@@ -9,6 +9,14 @@ import popsicle_modpost as module
 
 
 class ModpostTests(unittest.TestCase):
+    def test_same_crc_does_not_allow_a_duplicate_export_provider(self):
+        known = {'stock_api': '0x12345678'}
+        with self.assertRaisesRegex(ValueError, 'Duplicate generated export'):
+            module.merge_generated_exports(known, {'stock_api': '0x12345678'})
+        self.assertEqual(known, {'stock_api': '0x12345678'})
+        module.merge_generated_exports(known, {'private_bridge': '0x87654321'})
+        self.assertIn('private_bridge', known)
+
     def test_unreviewed_protected_list_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'modules.bzl'
@@ -64,6 +72,36 @@ class ModpostTests(unittest.TestCase):
                      patch.object(module, 'load', return_value=(b'', sections)):
                     result = module.module_report('candidate.ko', expected, {'api': '0x12345678'})
                     self.assertEqual(result['status'], status)
+
+    def test_stock_loader_evidence_still_requires_basic_crcs_and_matching_flags(self):
+        expected = {'layout': {'section_size': 1600, 'init_offset': 392, 'exit_offset': 1528},
+                    'vermagic': 'stock SMP modversions aarch64'}
+        evidence = {'target_vermagic': 'actual-stock SMP modversions aarch64',
+                    'kernel_sha256': 'stock-kernel'}
+        for basic, flags, crc, status in [
+                (True, 'SMP modversions aarch64', '0x12345678', 'RECORDED_LOADER_CHECKS_MATCH_ONLY'),
+                (False, 'SMP modversions aarch64', '0x12345678', 'REJECT'),
+                (True, 'modversions aarch64', '0x12345678', 'REJECT'),
+                (True, 'SMP modversions aarch64', '0x87654321', 'REJECT')]:
+            candidate = {'sha256': 'object', 'modinfo': {'vermagic': ['candidate ' + flags]},
+                         'versions': {'api': crc}, 'undefined': ['api']}
+            sections = [{'name': '__versions', 'size': 64}] if basic else []
+            with self.subTest(basic=basic, flags=flags, crc=crc), \
+                 patch.object(module, 'inspect', return_value=candidate), \
+                 patch.object(module, 'header_layout', return_value=expected['layout']), \
+                 patch.object(module, 'load', return_value=(b'', sections)), \
+                 patch.object(module, 'stock_loader_evidence', return_value=evidence):
+                self.assertEqual(module.module_report('candidate.ko', expected,
+                                                     {'api': '0x12345678'})['status'], status)
+
+    def test_recorded_stock_loader_evidence_is_hash_pinned(self):
+        import json
+        root = Path(__file__).resolve().parents[2]
+        expected = json.loads((root / 'kernel/abi/popsicle-stock-module-header.json').read_text())
+        self.assertEqual(module.stock_loader_evidence(expected)['caller_vers_byte_offset'], 116)
+        expected['loader_evidence']['sha256'] = 'wrong'
+        with self.assertRaisesRegex(ValueError, 'checksum mismatch'):
+            module.stock_loader_evidence(expected)
 
 
 if __name__ == '__main__':

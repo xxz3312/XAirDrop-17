@@ -7,5 +7,9 @@
     "init_offset": 392,
     "exit_offset": 1528
   },
-  "limitations": "Only module header section size and entry pointer offsets, not full type layout."
+  "limitations": "Only module header section size and entry pointer offsets, not full type layout.",
+  "loader_evidence": {
+    "path": "kernel/abi/popsicle-stock-loader.json",
+    "sha256": "72d76c6964567da860f3605073aee9bb1abd7696540e9aefa79eeed416fff4b8"
+  }
 }

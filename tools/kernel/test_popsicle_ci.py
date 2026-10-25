@@ -10,6 +10,15 @@ from popsicle_ci import REPO, cnss_audit, module_stage_exit
 
 
 class CiTests(unittest.TestCase):
+    def test_stock_loader_result_does_not_hide_an_unreviewed_module(self):
+        result = {'status': 'RECORDED_LOADER_CHECKS_MATCH_ONLY', 'wlan_unresolved': [],
+                  'modules': {name: {'status': 'RECORDED_LOADER_CHECKS_MATCH_ONLY'} for name in
+                              ['wonder_sysctl', 'opairshare_wonder_provider',
+                               'opairshare_route_b_probe', 'wonder', 'wlan']}}
+        self.assertEqual(module_stage_exit(result), 0)
+        result['modules']['wonder']['status'] = 'REVIEW_KERNEL_RELEASE'
+        self.assertEqual(module_stage_exit(result), 2)
+
     def test_release_review_stays_blocked_after_successful_linking(self):
         result = {'status': 'REVIEW_KERNEL_RELEASE', 'wlan_unresolved': [],
                   'modules': {name: {'status': 'REVIEW_KERNEL_RELEASE'} for name in

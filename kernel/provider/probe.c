@@ -5,7 +5,7 @@
 #include <linux/string.h>
 #include "wondertap.h"
 
-extern int cnss_set_vendor_wonder_priv_data(const void *priv_data);
+extern int opairshare_set_wonder_priv_data(const void *priv_data);
 
 static int probe_init_op(void **handle, const struct wondertap_init_params *params)
 {
@@ -53,13 +53,13 @@ static int __init probe_init(void)
 {
 	int ret;
 
-	ret = cnss_set_vendor_wonder_priv_data(&priv);
+	ret = opairshare_set_wonder_priv_data(&priv);
 	if (ret)
 		return ret;
 	/* Exercise duplicate registration and reject a competing owner. */
-	if (cnss_set_vendor_wonder_priv_data(&priv) ||
-	    cnss_set_vendor_wonder_priv_data(&other_priv) != -EBUSY) {
-		cnss_set_vendor_wonder_priv_data(NULL);
+	if (opairshare_set_wonder_priv_data(&priv) ||
+	    opairshare_set_wonder_priv_data(&other_priv) != -EBUSY) {
+		opairshare_set_wonder_priv_data(NULL);
 		return -EINVAL;
 	}
 	pr_info("opairshare_route_b_probe: registered ver=%d; duplicate/conflict checks passed\n", priv.ver);
@@ -68,7 +68,7 @@ static int __init probe_init(void)
 
 static void __exit probe_exit(void)
 {
-	cnss_set_vendor_wonder_priv_data(NULL);
+	opairshare_set_wonder_priv_data(NULL);
 	pr_info("opairshare_route_b_probe: ops cleared\n");
 }
 module_init(probe_init);

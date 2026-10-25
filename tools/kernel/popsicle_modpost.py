@@ -80,6 +80,33 @@ def header_layout(path):
     return result
 
 
+def merge_generated_exports(known, generated):
+    # The loader rejects duplicate providers even when their CRCs agree.
+    duplicate = sorted(known.keys() & generated.keys())
+    if duplicate:
+        raise ValueError('Duplicate generated export provider: ' + ', '.join(duplicate))
+    known.update(generated)
+
+
+def stock_loader_evidence(expected):
+    reference = expected.get('loader_evidence')
+    if not reference:
+        return None
+    root = Path(__file__).resolve().parents[2]
+    path = (root / reference['path']).resolve()
+    if not path.is_relative_to(root):
+        raise ValueError('Loader evidence must be a repository file')
+    raw = path.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != reference['sha256']:
+        raise ValueError('Stock loader evidence checksum mismatch')
+    data = json.loads(raw)
+    if (data['firmware'] != expected['firmware'] or
+            data['rule'] != 'basic_versions_ignore_release_prefix' or
+            data['caller_uses_basic_versions'] is not True):
+        raise ValueError('Unsupported or mismatched stock loader evidence')
+    return data
+
+
 def module_report(path, expected, available):
     module = inspect(path)
     layout = header_layout(path)
@@ -95,10 +122,19 @@ def module_report(path, expected, available):
     loader_magic = exact_magic or (basic_crcs and len(magic) == 1 and ' ' in magic[0]
                                    and ' ' in expected['vermagic']
                                    and magic[0].partition(' ')[2] == expected['vermagic'].partition(' ')[2])
+    evidence = stock_loader_evidence(expected)
+    target_magic = evidence['target_vermagic'] if evidence else None
+    stock_match = bool(evidence and len(magic) == 1 and (
+        magic[0] == target_magic or (basic_crcs and ' ' in magic[0] and ' ' in target_magic
+                                    and magic[0].partition(' ')[2] == target_magic.partition(' ')[2])))
     verdict = (bool(module['versions']) and not bad and not unversioned
-               and layout == expected['layout'] and loader_magic)
+               and layout == expected['layout'] and (stock_match if evidence else loader_magic))
     status = 'REJECT' if not verdict else ('RECORDS_AND_HEADER_MATCH_ONLY' if exact_magic
                                            else 'REVIEW_KERNEL_RELEASE')
+    if evidence and not stock_match:
+        status = 'REJECT'
+    elif verdict and stock_match:
+        status = 'RECORDED_LOADER_CHECKS_MATCH_ONLY'
     return {'status': status,
             'sha256': module['sha256'], 'version_records': len(module['versions']),
             'version_record_mismatches': bad, 'layout': layout,
@@ -106,6 +142,8 @@ def module_report(path, expected, available):
             'vermagic': module['modinfo'].get('vermagic'),
             'vermagic_exact_match': exact_magic,
             'vermagic_reference_loader_match': bool(loader_magic),
+            'vermagic_stock_loader_match': stock_match,
+            'stock_loader_kernel_sha256': evidence['kernel_sha256'] if evidence else None,
             'btf_present': any(s['name'] == '.BTF' for s in sections),
             'limitations': 'Modpost copies provider CRCs into imports; matching records do not '
                           'independently validate C declarations, private types, KCFI, full structure '

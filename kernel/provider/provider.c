@@ -30,11 +30,11 @@ static const struct component_ops provider_ops = {
 	.unbind = provider_unbind,
 };
 
-/* Same declaration/CRC as the reference CNSS export and the PLD caller.
+/* Private bridge API: must not shadow any stock CNSS export.
  * Caller owns priv and its callbacks until the matching NULL call returns.
  * Never call this function from a component bind/unbind callback.
  */
-int cnss_set_vendor_wonder_priv_data(const void *priv_data)
+int opairshare_set_wonder_priv_data(const void *priv_data)
 {
 	const struct wondertap_priv *priv = priv_data;
 	int ret = 0;
@@ -74,7 +74,7 @@ int cnss_set_vendor_wonder_priv_data(const void *priv_data)
 	mutex_unlock(&provider_lock);
 	return ret;
 }
-EXPORT_SYMBOL(cnss_set_vendor_wonder_priv_data);
+EXPORT_SYMBOL(opairshare_set_wonder_priv_data);
 
 static int __init provider_init(void)
 {
@@ -95,7 +95,7 @@ static int __init provider_init(void)
 
 static void __exit provider_exit(void)
 {
-	cnss_set_vendor_wonder_priv_data(NULL);
+	opairshare_set_wonder_priv_data(NULL);
 	/* No platform driver remove callback: device destruction has one owner. */
 	platform_device_unregister(provider);
 	provider = NULL;

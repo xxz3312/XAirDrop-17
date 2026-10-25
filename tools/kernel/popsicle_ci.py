@@ -13,7 +13,7 @@ import sys
 import tarfile
 
 from module_abi import inspect, symvers
-from popsicle_modpost import write_inputs, module_report
+from popsicle_modpost import write_inputs, module_report, merge_generated_exports
 from btf_layout import Btf, RecordedLayouts, compare
 
 REPO = Path(__file__).resolve().parents[2]
@@ -246,11 +246,13 @@ def module_stage_exit(result, link_only=False):
                 'opairshare_route_b_probe', 'wonder', 'wlan'}
     complete = (set(result['modules']) == expected and not result['wlan_unresolved']
                 and all(record['status'] in {'RECORDS_AND_HEADER_MATCH_ONLY',
+                                             'RECORDED_LOADER_CHECKS_MATCH_ONLY',
                                              'REVIEW_KERNEL_RELEASE'}
                         for record in result['modules'].values()))
     if not complete:
         return 2
-    if result['status'] == 'RECORDS_AND_HEADER_MATCH_ONLY':
+    passed = {'RECORDS_AND_HEADER_MATCH_ONLY', 'RECORDED_LOADER_CHECKS_MATCH_ONLY'}
+    if result['status'] in passed and all(r['status'] in passed for r in result['modules'].values()):
         return 0
     return 0 if link_only and result['status'] == 'REVIEW_KERNEL_RELEASE' else 2
 
@@ -265,6 +267,10 @@ def review(work):
             if record['status'] == 'REVIEW_KERNEL_RELEASE':
                 print(f"{name}: kernel release review required; vermagic={record['vermagic']}")
         print('No binary version rewriting or compatibility checks were bypassed.')
+    else:
+        print('Recorded offline module checks completed; no runtime compatibility certification.')
+        print('Actual stock loader evidence permits the release-prefix difference with basic CRCs.')
+        print('C prototypes, remaining KCFI differences, loading and AirDrop still need validation.')
     return code
 
 
@@ -323,10 +329,7 @@ def modules(work, link_only=False):
             command(args + ['modules'], f'modpost-{directory}.log')
             generated = REPO / 'kernel' / directory / 'Module.symvers'
             if generated.stat().st_size:
-                for symbol, crc in symvers([generated]).items():
-                    if symbol in known and known[symbol] != crc:
-                        raise ValueError(f'Generated export CRC conflict: {symbol}')
-                    known[symbol] = crc
+                merge_generated_exports(known, symvers([generated]))
             for name in names:
                 path = REPO / 'kernel' / directory / (name + '.ko')
                 produced.append(path)
@@ -351,6 +354,7 @@ def modules(work, link_only=False):
                 'modpost-wlan.log')
         path = work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.ko'
         produced.append(path)
+        merge_generated_exports(known, symvers([path.parent / 'Module.symvers']))
         result['modules']['wlan'] = module_report(path, expected, known)
         result['status'] = result['modules']['wlan']['status']
         if result['status'] != 'REJECT' and any(

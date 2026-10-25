@@ -1,0 +1,120 @@
+{
+  "source_workflow_run": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40226040284",
+  "method": "Read-only replay on unchanged prior artifacts; recorded loader checks only",
+  "modules": {
+    "opairshare_route_b_probe": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "af32367787eee4074aaf1e69c010db4bb4430890a7f9cd610d27d149147be863",
+      "version_records": 3,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "qca_cld3_peach_v2": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "04e6996af443ad0059d8b4625e83eade379e42aaf558062761ff4a566cdd1d2c",
+      "version_records": 573,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "110b0692a2391b1a8bc1b9f0e9777575681f3a84b25f3dbe8403b0ad0859d81c",
+      "version_records": 11,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "wonder_sysctl": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_records": 6,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b668bb518f1a9ef350bb26b242021587a2b3157efc8f1ee4d43cacfd2649107f",
+      "version_records": 87,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    }
+  },
+  "duplicate_exports_in_old_artifacts": [
+    {
+      "module": "opairshare_wonder_provider",
+      "symbol": "cnss_set_vendor_wonder_priv_data",
+      "recorded_crc": "0x263061b2"
+    }
+  ],
+  "duplicate_fix": "Bridge source/probe renamed to opairshare_set_wonder_priv_data; needs Actions rebuild",
+  "limitations": "Old artifacts have a duplicate provider export and are not loadable as a set with stock CNSS. Loader-rule checks passing do not certify runtime or AirDrop."
+}

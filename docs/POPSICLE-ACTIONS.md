@@ -159,3 +159,41 @@ Actions 在严格链接后新增 `layouts` 步骤，自动导出候选元数据�
 获得 boot 内核后才能尝试解包、符号定位与加载规则反汇编；能否恢复符号仍需检查。
 不要用不同版本的官方镜像代替当前活动内核，也不要为本次审计刷写分区。
 本次只更新离线审计与记录，不修改 workflow 或触发新的编译。
+
+## 当前 boot 的加载规则证据与修正
+
+已核对新提供的活动槽位 `_b` boot：系统仍为 OS4.0.5.0.XPBCNXM，
+内核版本与前两份采集一致。boot 中的原始 BTF 与手机之前导出的 BTF
+SHA256 完全相同。没有修改 boot 或写入任何手机分区。
+
+从 ARM64 Image 恢复 kallsyms 后，静态核对原厂 `same_magic` 的指令：
+`has_crcs` 为真时对两份字符串执行以空格为分隔符的 `strcspn`，
+跳过发布前缀，再调用 `strcmp` 比较其余内容。
+调用点读取 `load_info` 偏移 0x74 的字段作为布尔条件；原厂 BTF 确认
+该字段正是 `index.vers`，即 basic `__versions` 的索引。
+因此具备 basic 版本记录且其余标志一致时，发布前缀不同本身并非加载器拒绝条件。
+
+审计证据、输入哈希、函数字节和指令记录见
+`kernel/abi/popsicle-stock-loader.json`，由模块头部配置中的 SHA256 固定。
+`tools/kernel/verify_stock_loader.py` 可用同一 boot 重验记录字节。
+原始 boot、完整内核和完整符号表不提交到公开仓库。
+
+现在这种情况仅在有匹配目标系统的已核对原厂证据时，分类为
+`RECORDED_LOADER_CHECKS_MATCH_ONLY`；没有证据仍为 `REVIEW_KERNEL_RELEASE`。
+无 basic CRC、CRC 不匹配、头部差异或其余 vermagic 标志不同仍拒绝。
+前文多次“仍会标红”的说明是修正前的历史行为，本节取代该预期。
+没有改写任何模块的 vermagic 或 CRC，也没有关闭 modpost。
+
+重查旧产物还发现实验 provider 重复导出了原厂 CNSS 已有的
+`cnss_set_vendor_wonder_priv_data`。相同 CRC 不能允许重复符号提供者。
+已把实验 provider 和其探针改用私有 `opairshare_set_wonder_priv_data`，
+并让 CI 对辅助模块及 WLAN 的重复导出一律拒绝，即使 CRC 相同。
+原厂 CNSS 接口与原厂导出元数据保持原样。
+旧产物的只读重查记录见
+[原厂加载规则复核](research/popsicle-stock-loader-replay.json)；旧模块组合不能供安装。
+
+下一轮 Actions 将验证新的桥接符号和完整检查流程。
+工作流通过只表示已记录的离线检查完成；函数原型、KCFI 差异的完整影响、
+无线固件、加载和 AirDrop 收发仍需后续验证。
+模块 BTF 未生成的事实仍记录；原厂 WLAN 自身也无 `.BTF`，
+不能单凭这一项推断加载一定失败，它也不是此前 exit 2 的实际原因。

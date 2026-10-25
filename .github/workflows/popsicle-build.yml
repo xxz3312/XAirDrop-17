@@ -104,7 +104,7 @@ jobs:
       - name: Compare selected WLAN structure layouts with stock BTF metadata
         if: env.PHASE == 'module-trial'
         run: python3 tools/kernel/popsicle_ci.py layouts --work "$WORK"
-      - name: Required module compatibility review (may block after successful linking)
+      - name: Required recorded module checks (not runtime certification)
         if: env.PHASE == 'module-trial'
         run: python3 tools/kernel/popsicle_ci.py review --work "$WORK"
       - name: Upload diagnostics even when interface audit fails

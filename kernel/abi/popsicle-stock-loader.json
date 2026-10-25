@@ -1,0 +1,222 @@
+{
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "slot": "_b",
+  "boot_header_version": 4,
+  "boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93",
+  "kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+  "source_btf_sha256": "cc91023777fb757859cbc861302f7a303ede19c10a93823d6b99c5d5dbd699d7",
+  "target_vermagic": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k SMP preempt mod_unload modversions aarch64",
+  "rule": "basic_versions_ignore_release_prefix",
+  "caller_uses_basic_versions": true,
+  "caller_vers_byte_offset": 116,
+  "delimiter_file_offset": "0x1822300",
+  "delimiter_hex": "2000",
+  "kernel_vermagic_file_offset": "0x12f52b8",
+  "regions": {
+    "same_magic": {
+      "file_offset": "0x56ce90",
+      "size": 112,
+      "sha256": "8432dbb18afec45af24b7583a59c8819e1604237bc9cc54e61642299a381cd2c",
+      "bytes_hex": "3f2303d5fd7bbda9f50b00f9f44f02a9fd030091f30301aaf40300aa62010036b59500d0b5020c91e00314aae10315aa55b2f8979402008be00313aae10315aa51b2f8977302008be00314aae10313aaf465f2971f000071e0179f1af44f42a9f50b40f9fd7bc3a8bf2303d5c0035fd6",
+      "instructions": [
+        {
+          "offset": "0x56ce90",
+          "mnemonic": "paciasp",
+          "operands": ""
+        },
+        {
+          "offset": "0x56ce94",
+          "mnemonic": "stp",
+          "operands": "x29, x30, [sp, #-0x30]!"
+        },
+        {
+          "offset": "0x56ce98",
+          "mnemonic": "str",
+          "operands": "x21, [sp, #0x10]"
+        },
+        {
+          "offset": "0x56ce9c",
+          "mnemonic": "stp",
+          "operands": "x20, x19, [sp, #0x20]"
+        },
+        {
+          "offset": "0x56cea0",
+          "mnemonic": "mov",
+          "operands": "x29, sp"
+        },
+        {
+          "offset": "0x56cea4",
+          "mnemonic": "mov",
+          "operands": "x19, x1"
+        },
+        {
+          "offset": "0x56cea8",
+          "mnemonic": "mov",
+          "operands": "x20, x0"
+        },
+        {
+          "offset": "0x56ceac",
+          "mnemonic": "tbz",
+          "operands": "w2, #0, #0xffffffc08056ced8"
+        },
+        {
+          "offset": "0x56ceb0",
+          "mnemonic": "adrp",
+          "operands": "x21, #0xffffffc081822000"
+        },
+        {
+          "offset": "0x56ceb4",
+          "mnemonic": "add",
+          "operands": "x21, x21, #0x300"
+        },
+        {
+          "offset": "0x56ceb8",
+          "mnemonic": "mov",
+          "operands": "x0, x20"
+        },
+        {
+          "offset": "0x56cebc",
+          "mnemonic": "mov",
+          "operands": "x1, x21"
+        },
+        {
+          "offset": "0x56cec0",
+          "mnemonic": "bl",
+          "operands": "#0xffffffc080399814"
+        },
+        {
+          "offset": "0x56cec4",
+          "mnemonic": "add",
+          "operands": "x20, x20, x0"
+        },
+        {
+          "offset": "0x56cec8",
+          "mnemonic": "mov",
+          "operands": "x0, x19"
+        },
+        {
+          "offset": "0x56cecc",
+          "mnemonic": "mov",
+          "operands": "x1, x21"
+        },
+        {
+          "offset": "0x56ced0",
+          "mnemonic": "bl",
+          "operands": "#0xffffffc080399814"
+        },
+        {
+          "offset": "0x56ced4",
+          "mnemonic": "add",
+          "operands": "x19, x19, x0"
+        },
+        {
+          "offset": "0x56ced8",
+          "mnemonic": "mov",
+          "operands": "x0, x20"
+        },
+        {
+          "offset": "0x56cedc",
+          "mnemonic": "mov",
+          "operands": "x1, x19"
+        },
+        {
+          "offset": "0x56cee0",
+          "mnemonic": "bl",
+          "operands": "#0xffffffc0802066b0"
+        },
+        {
+          "offset": "0x56cee4",
+          "mnemonic": "cmp",
+          "operands": "w0, #0"
+        },
+        {
+          "offset": "0x56cee8",
+          "mnemonic": "cset",
+          "operands": "w0, eq"
+        },
+        {
+          "offset": "0x56ceec",
+          "mnemonic": "ldp",
+          "operands": "x20, x19, [sp, #0x20]"
+        },
+        {
+          "offset": "0x56cef0",
+          "mnemonic": "ldr",
+          "operands": "x21, [sp, #0x10]"
+        },
+        {
+          "offset": "0x56cef4",
+          "mnemonic": "ldp",
+          "operands": "x29, x30, [sp], #0x30"
+        },
+        {
+          "offset": "0x56cef8",
+          "mnemonic": "autiasp",
+          "operands": ""
+        },
+        {
+          "offset": "0x56cefc",
+          "mnemonic": "ret",
+          "operands": ""
+        }
+      ]
+    },
+    "early_mod_check_call": {
+      "file_offset": "0x567ee0",
+      "size": 32,
+      "sha256": "51edb27da1a8cfc4380e3f7af073add62f28727ecc7012fd81bcd1cbbaaa312c",
+      "bytes_hex": "687640b9616c00d021e00a91e00315aa1f010071e2079f1ae613009460020034",
+      "instructions": [
+        {
+          "offset": "0x567ee0",
+          "mnemonic": "ldr",
+          "operands": "w8, [x19, #0x74]"
+        },
+        {
+          "offset": "0x567ee4",
+          "mnemonic": "adrp",
+          "operands": "x1, #0xffffffc0812f5000"
+        },
+        {
+          "offset": "0x567ee8",
+          "mnemonic": "add",
+          "operands": "x1, x1, #0x2b8"
+        },
+        {
+          "offset": "0x567eec",
+          "mnemonic": "mov",
+          "operands": "x0, x21"
+        },
+        {
+          "offset": "0x567ef0",
+          "mnemonic": "cmp",
+          "operands": "w8, #0"
+        },
+        {
+          "offset": "0x567ef4",
+          "mnemonic": "cset",
+          "operands": "w2, ne"
+        },
+        {
+          "offset": "0x567ef8",
+          "mnemonic": "bl",
+          "operands": "#0xffffffc08056ce90"
+        },
+        {
+          "offset": "0x567efc",
+          "mnemonic": "cbz",
+          "operands": "w0, #0xffffffc080567f48"
+        }
+      ]
+    }
+  },
+  "symbol_recovery": {
+    "repository": "https://github.com/marin-m/vmlinux-to-elf",
+    "commit": "29eac31a38db48b51c0dc6aae3be0162237601eb",
+    "symbols_found": 133627,
+    "image_base": "0xffffffc080000000",
+    "verification": "_text maps to ARM64 Image header; BL destinations match recovered strcspn/strcmp/same_magic; load_info.index.vers offset checked in matching stock BTF."
+  },
+  "interpretation": "When basic __versions exists, the actual target loader skips each release prefix up to the first space and compares all remaining vermagic flags. Absence of basic versions does not permit ignoring release. This is a static target-code audit, not a module load test.",
+  "limitations": "Does not certify C prototypes, complete layouts, KCFI, runtime loading, firmware or AirDrop."
+}
