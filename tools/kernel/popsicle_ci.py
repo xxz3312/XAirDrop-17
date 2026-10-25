@@ -214,7 +214,35 @@ def audit(work):
     return 2 if result['missing'] else 0
 
 
-def modules(work):
+def module_stage_exit(result, link_only=False):
+    """A completed link stage is distinct from the existing review gate."""
+    expected = {'wonder_sysctl', 'opairshare_wonder_provider',
+                'opairshare_route_b_probe', 'wonder', 'wlan'}
+    complete = (set(result['modules']) == expected and not result['wlan_unresolved']
+                and all(record['status'] in {'RECORDS_AND_HEADER_MATCH_ONLY',
+                                             'REVIEW_KERNEL_RELEASE'}
+                        for record in result['modules'].values()))
+    if not complete:
+        return 2
+    if result['status'] == 'RECORDS_AND_HEADER_MATCH_ONLY':
+        return 0
+    return 0 if link_only and result['status'] == 'REVIEW_KERNEL_RELEASE' else 2
+
+
+def review(work):
+    result = json.loads((work / 'artifacts/reports/module-trial.json').read_text())
+    code = module_stage_exit(result)
+    if code:
+        print(f"::error title=Module compatibility review blocked::{result['status']}. "
+              'Link completion is not a compatibility pass. See module-trial.json.')
+        for name, record in result['modules'].items():
+            if record['status'] == 'REVIEW_KERNEL_RELEASE':
+                print(f"{name}: kernel release review required; vermagic={record['vermagic']}")
+        print('No binary version rewriting or compatibility checks were bypassed.')
+    return code
+
+
+def modules(work, link_only=False):
     """Strict small-module builds, then fail closed on missing WLAN providers."""
     inputs = work / 'abi'
     inputs.mkdir(parents=True, exist_ok=True)
@@ -302,7 +330,7 @@ def modules(work):
         if result['status'] != 'REJECT' and any(
                 record['status'] == 'REVIEW_KERNEL_RELEASE' for record in result['modules'].values()):
             result['status'] = 'REVIEW_KERNEL_RELEASE'
-        return 0 if result['status'] == 'RECORDS_AND_HEADER_MATCH_ONLY' else 2
+        return module_stage_exit(result, link_only=link_only)
     except Exception:
         result['status'] = 'MODPOST_OR_BUILD_FAILED'
         raise
@@ -324,7 +352,9 @@ def modules(work):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['setup', 'build', 'audit', 'modules'])
+    parser.add_argument('command', choices=['setup', 'build', 'audit', 'modules', 'review'])
+    parser.add_argument('--link-only', action='store_true',
+                        help='Report completed linking separately; run review as a required next step')
     parser.add_argument('--work', type=Path, required=True)
     parser.add_argument('--phase', choices=['prepare', 'wlan-object', 'module-trial'], default='module-trial')
     args = parser.parse_args()
@@ -335,8 +365,10 @@ def main():
         build(work, args.phase)
     elif args.command == 'audit':
         return audit(work)
+    elif args.command == 'review':
+        return review(work)
     else:
-        return modules(work)
+        return modules(work, link_only=args.link_only)
     return 0
 
 

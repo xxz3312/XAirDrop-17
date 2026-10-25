@@ -6,10 +6,24 @@ import json
 from pathlib import Path
 import unittest
 
-from popsicle_ci import REPO, cnss_audit
+from popsicle_ci import REPO, cnss_audit, module_stage_exit
 
 
 class CiTests(unittest.TestCase):
+    def test_release_review_stays_blocked_after_successful_linking(self):
+        result = {'status': 'REVIEW_KERNEL_RELEASE', 'wlan_unresolved': [],
+                  'modules': {name: {'status': 'REVIEW_KERNEL_RELEASE'} for name in
+                              ['wonder_sysctl', 'opairshare_wonder_provider',
+                               'opairshare_route_b_probe', 'wonder', 'wlan']}}
+        self.assertEqual(module_stage_exit(result, link_only=True), 0)
+        self.assertEqual(module_stage_exit(result), 2)
+        # A partial build, hidden reject or unresolved dependency cannot be
+        # mistaken for completed linking, even with the overall REVIEW label.
+        result['modules']['wlan']['status'] = 'REJECT'
+        self.assertEqual(module_stage_exit(result, link_only=True), 2)
+        del result['modules']['wlan']
+        self.assertEqual(module_stage_exit(result, link_only=True), 2)
+
     def test_missing_provider_blocks(self):
         result = cnss_audit({'undefined': ['cnss_new'], 'sha256': 'object'},
                             {'exports': {'cnss_old': '0x12345678'}})

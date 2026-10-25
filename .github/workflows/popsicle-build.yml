@@ -97,9 +97,12 @@ jobs:
       - name: Check CNSS provider interfaces
         if: env.PHASE != 'prepare'
         run: python3 tools/kernel/popsicle_ci.py audit --work "$WORK"
-      - name: Strict module trial and complete WLAN dependency gate
+      - name: Strict module linking and complete WLAN dependency gate
         if: env.PHASE == 'module-trial'
-        run: python3 tools/kernel/popsicle_ci.py modules --work "$WORK"
+        run: python3 tools/kernel/popsicle_ci.py modules --link-only --work "$WORK"
+      - name: Required module compatibility review (may block after successful linking)
+        if: env.PHASE == 'module-trial'
+        run: python3 tools/kernel/popsicle_ci.py review --work "$WORK"
       - name: Upload diagnostics even when interface audit fails
         if: always()
         uses: actions/upload-artifact@v4
