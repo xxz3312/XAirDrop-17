@@ -98,7 +98,10 @@ WLAN 基线对象编译与链接已通过，目录中生成 792 个对象文件�
 进一步源码检查表明，canoe 配置选择 TSF NOIRQ，GPIO IRQ 调用分支没有启用，
 但 PLD helper 仍被无条件编译。第三个补丁按实际分支条件裁剪 helper，
 保留启用 GPIO IRQ 时的原实现；由新的 [Actions 工作流](POPSICLE-ACTIONS.md)
-执行补丁后的全新编译和符号检查。后续编译迁移到 GitHub Actions。
+执行补丁后的全新编译和符号检查。首轮已成功完成，CNSS 所需名称 72/72
+均有原厂 provider 导出，原先 GPIO helper 引入的缺项已在该检查中消除。
+结果仍只是名称覆盖，后续继续检查完整模块、CRC/类型/结构及其他依赖。
+[首轮验证记录](research/popsicle-actions-first-pass.json)。后续编译使用 GitHub Actions。
 
 ## 下一步
 

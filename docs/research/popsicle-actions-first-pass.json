@@ -1,0 +1,16 @@
+{
+  "run_id": 40215365901,
+  "url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40215365901",
+  "commit": "fdfc1c78d3583bec6808c38989c439ea04d4b1ad",
+  "conclusion": "success",
+  "host_regressions": 15,
+  "object_compilation": "WLAN, Wonder, provider, binding probe and availability object builds completed",
+  "cnss_audit": {
+    "status": "NAME_COVERAGE_ONLY",
+    "required_cnss_symbols": 72,
+    "missing": [],
+    "object_sha256": "2ccfefc40c36cdcae82bebe89b6c5fcb1e3be23f87f77ec19df3db1f337e18c8"
+  },
+  "remaining_config_differences": 12,
+  "limitations": "No complete .ko/modpost, CRC/type/layout/KCFI, firmware, loading or AirDrop runtime validation."
+}

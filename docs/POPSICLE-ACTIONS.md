@@ -42,8 +42,10 @@ provider 导出表中，该步骤退出失败并写明缺项，不会因编译�
 全部名称覆盖时状态仍为 `NAME_COVERAGE_ONLY`，不代表 CRC、结构布局、
 KCFI、所有依赖、固件、加载或实际 AirDrop 收发已通过。
 
-本轮第三个源码补丁针对 NOIRQ 模式下无用的 GPIO IRQ 引用；它尚需以
-Actions 的全新编译和接口报告为准，不能把此前本地对象作为补丁后的验证结果。
+第三个源码补丁针对 NOIRQ 模式下无用的 GPIO IRQ 引用。
+[首轮 Actions](https://github.com/xxz3312/XAirDrop-17/actions/runs/40215365901)
+已全新编译成功；CNSS 名称检查为 72/72、缺项 0。
+详细记录见 [首轮结果](research/popsicle-actions-first-pass.json)，仍不代表完整模块 ABI 或可加载性通过。
 
 若 fork 的 Actions 尚未启用，需要先在仓库 Actions 页面启用工作流。
 工作流只有 `contents: read` 权限，不会自行发布安装包或修改仓库。
