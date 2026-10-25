@@ -13,6 +13,11 @@ https://github.com/xxz3312/XAirDrop-17/actions/workflows/popsicle-build.yml
 工作流使用 Ubuntu 24.04、锁定的源码提交、官方 Clang/Rust/bindgen，最多 4 个并行任务。
 首次运行需下载较大的工具链，后续复用缓存。无须配置第三方下载地址或额外 Token。
 
+Clang/Rust 与 bindgen 分别缓存，使用操作系统、架构和版本记录生成缓存键。
+输入准备成功后、开始编译前立即保存，因此后续编译或接口检查失败也保留缓存。
+命中缓存后跳过相应下载，并核对来源标记；bindgen 还会核对版本。
+连续推送会排队等待当前构建完成，不会为更新缓存设置而取消正在下载的首轮构建。
+
 ## 输入与输出
 
 `kernel/configs/popsicle-stock.config.gz` 只包含此前采集的内核配置，

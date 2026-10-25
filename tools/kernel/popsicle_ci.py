@@ -98,12 +98,19 @@ def setup(work):
             target.symlink_to(source, target_is_directory=True)
     bindgen_url = (f"{tools['bindgen_repository']}/+/{tools['bindgen_repository_commit']}/"
                    f"{tools['bindgen_path']}?format=TEXT")
-    bindgen_download = work / 'bindgen.b64'
-    download(bindgen_url, bindgen_download)
     bindgen = host / 'usr/bin/bindgen'
-    bindgen.write_bytes(base64.b64decode(b''.join(bindgen_download.read_bytes().split()), validate=True))
-    bindgen.chmod(0o755)
-    bindgen_download.unlink()
+    bindgen_marker = bindgen.parent / '.popsicle-bindgen-source-url'
+    if not (bindgen.is_file() and bindgen_marker.is_file()
+            and bindgen_marker.read_text() == bindgen_url):
+        bindgen_download = work / 'bindgen.b64'
+        download(bindgen_url, bindgen_download)
+        bindgen.write_bytes(base64.b64decode(b''.join(bindgen_download.read_bytes().split()), validate=True))
+        bindgen.chmod(0o755)
+        bindgen_download.unlink()
+        bindgen_marker.write_text(bindgen_url)
+    bindgen_version = subprocess.check_output([str(bindgen), '--version'], text=True).strip()
+    if bindgen_version != f"bindgen {tools['bindgen']}":
+        raise ValueError(f'Unexpected cached bindgen: {bindgen_version}')
 
     raw = gzip.decompress((REPO / 'kernel/configs/popsicle-stock.config.gz').read_bytes())
     expected = json.loads((REPO / 'kernel/configs/popsicle-stock.json').read_text())['config_sha256']

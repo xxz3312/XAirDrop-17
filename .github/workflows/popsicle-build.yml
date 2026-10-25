@@ -32,7 +32,7 @@ permissions:
 
 concurrency:
   group: popsicle-diagnostic-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   diagnostic:
@@ -57,14 +57,40 @@ jobs:
             build-essential flex bison m4 bc pahole libelf-dev libdw-dev \
             libssl-dev pkg-config zlib1g-dev libzstd-dev curl git python3
       - name: Restore pinned toolchains
-        uses: actions/cache@v4
+        id: toolchains
+        uses: actions/cache/restore@v4
         with:
           path: |
             .popsicle-ci/toolchains/clang-r536225
             .popsicle-ci/toolchains/rust-1.82.0.p2
           key: popsicle-tools-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docs/popsicle-source-lock.json') }}
+      - name: Restore pinned bindgen
+        id: bindgen
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/host/usr/bin/bindgen
+            .popsicle-ci/toolchains/host/usr/bin/.popsicle-bindgen-source-url
+          key: popsicle-bindgen-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docs/popsicle-source-lock.json') }}
       - name: Fetch locked sources and official toolchains
+        id: setup
         run: python3 tools/kernel/popsicle_ci.py setup --work "$WORK"
+      - name: Save complete toolchains before compilation
+        if: steps.setup.outcome == 'success' && steps.toolchains.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/clang-r536225
+            .popsicle-ci/toolchains/rust-1.82.0.p2
+          key: ${{ steps.toolchains.outputs.cache-primary-key }}
+      - name: Save complete bindgen before compilation
+        if: steps.setup.outcome == 'success' && steps.bindgen.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/host/usr/bin/bindgen
+            .popsicle-ci/toolchains/host/usr/bin/.popsicle-bindgen-source-url
+          key: ${{ steps.bindgen.outputs.cache-primary-key }}
       - name: Compile diagnostic objects
         run: python3 tools/kernel/popsicle_ci.py build --work "$WORK" --phase "$PHASE"
       - name: Check CNSS provider interfaces
