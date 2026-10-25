@@ -7,7 +7,8 @@ https://github.com/xxz3312/XAirDrop-17/actions/workflows/popsicle-build.yml
 修改相关源码、补丁、配置或构建入口后，推送到 `main` 自动触发。
 也可进入工作流页面点 **Run workflow**：
 
-- `wlan-object`：默认，准备内核并编译 WLAN、Wonder、provider、绑定探针和可用性节点对象。
+- `module-trial`：默认，先完成对象编译和 CNSS 检查，再进行严格辅助模块链接、头部与版本记录检查，并检查 WLAN 的全部依赖名称。
+- `wlan-object`：仅准备内核并编译 WLAN、Wonder、provider、绑定探针和可用性节点对象。
 - `prepare`：只验证配置和 `modules_prepare`，不生成 WLAN 对象。
 
 工作流使用 Ubuntu 24.04、锁定的源码提交、官方 Clang/Rust/bindgen，最多 4 个并行任务。
@@ -33,7 +34,9 @@ CI 的 CNSS 检查使用从真实原厂模块提取的 `cnss_*` 导出元数据�
 - WLAN 阶段成功后的 CNSS 接口检查报告。
 
 失败后也会尽量保留已生成的日志和报告。下载入口在对应运行页面的 Artifacts 区域。
-压缩包不是 Root 模块，不包含可刷入的 `.ko` 或安装脚本，不发布 Release。
+严格模块阶段还会尽量保存 `diagnostic-modules-not-for-install.tar.gz` 和
+`module-trial.json`。其中可能包含诊断 `.ko`；它们未经加载、固件和无线验证，
+不供安装。没有 Root 模块 ZIP 或安装脚本，不发布 Release。
 
 ## 如何判断结果
 
@@ -41,6 +44,19 @@ CI 的 CNSS 检查使用从真实原厂模块提取的 `cnss_*` 导出元数据�
 provider 导出表中，该步骤退出失败并写明缺项，不会因编译成功而放行。
 全部名称覆盖时状态仍为 `NAME_COVERAGE_ONLY`，不代表 CRC、结构布局、
 KCFI、所有依赖、固件、加载或实际 AirDrop 收发已通过。
+
+严格模块阶段从官方 CI 下载真实核心 `vmlinux.symvers` 并核对 SHA256，
+结合 9 个原厂 provider 的 717 条真实导出（含 GPL 类型与命名空间）供 modpost 使用。
+GKI 保护模块列表按锁定 common 源码中的官方定义生成，不关闭保护配置。
+原厂模块头部参考为 1600 字节，init/exit 指针偏移为 392/1528；只比较这三项
+不能验证全部结构布局。模块版本记录由 modpost 从 provider 表复制，匹配也不能
+独立证明调用者 C 类型与被调用者一致。
+
+先构建可用性、provider/探针、Wonder 的完整诊断 `.ko`；再检查 WLAN 全部外部符号。
+缺少真实 provider 时状态为 `BLOCKED_MISSING_WLAN_EXPORTS` 并失败，
+不会给未解析符号编造 CRC、添加假成功实现或改为告警放行。
+当前原厂额外采集中的 HWID、IPA、IOMMU、QMI 导出尚未恢复，因此这一阶段可能因
+真实证据不完整而停止。日志也会明确记录模块 BTF 是否实际生成。
 
 第三个源码补丁针对 NOIRQ 模式下无用的 GPIO IRQ 引用。
 [首轮 Actions](https://github.com/xxz3312/XAirDrop-17/actions/runs/40215365901)

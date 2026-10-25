@@ -1,0 +1,11 @@
+{
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "stock_wlan_sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+  "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64",
+  "layout": {
+    "section_size": 1600,
+    "init_offset": 392,
+    "exit_offset": 1528
+  },
+  "limitations": "Only module header section size and entry pointer offsets, not full type layout."
+}

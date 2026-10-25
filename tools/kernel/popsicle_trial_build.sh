@@ -3,11 +3,11 @@
 # Usage: script PHASE BASELINE COMMON SOC WLAN DATAIPA CLANG RUST HOST OUT
 set -euo pipefail
 if [[ $# != 10 ]]; then
-  echo 'Usage: popsicle_trial_build.sh configure|prepare|wlan-object BASELINE COMMON SOC WLAN DATAIPA CLANG RUST HOST OUT' >&2
+  echo 'Usage: popsicle_trial_build.sh configure|prepare|wlan-object|wlan-modules BASELINE COMMON SOC WLAN DATAIPA CLANG RUST HOST OUT' >&2
   exit 3
 fi
 phase=$1
-case "$phase" in configure|prepare|wlan-object) ;; *) echo 'Unknown phase' >&2; exit 3;; esac
+case "$phase" in configure|prepare|wlan-object|wlan-modules) ;; *) echo 'Unknown phase' >&2; exit 3;; esac
 baseline=$(realpath "$2")
 common=$(realpath "$3")
 soc=$(realpath "$4")
@@ -39,9 +39,21 @@ check_revision "$soc" 45705be1220b4cfa8100516ad86711656c0b634e
 check_revision "$wlan" 36df473046706a5259942e1bf7222108dbbb860f
 check_revision "$(git -C "$dataipa" rev-parse --show-toplevel)" 5ab2a689ff87d7d28c511f1762cf41c1b90d965a
 hwid_include=${POPSICLE_HWID_INCLUDE:-$soc/drivers/misc/hwid}
-if [[ "$phase" == wlan-object && ! -f "$hwid_include/hwid.h" ]]; then
+if [[ "$phase" == wlan-* && ! -f "$hwid_include/hwid.h" ]]; then
   echo 'Missing HWID header. Supply POPSICLE_HWID_INCLUDE only after verifying its target ABI.' >&2
   exit 2
+fi
+target=qca_cld3_peach_v2.o
+extra_symbols=()
+if [[ "$phase" == wlan-modules ]]; then
+  for input in "$out/Module.symvers" "$out/protected_module_names_list" "${POPSICLE_EXTRA_SYMBOLS:-}"; do
+    [[ -s "$input" ]] || { echo "Missing real modpost input: $input" >&2; exit 2; }
+  done
+  [[ -z "${KBUILD_MODPOST_WARN:-}${KBUILD_MODPOST_NOFINAL:-}${KBUILD_NSDEPS:-}" ]] || {
+    echo 'Refusing relaxed modpost settings' >&2; exit 3;
+  }
+  target=modules
+  extra_symbols=("KBUILD_EXTRA_SYMBOLS=$POPSICLE_EXTRA_SYMBOLS")
 fi
 export PATH="$host/usr/bin:$rust/bin:$clang/bin:$PATH"
 export M4="$host/usr/bin/m4"
@@ -101,5 +113,5 @@ make "${make_args[@]}" "-j$jobs" \
   CONFIG_IPA_OUT_OF_TREE=y \
   "DATA_IPA_INC=$dataipa/drivers/platform/msm/include" \
   "EXTRA_CFLAGS=-I$soc/include -I$hwid_include -DCONFIG_IPA3_MODULE=1 -DCONFIG_ARM_SMMU_MODULE=1 -DCONFIG_QCOM_IOMMU_UTIL_MODULE=1" \
-  qca_cld3_peach_v2.o
-echo 'Object compilation finished; no modpost, .ko, ABI, firmware or AirDrop validation is implied.'
+  "${extra_symbols[@]}" "$target"
+echo 'Diagnostic compilation finished; no load, firmware or AirDrop compatibility is implied.'

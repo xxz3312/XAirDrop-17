@@ -25,7 +25,12 @@ def load(path):
                          type=typ, off=foff, size=fsz, link=link, info=info))
     return d, secs
 
-def exports(path):
+def export_records(path, require_namespace=True):
+    """Read actual export CRC, license category and namespace from a module.
+
+    Strict mode refuses missing relocation metadata. These are exports, not
+    imported expectations, and can therefore describe real symvers providers.
+    """
     d, secs = load(path)
     # symbol table
     ss = next(s for s in secs if s['type'] == 2)
@@ -34,14 +39,27 @@ def exports(path):
     syms = []
     for i in range(ss['size'] // 24):
         p = ss['off'] + i*24
-        st_name, st_info, st_other, st_shndx = struct.unpack_from('<IBBH', d, p)
-        syms.append((nmtab[st_name:nmtab.index(b'\0', st_name)].decode('utf-8','replace'), st_shndx))
+        st_name, st_info, st_other, st_shndx, value, _ = struct.unpack_from('<IBBHQQ', d, p)
+        syms.append((nmtab[st_name:nmtab.index(b'\0', st_name)].decode('utf-8','replace'), st_shndx, value))
+
+    def relocated_string(reference):
+        symidx, addend = reference
+        _, shndx, value = syms[symidx]
+        sec = secs[shndx]
+        relative = value + addend
+        if not 0 <= relative < sec['size']:
+            raise ValueError('Export string relocation outside its section')
+        base = sec['off'] + relative
+        end = d.index(b'\0', base, sec['off'] + sec['size'])
+        return d[base:end].decode('utf-8')
     res = {}
     for ktab, ctab in (("__ksymtab", "__kcrctab"), ("__ksymtab_gpl", "__kcrctab_gpl")):
         k = next((s for s in secs if s['name'] == ktab), None)
         c = next((s for s in secs if s['name'] == ctab), None)
         if not k or not c:
             continue
+        if k['size'] % 12 or c['size'] != k['size'] // 12 * 4:
+            raise ValueError('Inconsistent export/CRC section sizes')
         rel = {}
         for r in secs:
             # sh_info identifies the target section. Android 6.12 also uses
@@ -54,15 +72,25 @@ def exports(path):
         for i in range(k['size'] // 12):
             nf = i*12 + 4
             if nf not in rel:
+                if require_namespace:
+                    raise ValueError('Missing export name relocation')
                 continue
-            symidx, addend = rel[nf]
-            _, shndx = syms[symidx]
-            sec = secs[shndx]
-            base = sec['off'] + addend
-            name = d[base:d.index(b'\0', base)].decode('utf-8', 'replace')
+            name = relocated_string(rel[nf])
+            if require_namespace and nf + 4 not in rel:
+                raise ValueError(f'Missing namespace relocation: {name}')
+            namespace = relocated_string(rel[nf + 4]) if nf + 4 in rel else ''
             crc, = struct.unpack_from('<I', d, c['off'] + i*4)
-            res[name] = "0x%08x" % crc
+            record = {'crc': '0x%08x' % crc, 'namespace': namespace,
+                      'export_type': 'EXPORT_SYMBOL_GPL' if ktab.endswith('_gpl') else 'EXPORT_SYMBOL'}
+            if name in res and res[name] != record:
+                raise ValueError(f'Conflicting export records: {name}')
+            res[name] = record
     return res
+
+
+def exports(path):
+    return {name: record['crc'] for name, record in
+            export_records(path, require_namespace=False).items()}
 
 if __name__ == "__main__":
     if sys.argv[1] == "--dump":

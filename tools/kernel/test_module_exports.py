@@ -5,12 +5,14 @@ import struct
 import tempfile
 import unittest
 
-from module_exports import exports
+from module_exports import exports, export_records
 
 
-def fixture(relocation_name, target=4):
+def fixture(relocation_name, target=4, namespace=None, gpl=False, named_symbol=False):
     names = ['', '.shstrtab', '.strtab', '.symtab', '__ksymtab',
              '__kcrctab', relocation_name]
+    if gpl:
+        names[4:6] = ['__ksymtab_gpl', '__kcrctab_gpl']
     shstr = b'\0'
     offsets = [0]
     for name in names[1:]:
@@ -18,10 +20,15 @@ def fixture(relocation_name, target=4):
         shstr += name.encode() + b'\0'
     strings = b'\0sample_symbol\0'
     # Relocation points to a section symbol + string addend, not a named symbol.
-    symbols = bytes(24) + struct.pack('<IBBHQQ', 0, 3, 0, 2, 0, 0)
+    symbols = bytes(24) + struct.pack('<IBBHQQ', 0, 3, 0, 2, 1 if named_symbol else 0, 0)
+    relocs = struct.pack('<QQq', 4, (1 << 32) | 261, 0 if named_symbol else 1)
+    if namespace is not None:
+        offset = len(strings)
+        strings += namespace.encode() + b'\0'
+        relocs += struct.pack('<QQq', 8, (1 << 32) | 261, offset - (1 if named_symbol else 0))
     chunks = [b'', shstr, strings, symbols, bytes(12),
               struct.pack('<I', 0x12345678),
-              struct.pack('<QQq', 4, (1 << 32) | 261, 1)]
+              relocs]
     types = [0, 3, 3, 2, 1, 1, 4]
     links = [0, 0, 0, 2, 0, 0, 3]
     infos = [0, 0, 0, 2, 0, 0, target]
@@ -62,6 +69,21 @@ class ExportRelocationTests(unittest.TestCase):
 
     def test_wrong_target_is_not_used(self):
         self.assertEqual(self.read_fixture('.rela___ksymtab+sample_symbol', 5), {})
+
+    def test_namespace_license_and_named_symbol_addend(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'fixture.ko'
+            path.write_bytes(fixture('.rela__ksymtab_gpl', namespace='TEST_NS',
+                                     gpl=True, named_symbol=True))
+            self.assertEqual(export_records(path), {'sample_symbol': {
+                'crc': '0x12345678', 'namespace': 'TEST_NS', 'export_type': 'EXPORT_SYMBOL_GPL'}})
+
+    def test_strict_export_metadata_refuses_missing_namespace(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'fixture.ko'
+            path.write_bytes(fixture('.rela__ksymtab'))
+            with self.assertRaisesRegex(ValueError, 'Missing namespace'):
+                export_records(path)
 
 
 if __name__ == '__main__':

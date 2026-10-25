@@ -12,7 +12,8 @@ import subprocess
 import sys
 import tarfile
 
-from module_abi import inspect
+from module_abi import inspect, symvers
+from popsicle_modpost import write_inputs, module_report
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -132,7 +133,8 @@ def build(work, phase):
     # This narrow header was rechecked against the recorded stock caller ABI.
     env['POPSICLE_HWID_INCLUDE'] = str(REPO / 'kernel/compat/popsicle')
     tools = work / 'toolchains'
-    args = ['bash', REPO / 'tools/kernel/popsicle_trial_build.sh', phase,
+    object_phase = 'wlan-object' if phase == 'module-trial' else phase
+    args = ['bash', REPO / 'tools/kernel/popsicle_trial_build.sh', object_phase,
             work / 'baseline', work / 'common', work / 'soc', work / 'wlan',
             work / 'reference-modules/vendor/qcom/opensource/dataipa',
             tools / 'clang-r536225', tools / 'rust-1.82.0.p2', tools / 'host', work / 'out']
@@ -148,7 +150,7 @@ def build(work, phase):
 
     try:
         logged(args, 'build.log')
-        if phase == 'wlan-object':
+        if phase != 'prepare':
             host = tools / 'host'
             env['PATH'] = f"{host}/usr/bin:{tools}/rust-1.82.0.p2/bin:" + env.get('PATH', '')
             env['LD_LIBRARY_PATH'] = f'{host}/usr/lib/x86_64-linux-gnu'
@@ -212,19 +214,125 @@ def audit(work):
     return 2 if result['missing'] else 0
 
 
+def modules(work):
+    """Strict small-module builds, then fail closed on missing WLAN providers."""
+    inputs = work / 'abi'
+    inputs.mkdir(parents=True, exist_ok=True)
+    lock = json.loads((REPO / 'docs/popsicle-source-lock.json').read_text())
+    core = inputs / 'vmlinux.symvers'
+    download(lock['candidate_common']['actual_symvers'], core)
+    vendor = inputs / 'stock-vendor.symvers'
+    known = write_inputs(work / 'common', work / 'out', core,
+                         REPO / 'kernel/abi/popsicle-stock-exports.json', vendor)
+    expected = json.loads((REPO / 'kernel/abi/popsicle-stock-module-header.json').read_text())
+    artifact = work / 'artifacts'
+    reports = artifact / 'reports'
+    logs = artifact / 'logs'
+    reports.mkdir(parents=True, exist_ok=True)
+    logs.mkdir(parents=True, exist_ok=True)
+    result = {'status': 'IN_PROGRESS', 'modules': {}, 'wlan_unresolved': [],
+              'limitations': 'Diagnostic .ko files only. No independent C type, private layout, '
+                            'KCFI, BTF, GKI access, firmware, loading or AirDrop certification.'}
+    tools = work / 'toolchains'
+    host = tools / 'host'
+    env = dict(os.environ)
+    for key in ['KBUILD_MODPOST_WARN', 'KBUILD_MODPOST_NOFINAL', 'KBUILD_NSDEPS']:
+        env.pop(key, None)
+    env.update(PATH=f'{host}/usr/bin:{tools}/rust-1.82.0.p2/bin:' + env.get('PATH', ''),
+               LD_LIBRARY_PATH=f'{host}/usr/lib/x86_64-linux-gnu',
+               LIBCLANG_PATH=f'{tools}/clang-r536225/lib',
+               M4=f'{host}/usr/bin/m4', BISON_PKGDATADIR=f'{host}/usr/share/bison')
+    make = ['make', '-C', work / 'common', f'O={work}/out', 'ARCH=arm64',
+            f'LLVM={tools}/clang-r536225/bin/', f'HOSTCFLAGS=-I{host}/usr/include',
+            f'HOSTLDFLAGS=-L{host}/usr/lib/x86_64-linux-gnu', '-j2']
+    produced = []
+
+    def command(args, filename):
+        with (logs / filename).open('w') as log:
+            process = subprocess.Popen(list(map(str, args)), env=env, stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT, text=True)
+            for line in process.stdout:
+                print(line, end='', flush=True)
+                log.write(line)
+            if process.wait():
+                raise subprocess.CalledProcessError(process.returncode, args)
+
+    try:
+        for directory, names in [
+            ('popsicle-availability', ['wonder_sysctl']),
+            ('provider', ['opairshare_wonder_provider', 'opairshare_route_b_probe']),
+            ('wonder', ['wonder']),
+        ]:
+            args = make + [f'M={REPO}/kernel/{directory}', f'KBUILD_EXTRA_SYMBOLS={vendor}']
+            if directory == 'wonder':
+                args += [f'EXTRA_CFLAGS=-I{REPO}/kernel/wonder/include/wonder']
+            command(args + ['modules'], f'modpost-{directory}.log')
+            generated = REPO / 'kernel' / directory / 'Module.symvers'
+            if generated.stat().st_size:
+                for symbol, crc in symvers([generated]).items():
+                    if symbol in known and known[symbol] != crc:
+                        raise ValueError(f'Generated export CRC conflict: {symbol}')
+                    known[symbol] = crc
+            for name in names:
+                path = REPO / 'kernel' / directory / (name + '.ko')
+                produced.append(path)
+                result['modules'][name] = module_report(path, expected, known)
+                if result['modules'][name]['status'] == 'REJECT':
+                    result['status'] = 'REJECT_MODULE_RECORDS_OR_HEADER'
+                    return 2
+
+        obj = inspect(work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.o')
+        # __this_module is supplied by the module-generated .mod.c, not a provider.
+        missing = sorted(set(obj['undefined']) - known.keys() - {'__this_module'})
+        result['wlan_unresolved'] = missing
+        if missing:
+            result['status'] = 'BLOCKED_MISSING_WLAN_EXPORTS'
+            return 2
+        env['POPSICLE_HWID_INCLUDE'] = str(REPO / 'kernel/compat/popsicle')
+        env['POPSICLE_EXTRA_SYMBOLS'] = str(vendor)
+        command(['bash', REPO / 'tools/kernel/popsicle_trial_build.sh', 'wlan-modules',
+                 work / 'baseline', work / 'common', work / 'soc', work / 'wlan',
+                 work / 'reference-modules/vendor/qcom/opensource/dataipa',
+                 tools / 'clang-r536225', tools / 'rust-1.82.0.p2', host, work / 'out'],
+                'modpost-wlan.log')
+        path = work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.ko'
+        produced.append(path)
+        result['modules']['wlan'] = module_report(path, expected, known)
+        result['status'] = result['modules']['wlan']['status']
+        return 2 if result['status'] == 'REJECT' else 0
+    except Exception:
+        result['status'] = 'MODPOST_OR_BUILD_FAILED'
+        raise
+    finally:
+        (reports / 'module-trial.json').write_text(json.dumps(result, indent=2) + '\n')
+        if produced:
+            with tarfile.open(artifact / 'diagnostic-modules-not-for-install.tar.gz', 'w:gz') as bundle:
+                for path in produced:
+                    bundle.add(path, arcname=path.name)
+        summary = os.environ.get('GITHUB_STEP_SUMMARY')
+        if summary:
+            with open(summary, 'a') as stream:
+                stream.write(f"\n### Strict module trial\n\nStatus: **{result['status']}**\n\n")
+                for name in result['wlan_unresolved']:
+                    stream.write(f'- Missing real WLAN provider export: `{name}`\n')
+                stream.write('\n' + result['limitations'] + '\n')
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['setup', 'build', 'audit'])
+    parser.add_argument('command', choices=['setup', 'build', 'audit', 'modules'])
     parser.add_argument('--work', type=Path, required=True)
-    parser.add_argument('--phase', choices=['prepare', 'wlan-object'], default='wlan-object')
+    parser.add_argument('--phase', choices=['prepare', 'wlan-object', 'module-trial'], default='module-trial')
     args = parser.parse_args()
     work = args.work.resolve()
     if args.command == 'setup':
         setup(work)
     elif args.command == 'build':
         build(work, args.phase)
-    else:
+    elif args.command == 'audit':
         return audit(work)
+    else:
+        return modules(work)
     return 0
 
 

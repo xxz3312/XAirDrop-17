@@ -7,9 +7,10 @@ on:
         description: Diagnostic stage (no installable module)
         type: choice
         options:
+          - module-trial
           - wlan-object
           - prepare
-        default: wlan-object
+        default: module-trial
   push:
     branches: [main]
     paths:
@@ -40,7 +41,7 @@ jobs:
     timeout-minutes: 90
     env:
       WORK: ${{ github.workspace }}/.popsicle-ci
-      PHASE: ${{ inputs.phase || 'wlan-object' }}
+      PHASE: ${{ inputs.phase || 'module-trial' }}
       POPSICLE_BUILD_JOBS: '4'
     steps:
       - uses: actions/checkout@v4
@@ -94,8 +95,11 @@ jobs:
       - name: Compile diagnostic objects
         run: python3 tools/kernel/popsicle_ci.py build --work "$WORK" --phase "$PHASE"
       - name: Check CNSS provider interfaces
-        if: env.PHASE == 'wlan-object'
+        if: env.PHASE != 'prepare'
         run: python3 tools/kernel/popsicle_ci.py audit --work "$WORK"
+      - name: Strict module trial and complete WLAN dependency gate
+        if: env.PHASE == 'module-trial'
+        run: python3 tools/kernel/popsicle_ci.py modules --work "$WORK"
       - name: Upload diagnostics even when interface audit fails
         if: always()
         uses: actions/upload-artifact@v4
