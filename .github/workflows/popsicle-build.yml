@@ -1,0 +1,81 @@
+name: Popsicle diagnostic build
+
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: Diagnostic stage (no installable module)
+        type: choice
+        options:
+          - wlan-object
+          - prepare
+        default: wlan-object
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-build.yml
+      - tools/kernel/popsicle_*.py
+      - tools/kernel/popsicle_*.sh
+      - tools/kernel/test_*.py
+      - tools/kernel/module_*.py
+      - kernel/configs/**
+      - kernel/abi/**
+      - kernel/compat/popsicle/**
+      - kernel/patches/popsicle/**
+      - kernel/provider/**
+      - kernel/wonder/**
+      - kernel/popsicle-availability/**
+      - docs/popsicle-source-lock.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: popsicle-diagnostic-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      WORK: ${{ github.workspace }}/.popsicle-ci
+      PHASE: ${{ inputs.phase || 'wlan-object' }}
+      POPSICLE_BUILD_JOBS: '4'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Host regression checks
+        run: |
+          python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+          bash -n tools/kernel/popsicle_trial_build.sh
+      - name: Install host build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential flex bison m4 bc pahole libelf-dev libdw-dev \
+            libssl-dev pkg-config zlib1g-dev libzstd-dev curl git python3
+      - name: Restore pinned toolchains
+        uses: actions/cache@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/clang-r536225
+            .popsicle-ci/toolchains/rust-1.82.0.p2
+          key: popsicle-tools-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docs/popsicle-source-lock.json') }}
+      - name: Fetch locked sources and official toolchains
+        run: python3 tools/kernel/popsicle_ci.py setup --work "$WORK"
+      - name: Compile diagnostic objects
+        run: python3 tools/kernel/popsicle_ci.py build --work "$WORK" --phase "$PHASE"
+      - name: Check CNSS provider interfaces
+        if: env.PHASE == 'wlan-object'
+        run: python3 tools/kernel/popsicle_ci.py audit --work "$WORK"
+      - name: Upload diagnostics even when interface audit fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .popsicle-ci/artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 0

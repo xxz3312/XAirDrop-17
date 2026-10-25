@@ -6,6 +6,7 @@
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [源码版本记录](docs/popsicle-source-lock.json)
+- [GitHub Actions 编译](docs/POPSICLE-ACTIONS.md)
 - [上游说明（其中机型、功能和安装说明适用于上游）](docs/UPSTREAM-README.md)
 
 此前临时工作区已丢失，本仓库先保存根据调查记录重建并重新检查的部分代码；详细恢复范围见适配进度。仓库中的上游 Oplus 安装逻辑和构建入口尚未迁移到小米 17，请勿直接构建安装。

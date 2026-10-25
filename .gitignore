@@ -27,6 +27,7 @@ local.properties
 /upload/
 /toolchains/
 /build-popsicle/
+/.popsicle-ci/
 *.img
 *.cpio
 *.tar.gz

@@ -1,0 +1,46 @@
+diff --git a/qcacld-3.0/core/pld/src/pld_common.c b/qcacld-3.0/core/pld/src/pld_common.c
+index dc30b90..c16cd1a 100644
+--- a/qcacld-3.0/core/pld/src/pld_common.c
++++ b/qcacld-3.0/core/pld/src/pld_common.c
+@@ -2856,6 +2856,9 @@ void pld_set_tsf_sync_period(struct device *dev, u32 val)
+ 	}
+ }
+ 
++#if defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ) && \
++    !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && \
++    !defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
+ int pld_get_tsf_gpio(struct device *dev)
+ {
+ 	switch (pld_get_bus_type(dev)) {
+@@ -2877,6 +2880,8 @@ int pld_get_tsf_gpio(struct device *dev)
+ 	return -EINVAL;
+ }
+ 
++#endif
++
+ void pld_reset_tsf_sync_period(struct device *dev)
+ {
+ 	switch (pld_get_bus_type(dev)) {
+diff --git a/qcacld-3.0/core/pld/src/pld_pcie.c b/qcacld-3.0/core/pld/src/pld_pcie.c
+index b4c09ad..09168f4 100644
+--- a/qcacld-3.0/core/pld/src/pld_pcie.c
++++ b/qcacld-3.0/core/pld/src/pld_pcie.c
+@@ -892,6 +892,9 @@ int pld_pcie_wlan_disable(struct device *dev, enum pld_driver_mode mode)
+ 	return cnss_wlan_disable(dev, CNSS_OFF);
+ }
+ 
++#if defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_IRQ) && \
++    !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && \
++    !defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC)
+ #if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+ int pld_pcie_get_tsf_gpio(struct device *dev)
+ {
+@@ -904,6 +907,8 @@ int pld_pcie_get_tsf_gpio(struct device *dev)
+ }
+ #endif
+ 
++#endif
++
+ int pld_pcie_get_fw_files_for_target(struct device *dev,
+ 				     struct pld_fw_files *pfw_files,
+ 				     u32 target_type, u32 target_version)
