@@ -1,0 +1,82 @@
+{
+  "status": "REVIEW_TYPE_ID_DIFFERENCES",
+  "stock_module_sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+  "candidate_module_sha256": "04e6996af443ad0059d8b4625e83eade379e42aaf558062761ff4a566cdd1d2c",
+  "stock_type_ids": 1090,
+  "candidate_type_ids": 1054,
+  "common_type_ids": 1053,
+  "matching_type_ids": 1051,
+  "differences": {
+    "dp_prealloc_get_page_pool": {
+      "stock": "0x5cef01da",
+      "candidate": "0x41d8b3e0"
+    },
+    "hdd_roam_vdev_mac_addr_update": {
+      "stock": "0xa9860b4c",
+      "candidate": "0xcf8fbd86"
+    }
+  },
+  "stock_only": [
+    "cfr_report_interval_timer_task",
+    "csr_roam_auth_offload_callback",
+    "dp_ipa_dump_ring_hp_tp",
+    "dp_ipa_get_opt_dp_ctrl_refill_cap",
+    "dp_ipa_is_completion_pending",
+    "dp_ipa_opt_dp_ctrl_debug_enable",
+    "dp_ipa_print_opt_dp_log",
+    "dp_srng_rx_ring_desc_mark_invalid_be",
+    "dp_srng_tx_comp_ring_desc_mark_invalid",
+    "dp_txrx_enable_ul_delay",
+    "hdd_cm_clear_link_info",
+    "hdd_reset_scan_reject_params",
+    "lim_auth_response_timer_handler",
+    "lim_get_connected_chan_for_mode",
+    "lim_handle_frame_genby_mbssid",
+    "lim_handle_sap_beacon",
+    "lim_pmf_comeback_timer_callback",
+    "lim_pmf_sa_query_timer_handler",
+    "lim_process_ap_ecsa_timeout",
+    "lim_process_deauth_ack_timeout",
+    "lim_send_conc_params_update",
+    "lim_update_tpc_bcn_on_c2c_detect_cb",
+    "lim_update_tx_pwr_on_ctry_change_cb",
+    "pe_disconnect_callback",
+    "pe_roam_synch_callback",
+    "pe_set_ie_for_roam_invoke",
+    "sme_sap_ser_callback",
+    "sme_ser_cmd_callback",
+    "target_if_allow_pm_after_roam_sync",
+    "tgt_cfr_info_send_v3",
+    "tgt_cfr_send_stop",
+    "wlan_hdd_cfg80211_p2p_parse_noa_params",
+    "wlan_hdd_cfg80211_vendor_add_scan_entry",
+    "wlan_mgmt_rx_srng_pdev_create_notification",
+    "wlan_mgmt_rx_srng_pdev_destroy_notification",
+    "wlan_mgmt_rx_srng_psoc_create_notification",
+    "wlan_mgmt_rx_srng_psoc_destroy_notification"
+  ],
+  "candidate_only": [
+    "hdd_cfr_data_send_nl_event"
+  ],
+  "limitations": "Absolute compiler type hashes only. Does not reconstruct C prototypes or prove internal call-site consistency, external callback compatibility, absence of hash collisions, runtime loading or firmware/AirDrop operation. A changed private callback hash alone is not proof of a cross-module ABI failure.",
+  "source_review": {
+    "dp_prealloc_get_page_pool": {
+      "candidate_prototype": "struct dp_page_pool_t * (enum qdf_dp_tx_pp_type, uint32_t)",
+      "callback_field": "ol_if_ops.dp_get_page_pool",
+      "assignment": "qcacld-3.0/core/cds/src/cds_api.c",
+      "declaration": "qca-wifi-host-cmn/dp/inc/cdp_txrx_ops.h",
+      "stock_exported": false,
+      "candidate_exported": false
+    },
+    "hdd_roam_vdev_mac_addr_update": {
+      "candidate_prototype": "QDF_STATUS (struct wlan_objmgr_vdev *, struct qdf_mac_addr *, struct qdf_mac_addr *)",
+      "callback_field": "mlo_osif_ext_ops.mlo_roam_osif_update_mac_addr",
+      "assignment": "qcacld-3.0/core/hdd/src/wlan_hdd_mlo.c",
+      "declaration": "qca-wifi-host-cmn/umac/mlo_mgr/inc/wlan_mlo_mgr_public_structs.h",
+      "stock_exported": false,
+      "candidate_exported": false
+    }
+  },
+  "stock_debug_types_available": false,
+  "review_conclusion": "Both changed IDs have internal WLAN callback assignments with matching candidate declarations. No cross-module export was found for these two names. This does not reconstruct the stock prototypes or prove all callback boundaries."
+}

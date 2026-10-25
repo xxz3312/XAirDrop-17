@@ -136,3 +136,26 @@ Actions 在严格链接后新增 `layouts` 步骤，自动导出候选元数据�
 不递归核对匿名嵌套结构或指针目标，也未验证函数原型、KCFI、运行加载或无线固件。
 这种独立元数据不等于生成可加载模块所需的、与基础内核关联的 split BTF。
 发布标识审核仍保留，下一轮即使布局检查通过，整体 Actions 仍会在 `review` 标红。
+
+## KCFI 审计与下一份必要输入
+
+从实际原厂 WLAN 和 Actions 候选 WLAN 的 ELF 符号表读取绝对
+`__kcfi_typeid_*`，并与 llvm-nm 的结果独立交叉核对。
+原厂有 1090 项，候选有 1054 项，共有 1053 项中 1051 项相同、2 项不同：
+`dp_prealloc_get_page_pool`、`hdd_roam_vdev_mac_addr_update`。
+真实标识与来源哈希保存在 [原厂元数据](research/popsicle-stock-wlan-kcfi.json)，
+结果及候选声明见 [KCFI 审计](research/popsicle-wlan-kcfi-audit.json)。
+
+两项在候选源码中分别赋给 WLAN 内部 `ol_if_ops.dp_get_page_pool` 和
+`mlo_osif_ext_ops.mlo_roam_osif_update_mac_addr`，声明与候选调用参数一致；
+这两个函数名都不是原厂或候选模块的导出符号。
+仅此不能认定跨模块 ABI 失败，也不能由哈希反推出原厂精确原型。
+原厂 WLAN 没有 DWARF 或 BTF 调试类型，因此暂不能继续比较其精确函数声明。
+审计工具为 `tools/kernel/kcfi_audit.py`；输出明确保留类型标识差异，未修改 hash。
+
+下一步核对模块加载器需要与采集记录相同系统、当前活动槽位的 **boot.img**。
+已有包的 `vendor_boot.img` 不含主内核；原厂 BTF 能看到 `same_magic` 的
+`has_crcs` 参数，但不包含该函数的机器指令，不能据此确认原厂比较行为。
+获得 boot 内核后才能尝试解包、符号定位与加载规则反汇编；能否恢复符号仍需检查。
+不要用不同版本的官方镜像代替当前活动内核，也不要为本次审计刷写分区。
+本次只更新离线审计与记录，不修改 workflow 或触发新的编译。
