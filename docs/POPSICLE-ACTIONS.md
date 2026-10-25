@@ -112,3 +112,27 @@ WLAN 未解析依赖为 0，573 条生成的版本记录均与输入 provider �
 默认 `modules` 命令仍保留原来的审核退出行为。未添加 continue-on-error、
 未改写 vermagic、未关闭严格 modpost，也未将待审核状态改为兼容性通过。
 因此新工作流仍可能标红，但会明确显示失败的是兼容性审核，而非编译链接。
+
+## 独立的结构布局核对
+
+已下载并校验运行 40226040284 的 Artifact SHA256，从其 WLAN `.ko` 的 DWARF
+用 pahole 1.25 导出独立 BTF 元数据，再与手机补充包中的原厂内核 BTF 比较。
+导出前后候选 `.ko` SHA256 一致，没有改写模块或把原厂 BTF 注入候选模块。
+
+7 个选定结构的直接布局全部一致：`module`、`net_device`、`wiphy`、
+`wireless_dev`、`sk_buff`、`cfg80211_chan_def`、`ieee80211_channel`。
+比较包含结构大小、直接成员的偏移、位域宽度、值类型大小和数组长度。
+原厂选定布局元数据保存在 `kernel/abi/popsicle-stock-btf-layouts.json`；
+不提交原厂 BTF 或模块二进制。结果见
+[布局核对记录](research/popsicle-selected-layout-audit.json)。
+
+探索检查还发现 969 个同名结构中有 968 个直接布局一致；唯一不同的 `fw_state`
+分别来自内核 firmware_loader 和 WLAN HDD，是用途不同的私有结构。
+仅凭 C 标签同名不能建立 ABI 对应关系，因此该探索结果不作为自动放行依据。
+
+Actions 在严格链接后新增 `layouts` 步骤，自动导出候选元数据并核对上述 7 项。
+类型缺失、歧义或直接布局不同会使该步骤失败。输出 `selected-layouts.json`
+随诊断报告保存；检查通过只标为 `SELECTED_LAYOUTS_MATCH_ONLY`。
+不递归核对匿名嵌套结构或指针目标，也未验证函数原型、KCFI、运行加载或无线固件。
+这种独立元数据不等于生成可加载模块所需的、与基础内核关联的 split BTF。
+发布标识审核仍保留，下一轮即使布局检查通过，整体 Actions 仍会在 `review` 标红。

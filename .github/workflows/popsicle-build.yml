@@ -19,6 +19,7 @@ on:
       - tools/kernel/popsicle_*.sh
       - tools/kernel/test_*.py
       - tools/kernel/module_*.py
+      - tools/kernel/btf_layout.py
       - kernel/configs/**
       - kernel/abi/**
       - kernel/compat/popsicle/**
@@ -100,6 +101,9 @@ jobs:
       - name: Strict module linking and complete WLAN dependency gate
         if: env.PHASE == 'module-trial'
         run: python3 tools/kernel/popsicle_ci.py modules --link-only --work "$WORK"
+      - name: Compare selected WLAN structure layouts with stock BTF metadata
+        if: env.PHASE == 'module-trial'
+        run: python3 tools/kernel/popsicle_ci.py layouts --work "$WORK"
       - name: Required module compatibility review (may block after successful linking)
         if: env.PHASE == 'module-trial'
         run: python3 tools/kernel/popsicle_ci.py review --work "$WORK"

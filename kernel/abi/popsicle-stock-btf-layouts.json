@@ -1,0 +1,4407 @@
+{
+  "pointer_size": 8,
+  "source_btf_sha256": "cc91023777fb757859cbc861302f7a303ede19c10a93823d6b99c5d5dbd699d7",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "types": {
+    "module": [
+      {
+        "kind": 4,
+        "size": 1600,
+        "members": [
+          {
+            "name": "state",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "module_state",
+              "size": 4
+            }
+          },
+          {
+            "name": "list",
+            "bit_offset": 64,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "name",
+            "bit_offset": 192,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 56,
+              "count": 56,
+              "element": {
+                "kind": 1,
+                "name": "char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "build_id",
+            "bit_offset": 640,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 20,
+              "count": 20,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "mkobj",
+            "bit_offset": 832,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "module_kobject",
+              "size": 128
+            }
+          },
+          {
+            "name": "modinfo_attrs",
+            "bit_offset": 1856,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "version",
+            "bit_offset": 1920,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "srcversion",
+            "bit_offset": 1984,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "scmversion",
+            "bit_offset": 2048,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "holders_dir",
+            "bit_offset": 2112,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "syms",
+            "bit_offset": 2176,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "crcs",
+            "bit_offset": 2240,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_syms",
+            "bit_offset": 2304,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "param_lock",
+            "bit_offset": 2368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "mutex",
+              "size": 48
+            }
+          },
+          {
+            "name": "kp",
+            "bit_offset": 2752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_kp",
+            "bit_offset": 2816,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "num_gpl_syms",
+            "bit_offset": 2848,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "gpl_syms",
+            "bit_offset": 2880,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "gpl_crcs",
+            "bit_offset": 2944,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "using_gplonly_symbols",
+            "bit_offset": 3008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "sig_ok",
+            "bit_offset": 3016,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "async_probe_requested",
+            "bit_offset": 3024,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "num_exentries",
+            "bit_offset": 3040,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "extable",
+            "bit_offset": 3072,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "init",
+            "bit_offset": 3136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "mem",
+            "bit_offset": 3584,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 504,
+              "count": 7,
+              "element": {
+                "kind": 4,
+                "name": "module_memory",
+                "size": 72
+              }
+            }
+          },
+          {
+            "name": "arch",
+            "bit_offset": 7616,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "mod_arch_specific",
+              "size": 232
+            }
+          },
+          {
+            "name": "taints",
+            "bit_offset": 9472,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_bugs",
+            "bit_offset": 9536,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "bug_list",
+            "bit_offset": 9600,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "bug_table",
+            "bit_offset": 9728,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "kallsyms",
+            "bit_offset": 9792,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "core_kallsyms",
+            "bit_offset": 9856,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "mod_kallsyms",
+              "size": 32
+            }
+          },
+          {
+            "name": "sect_attrs",
+            "bit_offset": 10112,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "notes_attrs",
+            "bit_offset": 10176,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "args",
+            "bit_offset": 10240,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "percpu",
+            "bit_offset": 10304,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "percpu_size",
+            "bit_offset": 10368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "noinstr_text_start",
+            "bit_offset": 10432,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "noinstr_text_size",
+            "bit_offset": 10496,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "num_tracepoints",
+            "bit_offset": 10528,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "tracepoints_ptrs",
+            "bit_offset": 10560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_srcu_structs",
+            "bit_offset": 10624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "srcu_struct_ptrs",
+            "bit_offset": 10688,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_bpf_raw_events",
+            "bit_offset": 10752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "bpf_raw_events",
+            "bit_offset": 10816,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "btf_data_size",
+            "bit_offset": 10880,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "btf_base_data_size",
+            "bit_offset": 10912,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "btf_data",
+            "bit_offset": 10944,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "btf_base_data",
+            "bit_offset": 11008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "jump_entries",
+            "bit_offset": 11072,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_jump_entries",
+            "bit_offset": 11136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "num_trace_bprintk_fmt",
+            "bit_offset": 11168,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "trace_bprintk_fmt_start",
+            "bit_offset": 11200,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "trace_events",
+            "bit_offset": 11264,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_trace_events",
+            "bit_offset": 11328,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "trace_evals",
+            "bit_offset": 11392,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_trace_evals",
+            "bit_offset": 11456,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "kprobes_text_start",
+            "bit_offset": 11520,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "kprobes_text_size",
+            "bit_offset": 11584,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "kprobe_blacklist",
+            "bit_offset": 11648,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_kprobe_blacklist",
+            "bit_offset": 11712,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "num_kunit_init_suites",
+            "bit_offset": 11744,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "kunit_init_suites",
+            "bit_offset": 11776,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_kunit_suites",
+            "bit_offset": 11840,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "kunit_suites",
+            "bit_offset": 11904,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "source_list",
+            "bit_offset": 11968,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "target_list",
+            "bit_offset": 12096,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "exit",
+            "bit_offset": 12224,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "refcnt",
+            "bit_offset": 12288,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 4
+            }
+          },
+          {
+            "name": "dyndbg_info",
+            "bit_offset": 12352,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "_ddebug_info",
+              "size": 24
+            }
+          },
+          {
+            "name": "__kabi_reserved1",
+            "bit_offset": 12544,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved2",
+            "bit_offset": 12608,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved3",
+            "bit_offset": 12672,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved4",
+            "bit_offset": 12736,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          }
+        ]
+      }
+    ],
+    "net_device": [
+      {
+        "kind": 4,
+        "size": 2688,
+        "members": [
+          {
+            "name": "__cacheline_group_begin__net_device_read_tx",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 8
+            }
+          },
+          {
+            "name": "netdev_ops",
+            "bit_offset": 64,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "header_ops",
+            "bit_offset": 128,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "_tx",
+            "bit_offset": 192,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "gso_partial_features",
+            "bit_offset": 256,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "real_num_tx_queues",
+            "bit_offset": 320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "gso_max_size",
+            "bit_offset": 352,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "gso_ipv4_max_size",
+            "bit_offset": 384,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "gso_max_segs",
+            "bit_offset": 416,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "num_tc",
+            "bit_offset": 432,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "short",
+              "size": 2
+            }
+          },
+          {
+            "name": "mtu",
+            "bit_offset": 448,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "needed_headroom",
+            "bit_offset": 480,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "tc_to_txq",
+            "bit_offset": 496,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 64,
+              "count": 16,
+              "element": {
+                "kind": 4,
+                "name": "netdev_tc_txq",
+                "size": 4
+              }
+            }
+          },
+          {
+            "name": "xps_maps",
+            "bit_offset": 1024,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 16,
+              "count": 2,
+              "element": {
+                "kind": "pointer",
+                "size": 8
+              }
+            }
+          },
+          {
+            "name": "nf_hooks_egress",
+            "bit_offset": 1152,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "tcx_egress",
+            "bit_offset": 1216,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "__cacheline_group_end__net_device_read_tx",
+            "bit_offset": 1280,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "__cacheline_group_begin__net_device_read_txrx",
+            "bit_offset": 1280,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "",
+            "bit_offset": 1280,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 8
+            }
+          },
+          {
+            "name": "state",
+            "bit_offset": 1344,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "flags",
+            "bit_offset": 1408,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "hard_header_len",
+            "bit_offset": 1440,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "features",
+            "bit_offset": 1472,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "ip6_ptr",
+            "bit_offset": 1536,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "__cacheline_group_end__net_device_read_txrx",
+            "bit_offset": 1600,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "__cacheline_group_begin__net_device_read_rx",
+            "bit_offset": 1600,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "xdp_prog",
+            "bit_offset": 1600,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ptype_specific",
+            "bit_offset": 1664,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "ifindex",
+            "bit_offset": 1792,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "real_num_rx_queues",
+            "bit_offset": 1824,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "_rx",
+            "bit_offset": 1856,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "gro_flush_timeout",
+            "bit_offset": 1920,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "napi_defer_hard_irqs",
+            "bit_offset": 1984,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "gro_max_size",
+            "bit_offset": 2016,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "gro_ipv4_max_size",
+            "bit_offset": 2048,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "rx_handler",
+            "bit_offset": 2112,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "rx_handler_data",
+            "bit_offset": 2176,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "nd_net",
+            "bit_offset": 2240,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 8
+            }
+          },
+          {
+            "name": "tcx_ingress",
+            "bit_offset": 2304,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "__cacheline_group_end__net_device_read_rx",
+            "bit_offset": 2368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "name",
+            "bit_offset": 2368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 16,
+              "count": 16,
+              "element": {
+                "kind": 1,
+                "name": "char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "name_node",
+            "bit_offset": 2496,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ifalias",
+            "bit_offset": 2560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "mem_end",
+            "bit_offset": 2624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "mem_start",
+            "bit_offset": 2688,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "base_addr",
+            "bit_offset": 2752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "dev_list",
+            "bit_offset": 2816,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "napi_list",
+            "bit_offset": 2944,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "unreg_list",
+            "bit_offset": 3072,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "close_list",
+            "bit_offset": 3200,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "ptype_all",
+            "bit_offset": 3328,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "adj_list",
+            "bit_offset": 3456,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 32
+            }
+          },
+          {
+            "name": "xdp_features",
+            "bit_offset": 3712,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "xdp_metadata_ops",
+            "bit_offset": 3776,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "xsk_tx_metadata_ops",
+            "bit_offset": 3840,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "gflags",
+            "bit_offset": 3904,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "needed_tailroom",
+            "bit_offset": 3920,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "hw_features",
+            "bit_offset": 3968,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "wanted_features",
+            "bit_offset": 4032,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "vlan_features",
+            "bit_offset": 4096,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "hw_enc_features",
+            "bit_offset": 4160,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "mpls_features",
+            "bit_offset": 4224,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "min_mtu",
+            "bit_offset": 4288,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_mtu",
+            "bit_offset": 4320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "type",
+            "bit_offset": 4352,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "min_header_len",
+            "bit_offset": 4368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "name_assign_type",
+            "bit_offset": 4376,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "group",
+            "bit_offset": 4384,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "stats",
+            "bit_offset": 4416,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "net_device_stats",
+              "size": 184
+            }
+          },
+          {
+            "name": "core_stats",
+            "bit_offset": 5888,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "carrier_up_count",
+            "bit_offset": 5952,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 4
+            }
+          },
+          {
+            "name": "carrier_down_count",
+            "bit_offset": 5984,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 4
+            }
+          },
+          {
+            "name": "wireless_handlers",
+            "bit_offset": 6016,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "wireless_data",
+            "bit_offset": 6080,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ethtool_ops",
+            "bit_offset": 6144,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ndisc_ops",
+            "bit_offset": 6208,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "operstate",
+            "bit_offset": 6272,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "link_mode",
+            "bit_offset": 6304,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "if_port",
+            "bit_offset": 6312,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "dma",
+            "bit_offset": 6320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "perm_addr",
+            "bit_offset": 6328,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 32,
+              "count": 32,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "addr_assign_type",
+            "bit_offset": 6584,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "addr_len",
+            "bit_offset": 6592,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "upper_level",
+            "bit_offset": 6600,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "lower_level",
+            "bit_offset": 6608,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "neigh_priv_len",
+            "bit_offset": 6624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "dev_id",
+            "bit_offset": 6640,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "dev_port",
+            "bit_offset": 6656,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "irq",
+            "bit_offset": 6688,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "priv_len",
+            "bit_offset": 6720,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "addr_list_lock",
+            "bit_offset": 6752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "spinlock",
+              "size": 4
+            }
+          },
+          {
+            "name": "uc",
+            "bit_offset": 6784,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "netdev_hw_addr_list",
+              "size": 32
+            }
+          },
+          {
+            "name": "mc",
+            "bit_offset": 7040,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "netdev_hw_addr_list",
+              "size": 32
+            }
+          },
+          {
+            "name": "dev_addrs",
+            "bit_offset": 7296,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "netdev_hw_addr_list",
+              "size": 32
+            }
+          },
+          {
+            "name": "queues_kset",
+            "bit_offset": 7552,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "promiscuity",
+            "bit_offset": 7616,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "allmulti",
+            "bit_offset": 7648,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "uc_promisc",
+            "bit_offset": 7680,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "ip_ptr",
+            "bit_offset": 7744,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "vlan_info",
+            "bit_offset": 7808,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "tipc_ptr",
+            "bit_offset": 7872,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ieee80211_ptr",
+            "bit_offset": 7936,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ieee802154_ptr",
+            "bit_offset": 8000,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "dev_addr",
+            "bit_offset": 8064,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_rx_queues",
+            "bit_offset": 8128,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "xdp_zc_max_segs",
+            "bit_offset": 8160,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "ingress_queue",
+            "bit_offset": 8192,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "nf_hooks_ingress",
+            "bit_offset": 8256,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "broadcast",
+            "bit_offset": 8320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 32,
+              "count": 32,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "rx_cpu_rmap",
+            "bit_offset": 8576,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "index_hlist",
+            "bit_offset": 8640,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "hlist_node",
+              "size": 16
+            }
+          },
+          {
+            "name": "num_tx_queues",
+            "bit_offset": 8768,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "qdisc",
+            "bit_offset": 8832,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "tx_queue_len",
+            "bit_offset": 8896,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "tx_global_lock",
+            "bit_offset": 8928,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "spinlock",
+              "size": 4
+            }
+          },
+          {
+            "name": "xdp_bulkq",
+            "bit_offset": 8960,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "qdisc_hash",
+            "bit_offset": 9024,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 128,
+              "count": 16,
+              "element": {
+                "kind": 4,
+                "name": "hlist_head",
+                "size": 8
+              }
+            }
+          },
+          {
+            "name": "watchdog_timer",
+            "bit_offset": 10048,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "timer_list",
+              "size": 40
+            }
+          },
+          {
+            "name": "watchdog_timeo",
+            "bit_offset": 10368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "proto_down_reason",
+            "bit_offset": 10400,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "todo_list",
+            "bit_offset": 10432,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "pcpu_refcnt",
+            "bit_offset": 10560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "refcnt_tracker",
+            "bit_offset": 10624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "ref_tracker_dir",
+              "size": 0
+            }
+          },
+          {
+            "name": "link_watch_list",
+            "bit_offset": 10624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "reg_state",
+            "bit_offset": 10752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "dismantle",
+            "bit_offset": 10760,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "rtnl_link_state",
+            "bit_offset": 10768,
+            "bitfield_size": 16,
+            "type": {
+              "kind": 6,
+              "name": "",
+              "size": 4
+            }
+          },
+          {
+            "name": "needs_free_netdev",
+            "bit_offset": 10784,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "priv_destructor",
+            "bit_offset": 10816,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ml_priv",
+            "bit_offset": 10880,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ml_priv_type",
+            "bit_offset": 10944,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "netdev_ml_priv_type",
+              "size": 4
+            }
+          },
+          {
+            "name": "pcpu_stat_type",
+            "bit_offset": 10976,
+            "bitfield_size": 8,
+            "type": {
+              "kind": 6,
+              "name": "netdev_stat_type",
+              "size": 4
+            }
+          },
+          {
+            "name": "dev",
+            "bit_offset": 11008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "device",
+              "size": 912
+            }
+          },
+          {
+            "name": "sysfs_groups",
+            "bit_offset": 18304,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 32,
+              "count": 4,
+              "element": {
+                "kind": "pointer",
+                "size": 8
+              }
+            }
+          },
+          {
+            "name": "sysfs_rx_queue_group",
+            "bit_offset": 18560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "rtnl_link_ops",
+            "bit_offset": 18624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "stat_ops",
+            "bit_offset": 18688,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "queue_mgmt_ops",
+            "bit_offset": 18752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "tso_max_size",
+            "bit_offset": 18816,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "tso_max_segs",
+            "bit_offset": 18848,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "prio_tc_map",
+            "bit_offset": 18864,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 16,
+              "count": 16,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "priomap",
+            "bit_offset": 19008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "link_topo",
+            "bit_offset": 19072,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "phydev",
+            "bit_offset": 19136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "sfp_bus",
+            "bit_offset": 19200,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "qdisc_tx_busylock",
+            "bit_offset": 19264,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "proto_down",
+            "bit_offset": 19328,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "threaded",
+            "bit_offset": 19336,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "see_all_hwtstamp_requests",
+            "bit_offset": 19344,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "change_proto_down",
+            "bit_offset": 19345,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "netns_local",
+            "bit_offset": 19346,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "fcoe_mtu",
+            "bit_offset": 19347,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "net_notifier_list",
+            "bit_offset": 19392,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "macsec_ops",
+            "bit_offset": 19520,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "udp_tunnel_nic_info",
+            "bit_offset": 19584,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "udp_tunnel_nic",
+            "bit_offset": 19648,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ethtool",
+            "bit_offset": 19712,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "xdp_state",
+            "bit_offset": 19776,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 48,
+              "count": 3,
+              "element": {
+                "kind": 4,
+                "name": "bpf_xdp_entity",
+                "size": 16
+              }
+            }
+          },
+          {
+            "name": "dev_addr_shadow",
+            "bit_offset": 20160,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 32,
+              "count": 32,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "linkwatch_dev_tracker",
+            "bit_offset": 20416,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 0
+            }
+          },
+          {
+            "name": "watchdog_dev_tracker",
+            "bit_offset": 20416,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 0
+            }
+          },
+          {
+            "name": "dev_registered_tracker",
+            "bit_offset": 20416,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 0
+            }
+          },
+          {
+            "name": "offload_xstats_l3",
+            "bit_offset": 20416,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "devlink_port",
+            "bit_offset": 20480,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "page_pools",
+            "bit_offset": 20544,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "hlist_head",
+              "size": 8
+            }
+          },
+          {
+            "name": "irq_moder",
+            "bit_offset": 20608,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved1",
+            "bit_offset": 20672,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved2",
+            "bit_offset": 20736,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved3",
+            "bit_offset": 20800,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved4",
+            "bit_offset": 20864,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved5",
+            "bit_offset": 20928,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved6",
+            "bit_offset": 20992,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved7",
+            "bit_offset": 21056,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved8",
+            "bit_offset": 21120,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "priv",
+            "bit_offset": 21504,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "wiphy": [
+      {
+        "kind": 4,
+        "size": 1536,
+        "members": [
+          {
+            "name": "mtx",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "mutex",
+              "size": 48
+            }
+          },
+          {
+            "name": "perm_addr",
+            "bit_offset": 384,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 6,
+              "count": 6,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "addr_mask",
+            "bit_offset": 432,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 6,
+              "count": 6,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "addresses",
+            "bit_offset": 512,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "mgmt_stypes",
+            "bit_offset": 576,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "iface_combinations",
+            "bit_offset": 640,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "n_iface_combinations",
+            "bit_offset": 704,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "software_iftypes",
+            "bit_offset": 736,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "n_addresses",
+            "bit_offset": 752,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "interface_modes",
+            "bit_offset": 768,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "max_acl_mac_addrs",
+            "bit_offset": 784,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "flags",
+            "bit_offset": 800,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "regulatory_flags",
+            "bit_offset": 832,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "features",
+            "bit_offset": 864,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "ext_features",
+            "bit_offset": 896,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 9,
+              "count": 9,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "ap_sme_capa",
+            "bit_offset": 992,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "signal_type",
+            "bit_offset": 1024,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "cfg80211_signal_type",
+              "size": 4
+            }
+          },
+          {
+            "name": "bss_priv_size",
+            "bit_offset": 1056,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_scan_ssids",
+            "bit_offset": 1088,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "max_sched_scan_reqs",
+            "bit_offset": 1096,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "max_sched_scan_ssids",
+            "bit_offset": 1104,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "max_match_sets",
+            "bit_offset": 1112,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "max_scan_ie_len",
+            "bit_offset": 1120,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "max_sched_scan_ie_len",
+            "bit_offset": 1136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "max_sched_scan_plans",
+            "bit_offset": 1152,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_sched_scan_plan_interval",
+            "bit_offset": 1184,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_sched_scan_plan_iterations",
+            "bit_offset": 1216,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "n_cipher_suites",
+            "bit_offset": 1248,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "cipher_suites",
+            "bit_offset": 1280,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "n_akm_suites",
+            "bit_offset": 1344,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "akm_suites",
+            "bit_offset": 1408,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "iftype_akm_suites",
+            "bit_offset": 1472,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_iftype_akm_suites",
+            "bit_offset": 1536,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "retry_short",
+            "bit_offset": 1568,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "retry_long",
+            "bit_offset": 1576,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "frag_threshold",
+            "bit_offset": 1600,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "rts_threshold",
+            "bit_offset": 1632,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "coverage_class",
+            "bit_offset": 1664,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "fw_version",
+            "bit_offset": 1672,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 32,
+              "count": 32,
+              "element": {
+                "kind": 1,
+                "name": "char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "hw_version",
+            "bit_offset": 1952,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "wowlan",
+            "bit_offset": 1984,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "wowlan_config",
+            "bit_offset": 2048,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "max_remain_on_channel_duration",
+            "bit_offset": 2112,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "max_num_pmkids",
+            "bit_offset": 2128,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "available_antennas_tx",
+            "bit_offset": 2144,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "available_antennas_rx",
+            "bit_offset": 2176,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "probe_resp_offload",
+            "bit_offset": 2208,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "extended_capabilities",
+            "bit_offset": 2240,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "extended_capabilities_mask",
+            "bit_offset": 2304,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "extended_capabilities_len",
+            "bit_offset": 2368,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "iftype_ext_capab",
+            "bit_offset": 2432,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "num_iftype_ext_capab",
+            "bit_offset": 2496,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "privid",
+            "bit_offset": 2560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "bands",
+            "bit_offset": 2624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 48,
+              "count": 6,
+              "element": {
+                "kind": "pointer",
+                "size": 8
+              }
+            }
+          },
+          {
+            "name": "reg_notifier",
+            "bit_offset": 3008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "regd",
+            "bit_offset": 3072,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "dev",
+            "bit_offset": 3136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "device",
+              "size": 912
+            }
+          },
+          {
+            "name": "registered",
+            "bit_offset": 10432,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "debugfsdir",
+            "bit_offset": 10496,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "ht_capa_mod_mask",
+            "bit_offset": 10560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "vht_capa_mod_mask",
+            "bit_offset": 10624,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "wdev_list",
+            "bit_offset": 10688,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "_net",
+            "bit_offset": 10816,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 8
+            }
+          },
+          {
+            "name": "coalesce",
+            "bit_offset": 10880,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "vendor_commands",
+            "bit_offset": 10944,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "vendor_events",
+            "bit_offset": 11008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "n_vendor_commands",
+            "bit_offset": 11072,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "n_vendor_events",
+            "bit_offset": 11104,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_ap_assoc_sta",
+            "bit_offset": 11136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "max_num_csa_counters",
+            "bit_offset": 11152,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "bss_select_support",
+            "bit_offset": 11168,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "nan_supported_bands",
+            "bit_offset": 11200,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "txq_limit",
+            "bit_offset": 11232,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "txq_memory_limit",
+            "bit_offset": 11264,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "txq_quantum",
+            "bit_offset": 11296,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "tx_queue_len",
+            "bit_offset": 11328,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "support_mbssid",
+            "bit_offset": 11392,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "support_only_he_mbssid",
+            "bit_offset": 11393,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "pmsr_capa",
+            "bit_offset": 11456,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "tid_config_support",
+            "bit_offset": 11520,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "",
+              "size": 24
+            }
+          },
+          {
+            "name": "max_data_retry_count",
+            "bit_offset": 11712,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "sar_capa",
+            "bit_offset": 11776,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "rfkill",
+            "bit_offset": 11840,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "mbssid_max_interfaces",
+            "bit_offset": 11904,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "ema_max_profile_periodicity",
+            "bit_offset": 11912,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "max_num_akm_suites",
+            "bit_offset": 11920,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "hw_timestamp_max_peers",
+            "bit_offset": 11936,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "n_radio",
+            "bit_offset": 11968,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "radio",
+            "bit_offset": 12032,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved1",
+            "bit_offset": 12096,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "priv",
+            "bit_offset": 12288,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "char",
+                "size": 1
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "wireless_dev": [
+      {
+        "kind": 4,
+        "size": 1496,
+        "members": [
+          {
+            "name": "wiphy",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "iftype",
+            "bit_offset": 64,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "nl80211_iftype",
+              "size": 4
+            }
+          },
+          {
+            "name": "list",
+            "bit_offset": 128,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "netdev",
+            "bit_offset": 256,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "identifier",
+            "bit_offset": 320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "mgmt_registrations",
+            "bit_offset": 384,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "mgmt_registrations_need_update",
+            "bit_offset": 512,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "use_4addr",
+            "bit_offset": 520,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "is_running",
+            "bit_offset": 528,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "registered",
+            "bit_offset": 536,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "registering",
+            "bit_offset": 544,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "address",
+            "bit_offset": 560,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 6,
+              "count": 6,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "conn",
+            "bit_offset": 640,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "connect_keys",
+            "bit_offset": 704,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "conn_bss_type",
+            "bit_offset": 768,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "ieee80211_bss_type",
+              "size": 4
+            }
+          },
+          {
+            "name": "conn_owner_nlportid",
+            "bit_offset": 800,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "disconnect_wk",
+            "bit_offset": 832,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "work_struct",
+              "size": 32
+            }
+          },
+          {
+            "name": "disconnect_bssid",
+            "bit_offset": 1088,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 6,
+              "count": 6,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "event_list",
+            "bit_offset": 1152,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "event_lock",
+            "bit_offset": 1280,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "spinlock",
+              "size": 4
+            }
+          },
+          {
+            "name": "connected",
+            "bit_offset": 1312,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "ps",
+            "bit_offset": 1320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "ps_timeout",
+            "bit_offset": 1344,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "ap_unexpected_nlportid",
+            "bit_offset": 1376,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "owner_nlportid",
+            "bit_offset": 1408,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "nl_owner_dead",
+            "bit_offset": 1440,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "cqm_rssi_work",
+            "bit_offset": 1472,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "wiphy_work",
+              "size": 24
+            }
+          },
+          {
+            "name": "cqm_config",
+            "bit_offset": 1664,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "pmsr_list",
+            "bit_offset": 1728,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "list_head",
+              "size": 16
+            }
+          },
+          {
+            "name": "pmsr_lock",
+            "bit_offset": 1856,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "spinlock",
+              "size": 4
+            }
+          },
+          {
+            "name": "pmsr_free_wk",
+            "bit_offset": 1920,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "work_struct",
+              "size": 32
+            }
+          },
+          {
+            "name": "unprot_beacon_reported",
+            "bit_offset": 2176,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "u",
+            "bit_offset": 2240,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 112
+            }
+          },
+          {
+            "name": "links",
+            "bit_offset": 3136,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 1080,
+              "count": 15,
+              "element": {
+                "kind": 4,
+                "name": "",
+                "size": 72
+              }
+            }
+          },
+          {
+            "name": "valid_links",
+            "bit_offset": 11776,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "radio_mask",
+            "bit_offset": 11808,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "__kabi_reserved1",
+            "bit_offset": 11840,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          },
+          {
+            "name": "__kabi_reserved2",
+            "bit_offset": 11904,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long long",
+              "size": 8
+            }
+          }
+        ]
+      }
+    ],
+    "sk_buff": [
+      {
+        "kind": 4,
+        "size": 248,
+        "members": [
+          {
+            "name": "",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 24
+            }
+          },
+          {
+            "name": "sk",
+            "bit_offset": 192,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "",
+            "bit_offset": 256,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 8
+            }
+          },
+          {
+            "name": "cb",
+            "bit_offset": 320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 48,
+              "count": 48,
+              "element": {
+                "kind": 1,
+                "name": "char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "",
+            "bit_offset": 704,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 16
+            }
+          },
+          {
+            "name": "_nfct",
+            "bit_offset": 832,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "len",
+            "bit_offset": 896,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "data_len",
+            "bit_offset": 928,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "mac_len",
+            "bit_offset": 960,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "hdr_len",
+            "bit_offset": 976,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "queue_mapping",
+            "bit_offset": 992,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "__cloned_offset",
+            "bit_offset": 1008,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "array",
+              "size": 0,
+              "count": 0,
+              "element": {
+                "kind": 1,
+                "name": "unsigned char",
+                "size": 1
+              }
+            }
+          },
+          {
+            "name": "cloned",
+            "bit_offset": 1008,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "nohdr",
+            "bit_offset": 1009,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "fclone",
+            "bit_offset": 1010,
+            "bitfield_size": 2,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "peeked",
+            "bit_offset": 1012,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "head_frag",
+            "bit_offset": 1013,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "pfmemalloc",
+            "bit_offset": 1014,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "pp_recycle",
+            "bit_offset": 1015,
+            "bitfield_size": 1,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "active_extensions",
+            "bit_offset": 1016,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned char",
+              "size": 1
+            }
+          },
+          {
+            "name": "",
+            "bit_offset": 1024,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 5,
+              "name": "",
+              "size": 80
+            }
+          },
+          {
+            "name": "tail",
+            "bit_offset": 1664,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "end",
+            "bit_offset": 1696,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "head",
+            "bit_offset": 1728,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "data",
+            "bit_offset": 1792,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "truesize",
+            "bit_offset": 1856,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "users",
+            "bit_offset": 1888,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "refcount_struct",
+              "size": 4
+            }
+          },
+          {
+            "name": "extensions",
+            "bit_offset": 1920,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          }
+        ]
+      }
+    ],
+    "cfg80211_chan_def": [
+      {
+        "kind": 4,
+        "size": 32,
+        "members": [
+          {
+            "name": "chan",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": "pointer",
+              "size": 8
+            }
+          },
+          {
+            "name": "width",
+            "bit_offset": 64,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "nl80211_chan_width",
+              "size": 4
+            }
+          },
+          {
+            "name": "center_freq1",
+            "bit_offset": 96,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "center_freq2",
+            "bit_offset": 128,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "edmg",
+            "bit_offset": 160,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 4,
+              "name": "ieee80211_edmg",
+              "size": 8
+            }
+          },
+          {
+            "name": "freq1_offset",
+            "bit_offset": 224,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "punctured",
+            "bit_offset": 240,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          }
+        ]
+      }
+    ],
+    "ieee80211_channel": [
+      {
+        "kind": 4,
+        "size": 64,
+        "members": [
+          {
+            "name": "band",
+            "bit_offset": 0,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "nl80211_band",
+              "size": 4
+            }
+          },
+          {
+            "name": "center_freq",
+            "bit_offset": 32,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "freq_offset",
+            "bit_offset": 64,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "hw_value",
+            "bit_offset": 80,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned short",
+              "size": 2
+            }
+          },
+          {
+            "name": "flags",
+            "bit_offset": 96,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_antenna_gain",
+            "bit_offset": 128,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_power",
+            "bit_offset": 160,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "max_reg_power",
+            "bit_offset": 192,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "beacon_found",
+            "bit_offset": 224,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "_Bool",
+              "size": 1
+            }
+          },
+          {
+            "name": "orig_flags",
+            "bit_offset": 256,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "orig_mag",
+            "bit_offset": 288,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "orig_mpwr",
+            "bit_offset": 320,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "int",
+              "size": 4
+            }
+          },
+          {
+            "name": "dfs_state",
+            "bit_offset": 352,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 6,
+              "name": "nl80211_dfs_state",
+              "size": 4
+            }
+          },
+          {
+            "name": "dfs_state_entered",
+            "bit_offset": 384,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned long",
+              "size": 8
+            }
+          },
+          {
+            "name": "dfs_cac_ms",
+            "bit_offset": 448,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "unsigned int",
+              "size": 4
+            }
+          },
+          {
+            "name": "psd",
+            "bit_offset": 480,
+            "bitfield_size": 0,
+            "type": {
+              "kind": 1,
+              "name": "signed char",
+              "size": 1
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

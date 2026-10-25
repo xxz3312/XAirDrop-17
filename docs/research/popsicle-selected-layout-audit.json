@@ -1,0 +1,54 @@
+{
+  "status": "SELECTED_LAYOUTS_MATCH_ONLY",
+  "workflow_run": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40226040284",
+  "candidate_module_sha256": "04e6996af443ad0059d8b4625e83eade379e42aaf558062761ff4a566cdd1d2c",
+  "candidate_btf_sha256": "a75953aa5a6ac6ed0308af90ea04bc79163d728088feb5f09363274b440fa6ce",
+  "stock_btf_sha256": "cc91023777fb757859cbc861302f7a303ede19c10a93823d6b99c5d5dbd699d7",
+  "metadata_tool": "pahole v1.25 --btf_encode_detached (input .ko unchanged)",
+  "selected_types": {
+    "module": {
+      "status": "MATCH",
+      "size": 1600,
+      "direct_members": 75
+    },
+    "net_device": {
+      "status": "MATCH",
+      "size": 2688,
+      "direct_members": 176
+    },
+    "wiphy": {
+      "status": "MATCH",
+      "size": 1536,
+      "direct_members": 91
+    },
+    "wireless_dev": {
+      "status": "MATCH",
+      "size": 1496,
+      "direct_members": 38
+    },
+    "sk_buff": {
+      "status": "MATCH",
+      "size": 248,
+      "direct_members": 28
+    },
+    "cfg80211_chan_def": {
+      "status": "MATCH",
+      "size": 32,
+      "direct_members": 7
+    },
+    "ieee80211_channel": {
+      "status": "MATCH",
+      "size": 64,
+      "direct_members": 16
+    }
+  },
+  "exploratory_same_name_types": 969,
+  "exploratory_direct_layout_matches": 968,
+  "same_name_collision": {
+    "name": "fw_state",
+    "stock_origin": "kernel/common drivers/base/firmware_loader/firmware.h",
+    "candidate_origin": "qcacld-3.0/core/hdd/src/wlan_hdd_fw_state.c",
+    "interpretation": "Unrelated private types share a C tag name; not evidence of a shared ABI mismatch."
+  },
+  "limitations": "Selected direct members and value sizes only. Anonymous nested types and pointer targets are not expanded. No function prototype, KCFI, runtime, firmware or AirDrop compatibility validation."
+}

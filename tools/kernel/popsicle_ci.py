@@ -14,6 +14,7 @@ import tarfile
 
 from module_abi import inspect, symvers
 from popsicle_modpost import write_inputs, module_report
+from btf_layout import Btf, RecordedLayouts, compare
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -214,6 +215,31 @@ def audit(work):
     return 2 if result['missing'] else 0
 
 
+def layouts(work):
+    """Derive detached type metadata without changing or installing any .ko."""
+    module = work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.ko'
+    original = hashlib.sha256(module.read_bytes()).hexdigest()
+    btf = work / 'abi/candidate-wlan-layouts.btf'
+    run(['pahole', '-j2', f'--btf_encode_detached={btf}', module])
+    if hashlib.sha256(module.read_bytes()).hexdigest() != original:
+        raise ValueError('Detached BTF extraction changed the candidate module')
+    baseline = json.loads((REPO / 'kernel/abi/popsicle-stock-btf-layouts.json').read_text())
+    result = compare(RecordedLayouts(baseline), Btf(btf.read_bytes()), list(baseline['types']))
+    result['candidate_module_sha256'] = original
+    (work / 'artifacts/reports/selected-layouts.json').write_text(json.dumps(result, indent=2) + '\n')
+    print(result['status'])
+    for name, entry in result['types'].items():
+        print(name, entry['status'])
+    print(result['limitations'])
+    summary = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary:
+        with open(summary, 'a') as stream:
+            stream.write(f"\n### Selected structure layouts\n\n{result['status']}\n\n")
+            stream.write('Detached metadata extraction; the module was not modified.\n\n')
+            stream.write(result['limitations'] + '\n')
+    return 0 if result['status'] == 'SELECTED_LAYOUTS_MATCH_ONLY' else 2
+
+
 def module_stage_exit(result, link_only=False):
     """A completed link stage is distinct from the existing review gate."""
     expected = {'wonder_sysctl', 'opairshare_wonder_provider',
@@ -352,7 +378,7 @@ def modules(work, link_only=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['setup', 'build', 'audit', 'modules', 'review'])
+    parser.add_argument('command', choices=['setup', 'build', 'audit', 'modules', 'review', 'layouts'])
     parser.add_argument('--link-only', action='store_true',
                         help='Report completed linking separately; run review as a required next step')
     parser.add_argument('--work', type=Path, required=True)
@@ -367,6 +393,8 @@ def main():
         return audit(work)
     elif args.command == 'review':
         return review(work)
+    elif args.command == 'layouts':
+        return layouts(work)
     else:
         return modules(work, link_only=args.link_only)
     return 0
