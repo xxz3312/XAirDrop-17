@@ -3,6 +3,10 @@
 当前目标仅是验证一个最小模块的加载、节点默认值和卸载。
 这不是 AirDrop 安装包，没有 WLAN 驱动替换、自动启动或刷分区操作。
 
+本阶段已在目标设备实测通过：节点默认值 0，退出码 0，模块卸载后不再归本脚本所有。
+脱敏记录见 [实机结果](research/popsicle-sysctl-device-pass.json)。
+下一阶段见 [provider/probe 测试](POPSICLE-PROVIDER-TEST.md)。
+
 固定测试对象为 `wonder_sysctl.ko`，SHA256：
 `b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625`。
 成功运行 [40229703474](https://github.com/xxz3312/XAirDrop-17/actions/runs/40229703474)

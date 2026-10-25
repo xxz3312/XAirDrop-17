@@ -1,0 +1,18 @@
+{
+  "status": "PASS_SYSCTL_LOAD_READ_UNLOAD",
+  "device": "popsicle",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "module_sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+  "result_archive_sha256": "61c1aeb4ef3c271ef7692c2d3a2c479a231581c2d200b55dd044e1f4d558f674",
+  "observed_node_value": 0,
+  "exit_code": 0,
+  "module_still_owned": 0,
+  "test_log": [
+    "Loading wonder_sysctl only; default availability must remain 0.",
+    "wonder_enable=0",
+    "Temporary module unloaded.",
+    "PASS_SYSCTL_LOAD_READ_UNLOAD (no radio or AirDrop functionality tested)"
+  ],
+  "limitations": "Only this minimal sysctl module was tested. No provider, probe, WLAN, AWDL or AirDrop operation validated."
+}
