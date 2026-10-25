@@ -1,0 +1,12 @@
+diff --git a/qca-wifi-host-cmn/os_if/linux/mlme/src/osif_link_reconfig.c b/qca-wifi-host-cmn/os_if/linux/mlme/src/osif_link_reconfig.c
+index b1a58c5..c1b2bda 100644
+--- a/qca-wifi-host-cmn/os_if/linux/mlme/src/osif_link_reconfig.c
++++ b/qca-wifi-host-cmn/os_if/linux/mlme/src/osif_link_reconfig.c
+@@ -30,6 +30,7 @@
+ #include "wlan_mlo_mgr_public_structs.h"
+ #include "wlan_mlo_link_recfg.h"
+ #include "qdf_status.h"
++#include "osif_link_reconfig.h"
+ #include "osif_cm_util.h"
+ #include <wlan_cfg80211.h>
+ 

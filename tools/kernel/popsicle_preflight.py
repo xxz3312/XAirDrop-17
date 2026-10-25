@@ -7,6 +7,7 @@ Use actual export tables, never imported CRC expectations as Module.symvers.
 import argparse
 import json
 from pathlib import Path
+import struct
 import sys
 
 from module_abi import inspect, symvers
@@ -17,6 +18,8 @@ def audit(stock, dependencies, kernel_symvers, candidate=None):
     original = inspect(stock)
     if original['modinfo'].get('name') != ['qca_cld3_peach_v2']:
         raise ValueError('Stock input is not qca_cld3_peach_v2')
+    if not original['versions']:
+        raise ValueError('Stock input has no module version evidence')
     available = symvers(kernel_symvers)
     conflicts = {}
     for path in dependencies:
@@ -63,13 +66,14 @@ def audit(stock, dependencies, kernel_symvers, candidate=None):
             'added': sorted(built['versions'].keys() - original['versions'].keys()),
             'removed': sorted(original['versions'].keys() - built['versions'].keys()),
         }
-        if identity or result['candidate']['mismatches']:
+        if identity or result['candidate']['mismatches'] or not built['versions']:
             result['status'] = 'REJECT'
     if conflicts or result['stock']['mismatches']:
         result['status'] = 'REJECT'
     elif result['status'] != 'REJECT' and (
-        result['stock']['missing'] or
-        (candidate and result['candidate']['missing'])
+        result['stock']['missing'] or result['stock']['undefined_without_version'] or
+        (candidate and (result['candidate']['missing'] or
+                        result['candidate']['undefined_without_version']))
     ):
         result['status'] = 'INCOMPLETE'
     return result
@@ -95,6 +99,6 @@ def main():
 if __name__ == '__main__':
     try:
         sys.exit(main())
-    except (OSError, ValueError, KeyError) as error:
+    except (OSError, ValueError, KeyError, struct.error, StopIteration) as error:
         print(f'error: {error}', file=sys.stderr)
         sys.exit(3)

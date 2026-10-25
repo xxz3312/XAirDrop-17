@@ -26,7 +26,8 @@
     "repository": "https://android.googlesource.com/kernel/common",
     "tag": "android16-6.12-2026-03_r62",
     "commit": "e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5",
-    "role": "candidate only; not exact stock commit"
+    "role": "candidate only; not exact stock commit",
+    "actual_symvers": "https://ci.android.com/builds/submitted/16064883/kernel_aarch64/latest/raw/vmlinux.symvers"
   },
   "reference_dataipa": {
     "repository": "https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8850",
@@ -36,6 +37,17 @@
   },
   "toolchain_record": {
     "clang": "r536225 / 19.0.1 / build 14043575",
-    "rust": "1.82.0-dev f6e511eec / linux-glibc-15545352"
+    "rust": "1.82.0-dev f6e511eec / linux-glibc-15545352",
+    "clang_repository": "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86",
+    "clang_repository_commit": "77c95e8253c2c82ffd4fee92c0ad9f5ac1e8ca04",
+    "clang_path": "clang-r536225",
+    "rust_repository": "https://android.googlesource.com/platform/prebuilts/rust",
+    "rust_repository_commit": "5c78b1e636b2bf68d46a6980437590fddca64147",
+    "rust_path": "linux-x86/1.82.0.p2",
+    "provenance": "Official CI build 16064883/kernel_aarch64 BUILD_INFO repo-dict, re-fetched during recovery",
+    "bindgen": "0.69.5",
+    "bindgen_repository": "https://android.googlesource.com/platform/prebuilts/clang-tools",
+    "bindgen_repository_commit": "c03d5bc912878cdcbdc38fcb003e94116b978956",
+    "bindgen_path": "linux-x86/bin/bindgen"
   }
 }
