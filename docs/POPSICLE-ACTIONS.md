@@ -46,7 +46,7 @@ provider 导出表中，该步骤退出失败并写明缺项，不会因编译�
 KCFI、所有依赖、固件、加载或实际 AirDrop 收发已通过。
 
 严格模块阶段从官方 CI 下载真实核心 `vmlinux.symvers` 并核对 SHA256，
-结合 9 个原厂 provider 的 717 条真实导出（含 GPL 类型与命名空间）供 modpost 使用。
+结合 17 个原厂 provider 的 1110 条真实导出（含 GPL 类型与命名空间）供 modpost 使用。
 GKI 保护模块列表按锁定 common 源码中的官方定义生成，不关闭保护配置。
 原厂模块头部参考为 1600 字节，init/exit 指针偏移为 392/1528；只比较这三项
 不能验证全部结构布局。模块版本记录由 modpost 从 provider 表复制，匹配也不能
@@ -55,8 +55,8 @@ GKI 保护模块列表按锁定 common 源码中的官方定义生成，不关�
 先构建可用性、provider/探针、Wonder 的完整诊断 `.ko`；再检查 WLAN 全部外部符号。
 缺少真实 provider 时状态为 `BLOCKED_MISSING_WLAN_EXPORTS` 并失败，
 不会给未解析符号编造 CRC、添加假成功实现或改为告警放行。
-当前原厂额外采集中的 HWID、IPA、IOMMU、QMI 导出尚未恢复，因此这一阶段可能因
-真实证据不完整而停止。日志也会明确记录模块 BTF 是否实际生成。
+HWID、IPA、IOMMU、QMI 等原厂导出已从补充采集恢复，待新一轮 Actions 完成严格链接。
+日志也会明确记录模块 BTF 是否实际生成。
 
 参照 ACK 的 `kernel/module/version.c:same_magic`，只有存在 basic `__versions`
 时才可在该比较中忽略发布字符串的版本前缀，SMP/抢占/架构等其余标志仍须一致。
@@ -72,20 +72,22 @@ GKI 保护模块列表按锁定 common 源码中的官方定义生成，不关�
 若 fork 的 Actions 尚未启用，需要先在仓库 Actions 页面启用工作流。
 工作流只有 `contents: read` 权限，不会自行发布安装包或修改仓库。
 
-## 当前阻塞与恢复步骤
+## 上轮阻塞与已恢复的输入
 
 [运行 40219646880](https://github.com/xxz3312/XAirDrop-17/actions/runs/40219646880)
 已完成对象编译、72/72 CNSS 名称检查，以及全部 4 个辅助模块的严格 modpost 和链接。
 失败点是 WLAN 完整依赖检查，状态为 `BLOCKED_MISSING_WLAN_EXPORTS`，共缺 33 项。
 完整报告见 [本次诊断记录](research/popsicle-actions-module-blocked.json)。
 
-下一步需要恢复原先采集的 `17pm-airdrop-extra-20261025-162440.tar.gz`。
-当前工作区没有该包；不必重新采集或上传整套系统固件。
-如果原包已经找不到，则需要与基线相同系统版本的原厂 `hwid.ko`、`ipam.ko`、
-`qcom_iommu_util.ko` 和 `qmi_helpers.ko`，以及用于确认来源的系统版本和内核版本。
-这些名称对应待核对的 provider，只有实际解析导出表后才能确认覆盖情况。
+补充包 `17pm-airdrop-extra-20261025-162440.tar.gz` 已重新提供并核对为同一系统、
+内核与槽位。已提取 `ipam`、`qmi_helpers`、`hwid`、`qcom_iommu_util`、
+`qcom_va_minidump`、`rproc_qcom_common`、`powerinsight_interface`、`sched-walt`
+这 8 个原厂 provider 的真实 CRC、导出类型与命名空间。
+其中 ramdisk 模块来自包内的原厂 `vendor_boot.img`，未修改镜像或模块。
 
-恢复后先离线提取真实导出 CRC、类型与命名空间，核对来源、冲突和缺项，
-仅将导出元数据更新进仓库，然后由 Actions 继续严格 WLAN 模块链接。
-原厂二进制无需提交到公开仓库。输入补齐前重复运行同一工作流不会解决阻塞。
+上轮 33 项缺失接口现已全部覆盖；原厂 WLAN 的 610 条版本记录亦全部找到真实
+provider，CRC 冲突为 0。记录与原始文件哈希见
+[补充包恢复报告](research/popsicle-extra-provider-recovery.json)。
+只将导出元数据提交到公开仓库，原厂二进制保留在本地分析目录。
+下一轮由 Actions 继续严格 WLAN 模块链接，仍须检查候选模块实际生成结果。
 4 个辅助模块仍存在发布字符串差异，且没有生成 BTF；链接完成不表示可加载。

@@ -1485,6 +1485,58 @@
     },
     {
       "exports": {
+        "get_hw_build_adc": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_country_version": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_id_value": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_project_adc": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_version_build": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_version_major": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_version_minor": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "get_hw_version_platform": {
+          "crc": "0x0f600de8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "product_name_get": {
+          "crc": "0xc6d171ba",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        }
+      },
+      "name": "hwid",
+      "sha256": "325a203444ebbb4cd013ce9d64b3a1147376f4c733745686e2bf2fc5b6045625",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
         "__icnss_register_driver": {
           "crc": "0xd18cf709",
           "export_type": "EXPORT_SYMBOL",
@@ -1788,6 +1840,1528 @@
       },
       "name": "icnss2",
       "sha256": "230263bd64744bc0dcaa7f6de2a98acdfe8a783e00941b47c8b3b4f0b852bfcc",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "ipa3_add_hdr_hpc": {
+          "crc": "0x0325a000",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_after": {
+          "crc": "0x671f14f2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_after_v2": {
+          "crc": "0xdca9da5f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_ext": {
+          "crc": "0xda22b177",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_ext_v2": {
+          "crc": "0x2fb4ba5d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_usr": {
+          "crc": "0x86075529",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_usr_v2": {
+          "crc": "0xdaf5f8ce",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_add_rt_rule_v2": {
+          "crc": "0x7e558389",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_cfg_ep": {
+          "crc": "0x02123414",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_cfg_ep_holb": {
+          "crc": "0xc7212cd1",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_check_wdi_opt_chn_empty": {
+          "crc": "0xf79afe22",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa3_commit_hdr": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_conn_wdi3_pipes": {
+          "crc": "0x8c9e009d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_conn_wigig_client_i": {
+          "crc": "0x5e6f5562",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_conn_wigig_rx_pipe_i": {
+          "crc": "0x9b1f1974",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_connect_mhi_pipe": {
+          "crc": "0x930b3391",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_create_wdi_mapping": {
+          "crc": "0xbb5b876c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_ctx": {
+          "crc": "0x4e06144b",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_dec_client_disable_clks": {
+          "crc": "0x890b3d01",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_del_hdr_hpc": {
+          "crc": "0x1b2f0cc6",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_del_hdr_proc_ctx": {
+          "crc": "0x35e71632",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_deregister_client_callback": {
+          "crc": "0x966df22f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_disable_wdi3_opt_dpath": {
+          "crc": "0x7b1e0c95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_disable_wdi3_pipes": {
+          "crc": "0x10e84939",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_disable_wigig_pipe_i": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_disconn_wdi3_pipes": {
+          "crc": "0x10e84939",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_disconn_wigig_pipe_i": {
+          "crc": "0x8b3eeb36",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_disconnect_mhi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_enable_wdi3_opt_dpath": {
+          "crc": "0x39e44c1d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_enable_wdi3_pipes": {
+          "crc": "0x10e84939",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_enable_wigig_pipe_i": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_eth_connect": {
+          "crc": "0xd69eb80a",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_eth_debugfs_add_node": {
+          "crc": "0x66dab607",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_eth_debugfs_init": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_eth_disconnect": {
+          "crc": "0xd69eb80a",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_client": {
+          "crc": "0x26a4427e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_client_mapping": {
+          "crc": "0x92666a8d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_ctx": {
+          "crc": "0x56393552",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_dma_dev": {
+          "crc": "0x1ad4d86d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_ipc_logbuf": {
+          "crc": "0x35032efa",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_ipc_logbuf_low": {
+          "crc": "0x35032efa",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_outstanding_buffers_wdi3": {
+          "crc": "0xb066e134",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa3_get_pdev": {
+          "crc": "0x57e2cb17",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_r_rev_version": {
+          "crc": "0xc01aafd2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_rt_tbl": {
+          "crc": "0x72230026",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_transport_info": {
+          "crc": "0xdbad92af",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_get_transport_type": {
+          "crc": "0x5b4d3033",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_handle_ipa_wlan_opt_dp_set_wlan_ctrl_ready_req": {
+          "crc": "0xaa9da44e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_has_open_aggr_frame": {
+          "crc": "0x8810fb04",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_inc_client_enable_clks": {
+          "crc": "0x890b3d01",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_inc_client_enable_clks_no_block": {
+          "crc": "0x5c4090e4",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_is_client_handle_valid": {
+          "crc": "0xd795075f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_is_ulso_supported": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_mhi_destroy_channel": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_mhi_init_engine": {
+          "crc": "0x0e3455a7",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_mhi_query_ch_info": {
+          "crc": "0x0f1849df",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_mhi_reset_channel_internal": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_mhi_resume_channels_internal": {
+          "crc": "0xea28103f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_mhi_stop_gsi_channel": {
+          "crc": "0x8810fb04",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_notify_clients_registered": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_ntn_uc_dereg_rdyCB": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_ntn_uc_reg_rdyCB": {
+          "crc": "0xe9966102",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_proxy_clk_vote": {
+          "crc": "0x84c5f3e2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_qmi_disable_force_clear_datapath_send": {
+          "crc": "0xc07c087b",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_qmi_enable_force_clear_datapath_send": {
+          "crc": "0xd64886d3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_qmi_send_wdi_opt_dpath_ep_info": {
+          "crc": "0xca4d1173",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_qmi_send_wdi_opt_dpath_rmv_all_flt_ind": {
+          "crc": "0x1f37fda2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_qmi_send_wdi_opt_dpath_rmv_ctrl_flt_ind": {
+          "crc": "0x90524950",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_qmi_send_wdi_opt_dpath_rsrv_flt_ind": {
+          "crc": "0x8f2bc1bb",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_register_client_callback": {
+          "crc": "0x6a5376b9",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_release_gsi_channel": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_release_wdi_mapping": {
+          "crc": "0xbb5b876c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_request_gsi_channel": {
+          "crc": "0x5668ac52",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_reset_gsi_channel": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_reset_gsi_event_ring": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_reset_hdr": {
+          "crc": "0x54367d9c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_set_required_perf_profile": {
+          "crc": "0x963042cf",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_set_tag_process_before_gating": {
+          "crc": "0x379b1809",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_set_usb_max_packet_size": {
+          "crc": "0x98edbf9d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_set_wlan_tx_info": {
+          "crc": "0xc878c3c3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_setup_uc_ntn_pipes": {
+          "crc": "0x267e894f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_setup_wlan_ctrl_ready_req": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa3_smmu_map_peer_buff": {
+          "crc": "0x67c95fec",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_smmu_map_peer_reg": {
+          "crc": "0xd2e3662d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_start_gsi_channel": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_sys_setup": {
+          "crc": "0xcdf07e40",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_sys_teardown": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_sys_update_gsi_hdls": {
+          "crc": "0x8045f6ab",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_tear_down_uc_offload_pipes": {
+          "crc": "0x7acc8cf9",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_teth_bridge_connect": {
+          "crc": "0x95041529",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_teth_bridge_disconnect": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_teth_bridge_init": {
+          "crc": "0xac7e5ac9",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_holb_enabled_check": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_load_notify": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_loaded_check": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_mhi_print_stats": {
+          "crc": "0xcdb6aa7c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_reg_rdyCB": {
+          "crc": "0x359fea9f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_register_ready_cb": {
+          "crc": "0x0a227d4d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_state_check": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_uc_unregister_ready_cb": {
+          "crc": "0x0a227d4d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_update_mhi_ctrl_state": {
+          "crc": "0xd88453ec",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_wigig_internal_init": {
+          "crc": "0x89fc2c65",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_wigig_uc_msi_init": {
+          "crc": "0x81a5fe66",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_wwan_cleanup": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_wwan_platform_driver_register": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_xdci_connect": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_xdci_disconnect": {
+          "crc": "0xd43fad2f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_xdci_ep_delay_rm": {
+          "crc": "0xd695b1c5",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_xdci_resume": {
+          "crc": "0x2fc8caf5",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_xdci_start": {
+          "crc": "0xff8db459",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa3_xdci_suspend": {
+          "crc": "0x9186fe12",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_add_hdr": {
+          "crc": "0x0325a000",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_add_interrupt_handler": {
+          "crc": "0x402174a9",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_add_rt_rule": {
+          "crc": "0x86f383e9",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_assert": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_cleanup": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_connect": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_disconnect": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_init": {
+          "crc": "0x5d8e414b",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_resume": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_set_perf_profile": {
+          "crc": "0xe0108d46",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_suspend": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_bridge_tx_dp": {
+          "crc": "0xdf07527d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_broadcast_wdi_quota_reach_ind": {
+          "crc": "0xb9a1cc02",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_cfg_ep_ctrl": {
+          "crc": "0x301cb270",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_clients_strings": {
+          "crc": "0x2e760c61",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_connect_wdi_pipe": {
+          "crc": "0x35d29acb",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_debugfs_get_root": {
+          "crc": "0x3caa4226",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_del_hdr": {
+          "crc": "0x191823c3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_deregister_intf": {
+          "crc": "0x591cb0f8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_disable_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_disconnect_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_dma_async_memcpy": {
+          "crc": "0x19577573",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_dma_destroy": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_dma_disable": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_dma_enable": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_dma_init": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_dma_sync_memcpy": {
+          "crc": "0x2a20b420",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_enable_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_conn_evt": {
+          "crc": "0x88d19740",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_conn_pipes": {
+          "crc": "0xb746bce2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_disconn_evt": {
+          "crc": "0x88d19740",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_disconn_pipes": {
+          "crc": "0xb746bce2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_exist": {
+          "crc": "0x845a13b5",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_reg_intf": {
+          "crc": "0x120bdaca",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_set_perf_profile": {
+          "crc": "0x673d3680",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_client_unreg_intf": {
+          "crc": "0x120bdaca",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_get_ipa_client_type_from_eth_type": {
+          "crc": "0xd9b50ae1",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_register_ready_cb": {
+          "crc": "0x1c0f8d84",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_eth_unregister_ready_cb": {
+          "crc": "0x1c0f8d84",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_free_skb": {
+          "crc": "0xb88e1b10",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_ep_mapping": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_gsi_ep_info": {
+          "crc": "0x7f82cad7",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_hdr": {
+          "crc": "0x8e3a2f17",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_hw_type": {
+          "crc": "0xad9989e8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_lan_rx_napi": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_smmu_params": {
+          "crc": "0xa96a10a8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_version_string": {
+          "crc": "0x266b19fa",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_wdi_stats": {
+          "crc": "0x888dc36b",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_get_wdi_version": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_hdrs_hpc_destroy": {
+          "crc": "0xd64e4c6f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_is_ready": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_is_test_prod_flt_in_sram_internal": {
+          "crc": "0x632d6591",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_is_vlan_mode": {
+          "crc": "0x34824af8",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_connect_pipe": {
+          "crc": "0xde6138f3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_destroy": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_disconnect_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_handle_ipa_config_req": {
+          "crc": "0x2a4c28b9",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_init": {
+          "crc": "0x3d66bc15",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_resume": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_start": {
+          "crc": "0xf19350a3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_suspend": {
+          "crc": "0xba24122b",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_mhi_update_mstate": {
+          "crc": "0x1da36357",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_activate": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_activate_sync": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_associate_ipa_cons_to_client": {
+          "crc": "0xcb38a105",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_deactivate_sync": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_deferred_deactivate": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_deregister": {
+          "crc": "0xff9caf95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_register": {
+          "crc": "0x31d1922e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_set_throughput": {
+          "crc": "0xd1a54e21",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_wrapper_connect_wdi_pipe": {
+          "crc": "0x35d29acb",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_wrapper_disable_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_wrapper_disconnect_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_wrapper_enable_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_pm_wrapper_wdi_set_perf_profile_internal": {
+          "crc": "0x21a86995",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_put_rt_tbl": {
+          "crc": "0x2f2cbf12",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_qdss_conn_pipes": {
+          "crc": "0xb3bfabba",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_qdss_disconn_pipes": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_register_intf": {
+          "crc": "0x366818f0",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_register_ipa_ready_cb": {
+          "crc": "0xe9966102",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_register_notifier": {
+          "crc": "0x97a5c9df",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_register_rmnet_ctl_cb": {
+          "crc": "0xe8fbdb7e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_register_rmnet_ll_cb": {
+          "crc": "0x5ba8d56a",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_restore_suspend_handler": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_resume_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_rmnet_ctl_xmit": {
+          "crc": "0x39c32d16",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_rmnet_ll_xmit": {
+          "crc": "0x39c32d16",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_send_msg": {
+          "crc": "0x735c74ad",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_set_aggr_mode": {
+          "crc": "0x10ae8364",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_set_perf_profile": {
+          "crc": "0xd2f6a178",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_set_pkt_init_ex_hdr_ofst": {
+          "crc": "0x0b5560b2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_set_qcncm_ndp_sig": {
+          "crc": "0x2371b4b5",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_set_single_ndp_per_mbim": {
+          "crc": "0x283bf429",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_setup_sys_pipe": {
+          "crc": "0x606a7a27",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_smmu_free_sgt": {
+          "crc": "0xbb4171ec",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_smmu_store_sgt": {
+          "crc": "0x5b7ec790",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_stop_gsi_channel": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_suspend_wdi_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_teardown_sys_pipe": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_tx_dp": {
+          "crc": "0x990a31cc",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_bw_monitor": {
+          "crc": "0x3d971339",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_offload_cleanup": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_offload_conn_pipes": {
+          "crc": "0x11067d38",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_offload_dereg_rdyCB": {
+          "crc": "0xb8a30900",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_offload_disconn_pipes": {
+          "crc": "0x8bea768c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_offload_reg_intf": {
+          "crc": "0xcbfb77c1",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_offload_reg_rdyCB": {
+          "crc": "0x281a2c2e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_uc_wdi_get_dbpa": {
+          "crc": "0x540baa78",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_unregister_notifier": {
+          "crc": "0x97a5c9df",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_unregister_rmnet_ctl_cb": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_unregister_rmnet_ll_cb": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_deinit_teth_prot": {
+          "crc": "0x96148f2e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_init_teth_prot": {
+          "crc": "0x0f103c14",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_is_teth_prot_connected": {
+          "crc": "0xca52ad80",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_xdci_connect": {
+          "crc": "0xee67b6fd",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_xdci_disconnect": {
+          "crc": "0x67732963",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_xdci_resume": {
+          "crc": "0x67732963",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_usb_xdci_suspend": {
+          "crc": "0x08050823",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_cleanup": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_cleanup_per_inst": {
+          "crc": "0x7f125757",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_conn_pipes": {
+          "crc": "0x539bd76c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_conn_pipes_per_inst": {
+          "crc": "0x539bd76c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_create_smmu_mapping_per_inst": {
+          "crc": "0x7991c655",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_dereg_intf": {
+          "crc": "0x4c01a80f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_dereg_intf_per_inst": {
+          "crc": "0xea4215bb",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_disable_pipes": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_disable_pipes_per_inst": {
+          "crc": "0x7f125757",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_disconn_pipes": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_disconn_pipes_per_inst": {
+          "crc": "0x7f125757",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_enable_pipes": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_enable_pipes_per_inst": {
+          "crc": "0x7f125757",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_get_capabilities": {
+          "crc": "0xfea229df",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_get_outstanding_buffers": {
+          "crc": "0x736eca7b",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa_wdi_init": {
+          "crc": "0xc001fb7f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_init_per_inst": {
+          "crc": "0xc001fb7f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_is_tx1_used": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_add_ctrl_filter_req": {
+          "crc": "0x7857de6f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_add_filter_req": {
+          "crc": "0x7857de6f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_ctrl_enabled": {
+          "crc": "0xc5117b30",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_disable_clk_per_inst": {
+          "crc": "0x7f125757",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_enable_clk_per_inst": {
+          "crc": "0x7f125757",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_notify_ctrl_flt_rem_per_inst": {
+          "crc": "0x15956540",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_notify_flt_rlsd_per_inst": {
+          "crc": "0xdb186553",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_notify_flt_rsvd_per_inst": {
+          "crc": "0xdb186553",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_register_flt_cb_per_inst": {
+          "crc": "0x692ea4aa",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_register_flt_cb_per_inst_v2": {
+          "crc": "0x8da06ca7",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_remove_all_ctrl_filter_req": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_remove_all_filter_req": {
+          "crc": "0x33eff793",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_remove_ctrl_filter_req": {
+          "crc": "0x06adc8b3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_remove_filter_req": {
+          "crc": "0x06adc8b3",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_opt_dpath_rsrv_filter_req": {
+          "crc": "0xc653b78d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_reg_intf": {
+          "crc": "0x1d01ae5e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_reg_intf_per_inst": {
+          "crc": "0x1d01ae5e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_release_smmu_mapping_per_inst": {
+          "crc": "0x7991c655",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_set_perf_profile": {
+          "crc": "0x21a86995",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wdi_set_perf_profile_per_inst": {
+          "crc": "0x07367770",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_cleanup": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_conn_client": {
+          "crc": "0xa2f98978",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_conn_client_smmu": {
+          "crc": "0x33048619",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_conn_rx_pipe": {
+          "crc": "0x9eb1464e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_conn_rx_pipe_smmu": {
+          "crc": "0x0ef5c1b1",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_dereg_intf": {
+          "crc": "0x4c01a80f",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_disable_pipe": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_disconn_pipe": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_enable_pipe": {
+          "crc": "0x2e0d65db",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_init": {
+          "crc": "0x2aea9d78",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_is_smmu_enabled": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_reg_intf": {
+          "crc": "0x56f6c635",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_save_regs": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_send_msg": {
+          "crc": "0x1659c552",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_send_wlan_msg": {
+          "crc": "0x52a40684",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_set_perf_profile": {
+          "crc": "0xc05d7d00",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_wigig_tx_dp": {
+          "crc": "0x1a5e05d5",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipa_xr_wdi_opt_dpath_add_filter_req": {
+          "crc": "0x3556f9e8",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa_xr_wdi_opt_dpath_remove_all_filter_req": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa_xr_wdi_opt_dpath_remove_filter_req": {
+          "crc": "0x0925aad6",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipa_xr_wdi_opt_dpath_rsrv_filter_req": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ipahal_get_ep_bit": {
+          "crc": "0xfeb2597a",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ipahal_get_ep_reg_idx": {
+          "crc": "0xfeb2597a",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "ncm_ipa_cleanup": {
+          "crc": "0xf3cf3e26",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ncm_ipa_cleanup_module": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ncm_ipa_init": {
+          "crc": "0x18f17d10",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ncm_ipa_init_module": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ncm_ipa_pipe_connect_notify": {
+          "crc": "0xed055f58",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "ncm_ipa_pipe_disconnect_notify": {
+          "crc": "0xd592e312",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmap_encapsulate_skb": {
+          "crc": "0x35423999",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "rndis_ipa_cleanup": {
+          "crc": "0xf3cf3e26",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "rndis_ipa_cleanup_module": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "rndis_ipa_init": {
+          "crc": "0xced91f22",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "rndis_ipa_init_module": {
+          "crc": "0x7851be11",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "rndis_ipa_pipe_connect_notify": {
+          "crc": "0xed055f58",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "rndis_ipa_pipe_disconnect_notify": {
+          "crc": "0xd592e312",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        }
+      },
+      "name": "ipam",
+      "sha256": "8ad6af43d85d1b096afd4402ea2ed069a41197e5d0975952a199de082217502c",
       "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
     },
     {
@@ -2505,6 +4079,953 @@
       },
       "name": "mac80211",
       "sha256": "01b40a32346277f30b807d31c4acd7011e18c38bdff594282f5e835d40f40dec",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "powerinsight_wifi_wake_data": {
+          "crc": "0xd316f792",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "powerinsight_wifi_wake_interrupt": {
+          "crc": "0x440f4959",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "powerinsight_wifi_wake_reason": {
+          "crc": "0xab04737c",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        }
+      },
+      "name": "powerinsight_interface",
+      "sha256": "23499870867722dae501527b08361290d5d20451250c31cc7ef1e02d35587240",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "fast_smmu_init_mapping": {
+          "crc": "0x3c96b433",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "fast_smmu_put_dma_cookie": {
+          "crc": "0xa3a5e508",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "fast_smmu_setup_dma_ops": {
+          "crc": "0x4367ce6c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_alloc_io_pgtable_ops": {
+          "crc": "0x47884baa",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_arm_lpae_map_pages": {
+          "crc": "0x668f4d31",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_arm_lpae_map_sg": {
+          "crc": "0xa953f67d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_arm_lpae_unmap_pages": {
+          "crc": "0x20674594",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_dma_iommu_is_ready": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_free_io_pgtable_ops": {
+          "crc": "0x22f97ef5",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_io_pgtable_free_page": {
+          "crc": "0x5f9948e2",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_enable_s1_translation": {
+          "crc": "0x393e9b37",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_get_asid_nr": {
+          "crc": "0x393e9b37",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_get_context_bank_nr": {
+          "crc": "0x393e9b37",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_get_fast_iova_range": {
+          "crc": "0x204ea89a",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_get_fault_ids": {
+          "crc": "0xe6b9e2ca",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_get_mappings_configuration": {
+          "crc": "0x393e9b37",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_get_resv_regions": {
+          "crc": "0x0b069f27",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_iova_to_phys_hard": {
+          "crc": "0xafb1bd57",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_set_fault_model": {
+          "crc": "0xd88663bb",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_set_secure_vmid": {
+          "crc": "0x913ad69d",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_iommu_sid_switch": {
+          "crc": "0xcd018f3c",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_skip_tlb_management": {
+          "crc": "0x776aa962",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "register_qcom_iommu_ops": {
+          "crc": "0x3ce6046e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        }
+      },
+      "name": "qcom_iommu_util",
+      "sha256": "e766b0513031f0df49a8c01845ac978fb48350d45e7775852127f4197eb1c1d0",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "qcom_va_md_add_region": {
+          "crc": "0xc7e483eb",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_va_md_enabled": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_va_md_register": {
+          "crc": "0x118e2890",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_va_md_unregister": {
+          "crc": "0x118e2890",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        }
+      },
+      "name": "qcom_va_minidump",
+      "sha256": "ba5100d3d321d89d7c073010494fad08f1bb302a77c138336bf876b6148cf085",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "qmi_add_lookup": {
+          "crc": "0x33cf7265",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_add_server": {
+          "crc": "0x33cf7265",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_decode_message": {
+          "crc": "0x4f564f53",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_encode_message": {
+          "crc": "0x26c9833d",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_handle_init": {
+          "crc": "0xb681c140",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_handle_release": {
+          "crc": "0xaecd6d9f",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_response_type_v01_ei": {
+          "crc": "0x77b5c22d",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_send_indication": {
+          "crc": "0x39846ac5",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_send_request": {
+          "crc": "0xccf36179",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_send_response": {
+          "crc": "0xccf36179",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_txn_cancel": {
+          "crc": "0x47a7044c",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_txn_init": {
+          "crc": "0x2eefb693",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qmi_txn_wait": {
+          "crc": "0x0633ea71",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        }
+      },
+      "name": "qmi_helpers",
+      "sha256": "279c051b9b562aa1906e96f2febab1dfe26426437a9917ebeba5ad479e06c846",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "__SCK__tp_func_rproc_qcom_event": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "__traceiter_rproc_qcom_event": {
+          "crc": "0x205ca9be",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "__tracepoint_rproc_qcom_event": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_add_glink_subdev": {
+          "crc": "0xcb4a938f",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_add_pdm_subdev": {
+          "crc": "0x151ee11e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_add_smd_subdev": {
+          "crc": "0x6379d496",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_add_ssr_subdev": {
+          "crc": "0x1a876141",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_device_shutdown_in_progress": {
+          "crc": "0x3239fbdb",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_minidump": {
+          "crc": "0x2693006a",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_notify_early_ssr_clients": {
+          "crc": "0xd4ddcdda",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_notify_ssr_clients": {
+          "crc": "0x0b212c34",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_register_dump_segments": {
+          "crc": "0x911856a5",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_register_early_ssr_notifier": {
+          "crc": "0xeb954a17",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_register_ssr_notifier": {
+          "crc": "0xeb954a17",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_remove_glink_subdev": {
+          "crc": "0xbcb927ca",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_remove_pdm_subdev": {
+          "crc": "0x151ee11e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_remove_smd_subdev": {
+          "crc": "0x6379d496",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_remove_ssr_subdev": {
+          "crc": "0x3a1f459c",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_ssr_get_subsys": {
+          "crc": "0xe876d4a4",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "qcom_unregister_early_ssr_notifier": {
+          "crc": "0x52d99790",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "qcom_unregister_ssr_notifier": {
+          "crc": "0x52d99790",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "rproc_recovery_set_fn": {
+          "crc": "0x9aa5a261",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        }
+      },
+      "name": "rproc_qcom_common",
+      "sha256": "8b7fc6899bbdd2687e46fce251b20342004d36f416024da639fa623dcd26f23a",
+      "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "exports": {
+        "__SCK__tp_func_sched_assi_cfs_enqueue_mvp_task_check": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_dump_task_io_ravg1": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_dump_task_io_ravg2": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_fuse_boost_state_floor_freq": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_init_new_task_load": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_keytask_set_mvp": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_kt_load_boost": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_kt_walt_irq_work": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_newly_idle_balance_task_fit": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_rt_active_balance": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_runnable_keytask_boost": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_select_cpu_fastpath": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_should_run_privilege": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_skip_keytask_cpu": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_walt_cfs_get_indicies": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_walt_rt_get_indicies": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_assi_walt_rt_skip_sync_wakeup": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__SCK__tp_func_sched_update_task_ravg": {
+          "crc": "0xcd11e499",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__cpu_halt_mask": {
+          "crc": "0x4e994f70",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__cpu_partial_halt_mask": {
+          "crc": "0x4e994f70",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_cfs_enqueue_mvp_task_check": {
+          "crc": "0x9dc71cfc",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_dump_task_io_ravg1": {
+          "crc": "0xad6b6077",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_dump_task_io_ravg2": {
+          "crc": "0xf8e3f571",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_fuse_boost_state_floor_freq": {
+          "crc": "0x0b8c82ef",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_init_new_task_load": {
+          "crc": "0x63da35e8",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_keytask_set_mvp": {
+          "crc": "0x3a3e7cc0",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_kt_load_boost": {
+          "crc": "0xe8c9b822",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_kt_walt_irq_work": {
+          "crc": "0x1a87f13c",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_newly_idle_balance_task_fit": {
+          "crc": "0x3f51048f",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_rt_active_balance": {
+          "crc": "0xb5851ba6",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_runnable_keytask_boost": {
+          "crc": "0xb5851ba6",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_select_cpu_fastpath": {
+          "crc": "0x330b4d20",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_should_run_privilege": {
+          "crc": "0x80883fe7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_skip_keytask_cpu": {
+          "crc": "0x3a3e7cc0",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_walt_cfs_get_indicies": {
+          "crc": "0xd54a8c9e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_walt_rt_get_indicies": {
+          "crc": "0xd54a8c9e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_assi_walt_rt_skip_sync_wakeup": {
+          "crc": "0x1d7b2e1f",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__traceiter_sched_update_task_ravg": {
+          "crc": "0x45d5cd71",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_cfs_enqueue_mvp_task_check": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_dump_task_io_ravg1": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_dump_task_io_ravg2": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_fuse_boost_state_floor_freq": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_init_new_task_load": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_keytask_set_mvp": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_kt_load_boost": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_kt_walt_irq_work": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_newly_idle_balance_task_fit": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_rt_active_balance": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_runnable_keytask_boost": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_select_cpu_fastpath": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_should_run_privilege": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_skip_keytask_cpu": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_walt_cfs_get_indicies": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_walt_rt_get_indicies": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_assi_walt_rt_skip_sync_wakeup": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "__tracepoint_sched_update_task_ravg": {
+          "crc": "0x7c5aa8a7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cluster_head": {
+          "crc": "0x7ce7ad9f",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "core_ctl_notifier_register": {
+          "crc": "0xdd98a2ad",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "core_ctl_notifier_unregister": {
+          "crc": "0xdd98a2ad",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "core_ctl_set_boost": {
+          "crc": "0x2a33519d",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cpu_array": {
+          "crc": "0x10cdc614",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cpu_is_waiting_on_io": {
+          "crc": "0x84e77b06",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cpu_util_without": {
+          "crc": "0x493a898d",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cpufreq_walt_get_adaptive_freq": {
+          "crc": "0x15df9159",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cpufreq_walt_reset_adaptive_freq": {
+          "crc": "0x47559d93",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "cpufreq_walt_set_adaptive_freq": {
+          "crc": "0x0783426e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "debugfs_walt_features": {
+          "crc": "0xf296206e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "get_capacity_orig_of": {
+          "crc": "0x4685cf55",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "get_scale_exec_time": {
+          "crc": "0xd510ab8e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "is_new_task": {
+          "crc": "0x5e812601",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "max_possible_cluster_id": {
+          "crc": "0x7ec472ba",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "metis_lb_cpu_array": {
+          "crc": "0x10cdc614",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "min_possible_cluster_id": {
+          "crc": "0x7ec472ba",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "miui_cluster_packing_callback": {
+          "crc": "0x7c2a7504",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "oem_corectl_cpu_busy": {
+          "crc": "0xf6e93de5",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "part_haltable_cpus": {
+          "crc": "0xaf2d2308",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "register_cam_freq_hook": {
+          "crc": "0x78b0d3d7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "register_micam_cpu_cycles_calibration_hook": {
+          "crc": "0x56ac5bd5",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_capacity_margin_down": {
+          "crc": "0x9fdd8622",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_capacity_margin_up": {
+          "crc": "0x9fdd8622",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_get_group_id": {
+          "crc": "0xf5462789",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_get_nr_running_avg": {
+          "crc": "0x38a1770b",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_lpm_disallowed_time": {
+          "crc": "0xc5ec8ad9",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_ravg_window": {
+          "crc": "0xf296206e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "sched_set_boost": {
+          "crc": "0x51330f0e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_set_group_id": {
+          "crc": "0x09587c7d",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "sched_walt_oscillate": {
+          "crc": "0xfa585d9f",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "set_task_boost": {
+          "crc": "0x2e1dff25",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "should_boost_bus_dcvs": {
+          "crc": "0x5e505530",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "unregister_cam_freq_hook": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "unregister_micam_cpu_cycles_calibration_hook": {
+          "crc": "0xd272d446",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "use_cgroup_margin": {
+          "crc": "0xf296206e",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_clear_rt_irq_balance_task": {
+          "crc": "0x04d13003",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_disabled": {
+          "crc": "0x3239fbdb",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_get_cpus_in_state1": {
+          "crc": "0xe9d9ceac",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_get_cpus_taken": {
+          "crc": "0xfd7e2bae",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_get_enforce_high_irq_cpus": {
+          "crc": "0xfd7e2bae",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_get_halted_cpus": {
+          "crc": "0xfd7e2bae",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_is_idle_task": {
+          "crc": "0x5e812601",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_partial_pause_cpus": {
+          "crc": "0xed372be7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_partial_resume_cpus": {
+          "crc": "0xed372be7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_pause_cpus": {
+          "crc": "0xed372be7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_resume_cpus": {
+          "crc": "0xed372be7",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_rq": {
+          "crc": "0x69d3858e",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "walt_rt_energy_aware_wake_cpu": {
+          "crc": "0x1f59ebfd",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_sched_clock": {
+          "crc": "0xf018baf9",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_set_cpus_taken": {
+          "crc": "0x6fac3e23",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_set_enforce_high_irq_cpus": {
+          "crc": "0x6fac3e23",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_set_rt_irq_balance_task": {
+          "crc": "0x698dde60",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_unset_cpus_taken": {
+          "crc": "0x51711841",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_unset_enforce_high_irq_cpus": {
+          "crc": "0x51711841",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "walt_update_task_ravg": {
+          "crc": "0x5d6406f9",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "waltgov_cam_cpu": {
+          "crc": "0xb21c3e33",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "waltgov_cb_data": {
+          "crc": "0x11cbe118",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "waltgov_cpu": {
+          "crc": "0xe360d8c8",
+          "export_type": "EXPORT_SYMBOL_GPL",
+          "namespace": ""
+        },
+        "waltgov_run_callback": {
+          "crc": "0xb92122de",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        }
+      },
+      "name": "sched-walt",
+      "sha256": "886f25672ff2ee5eb231690928d52539a0e606b61e2726261817d3c75e11c6db",
       "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
     },
     {

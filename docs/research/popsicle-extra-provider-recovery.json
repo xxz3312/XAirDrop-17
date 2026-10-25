@@ -1,0 +1,62 @@
+{
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "archive_sha256": "974268f5d81561377a9a5eaed29cf653560b3f834f864e525fc9d8091a9056ac",
+  "vendor_boot_sha256": "77d7941a8cf074e5fcf15dd36508405ae536ea28636dc0b321ed96e54727c630",
+  "providers_added": [
+    {
+      "name": "ipam",
+      "sha256": "8ad6af43d85d1b096afd4402ea2ed069a41197e5d0975952a199de082217502c",
+      "exports": 303,
+      "source": "files/vendor/lib/modules"
+    },
+    {
+      "name": "qmi_helpers",
+      "sha256": "279c051b9b562aa1906e96f2febab1dfe26426437a9917ebeba5ad479e06c846",
+      "exports": 13,
+      "source": "files/vendor/lib/modules"
+    },
+    {
+      "name": "hwid",
+      "sha256": "325a203444ebbb4cd013ce9d64b3a1147376f4c733745686e2bf2fc5b6045625",
+      "exports": 9,
+      "source": "vendor_boot.img ramdisk"
+    },
+    {
+      "name": "qcom_iommu_util",
+      "sha256": "e766b0513031f0df49a8c01845ac978fb48350d45e7775852127f4197eb1c1d0",
+      "exports": 23,
+      "source": "vendor_boot.img ramdisk"
+    },
+    {
+      "name": "qcom_va_minidump",
+      "sha256": "ba5100d3d321d89d7c073010494fad08f1bb302a77c138336bf876b6148cf085",
+      "exports": 4,
+      "source": "files/vendor/lib/modules"
+    },
+    {
+      "name": "rproc_qcom_common",
+      "sha256": "8b7fc6899bbdd2687e46fce251b20342004d36f416024da639fa623dcd26f23a",
+      "exports": 22,
+      "source": "files/vendor/lib/modules"
+    },
+    {
+      "name": "powerinsight_interface",
+      "sha256": "23499870867722dae501527b08361290d5d20451250c31cc7ef1e02d35587240",
+      "exports": 3,
+      "source": "vendor_boot.img ramdisk"
+    },
+    {
+      "name": "sched-walt",
+      "sha256": "886f25672ff2ee5eb231690928d52539a0e606b61e2726261817d3c75e11c6db",
+      "exports": 116,
+      "source": "vendor_boot.img ramdisk"
+    }
+  ],
+  "previously_unresolved": 33,
+  "remaining_previous_blockers": [],
+  "stock_wlan_version_records": 610,
+  "stock_wlan_crc_conflicts": {},
+  "stock_wlan_missing_providers": [],
+  "limitations": "Actual export metadata only. CRC name coverage is not independent C type, layout, KCFI, BTF, runtime loading or AirDrop validation."
+}
