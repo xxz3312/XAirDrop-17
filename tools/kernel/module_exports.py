@@ -9,7 +9,8 @@ of the relocation.
 import struct, sys, json
 
 def load(path):
-    d = open(path, 'rb').read()
+    with open(path, 'rb') as source:
+        d = source.read()
     e_shoff, = struct.unpack_from('<Q', d, 0x28)
     ent, num, shstr = struct.unpack_from('<HHH', d, 0x3a)
     o, s = struct.unpack_from('<QQ', d, e_shoff + shstr*ent + 0x18)
@@ -19,9 +20,9 @@ def load(path):
         p = e_shoff + i*ent
         nm, typ = struct.unpack_from('<II', d, p)
         foff, fsz = struct.unpack_from('<QQ', d, p + 0x18)
-        link, = struct.unpack_from('<I', d, p + 0x28)
+        link, info = struct.unpack_from('<II', d, p + 0x28)
         secs.append(dict(idx=i, name=st[nm:st.index(b'\0', nm)].decode(),
-                         type=typ, off=foff, size=fsz, link=link))
+                         type=typ, off=foff, size=fsz, link=link, info=info))
     return d, secs
 
 def exports(path):
@@ -43,7 +44,9 @@ def exports(path):
             continue
         rel = {}
         for r in secs:
-            if r['name'].startswith('.rela_' + ktab + '+'):
+            # sh_info identifies the target section. Android 6.12 also uses
+            # combined .rela__ksymtab sections without a per-symbol suffix.
+            if r['type'] == 4 and r['info'] == k['idx']:
                 for i in range(r['size'] // 24):
                     p = r['off'] + i*24
                     ro, ri, ra = struct.unpack_from('<QQq', d, p)

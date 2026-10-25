@@ -1,0 +1,41 @@
+{
+  "status": "reconstructed source references; not a reproducible or verified build manifest",
+  "opairdrop": {
+    "repository": "https://github.com/Weverses/OPAirDrop",
+    "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d"
+  },
+  "xairdrop": {
+    "repository": "https://github.com/Leekin2/XAirDrop",
+    "commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76",
+    "role": "userspace and sysctl reference; SM8750 binaries not for this target"
+  },
+  "xiaomi_wlan": {
+    "repository": "https://github.com/MiCode/vendor_qcom_opensource_wlan",
+    "branch": "popsicle-w-oss",
+    "commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "version": "5.2.1.137C",
+    "stock_version": "5.2.1.146N"
+  },
+  "xiaomi_soc": {
+    "repository": "https://github.com/MiCode/Xiaomi_Kernel_OpenSource",
+    "branch": "popsicle-w-oss",
+    "commit": "45705be1220b4cfa8100516ad86711656c0b634e",
+    "role": "SoC extension/DDK tree; missing published HWID header"
+  },
+  "candidate_common": {
+    "repository": "https://android.googlesource.com/kernel/common",
+    "tag": "android16-6.12-2026-03_r62",
+    "commit": "e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5",
+    "role": "candidate only; not exact stock commit"
+  },
+  "reference_dataipa": {
+    "repository": "https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8850",
+    "commit": "5ab2a689ff87d7d28c511f1762cf41c1b90d965a",
+    "path": "vendor/qcom/opensource/dataipa",
+    "role": "reference only; not validated Xiaomi dependency"
+  },
+  "toolchain_record": {
+    "clang": "r536225 / 19.0.1 / build 14043575",
+    "rust": "1.82.0-dev f6e511eec / linux-glibc-15545352"
+  }
+}

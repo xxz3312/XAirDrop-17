@@ -22,6 +22,21 @@ local.properties
 *.class
 *.log
 
+# Local device evidence and kernel build intermediates
+/analysis/
+/upload/
+/toolchains/
+/build-popsicle/
+*.img
+*.cpio
+*.tar.gz
+/kernel/**/*.o
+/kernel/**/*.mod
+/kernel/**/*.mod.c
+/kernel/**/.*.cmd
+/kernel/**/Module.symvers
+/kernel/**/modules.order
+
 # Local investigation notes, plans and verification records
 /docs/*DIAGNOSIS*.md
 /docs/*-PLAN.md

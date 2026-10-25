@@ -1,0 +1,4 @@
+obj-m += opairshare_wonder_provider.o
+opairshare_wonder_provider-y := provider.o
+obj-m += opairshare_route_b_probe.o
+opairshare_route_b_probe-y := probe.o
