@@ -58,6 +58,12 @@ GKI 保护模块列表按锁定 common 源码中的官方定义生成，不关�
 当前原厂额外采集中的 HWID、IPA、IOMMU、QMI 导出尚未恢复，因此这一阶段可能因
 真实证据不完整而停止。日志也会明确记录模块 BTF 是否实际生成。
 
+参照 ACK 的 `kernel/module/version.c:same_magic`，只有存在 basic `__versions`
+时才可在该比较中忽略发布字符串的版本前缀，SMP/抢占/架构等其余标志仍须一致。
+前缀不同单独标为 `REVIEW_KERNEL_RELEASE`，保留原始字符串，不改二进制，
+也不会给整个检查返回通过。只有扩展 CRC、没有 basic CRC 的模块不会套用此规则。
+这是参考内核的比较规则，不是对原厂加载行为的实测。
+
 第三个源码补丁针对 NOIRQ 模式下无用的 GPIO IRQ 引用。
 [首轮 Actions](https://github.com/xxz3312/XAirDrop-17/actions/runs/40215365901)
 已全新编译成功；CNSS 名称检查为 72/72、缺项 0。

@@ -48,6 +48,23 @@ class ModpostTests(unittest.TestCase):
         self.assertEqual(self.report(crc='0x87654321')['status'], 'REJECT')
         self.assertEqual(self.report(versions=False)['status'], 'REJECT')
 
+    def test_reference_loader_release_rule_does_not_ignore_flags(self):
+        expected = {'layout': {'section_size': 1600, 'init_offset': 392, 'exit_offset': 1528},
+                    'vermagic': 'stock SMP modversions aarch64'}
+        candidate = {'sha256': 'object', 'modinfo': {'vermagic': ['candidate SMP modversions aarch64']},
+                     'versions': {'api': '0x12345678'}, 'undefined': ['api']}
+        for basic, flags, status in [(True, 'SMP modversions aarch64', 'REVIEW_KERNEL_RELEASE'),
+                                     (False, 'SMP modversions aarch64', 'REJECT'),
+                                     (True, 'modversions aarch64', 'REJECT')]:
+            with self.subTest(basic=basic, flags=flags):
+                candidate['modinfo']['vermagic'] = ['candidate ' + flags]
+                sections = [{'name': '__versions', 'size': 64}] if basic else []
+                with patch.object(module, 'inspect', return_value=candidate), \
+                     patch.object(module, 'header_layout', return_value=expected['layout']), \
+                     patch.object(module, 'load', return_value=(b'', sections)):
+                    result = module.module_report('candidate.ko', expected, {'api': '0x12345678'})
+                    self.assertEqual(result['status'], status)
+
 
 if __name__ == '__main__':
     unittest.main()

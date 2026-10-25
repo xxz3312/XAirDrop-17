@@ -107,7 +107,11 @@ WLAN 基线对象编译与链接已通过，目录中生成 792 个对象文件�
 
 新的 Actions 默认阶段已扩展为 `module-trial`：先生成辅助模块的完整诊断 `.ko`，
 严格执行 modpost，再比较版本记录与模块头部三项参考，并检查 WLAN 全部依赖名称。
-该阶段的结果必须以新运行报告为准，尚不能声称完整模块或 ABI 已通过。
+第一轮严格检查已生成 `wonder_sysctl.ko`，6 条版本记录及 1600/392/1528
+头部参考均匹配，未带版本的未定义符号为 0。原始严格比较因发布前缀不同而停止，
+随后根据参考内核对 basic CRC 的规则只读重分类为 `REVIEW_KERNEL_RELEASE`，
+不修改原始模块。BTF 因缺少 vmlinux 未生成，后续模块及 WLAN 完整依赖仍待新运行。
+[严格检查记录](research/popsicle-module-trial-1.json)。目前不能称为 ABI 或可加载性通过。
 
 1. 解决新增 CNSS 接口缺失及公开源码/DDK 配置差异，补齐真实依赖导出证据，进行完整模块与结构检查。
 2. 在 Xiaomi WLAN 中移植 Wonder provider、接口生命周期、WMI TX、monitor/native RX。

@@ -299,12 +299,16 @@ def modules(work):
         produced.append(path)
         result['modules']['wlan'] = module_report(path, expected, known)
         result['status'] = result['modules']['wlan']['status']
-        return 2 if result['status'] == 'REJECT' else 0
+        if result['status'] != 'REJECT' and any(
+                record['status'] == 'REVIEW_KERNEL_RELEASE' for record in result['modules'].values()):
+            result['status'] = 'REVIEW_KERNEL_RELEASE'
+        return 0 if result['status'] == 'RECORDS_AND_HEADER_MATCH_ONLY' else 2
     except Exception:
         result['status'] = 'MODPOST_OR_BUILD_FAILED'
         raise
     finally:
         (reports / 'module-trial.json').write_text(json.dumps(result, indent=2) + '\n')
+        print(json.dumps(result, indent=2), flush=True)
         if produced:
             with tarfile.open(artifact / 'diagnostic-modules-not-for-install.tar.gz', 'w:gz') as bundle:
                 for path in produced:

@@ -86,14 +86,26 @@ def module_report(path, expected, available):
     bad = {name: {'recorded': crc, 'provider': available.get(name)}
            for name, crc in module['versions'].items() if available.get(name) != crc}
     unversioned = sorted(set(module['undefined']) - module['versions'].keys())
-    verdict = (bool(module['versions']) and not bad and not unversioned and layout == expected['layout']
-               and module['modinfo'].get('vermagic') == [expected['vermagic']])
     _, sections = load(path)
-    return {'status': 'RECORDS_AND_HEADER_MATCH_ONLY' if verdict else 'REJECT',
+    magic = module['modinfo'].get('vermagic', [])
+    exact_magic = magic == [expected['vermagic']]
+    basic_crcs = any(s['name'] == '__versions' and s['size'] for s in sections)
+    # Reference ACK kernel/module/version.c:same_magic ignores the release
+    # prefix only if the basic __versions section exists. Do not rewrite it.
+    loader_magic = exact_magic or (basic_crcs and len(magic) == 1 and ' ' in magic[0]
+                                   and ' ' in expected['vermagic']
+                                   and magic[0].partition(' ')[2] == expected['vermagic'].partition(' ')[2])
+    verdict = (bool(module['versions']) and not bad and not unversioned
+               and layout == expected['layout'] and loader_magic)
+    status = 'REJECT' if not verdict else ('RECORDS_AND_HEADER_MATCH_ONLY' if exact_magic
+                                           else 'REVIEW_KERNEL_RELEASE')
+    return {'status': status,
             'sha256': module['sha256'], 'version_records': len(module['versions']),
             'version_record_mismatches': bad, 'layout': layout,
             'undefined_without_version': unversioned,
             'vermagic': module['modinfo'].get('vermagic'),
+            'vermagic_exact_match': exact_magic,
+            'vermagic_reference_loader_match': bool(loader_magic),
             'btf_present': any(s['name'] == '.BTF' for s in sections),
             'limitations': 'Modpost copies provider CRCs into imports; matching records do not '
                           'independently validate C declarations, private types, KCFI, full structure '
