@@ -71,3 +71,21 @@ GKI 保护模块列表按锁定 common 源码中的官方定义生成，不关�
 
 若 fork 的 Actions 尚未启用，需要先在仓库 Actions 页面启用工作流。
 工作流只有 `contents: read` 权限，不会自行发布安装包或修改仓库。
+
+## 当前阻塞与恢复步骤
+
+[运行 40219646880](https://github.com/xxz3312/XAirDrop-17/actions/runs/40219646880)
+已完成对象编译、72/72 CNSS 名称检查，以及全部 4 个辅助模块的严格 modpost 和链接。
+失败点是 WLAN 完整依赖检查，状态为 `BLOCKED_MISSING_WLAN_EXPORTS`，共缺 33 项。
+完整报告见 [本次诊断记录](research/popsicle-actions-module-blocked.json)。
+
+下一步需要恢复原先采集的 `17pm-airdrop-extra-20261025-162440.tar.gz`。
+当前工作区没有该包；不必重新采集或上传整套系统固件。
+如果原包已经找不到，则需要与基线相同系统版本的原厂 `hwid.ko`、`ipam.ko`、
+`qcom_iommu_util.ko` 和 `qmi_helpers.ko`，以及用于确认来源的系统版本和内核版本。
+这些名称对应待核对的 provider，只有实际解析导出表后才能确认覆盖情况。
+
+恢复后先离线提取真实导出 CRC、类型与命名空间，核对来源、冲突和缺项，
+仅将导出元数据更新进仓库，然后由 Actions 继续严格 WLAN 模块链接。
+原厂二进制无需提交到公开仓库。输入补齐前重复运行同一工作流不会解决阻塞。
+4 个辅助模块仍存在发布字符串差异，且没有生成 BTF；链接完成不表示可加载。

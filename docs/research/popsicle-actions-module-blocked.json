@@ -1,0 +1,119 @@
+{
+  "status": "BLOCKED_MISSING_WLAN_EXPORTS",
+  "modules": {
+    "wonder_sysctl": {
+      "status": "REVIEW_KERNEL_RELEASE",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_records": 6,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "opairshare_wonder_provider": {
+      "status": "REVIEW_KERNEL_RELEASE",
+      "sha256": "110b0692a2391b1a8bc1b9f0e9777575681f3a84b25f3dbe8403b0ad0859d81c",
+      "version_records": 11,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "opairshare_route_b_probe": {
+      "status": "REVIEW_KERNEL_RELEASE",
+      "sha256": "af32367787eee4074aaf1e69c010db4bb4430890a7f9cd610d27d149147be863",
+      "version_records": 3,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "wonder": {
+      "status": "REVIEW_KERNEL_RELEASE",
+      "sha256": "b668bb518f1a9ef350bb26b242021587a2b3157efc8f1ee4d43cacfd2649107f",
+      "version_records": 87,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    }
+  },
+  "wlan_unresolved": [
+    "get_hw_country_version",
+    "ipa_free_skb",
+    "ipa_get_lan_rx_napi",
+    "ipa_get_smmu_params",
+    "ipa_get_wdi_stats",
+    "ipa_is_ready",
+    "ipa_register_ipa_ready_cb",
+    "ipa_send_msg",
+    "ipa_setup_sys_pipe",
+    "ipa_wdi_cleanup_per_inst",
+    "ipa_wdi_conn_pipes_per_inst",
+    "ipa_wdi_create_smmu_mapping_per_inst",
+    "ipa_wdi_dereg_intf_per_inst",
+    "ipa_wdi_disable_pipes_per_inst",
+    "ipa_wdi_disconn_pipes_per_inst",
+    "ipa_wdi_enable_pipes_per_inst",
+    "ipa_wdi_get_capabilities",
+    "ipa_wdi_init_per_inst",
+    "ipa_wdi_opt_dpath_notify_flt_rlsd_per_inst",
+    "ipa_wdi_opt_dpath_notify_flt_rsvd_per_inst",
+    "ipa_wdi_opt_dpath_register_flt_cb_per_inst",
+    "ipa_wdi_reg_intf_per_inst",
+    "ipa_wdi_release_smmu_mapping_per_inst",
+    "ipa_wdi_set_perf_profile_per_inst",
+    "qcom_iommu_get_mappings_configuration",
+    "qmi_add_lookup",
+    "qmi_handle_init",
+    "qmi_handle_release",
+    "qmi_response_type_v01_ei",
+    "qmi_send_request",
+    "qmi_txn_cancel",
+    "qmi_txn_init",
+    "qmi_txn_wait"
+  ],
+  "limitations": "Diagnostic .ko files only. No independent C type, private layout, KCFI, BTF, GKI access, firmware, loading or AirDrop certification.",
+  "workflow_run": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40219646880",
+  "head_sha": "2d57c3ac8f908e6c0fc633ca1dac253ae674d137"
+}
