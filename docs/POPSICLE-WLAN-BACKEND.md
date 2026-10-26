@@ -375,3 +375,39 @@ START 超时的合成响应则携带 WLAN_MLME_HOST_VDEV_START_TIMEOUT，仍需�
 
 本轮只是事务控制器完成及离线验证；实际 MLME callbacks、定时器、owner 引用与排空、
 DOWN/delete 和恢复尚未接通。原有创建拒绝与 Wonder init 不支持行为保留，未在手机加载。
+
+## 原生响应/超时来源接线与 owner 注册表（构建待验证）
+
+0009 在 native target-if 的四个来源插入 `mishare_events_notify`：正常 START、
+正常 STOP、原生 START 超时和 STOP 超时。正常来源只在原有响应解析与匹配 timer-stop
+成功后通知；START 仅接受 START 类型，排除 RESTART，状态需为
+WLAN_MLME_HOST_VDEV_START_OK。超时通知在 recovery/common callback 前发出，
+不读取随后会清零的 timer_status。正常与超时仍走原有回调和返回值，通知结果不改写它们。
+
+新增 `wlan_hdd_mishare_events.c/.h`：绑定仅允许 PASSTHRU vdev，并持有额外的
+WLAN_HDD_ID_OBJ_MGR 引用。绑定错误按分配、引用逆序回收，重复 owner 或
+相同 psoc/vdev ID 拒绝；不同 psoc 的相同 ID 独立。创建实例前必须已有真实 vdev，
+并且旧事件流已经排空；此约束不是由注册表自动证明。
+
+一个 IRQ-save spinlock 保护键查找、事务操作、快照和移除。通知过程没有分配、等待、
+外部回调或保留 owner 指针；解绑取得同一锁、移除并清空 handle 后才在锁外释放存储
+和 vdev 引用。owner handle 的 bind/begin/submitted/snapshot/unbind 仍由调用者串行化，
+不能并发使用已解绑 handle。回调按 psoc/vdev ID 查找，不携带可能失效的 owner 指针。
+持有 vdev 引用不等于允许延后整个 HDD teardown；实际调用者仍须在删除 vdev 和
+销毁 HDD 前解绑。注册表没有替代原生 timer 取消或 vdev ID 复用时的事件排空。
+
+来源明确的 TIMEOUT 按当前匹配命令隔离事务，错命令超时不污染另一条 pending 请求。
+真实固件来源经事务控制器处理提前、重复、失败及迟到响应；被隔离的事务不会被真实
+迟到响应恢复为成功。snapshot 只复制事务状态，不返回内部对象指针。
+
+Actions 编译整份生产 events/txn C，并执行从四个真实插入点提取的 C 代码；
+同时验证移除这些插入和 include 后的整个 RX 文件与 pinned HEAD 逐字一致，
+公开响应定义未变化。测试使用模拟对象管理器、pthread 锁及 ASan/UBSan，覆盖
+引用/分配失败、重复键、PSOC 隔离、提前响应、RESTART 排除、错误命令超时、
+真实 START 失败、START/STOP 超时、迟到响应、解绑后引用释放时重入，以及
+键通知线程与注销/释放并发。它不执行完整 native WMI 解析或真实 timer/IRQ 环境。
+完整 WLAN 对象和 .ko 均需实际含六个 events API，缓存及严格链接/选定布局检查保留。
+
+当前只有 native 通知入口有运行时调用点，注册表默认空，没有实际 owner 绑定者。
+尚未把真实 vdev 创建、START/STOP 命令提交、专用 MLME ops、DOWN/delete 和恢复
+连成完整生命周期；不启用无线或 Wonder init，也未提供手机安装包。

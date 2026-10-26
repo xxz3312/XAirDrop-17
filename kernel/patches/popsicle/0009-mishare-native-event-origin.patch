@@ -1,0 +1,61 @@
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -266,6 +266,7 @@
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_host.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_backend.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_txn.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_events.o
+ 
+ ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
+--- a/qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c
++++ b/qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c
+@@ -24,6 +24,7 @@
+  * from FW
+  */
+ #include <target_if_vdev_mgr_rx_ops.h>
++#include <wlan_hdd_mishare_events.h>
+ #include <target_if_vdev_mgr_tx_ops.h>
+ #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
+ #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
+@@ -225,6 +226,10 @@
+ 		}
+ 
+ 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
++		/* Preserve timeout origin before recovery/common callback. */
++		if (start_rsp.resp_type == WMI_HOST_VDEV_START_RESP_EVENT)
++			mishare_events_notify(psoc, vdev_id, MISHARE_TXN_START,
++					      MISHARE_EVENT_TIMEOUT, false);
+ 		target_if_vdev_mgr_handle_recovery(psoc, vdev_id,
+ 						   recovery_reason, rsp_pos);
+ 		rx_ops->vdev_mgr_start_response(psoc, &start_rsp);
+@@ -235,6 +240,8 @@
+ 		recovery_reason = QDF_VDEV_STOP_RESPONSE_TIMED_OUT;
+ 
+ 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
++		mishare_events_notify(psoc, vdev_id, MISHARE_TXN_STOP,
++				      MISHARE_EVENT_TIMEOUT, false);
+ 		target_if_vdev_mgr_handle_recovery(psoc, vdev_id,
+ 						   recovery_reason, rsp_pos);
+ 		rx_ops->vdev_mgr_stop_response(psoc, &stop_rsp);
+@@ -467,6 +474,11 @@
+ 		goto err;
+ 	}
+ 
++	/* The transport validated/stopped the matching response timer above. */
++	if (vdev_start_resp.resp_type == WMI_HOST_VDEV_START_RESP_EVENT)
++		mishare_events_notify(psoc, vdev_id, MISHARE_TXN_START,
++				      MISHARE_EVENT_FIRMWARE,
++				      vdev_start_resp.status == WLAN_MLME_HOST_VDEV_START_OK);
+ 	status = rx_ops->vdev_mgr_start_response(psoc, &vdev_start_resp);
+ 
+ err:
+@@ -530,6 +542,8 @@
+ 	}
+ 
+ 	rsp.vdev_id = vdev_id;
++	mishare_events_notify(psoc, vdev_id, MISHARE_TXN_STOP,
++			      MISHARE_EVENT_FIRMWARE, true);
+ 	status = rx_ops->vdev_mgr_stop_response(psoc, &rsp);
+ 
+ err:
