@@ -45,8 +45,11 @@
   "compiled_semantic_comparison": "All smali classes match the expected patched sources after ignoring only empty lines and redundant static false/zero/null field encodings. No method/instruction normalization.",
   "non_target_class_default_encoding_changes": 18,
   "cache_saved_before_compilation": true,
-  "validation_pending": "Device NETWORK_FACTORY actual grant and XOS service status; no device runtime, BLE observation or iPhone transfer test.",
+  "validation_pending": "XOS device dependencies, linker namespace, Binder and SELinux; no device runtime, BLE observation or iPhone transfer test.",
   "required_all_class_check_actions_run": 40297139875,
   "required_all_class_check_commit": "1c9a87bf3a58f9c871b474609fd0a372d94ea8b0",
-  "required_all_class_check_conclusion": "success"
+  "required_all_class_check_conclusion": "success",
+  "device_network_factory_granted": true,
+  "device_xos_service_found": false,
+  "device_permission_evidence": "User terminal output: android.permission.NETWORK_FACTORY: granted=true; service check returned not found."
 }

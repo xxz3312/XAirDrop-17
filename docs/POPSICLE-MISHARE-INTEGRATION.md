@@ -94,3 +94,38 @@ service check com.domestic.xoscomm.IDomesticXOsComm/default
 ```
 
 仅出现 requested permissions 条目不代表已授权；需要结合 granted 状态判断。
+
+## XOS 依赖适配审计
+
+用户设备输出已确认 `NETWORK_FACTORY: granted=true`，XOS 服务 `not found`。
+保留 MiShare 原生 NetworkAgent 注册；暂不加入 root broker。如果后续出现实际注册错误再分析。
+
+对参考发布资产 `XAirDrop-1.0.zip` 做了纯静态检查，固定整包及四个 ELF 的 SHA256，
+见 `tools/xos/profile.json` 和 [XOS 报告](research/popsicle-xos-reference-audit.json)。
+发布标签可被重建，固定源码提交不能代替发布资产指纹；这些二进制的原厂固件出处未独立验证。
+
+四个文件为 `DomesticXOsComm`、`com.domestic.xoscomm-V1-ndk.so`、`libxos.so`、`libev.so`。
+它们都是 AArch64 ELF。服务通过 dlopen 加载 libxos，而非通过 DT_NEEDED 直接依赖它。
+四者还需要设备提供 11 个外部库：libbase、libbinder_ndk、libc++、libc、libcutils、
+libdl、liblog、libm、libnl、libpcap、libutils（后缀均为 .so）。
+文件存在不等于 ABI 匹配，仍需核对符号版本、传递依赖和 linker namespace。
+
+本机 MiShare 的 Binder 描述符及 startDomestXOsComm/stopDomestXOsComm/getStatus 名称
+与参考 NDK 库相符；本机调用事务号为 1/2/3。尚未完整验证原生事务编码或 Binder 运行兼容性，
+不能据此宣称服务可用。参考还增加 VINTF AIDL 声明，手工运行服务并通过策略放行。
+本机 SELinux 域与现有 service_contexts 必须先采集，不能直接照搬上游广泛域授权。
+
+参考发布包的 libxos 在 0x177f0/0x17a18 已是 `mov w19, wzr`，
+0x177f4/0x17a1c 已是无条件成功分支：上游聚合配置错误绕过已存在于资产中。
+这只是掩盖返回错误，不能证明 SET_FEATURES 被 Wonder 或 WLAN/固件实现。
+本项目不会在本轮应用该补丁、分发该库或开启系统可用性开关。
+
+`tools/xos/audit_reference.py` 使用 readelf 把参考二进制当作数据检查，完全不执行它们。
+独立 Actions `.github/workflows/xos-audit.yml` 缓存已验证的参考资产，输出报告和只读采集脚本。
+不触发内核或 DEX 编译，也不更改原有启动模块。
+
+设备运行 `tools/device/popsicle-xos-audit.sh`（root）后，在 Download 生成报告。
+脚本只读取设备信息、MiShare 权限/进程域、服务配置和 linker 配置，并复制所需库的候选路径；
+不会加载模块、挂载、改 SELinux/VINTF、运行参考程序或切换 Wi-Fi。
+报告用于后续离线符号与依赖比对，不应提交公开仓库。
+底层无线 backend init 当前仍拒绝运行；即使完成服务依赖核对，完整 AirDrop 也未实现。

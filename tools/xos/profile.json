@@ -1,0 +1,17 @@
+{
+  "reference_commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76",
+  "archive_url": "https://github.com/Leekin2/XAirDrop/releases/download/v1.0/XAirDrop-1.0.zip",
+  "archive_sha256": "64e81b259b920fd3946cf8b882089a607d9a01c07b240362044f108bf9d54419",
+  "entries": {
+    "xos/DomesticXOsComm": "292827f7b433ec05a53ee198ca332e2cb3d5cea35571acd7abde130472bfde3d",
+    "xos/com.domestic.xoscomm-V1-ndk.so": "f037bcea28e3dedf2a341cdc750d6b366a97be6f0aa837979b25a1c9f0e8f3ce",
+    "xos/libxos.so": "a89bc4f3ed4734269ba576d5c128218c22ab778b6920c37236046c1129a69685",
+    "xos/libev.so": "554dac637dcbca577da882260fe56b376893573b9f6ea9e77303021a3901cb0e"
+  },
+  "aggregation_instruction_words": {
+    "0x177f0": "2a1f03f3",
+    "0x177f4": "14000034",
+    "0x17a18": "2a1f03f3",
+    "0x17a1c": "14000034"
+  }
+}

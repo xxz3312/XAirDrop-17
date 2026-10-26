@@ -1,0 +1,58 @@
+name: Xiaomi XOS reference audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/xos-audit.yml
+      - tools/xos/**
+      - tools/device/popsicle-xos-audit.sh
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check Python and shell syntax
+        run: |
+          python3 -m py_compile tools/xos/audit_reference.py
+          sh -n tools/device/popsicle-xos-audit.sh
+      - uses: actions/cache/restore@v4
+        id: reference
+        with:
+          path: .xos-cache
+          key: xos-reference-v1-${{ runner.os }}-${{ hashFiles('tools/xos/profile.json') }}
+      - name: Fetch and verify pinned reference as data
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib,shutil,urllib.request
+          p=json.loads(pathlib.Path('tools/xos/profile.json').read_text())
+          cache=pathlib.Path('.xos-cache');cache.mkdir(exist_ok=True)
+          target=cache/'reference.zip'
+          if not target.exists():
+              partial=cache/'reference.partial'
+              with urllib.request.urlopen(p['archive_url'],timeout=90) as src,partial.open('wb') as out:
+                  shutil.copyfileobj(src,out)
+              partial.replace(target)
+          if hashlib.sha256(target.read_bytes()).hexdigest()!=p['archive_sha256']:
+              raise SystemExit('Reference hash mismatch')
+          PY
+      - uses: actions/cache/save@v4
+        if: steps.reference.outputs.cache-hit != 'true'
+        with:
+          path: .xos-cache
+          key: ${{ steps.reference.outputs.cache-primary-key }}
+      - name: Inspect ELF dependencies and aggregation bypass without execution
+        run: |
+          python3 tools/xos/audit_reference.py --archive .xos-cache/reference.zip --output "$RUNNER_TEMP/xos-audit/reference.json"
+          cp tools/device/popsicle-xos-audit.sh "$RUNNER_TEMP/xos-audit/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xos-static-audit-${{ github.run_id }}
+          path: ${{ runner.temp }}/xos-audit/
+          if-no-files-found: error
+          retention-days: 7
