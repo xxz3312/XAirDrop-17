@@ -1,5 +1,5 @@
 {
-  "status": "DEVICE_XOS_REGISTRATION_AND_LAZY_EXIT_PASSED_CLIENT_AND_RADIO_UNTESTED",
+  "status": "DEVICE_ROOT_BINDER_METADATA_PASSED_MISHARE_AND_RADIO_UNTESTED",
   "reference_results": {
     "DomesticXOsComm": {
       "strong_import_count": 61,
@@ -172,5 +172,19 @@
     "lazy_exit_timestamp": "10-26 18:59:43.453",
     "exit_reason": "Lazy service observed zero clients, unregistered and exited normally.",
     "limits": "Root service lookup and lazy lifecycle observed. No protocol metadata/client transactions, MiShare UID/domain or radio transfer tested. This report does not itself include boot ID/uptime."
+  },
+  "root_binder_metadata_evidence": {
+    "archive_sha256": "118acd2b3b6208b90f4c0d412759099f1ac86a74b19ebb234c8ddf80d5513414",
+    "status": "PASS_ROOT_BINDER_METADATA_ONLY",
+    "client_exit": 0,
+    "service_exit": 143,
+    "state_unchanged": true,
+    "descriptor": "com.domestic.xoscomm.IDomesticXOsComm",
+    "ping": true,
+    "interface_version": 1,
+    "interface_hash": "5240962a28e277f0b9764b8f7d1986b35c106edb",
+    "service_pid": 14462,
+    "service_exit_explanation": "The bounded test sent TERM during cleanup; 143 is not evidence of a service crash. Service was absent at end.",
+    "limits": "Root-only Binder metadata. MiShare process identity/access, app integration and AWDL backend remain unvalidated."
   }
 }

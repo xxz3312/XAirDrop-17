@@ -422,3 +422,20 @@ su -c 'sh /sdcard/Download/xos-binder-probe/popsicle-xos-binder-smoke.sh /sdcard
 ```
 
 上传 Download/17pm-xos-binder-*.tar.gz。不需要重装声明模块，不启用 wonder_enable。
+
+
+## Root Binder 协议元数据实机通过
+
+19:09 报告 SHA256：
+`118acd2b3b6208b90f4c0d412759099f1ac86a74b19ebb234c8ddf80d5513414`。
+客户端退出 0，描述符、ping、接口版本 1 和固定哈希全部符合预期。
+结果 PASS_ROOT_BINDER_METADATA_ONLY；前后可观察状态相同，结束时服务不存在。
+服务退出 143 来自测试脚本的 TERM 清理，不能描述为崩溃或错误退出。
+本轮没有调用 start/stop/status/config，没有无线启动、MiShare caller 或传输测试。
+
+下一步需确认真实 MiShare 进程的 UID 与 SELinux 域，再验证其应用侧访问链路。
+不能用 root app_process、run-as UID 或其他独立 app 的测试替代 MiShare 本身的调用身份。
+已从用户原 Manifest 核对普通设置入口：
+`com.miui.mishare.connectivity/com.miui.mishare.activity.MiShareSettingsActivity`，进程为 :ui。
+打开普通设置页后读取 ps -AZ 可以取得真实进程域，不需要开启 AirDrop 可用性或改签名。
+在取得实际身份和调用证据前，不加入基于猜测的广泛 SELinux 规则。
