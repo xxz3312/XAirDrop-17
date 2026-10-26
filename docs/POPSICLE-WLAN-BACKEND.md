@@ -89,3 +89,47 @@ su -c 'sh /sdcard/Download/popsicle-wlan-fw-audit.sh'
 上传 `17pm-wlan-fw-*.tar.gz`。随后核对候选固件与驱动中的 vdev 类型转换、
 相关命令处理证据，再决定原生 PASSTHRU 后端的接线与受限实测方案。
 当前没有新的可刷无线模块，也未宣称后端初始化或收发通过。
+
+## 20:26 固件输入到齐，原厂 PASSTHRU 名称对应空实现
+
+采集报告 SHA256 `8b870e358cd522a43bef648d33311f962727cd681a51c60a1da62ad61d31cdac`。
+已逐个校验复制文件摘要；SELinux 为 Enforcing，采集前后状态一致。
+原厂 `qca_cld3_peach_v2.ko` SHA256 仍为
+`202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75`。
+日志未提供实际加载固件路径，故以下仍是候选；按当前 Peach 驱动优先分析 Peach 镜像。
+
+| 来源 | SHA256 | 固件版本标记 |
+| --- | --- | --- |
+| peach/amss20.bin | 8d0ac09be5489393ed23c19ace3ea9e44ceff5e29c4bb75ea3d22acf26d92e8f | WLAN.GNG.2.0-01294.3-QCAGNGSWPL_V2_TO_SILICONZ-1.121647.68.168475.4 |
+| kiwi/amss.bin | c42e06f534c07ffdaec3b265ff1e38b312741e35eb5fb21b5ca77995fab8d688 | CI_WLAN.HMT.1.0-02352.5.1-QCAHMTSWPL_V1.0_V2.0_SILICON-2 |
+| kiwi/amss20.bin | e16100daffd481a40d66476ec7e3e4f3c6cfd6ac48bbd1a033d58ebcbdca8756 | WLAN.HMT.2.0-03335-QCAHMTSWPL_V1.0_V2.0_SILICONZ-1 |
+
+Peach 文件开头是 ARM ELF32，偏移 0x80000 处还有有效 QDSP6 ELF32（21 个 program
+headers、无 section table）。另一个 0x44345e 处的 ELF 字样头部无效，不算第三个镜像。
+扫描器校验头部、program table 和 segment 边界，不能仅查 magic。
+没有符号表/节表，字符串检索未定位出可认证的 PASSTHRU 命令处理路径。
+这不等于证明固件不支持 0x9；仍需专门的 DSP 命令分发分析或后续受限固件实测。
+
+原厂模块符号表确有两个相关函数，已读取所在 .text 的真实字节并独立反汇编：
+
+| 函数 | 字节 | 实际指令 |
+| --- | --- | --- |
+| hdd_sme_passthrough_mode_callback | c0035fd6 | ret |
+| dp_tx_send_passthru | e00302aac0035fd6 | mov x0, x2; ret |
+
+这两处函数体没有调用、数据拷贝或发送实现；不能因符号存在就把它们作为收发后端。
+返回参数的含义仍需结合调用者/原型核对，不仅凭名称推断全局发送行为。
+本结论也没有证明其他驱动路径或固件内部一定缺少 PASSTHRU 支持。
+
+`tools/kernel/firmware_image_audit.py` 可离线重验容器结构、版本标记和原厂空实现字节。
+[完整元数据记录](research/popsicle-wlan-firmware-device-audit.json) 包含文件摘要、来源、
+各层 ELF、函数偏移和明确限制；不提交原厂固件/模块二进制。
+夹具覆盖嵌套 DSP、无效内嵌 magic、截断头部/段及纯字符串不能认证能力。
+
+采集脚本旧版把所有非 Peach 模块都标成 STOCK_MODULE_HASH_CHANGED，含义不准确。
+Kiwi/WCN7750 是其他随系统提供的型号变体；现改为 OTHER_WLAN_VARIANT_NOT_SELECTED。
+只有被选中的 Peach 模块不匹配才标 HASH_CHANGED。新增负例测试，原报告无需重跑。
+
+已有输入足以继续主机侧源码移植，无需重复固件采集。驱动生命周期、模式转换与收发路径
+需要真实实现；不能 hook 空函数、直接写模式数值或让 init 返回成功来替代。
+当前没有新可刷驱动；原生编译仍通过现有缓存的 GitHub Actions 执行。

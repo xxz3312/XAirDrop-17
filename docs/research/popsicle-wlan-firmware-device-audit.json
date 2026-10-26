@@ -1,0 +1,789 @@
+{
+  "status": "OFFLINE_STRUCTURE_AND_STUB_EVIDENCE_ONLY",
+  "firmware": [
+    {
+      "bytes": 7319616,
+      "sha256": "8d0ac09be5489393ed23c19ace3ea9e44ceff5e29c4bb75ea3d22acf26d92e8f",
+      "elf_images": [
+        {
+          "offset": 0,
+          "machine": 40,
+          "machine_name": "ARM",
+          "entry": 25208832,
+          "section_count": 0,
+          "program_headers": [
+            {
+              "type": 0,
+              "file_offset": 0,
+              "virtual_address": 0,
+              "file_size": 276,
+              "memory_size": 0,
+              "flags": 117440512
+            },
+            {
+              "type": 0,
+              "file_offset": 288,
+              "virtual_address": 0,
+              "file_size": 11136,
+              "memory_size": 11136,
+              "flags": 33554432
+            },
+            {
+              "type": 1,
+              "file_offset": 12288,
+              "virtual_address": 25120768,
+              "file_size": 88324,
+              "memory_size": 88324,
+              "flags": 50331653
+            },
+            {
+              "type": 1,
+              "file_offset": 102400,
+              "virtual_address": 25210880,
+              "file_size": 46812,
+              "memory_size": 46812,
+              "flags": 50331655
+            },
+            {
+              "type": 1,
+              "file_offset": 151552,
+              "virtual_address": 25280512,
+              "file_size": 38600,
+              "memory_size": 38600,
+              "flags": 50331654
+            },
+            {
+              "type": 1,
+              "file_offset": 192512,
+              "virtual_address": 21434368,
+              "file_size": 11524,
+              "memory_size": 11524,
+              "flags": 50331653
+            },
+            {
+              "type": 1,
+              "file_offset": 204800,
+              "virtual_address": 21446656,
+              "file_size": 5680,
+              "memory_size": 5680,
+              "flags": 50331654
+            }
+          ]
+        },
+        {
+          "offset": 524288,
+          "machine": 164,
+          "machine_name": "QDSP6",
+          "entry": 21940696,
+          "section_count": 0,
+          "program_headers": [
+            {
+              "type": 0,
+              "file_offset": 0,
+              "virtual_address": 0,
+              "file_size": 724,
+              "memory_size": 0,
+              "flags": 117440512
+            },
+            {
+              "type": 0,
+              "file_offset": 736,
+              "virtual_address": 0,
+              "file_size": 11472,
+              "memory_size": 11472,
+              "flags": 33554432
+            },
+            {
+              "type": 1,
+              "file_offset": 12288,
+              "virtual_address": 32382976,
+              "file_size": 122880,
+              "memory_size": 122880,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 135168,
+              "virtual_address": 12582912,
+              "file_size": 24,
+              "memory_size": 24,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 135424,
+              "virtual_address": 32375040,
+              "file_size": 3840,
+              "memory_size": 3840,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 139264,
+              "virtual_address": 12587008,
+              "file_size": 28,
+              "memory_size": 28,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 139520,
+              "virtual_address": 32379136,
+              "file_size": 3840,
+              "memory_size": 3840,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 143360,
+              "virtual_address": 21073920,
+              "file_size": 56704,
+              "memory_size": 56704,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 200704,
+              "virtual_address": 21868544,
+              "file_size": 94208,
+              "memory_size": 94208,
+              "flags": 83886085
+            },
+            {
+              "type": 1,
+              "file_offset": 294912,
+              "virtual_address": 21962752,
+              "file_size": 125728,
+              "memory_size": 125728,
+              "flags": 83886084
+            },
+            {
+              "type": 1,
+              "file_offset": 421888,
+              "virtual_address": 22089728,
+              "file_size": 235960,
+              "memory_size": 1616096,
+              "flags": 83886086
+            },
+            {
+              "type": 1,
+              "file_offset": 659776,
+              "virtual_address": 20971840,
+              "file_size": 31104,
+              "memory_size": 31104,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 692224,
+              "virtual_address": 25104384,
+              "file_size": 3043328,
+              "memory_size": 3043328,
+              "flags": 1048581
+            },
+            {
+              "type": 1,
+              "file_offset": 3735552,
+              "virtual_address": 28147712,
+              "file_size": 217088,
+              "memory_size": 217088,
+              "flags": 1048580
+            },
+            {
+              "type": 1,
+              "file_offset": 3952640,
+              "virtual_address": 28364800,
+              "file_size": 1572864,
+              "memory_size": 1572864,
+              "flags": 1048582
+            },
+            {
+              "type": 1,
+              "file_offset": 5525504,
+              "virtual_address": 4026531840,
+              "file_size": 98304,
+              "memory_size": 98304,
+              "flags": 16777222
+            },
+            {
+              "type": 1,
+              "file_offset": 5623808,
+              "virtual_address": 0,
+              "file_size": 0,
+              "memory_size": 0,
+              "flags": 16777216
+            },
+            {
+              "type": 1,
+              "file_offset": 5623808,
+              "virtual_address": 4026630144,
+              "file_size": 60784,
+              "memory_size": 60784,
+              "flags": 16777222
+            },
+            {
+              "type": 1,
+              "file_offset": 5685248,
+              "virtual_address": 0,
+              "file_size": 0,
+              "memory_size": 0,
+              "flags": 0
+            },
+            {
+              "type": 1,
+              "file_offset": 5685248,
+              "virtual_address": 3556769792,
+              "file_size": 9396,
+              "memory_size": 9396,
+              "flags": 16777220
+            },
+            {
+              "type": 1,
+              "file_offset": 5697536,
+              "virtual_address": 23724032,
+              "file_size": 1097792,
+              "memory_size": 1097792,
+              "flags": 6
+            }
+          ]
+        }
+      ],
+      "rejected_magic": [
+        {
+          "offset": 4469854,
+          "reason": "Not a complete little-endian ELF32 header"
+        }
+      ],
+      "version_strings": [
+        {
+          "offset": 938192,
+          "text": "IMAGE_VARIANT_STRING=7880.wlanfw.eval_v2_TOQ"
+        },
+        {
+          "offset": 938288,
+          "text": "QC_IMAGE_VERSION_STRING=WLAN.GNG.2.0-01294.3-QCAGNGSWPL_V2_TO_SILICONZ-1.121647.68.168475.4"
+        }
+      ],
+      "active_image_confirmed": false,
+      "passthru_support": "UNVERIFIED",
+      "file": "8d0ac09be5489393ed23c19ace3ea9e44ceff5e29c4bb75ea3d22acf26d92e8f-amss20.bin",
+      "source_paths": [
+        "/vendor/firmware_mnt/image/peach/amss20.bin"
+      ]
+    },
+    {
+      "bytes": 7458880,
+      "sha256": "c42e06f534c07ffdaec3b265ff1e38b312741e35eb5fb21b5ca77995fab8d688",
+      "elf_images": [
+        {
+          "offset": 0,
+          "machine": 40,
+          "machine_name": "ARM",
+          "entry": 24726528,
+          "section_count": 0,
+          "program_headers": [
+            {
+              "type": 0,
+              "file_offset": 0,
+              "virtual_address": 0,
+              "file_size": 852,
+              "memory_size": 0,
+              "flags": 117440512
+            },
+            {
+              "type": 0,
+              "file_offset": 4096,
+              "virtual_address": 4060946432,
+              "file_size": 840,
+              "memory_size": 4096,
+              "flags": 35651584
+            },
+            {
+              "type": 1,
+              "file_offset": 8192,
+              "virtual_address": 24653824,
+              "file_size": 72964,
+              "memory_size": 72964,
+              "flags": 50331653
+            },
+            {
+              "type": 1,
+              "file_offset": 81920,
+              "virtual_address": 24735744,
+              "file_size": 46204,
+              "memory_size": 46204,
+              "flags": 50331655
+            },
+            {
+              "type": 1,
+              "file_offset": 131072,
+              "virtual_address": 24805376,
+              "file_size": 18120,
+              "memory_size": 18120,
+              "flags": 50331654
+            },
+            {
+              "type": 1,
+              "file_offset": 151552,
+              "virtual_address": 21504000,
+              "file_size": 9732,
+              "memory_size": 9732,
+              "flags": 50331653
+            },
+            {
+              "type": 1,
+              "file_offset": 163840,
+              "virtual_address": 21516288,
+              "file_size": 5364,
+              "memory_size": 5364,
+              "flags": 50331654
+            },
+            {
+              "type": 1,
+              "file_offset": 172032,
+              "virtual_address": 20320256,
+              "file_size": 118784,
+              "memory_size": 118784,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 290816,
+              "virtual_address": 12582912,
+              "file_size": 20,
+              "memory_size": 20,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 294912,
+              "virtual_address": 21151744,
+              "file_size": 45960,
+              "memory_size": 45960,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 344064,
+              "virtual_address": 22003712,
+              "file_size": 208896,
+              "memory_size": 208896,
+              "flags": 83886085
+            },
+            {
+              "type": 1,
+              "file_offset": 552960,
+              "virtual_address": 22212608,
+              "file_size": 181456,
+              "memory_size": 181456,
+              "flags": 83886084
+            },
+            {
+              "type": 1,
+              "file_offset": 737280,
+              "virtual_address": 22396928,
+              "file_size": 128388,
+              "memory_size": 1322472,
+              "flags": 83886086
+            },
+            {
+              "type": 1,
+              "file_offset": 868352,
+              "virtual_address": 20971840,
+              "file_size": 34368,
+              "memory_size": 34368,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 905216,
+              "virtual_address": 24641536,
+              "file_size": 2174976,
+              "memory_size": 2174976,
+              "flags": 1048581
+            },
+            {
+              "type": 1,
+              "file_offset": 3080192,
+              "virtual_address": 26816512,
+              "file_size": 192512,
+              "memory_size": 192512,
+              "flags": 1048580
+            },
+            {
+              "type": 1,
+              "file_offset": 3272704,
+              "virtual_address": 27009024,
+              "file_size": 1552384,
+              "memory_size": 1552384,
+              "flags": 1048582
+            },
+            {
+              "type": 1,
+              "file_offset": 4825088,
+              "virtual_address": 4026531840,
+              "file_size": 98304,
+              "memory_size": 98304,
+              "flags": 16777222
+            },
+            {
+              "type": 1,
+              "file_offset": 4923392,
+              "virtual_address": 0,
+              "file_size": 0,
+              "memory_size": 0,
+              "flags": 16777216
+            },
+            {
+              "type": 1,
+              "file_offset": 4923392,
+              "virtual_address": 4026630144,
+              "file_size": 51072,
+              "memory_size": 51072,
+              "flags": 16777222
+            },
+            {
+              "type": 1,
+              "file_offset": 4976640,
+              "virtual_address": 4060086272,
+              "file_size": 856944,
+              "memory_size": 856944,
+              "flags": 16777220
+            },
+            {
+              "type": 1,
+              "file_offset": 5836800,
+              "virtual_address": 23719936,
+              "file_size": 736,
+              "memory_size": 736,
+              "flags": 4
+            },
+            {
+              "type": 0,
+              "file_offset": 5840896,
+              "virtual_address": 29360128,
+              "file_size": 617108,
+              "memory_size": 617108,
+              "flags": 5
+            },
+            {
+              "type": 0,
+              "file_offset": 6459392,
+              "virtual_address": 30408704,
+              "file_size": 310556,
+              "memory_size": 310556,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 6770688,
+              "virtual_address": 23789568,
+              "file_size": 688192,
+              "memory_size": 688192,
+              "flags": 6
+            }
+          ]
+        }
+      ],
+      "rejected_magic": [],
+      "version_strings": [
+        {
+          "offset": 726128,
+          "text": "IMAGE_VARIANT_STRING=7850.wlanfw.eval_v1_TOQ"
+        },
+        {
+          "offset": 726224,
+          "text": "QC_IMAGE_VERSION_STRING=CI_WLAN.HMT.1.0-02352.5.1-QCAHMTSWPL_V1.0_V2.0_SILICON-2"
+        }
+      ],
+      "active_image_confirmed": false,
+      "passthru_support": "UNVERIFIED",
+      "file": "c42e06f534c07ffdaec3b265ff1e38b312741e35eb5fb21b5ca77995fab8d688-amss.bin",
+      "source_paths": [
+        "/vendor/firmware_mnt/image/kiwi/amss.bin"
+      ]
+    },
+    {
+      "bytes": 6414400,
+      "sha256": "e16100daffd481a40d66476ec7e3e4f3c6cfd6ac48bbd1a033d58ebcbdca8756",
+      "elf_images": [
+        {
+          "offset": 0,
+          "machine": 40,
+          "machine_name": "ARM",
+          "entry": 24802048,
+          "section_count": 0,
+          "program_headers": [
+            {
+              "type": 0,
+              "file_offset": 0,
+              "virtual_address": 0,
+              "file_size": 884,
+              "memory_size": 0,
+              "flags": 117440512
+            },
+            {
+              "type": 0,
+              "file_offset": 4096,
+              "virtual_address": 4026716160,
+              "file_size": 872,
+              "memory_size": 4096,
+              "flags": 35651584
+            },
+            {
+              "type": 1,
+              "file_offset": 8192,
+              "virtual_address": 24727552,
+              "file_size": 74756,
+              "memory_size": 74756,
+              "flags": 50331653
+            },
+            {
+              "type": 1,
+              "file_offset": 86016,
+              "virtual_address": 24809472,
+              "file_size": 46500,
+              "memory_size": 46500,
+              "flags": 50331655
+            },
+            {
+              "type": 1,
+              "file_offset": 135168,
+              "virtual_address": 24879104,
+              "file_size": 18120,
+              "memory_size": 18120,
+              "flags": 50331654
+            },
+            {
+              "type": 1,
+              "file_offset": 155648,
+              "virtual_address": 21422080,
+              "file_size": 9732,
+              "memory_size": 9732,
+              "flags": 50331653
+            },
+            {
+              "type": 1,
+              "file_offset": 167936,
+              "virtual_address": 21434368,
+              "file_size": 5368,
+              "memory_size": 5368,
+              "flags": 50331654
+            },
+            {
+              "type": 1,
+              "file_offset": 176128,
+              "virtual_address": 20324352,
+              "file_size": 122880,
+              "memory_size": 122880,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 299008,
+              "virtual_address": 12582912,
+              "file_size": 256,
+              "memory_size": 256,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 303360,
+              "virtual_address": 20316416,
+              "file_size": 3840,
+              "memory_size": 3840,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 307200,
+              "virtual_address": 12587008,
+              "file_size": 256,
+              "memory_size": 256,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 311552,
+              "virtual_address": 20320512,
+              "file_size": 3840,
+              "memory_size": 3840,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 315392,
+              "virtual_address": 21069824,
+              "file_size": 46672,
+              "memory_size": 46672,
+              "flags": 5
+            },
+            {
+              "type": 1,
+              "file_offset": 364544,
+              "virtual_address": 21667840,
+              "file_size": 167936,
+              "memory_size": 167936,
+              "flags": 83886085
+            },
+            {
+              "type": 1,
+              "file_offset": 532480,
+              "virtual_address": 21835776,
+              "file_size": 186772,
+              "memory_size": 186772,
+              "flags": 83886084
+            },
+            {
+              "type": 1,
+              "file_offset": 720896,
+              "virtual_address": 22024192,
+              "file_size": 218988,
+              "memory_size": 1483488,
+              "flags": 83886086
+            },
+            {
+              "type": 1,
+              "file_offset": 942400,
+              "virtual_address": 20971840,
+              "file_size": 23488,
+              "memory_size": 23488,
+              "flags": 6
+            },
+            {
+              "type": 1,
+              "file_offset": 966656,
+              "virtual_address": 0,
+              "file_size": 0,
+              "memory_size": 0,
+              "flags": 1048576
+            },
+            {
+              "type": 1,
+              "file_offset": 966656,
+              "virtual_address": 24715264,
+              "file_size": 2756608,
+              "memory_size": 2756608,
+              "flags": 1048581
+            },
+            {
+              "type": 1,
+              "file_offset": 3723264,
+              "virtual_address": 27471872,
+              "file_size": 217088,
+              "memory_size": 217088,
+              "flags": 1048580
+            },
+            {
+              "type": 1,
+              "file_offset": 3940352,
+              "virtual_address": 27688960,
+              "file_size": 1380352,
+              "memory_size": 1380352,
+              "flags": 1048582
+            },
+            {
+              "type": 1,
+              "file_offset": 5320704,
+              "virtual_address": 4026531840,
+              "file_size": 122880,
+              "memory_size": 122880,
+              "flags": 16777222
+            },
+            {
+              "type": 1,
+              "file_offset": 5443584,
+              "virtual_address": 0,
+              "file_size": 0,
+              "memory_size": 0,
+              "flags": 16777216
+            },
+            {
+              "type": 1,
+              "file_offset": 5443584,
+              "virtual_address": 4026654720,
+              "file_size": 60192,
+              "memory_size": 60192,
+              "flags": 16777222
+            },
+            {
+              "type": 1,
+              "file_offset": 5505024,
+              "virtual_address": 23511040,
+              "file_size": 736,
+              "memory_size": 736,
+              "flags": 4
+            },
+            {
+              "type": 1,
+              "file_offset": 5509120,
+              "virtual_address": 23527424,
+              "file_size": 905280,
+              "memory_size": 905280,
+              "flags": 6
+            }
+          ]
+        }
+      ],
+      "rejected_magic": [],
+      "version_strings": [
+        {
+          "offset": 711040,
+          "text": "IMAGE_VARIANT_STRING=7850.wlanfw.eval_v2_TOQ"
+        },
+        {
+          "offset": 711136,
+          "text": "QC_IMAGE_VERSION_STRING=WLAN.HMT.2.0-03335-QCAHMTSWPL_V1.0_V2.0_SILICONZ-1"
+        }
+      ],
+      "active_image_confirmed": false,
+      "passthru_support": "UNVERIFIED",
+      "file": "e16100daffd481a40d66476ec7e3e4f3c6cfd6ac48bbd1a033d58ebcbdca8756-amss20.bin",
+      "source_paths": [
+        "/vendor/firmware_mnt/image/kiwi/amss20.bin"
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+      "related_functions": [
+        {
+          "name": "hdd_sme_passthrough_mode_callback",
+          "section": ".text",
+          "section_offset": 2270156,
+          "file_offset": 4904720,
+          "bytes": 4,
+          "code_hex": "c0035fd6",
+          "interpretation": "AARCH64_RET_ONLY"
+        },
+        {
+          "name": "dp_tx_send_passthru",
+          "section": ".text",
+          "section_offset": 4037332,
+          "file_offset": 6671896,
+          "bytes": 8,
+          "code_hex": "e00302aac0035fd6",
+          "interpretation": "AARCH64_MOV_X0_X2_RET_ONLY"
+        }
+      ],
+      "limitations": "Exact bodies only: ret and argument-return helpers do not implement transmit themselves. This does not prove firmware support or absence of another path.",
+      "file": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75-qca_cld3_peach_v2.ko"
+    }
+  ],
+  "radio_usable": null,
+  "firmware_passthru_support": "UNVERIFIED",
+  "limitations": "No commands sent to target firmware. Candidate names, embedded ELFs, strings and host stubs do not establish active firmware or vdev type 0x9 support.",
+  "collection": {
+    "report": "17pm-wlan-fw-20261026-202640-30020.tar.gz",
+    "report_sha256": "8b870e358cd522a43bef648d33311f962727cd681a51c60a1da62ad61d31cdac",
+    "device": "popsicle",
+    "firmware": "OS4.0.5.0.XPBCNXM",
+    "state_unchanged": true,
+    "selinux": "Enforcing",
+    "loaded_wlan_module": "qca_cld3_peach_v2",
+    "stock_module_matches_recorded_sha256": true,
+    "active_firmware_image_confirmed": false
+  },
+  "collector_label_correction": "Kiwi/WCN7750 are other shipped module variants, not evidence that the selected Peach module changed; collector now reports OTHER_WLAN_VARIANT_NOT_SELECTED."
+}

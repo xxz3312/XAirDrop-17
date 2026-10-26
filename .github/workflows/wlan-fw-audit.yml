@@ -7,6 +7,9 @@ on:
       - .github/workflows/wlan-fw-audit.yml
       - tools/device/popsicle-wlan-fw-audit.sh
       - tests/test_wlan_fw_audit.py
+      - tests/test_wlan_firmware_image_audit.py
+      - tools/kernel/firmware_image_audit.py
+      - docs/research/popsicle-wlan-firmware-device-audit.json
 permissions:
   contents: read
 jobs:
@@ -20,6 +23,7 @@ jobs:
       - name: Verify shell and package read-only tool
         run: |
           python3 -m unittest discover -s tests -p 'test_wlan_fw_audit.py'
+          python3 -m unittest discover -s tests -p 'test_wlan_firmware_image_audit.py'
           sh -n tools/device/popsicle-wlan-fw-audit.sh
           out="$RUNNER_TEMP/wlan-fw-audit"
           mkdir -p "$out"

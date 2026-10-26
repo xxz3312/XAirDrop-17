@@ -67,6 +67,9 @@ copy_candidate() {
     fi
     digest=$(sha256sum "$real") || return
     digest=${digest%% *}
+    if [ "$kind" = module ] && [ "$(basename "$real")" != qca_cld3_peach_v2.ko ]; then
+        printf '%s\t%s\t%s\t%s\t%s\tOTHER_WLAN_VARIANT_NOT_SELECTED\n' "$kind" "$source" "$real" "$size" "$digest" >> "$work/manifest.tsv"; return
+    fi
     if [ "$kind" = module ] && [ "$digest" != 202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75 ]; then
         printf '%s\t%s\t%s\t%s\t%s\tSTOCK_MODULE_HASH_CHANGED\n' "$kind" "$source" "$real" "$size" "$digest" >> "$work/manifest.tsv"; return
     fi

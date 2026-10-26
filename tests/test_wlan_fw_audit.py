@@ -38,6 +38,7 @@ class FirmwareCollectorTests(unittest.TestCase):
             mod = root / 'vendor_dlkm/lib/modules'
             mod.mkdir(parents=True)
             (mod / 'qca_cld3_peach_v2.ko').write_bytes(b'changed stock module')
+            (mod / 'qca_cld3_kiwi_v2.ko').write_bytes(b'other shipped variant')
             proc = root / 'proc'
             proc.mkdir()
             (proc / 'modules').write_text('qca_cld3_peach_v2 fixture\n')
@@ -61,6 +62,7 @@ class FirmwareCollectorTests(unittest.TestCase):
                 self.assertIn('OUTSIDE_FIRMWARE_MODULE_ROOTS', manifest)
                 self.assertIn('SIZE_LIMIT', manifest)
                 self.assertIn('STOCK_MODULE_HASH_CHANGED', manifest)
+                self.assertIn('OTHER_WLAN_VARIANT_NOT_SELECTED', manifest)
                 self.assertIn('firmware_files=1\n', result)
                 self.assertIn('stock_module_files=0\n', result)
                 self.assertIn('state_unchanged=1\n', result)
