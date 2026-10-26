@@ -85,7 +85,8 @@ def setup(work):
         ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc'),
         ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc'),
         ('wlan_hdd_mishare_txn.c', 'src'), ('wlan_hdd_mishare_txn.h', 'inc'),
-        ('wlan_hdd_mishare_events.c', 'src'), ('wlan_hdd_mishare_events.h', 'inc')]:
+        ('wlan_hdd_mishare_events.c', 'src'), ('wlan_hdd_mishare_events.h', 'inc'),
+        ('wlan_hdd_mishare_commands.c', 'src'), ('wlan_hdd_mishare_commands.h', 'inc')]:
         shutil.copy2(REPO / 'kernel/popsicle-hdd' / source,
                      work / 'wlan/qcacld-3.0/core/hdd' / destination / source)
 
@@ -154,7 +155,9 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_vdev_txn_begin', 'mishare_vdev_txn_submitted',
              'mishare_vdev_txn_response', 'mishare_vdev_txn_timeout',
              'mishare_events_bind', 'mishare_events_unbind', 'mishare_events_begin',
-             'mishare_events_submitted', 'mishare_events_snapshot', 'mishare_events_notify']
+             'mishare_events_submitted', 'mishare_events_snapshot', 'mishare_events_notify',
+             'mishare_events_begin_vdev', 'mishare_command_submit_start',
+             'mishare_command_submit_stop']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -199,6 +202,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/passthru_mode_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/passthru-mode-fixture.json'],
                'passthru-mode-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_commands_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-commands-fixture.json'],
+               'mishare-commands-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_events_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-events-fixture.json'],
                'mishare-events-fixture.log')

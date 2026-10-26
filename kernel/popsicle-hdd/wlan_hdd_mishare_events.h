@@ -21,6 +21,10 @@ int mishare_events_bind(struct wlan_objmgr_vdev *vdev,
 void mishare_events_unbind(struct mishare_event_owner **owner);
 int mishare_events_begin(struct mishare_event_owner *owner,
                          enum mishare_txn_command command, u64 *ticket);
+/* Atomically require the exact bound vdev before starting a transaction. */
+int mishare_events_begin_vdev(struct mishare_event_owner *owner,
+                              struct wlan_objmgr_vdev *vdev,
+                              enum mishare_txn_command command, u64 *ticket);
 int mishare_events_submitted(struct mishare_event_owner *owner, u64 ticket,
                              enum mishare_txn_delivery delivery);
 int mishare_events_snapshot(struct mishare_event_owner *owner,

@@ -118,6 +118,27 @@ int mishare_events_begin(struct mishare_event_owner *owner,
     return ret;
 }
 
+int mishare_events_begin_vdev(struct mishare_event_owner *owner,
+                              struct wlan_objmgr_vdev *vdev,
+                              enum mishare_txn_command command, u64 *ticket)
+{
+    unsigned long flags;
+    int ret;
+
+    if (!ticket)
+        return -EINVAL;
+    *ticket = 0;
+    if (!owner || !vdev)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_events_lock, flags);
+    if (owner->vdev != vdev)
+        ret = -EXDEV;
+    else
+        ret = mishare_vdev_txn_begin(&owner->txn, command, ticket);
+    spin_unlock_irqrestore(&mishare_events_lock, flags);
+    return ret;
+}
+
 int mishare_events_submitted(struct mishare_event_owner *owner, u64 ticket,
                              enum mishare_txn_delivery delivery)
 {

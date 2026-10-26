@@ -431,3 +431,35 @@ Actions 编译整份生产 events/txn C，并执行从四个真实插入点提�
 下一段要实现专用 MLME ops，以及真实 vdev 创建与 START/STOP 命令提交端的归属和
 失败回收，再处理 DOWN/delete、恢复与 vdev ID 复用前的事件排空。
 目前仍保留创建拒绝和 Wonder init 不支持，没有向手机发送固件请求或提供安装步骤。
+
+## 原生 START/STOP 命令提交端（构建待验证）
+
+新增 `wlan_hdd_mishare_commands.c/.h`，0010 将它编入原有 WLAN。
+内部 START/STOP 入口调用现有 `vdev_mgr_start_send(mlme, false)` / `vdev_mgr_stop_send`，
+不另造 WMI 包、不使用 RESTART、也不走 STA 或 MONITOR 的提交函数。
+当前没有运行时调用者，专用 MLME ops 与创建保护仍未启用。
+
+提交前检查有效 owner/MLME/vdev，要求 PASSTHRU mode、type=9/subtype=0，
+并确认该 MLME 指针正是 vdev 已发布的组件。新增 `mishare_events_begin_vdev`
+在注册表锁内检查 owner 绑定的确切 vdev 指针并开始事务；不同对象不能借相同 ID
+操作另一个 owner。所有前置/状态拒绝均不调用原生发送，输出 ticket=0。
+
+开始事务后释放注册表锁再调用原生 API，因此同步/提前响应可以安全进入原生来源
+通知。原生 SUCCESS 只记录 ACCEPTED，返回 0 不等于 START/STOP 已完成；
+是否收到真实完成必须查询事务快照。提前失败或超时会使提交结果返回错误且保持隔离。
+一般原生错误一律按 UNKNOWN 处理，保留其真实 `qdf_status_to_os_return` 返回值，
+不能把 INVAL/timeout 等一般错误擅自认定为命令未发出。此时 ticket 非零、owner 与
+vdev 引用仍保留，没有自动重试、解绑、DELETE 或资源释放。
+
+调用者必须在整个调用期间串行化 owner handle，保证 vdev/MLME 组件存活，并拥有
+配置/命令转换权限；同步原生回调不能解绑同一 owner。信道、法规、并发和 DFS 配置
+必须由后续完整调用者建立，现有原生 API 负责其参数路径。本段没有替代这些前置条件，
+没有创建 vdev，没有发 UP/DOWN/DELETE，也没有把此提交端接到 Wonder init。
+
+Actions 编译实际 commands/events/txn C，以原生 vdev-manager 发送和组件/对象管理器
+替身测试：空/错误组件、mode/type/subtype、准确 vdev 绑定、前置拒绝不发送、
+每事务只发送一次、排队成功仍 pending、提前成功/失败/超时且不持注册表锁、
+无关 vdev 响应、一般发送错误隔离并保留错误码、不因失败释放 owner/引用、STOP 与
+终态拒绝复用。错误码转换提取锁定源码的默认 QDF 映射函数；不会把替身执行称为真实
+native 参数打包或无线测试。新三个 API 必须实际出现在 WLAN 对象和 .ko 中。
+所有原生编译仍只由 Actions 执行，工具链缓存和严格链接/选定布局检查保留。
