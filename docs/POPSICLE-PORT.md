@@ -41,8 +41,9 @@
 - netdevice notifier 注册失败时回滚已注册硬件与 TX 状态队列。
 - 只在本模块创建了平台设备时注销它。
 
-本次源码检查与 Python 回归已完成，修订后的原生模块仍须由 Actions 编译验证。
-未声称已执行故障注入或完成 Wonder 主模块加载测试。
+修订后的原生模块已由 [Actions 40274658306](https://github.com/xxz3312/XAirDrop-17/actions/runs/40274658306)
+编译并通过当前离线检查。[第三阶段测试包](POPSICLE-MASTER-TEST.md) 已准备，
+等待实机绑定、解绑及重新绑定结果。未声称已执行内核故障注入或完成主模块加载测试。
 
 ## 仍未完成
 
