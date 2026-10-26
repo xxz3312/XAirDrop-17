@@ -1,6 +1,16 @@
 # 第三阶段：Wonder component 绑定生命周期
 
-## 当前状态：修订产物通过离线检查，等待实机测试
+## 当前状态：实机绑定、解绑和重新绑定通过
+
+目标设备已返回 `PASS_MASTER_BIND_UNBIND_REBIND`，退出码为 0。
+新增日志按顺序确认初次绑定 → 注销操作表 → 重新绑定 → 最终注销和硬件卸载。
+全部本次模块所有权标志为 0，前后网络接口名称完全一致；原有 mac80211 未卸载。
+[实机通过记录](research/popsicle-master-device-pass.json)。本阶段无需重复运行。
+
+这只验证虚拟硬件注册及 component 生命周期；probe 无线 init 仍为不支持。
+没有验证 WLAN 后端、接口启动、TX/RX、AWDL、XOS 或 AirDrop。
+
+## 产物与既有失败记录
 
 [Actions 40284559893](https://github.com/xxz3312/XAirDrop-17/actions/runs/40284559893)
 已完成原生编译、19 个 allocator 回调偏移断言、严格链接、依赖/重复导出检查、
@@ -15,7 +25,7 @@
 [问题与旧构建记录](research/popsicle-mac80211-allocator-audit.json)、
 [首次实机失败记录](research/popsicle-master-device-failure.json) 均保留。
 
-旧测试包作废。以下说明只适用于新产物；不代表完整 mac80211 ABI 或实机验证已通过。
+旧测试包作废。以下说明只适用于新产物；仅已完成上述受限实机测试，不代表完整 mac80211 ABI 或无线收发验证。
 原生源码提交 `36f5a9cba7a13ca16639bb14fdbabab1e63c8ff3`。
 本包使用 Actions 原始字节，不本地重新编译、strip 或改写版本/CRC。
 

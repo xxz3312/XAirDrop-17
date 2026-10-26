@@ -13,5 +13,6 @@
   "actions_run": 40284559893,
   "native_commit": "36f5a9cba7a13ca16639bb14fdbabab1e63c8ff3",
   "artifact_sha256": "83e35edf4afa31a73f53595519a85b7fb6cc43ec72f04edb2550b61028be7c8c",
-  "runtime_status": "NOT_YET_TESTED"
+  "runtime_status": "PASS_MASTER_BIND_UNBIND_REBIND_ONLY",
+  "runtime_report": "popsicle-master-device-pass.json"
 }

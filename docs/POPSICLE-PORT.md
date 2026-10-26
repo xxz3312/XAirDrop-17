@@ -24,11 +24,13 @@
 | --- | --- | --- |
 | 最小 sysctl 模块 | 加载成功，节点默认值 0，正常卸载 | [第一阶段记录](research/popsicle-sysctl-device-pass.json) |
 | 私有 provider/probe | 重复注册、竞争注册检查成功，清除回调并按顺序卸载 | [第二阶段记录](research/popsicle-provider-device-pass.json) |
+| Wonder 主模块 | 硬件注册、初次绑定、操作表注销、重新绑定及卸载通过 | [第三阶段记录](research/popsicle-master-device-pass.json) |
 
-以上未替换原厂 WLAN，未加载 Wonder 主模块，没有开启可用性开关。
-第二阶段退出码为 0，provider/probe 均无本次加载残留。
+以上未替换原厂 WLAN，没有开启可用性开关。第三阶段退出码为 0，
+Wonder/provider/probe 均无本次加载残留，前后网络接口名称一致。
+原有 mac80211 保持加载。该测试未启动无线接口或执行收发。
 
-## 正在处理：Wonder 主模块失败路径
+## Wonder 主模块修复与验证记录
 
 主模块在分配并注册虚拟无线硬件后，原代码遇到缺少 DT phandle 或组件绑定失败会直接返回，
 没有对称释放硬件；debugfs 初始化也没有正确识别 ERR_PTR。
@@ -53,16 +55,22 @@
 现已移至实际 Kbuild，并加入链接后真实 ELF 回调位置必过检查。
 [Actions 40284559893](https://github.com/xxz3312/XAirDrop-17/actions/runs/40284559893)
 已通过全部当前检查；下载原始产物后独立重验确认三个频道回调位置正确。
-[修订产物报告](research/popsicle-master-rebuild-allocator-pass.json) 已记录，现等待新版绑定生命周期实测。
+[修订产物报告](research/popsicle-master-rebuild-allocator-pass.json) 已记录，新版已通过目标设备绑定、解绑、重新绑定及卸载实测。
 详见 [审计](research/popsicle-mac80211-allocator-audit.json)。旧测试包作废，新实机包只使用修订后的原始 Actions 模块。
+
+## 下一步：真实 WLAN 后端
+
+component 绑定问题已通过受限实测，后续重点转向 Xiaomi WLAN 驱动源码。
+先核对真实接口创建/销毁、频道设置、发送完成通知和 monitor/native RX 的调用链，
+再移植 Wonder 操作表；不能将 probe 的不支持返回值改成成功来充当实现。
+在构建检查通过、失败路径与回滚明确之前，不进入原厂 WLAN 替换测试。
 
 ## 仍未完成
 
-1. Wonder 主模块与已实测桥接的绑定、解除绑定和卸载验证。
-2. Xiaomi WLAN 中真正的 Wonder 操作表与接口生命周期、WMI TX、monitor/native RX。
+1. Xiaomi WLAN 中真正的 Wonder 操作表与接口生命周期、WMI TX、monitor/native RX。
    当前 probe 的无线 init 明确返回不支持，不能作为可工作的后端。
-3. 固件命令与用户态 XOS 协议核对、原生互传接入。
-4. Wi-Fi 共存与 iPhone 双向真实文件传输。
+2. 固件命令与用户态 XOS 协议核对、原生互传接入。
+3. Wi-Fi 共存与 iPhone 双向真实文件传输。
 
 公开 WLAN 5.2.1.137C 与原厂 5.2.1.146N 不同，ACK R62 也不是原厂精确提交。
 KCFI 审计在 1053 个共有标识中发现两项私有回调差异；候选内部声明相符，

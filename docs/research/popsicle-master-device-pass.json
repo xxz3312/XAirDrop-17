@@ -1,0 +1,32 @@
+{
+  "status": "PASS_MASTER_BIND_UNBIND_REBIND",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "result_archive_sha256": "461f58ed3309378260584134c4d6b76015de15e0105c75e6efcaed5e45eff141",
+  "result": {
+    "status": "PASS_MASTER_BIND_UNBIND_REBIND",
+    "phase": "cleanup",
+    "exit_code": "0",
+    "master_still_owned": "0",
+    "probe_still_owned": "0",
+    "provider_still_owned": "0",
+    "mac_still_owned": "0",
+    "mac_loaded_by_test": "0"
+  },
+  "fresh_bind_count": 2,
+  "fresh_operations_unregister_count": 2,
+  "event_order_verified": true,
+  "network_interface_names_unchanged": true,
+  "fresh_filtered_log_warning_error_matches": [],
+  "sanitized_evidence": [
+    "[70088.478451] ieee80211 wonder: Selected rate control algorithm 'minstrel_ht'",
+    "[70088.480286] [wonder][mac80211] Wonder Virtual Soft-MAC Driver loaded successfully.",
+    "[70088.480435] wonder wonder: wonder_master_bind(): Connected to wlan ver 5 (cur: wonder ver 7)!",
+    "[70088.511447] [wonder][wondertap] Unregistered vendor operations.",
+    "[70088.573688] wonder wonder: wonder_master_bind(): Connected to wlan ver 5 (cur: wonder ver 7)!",
+    "[70088.594153] [wonder][wondertap] Unregistered vendor operations.",
+    "[70088.594752] [wonder][mac80211] Wonder Virtual Soft-MAC Driver unloaded successfully."
+  ],
+  "preexisting_warning": "A DRM vblank warning is already present in the before snapshot; it is not a new warning from this test. This comparison covers captured filtered logs only.",
+  "limitations": "Binding lifecycle with diagnostic probe only. Original mac80211 was preloaded. No network interface creation/up, firmware operations, TX/RX, AWDL, XOS or AirDrop validated. Probe radio init still returns -EOPNOTSUPP."
+}
