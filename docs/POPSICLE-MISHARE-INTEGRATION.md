@@ -500,3 +500,28 @@ allow platform_app_36 default_android_service service_manager find
 保留现有 xos-policy-probe 工具，重启后重新执行同一采集命令并上传报告，
 预期 find 查询转为允许后再验证实际 MiShare 调用链。
 此处仍只有策略证据，没有 MiShare 实际 Binder 或 AWDL 收发结论。
+
+## 19:40 策略复测通过，转入真实 MiShare 进程诊断
+
+报告 SHA256 `430211ed77e41cc8126812169a43148b24ce2d0aa3b0cd38035df8ffc8a48f31`。
+UID 10132、main/:ui 的 platform_app_36:s0:c512,c768 均匹配；六项 ALLOW，denied=0/errors=0。
+Enforcing 前后保持，策略摘要均为 `bec7281a4c0cd29bf88410d6cbfa3f6ee23cb640149ca6c942e9bf71cf1035cf`。
+这仍只证明候选策略查询，不证明真实应用调用。
+
+独立 `mishare-probe` 为 API 102 LSPosed 诊断 APK，作用域仅 com.miui.mishare.connectivity。
+核对原 APK SHA、版本、UID、实际上下文及 main/:ui 进程后，在应用线程中查询服务元数据。
+只调用 checkService、descriptor、ping、稳定 AIDL version/hash；不调用 XOS 功能入口，
+不覆盖 AirDrop 可用性，不调整无线、SELinux 或 VINTF。失败仅记日志。
+Actions 缓存 API36 SDK、Gradle 依赖及诊断 debug 签名后编译。
+
+工具 ZIP 必须解压，APK 通过 Android 安装，不在 KernelSU 刷入。
+在 LSPosed 启用 XAirDrop MiShare Probe，仅勾选小米互传。保留声明模块 0.2。
+将脚本放在 Download 后执行（脚本会强制停止并打开普通互传设置）：
+
+```sh
+su -c 'sh /sdcard/Download/popsicle-mishare-binder-smoke.sh /sdcard/Download/XAirDrop-reference-1.0.zip'
+```
+
+上传 `17pm-mishare-binder-*.tar.gz`。PASS_MISHARE_BINDER_METADATA_ONLY 只代表
+实际应用进程完成元数据调用，不代表原生 AirDrop 业务路径、回调或 AWDL 收发通过。
+诊断后可在 LSPosed 停用并卸载本 APK。

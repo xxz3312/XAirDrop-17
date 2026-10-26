@@ -1,0 +1,104 @@
+name: MiShare process Binder diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/mishare-probe.yml
+      - mishare-probe/**
+      - tools/device/popsicle-mishare-binder-smoke.sh
+      - tests/test_mishare_host_gate.py
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/cache/restore@v4
+        id: sdk
+        with:
+          path: .xos-sdk
+          key: xos-binder-sdk-${{ runner.os }}-api36-tools36.0.0-v1
+      - name: Prepare pinned Android SDK
+        run: |
+          mkdir -p .xos-sdk/platforms .xos-sdk/build-tools
+          cp -a "$ANDROID_HOME/licenses" .xos-sdk/
+          for part in platforms/android-36 build-tools/36.0.0; do
+            if [ ! -d ".xos-sdk/$part" ] && [ -d "$ANDROID_HOME/$part" ]; then cp -a "$ANDROID_HOME/$part" ".xos-sdk/$(dirname "$part")/"; fi
+          done
+          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] || [ ! -x .xos-sdk/build-tools/36.0.0/aapt2 ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-sdk" 'platforms;android-36' 'build-tools;36.0.0'
+          fi
+          test -f .xos-sdk/platforms/android-36/android.jar
+          test -x .xos-sdk/build-tools/36.0.0/aapt2
+          printf 'sdk.dir=%s/.xos-sdk\n' "$PWD" > mishare-probe/local.properties
+      - name: Save SDK before compilation
+        if: steps.sdk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .xos-sdk
+          key: ${{ steps.sdk.outputs.cache-primary-key }}
+      - uses: actions/cache/restore@v4
+        id: gradle
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/debug.keystore
+          key: mishare-probe-${{ runner.os }}-${{ hashFiles('mishare-probe/**/*.kts', 'oshare/gradle/wrapper/*') }}-v1
+      - name: Resolve build dependencies and diagnostic signing identity
+        run: |
+          mkdir -p "$HOME/.android"
+          if [ ! -f "$HOME/.android/debug.keystore" ]; then
+            keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -dname 'CN=Android Debug,O=Android,C=US' -keyalg RSA -keysize 2048 -validity 10000
+          fi
+          bash oshare/gradlew --project-dir mishare-probe --no-daemon -Pandroid.aapt2FromMavenOverride="$PWD/.xos-sdk/build-tools/36.0.0/aapt2" prepareProbeDependencies
+      - name: Save Gradle toolchain before APK compilation
+        if: steps.gradle.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ~/.android/debug.keystore
+          key: ${{ steps.gradle.outputs.cache-primary-key }}
+      - name: Validate exact host gate and compile diagnostic APK
+        run: |
+          python3 -m unittest discover -s tests -p 'test_mishare_host_gate.py'
+          sh -n tools/device/popsicle-mishare-binder-smoke.sh
+          bash oshare/gradlew --project-dir mishare-probe --no-daemon -Pandroid.aapt2FromMavenOverride="$PWD/.xos-sdk/build-tools/36.0.0/aapt2" assembleDebug
+      - name: Verify APK and package tools
+        run: |
+          apk=mishare-probe/app/build/outputs/apk/debug/app-debug.apk
+          .xos-sdk/build-tools/36.0.0/apksigner verify --verbose "$apk"
+          .xos-sdk/build-tools/36.0.0/aapt dump badging "$apk"
+          out="$RUNNER_TEMP/mishare-binder-probe"
+          mkdir -p "$out"
+          cp "$apk" "$out/XAirDrop-MiShare-Probe-0.1.apk"
+          cp tools/device/popsicle-mishare-binder-smoke.sh "$out/"
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,zipfile
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'mishare-binder-probe'
+          apk=out/'XAirDrop-MiShare-Probe-0.1.apk'
+          with zipfile.ZipFile(apk) as z:
+              assert z.read('META-INF/xposed/scope.list').decode().strip()=='com.miui.mishare.connectivity'
+              assert z.read('META-INF/xposed/java_init.list').decode().strip()=='io.github.xairdrop17.mishareprobe.Entry'
+              assert not any(n.startswith('lib/') for n in z.namelist())
+          report={'status':'BUILT_NOT_DEVICE_TESTED','commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],'apk_sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),'apk_bytes':apk.stat().st_size,'scope':'Actual MiShare process Binder descriptor/ping/version/hash only. No availability override or wireless entry point calls.'}
+          (out/'build.json').write_text(json.dumps(report,indent=2)+'\n')
+          (out/'SHA256SUMS').write_text(''.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.name+'\n' for p in sorted(out.iterdir()) if p.is_file() and p.name!='SHA256SUMS'))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mishare-binder-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/mishare-binder-probe/
+          if-no-files-found: error
+          retention-days: 7
