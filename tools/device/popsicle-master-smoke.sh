@@ -103,19 +103,23 @@ for name in opairshare_wonder_provider opairshare_route_b_probe wonder; do
     [ "${actual%% *}" = "$expected" ] || fail "Staged checksum mismatch: $name"
 done
 phase=stock-mac80211
+stock_mac=
+for path in /vendor/lib/modules/mac80211.ko /vendor_dlkm/lib/modules/mac80211.ko /system_dlkm/lib/modules/mac80211.ko; do
+    if [ -f "$path" ]; then stock_mac=$path; break; fi
+done
+[ -n "$stock_mac" ] || fail 'Stock mac80211 missing; no modules loaded.'
+actual=$(sha256sum "$stock_mac") || fail 'Cannot checksum stock mac80211.'
+[ "${actual%% *}" = 01b40a32346277f30b807d31c4acd7011e18c38bdff594282f5e835d40f40dec ] || fail 'Stock mac80211 differs from captured baseline.'
 if [ ! -d /sys/module/mac80211 ]; then
-    stock_mac=
-    for path in /vendor/lib/modules/mac80211.ko /vendor_dlkm/lib/modules/mac80211.ko /system_dlkm/lib/modules/mac80211.ko; do
-        if [ -f "$path" ]; then stock_mac=$path; break; fi
-    done
-    [ -n "$stock_mac" ] || fail 'Stock mac80211 missing; no modules loaded.'
-    actual=$(sha256sum "$stock_mac") || fail 'Cannot checksum stock mac80211.'
-    [ "${actual%% *}" = 01b40a32346277f30b807d31c4acd7011e18c38bdff594282f5e835d40f40dec ] || fail 'Stock mac80211 differs from captured baseline.'
     say 'Temporarily loading the verified stock mac80211 dependency.'
     insmod "$stock_mac" || fail 'Stock mac80211 load failed; do not force-load.'
     own_mac=1
     mac_added=1
 fi
+# File identity alone cannot identify an already-loaded image. Compare its
+# exported build-id note too, before loading any experimental module.
+actual=$(sha256sum /sys/module/mac80211/notes/.note.gnu.build-id) || fail 'Cannot verify loaded mac80211 build ID.'
+[ "${actual%% *}" = 899f5b3a74a889052e6cd74bf50381e29d67fcd156b09bdfe9baf01add52a7aa ] || fail 'Loaded mac80211 build ID differs from captured baseline.'
 before_bind=$(last_bind)
 before_unbind=$(last_unbind)
 phase=load-provider

@@ -46,6 +46,15 @@ class MasterSmokeTests(unittest.TestCase):
         for path in ['/vendor/lib/modules/mac80211.ko', '/vendor_dlkm/lib/modules/mac80211.ko',
                      '/system_dlkm/lib/modules/mac80211.ko']:
             script = script.replace(path, str(root / 'stock/mac80211.ko'))
+        note_data = b'mock stock build-id note'
+        script = script.replace('899f5b3a74a889052e6cd74bf50381e29d67fcd156b09bdfe9baf01add52a7aa',
+                                hashlib.sha256(note_data).hexdigest())
+        if preloaded:
+            note = modules / 'mac80211/notes/.note.gnu.build-id'
+            note.parent.mkdir()
+            note.write_bytes(b'wrong note' if flags.get('BAD_MAC_NOTE') else note_data)
+        if flags.get('BAD_MAC_FILE'):
+            (root / 'stock/mac80211.ko').write_bytes(b'wrong file')
         (root / 'run-test.sh').write_text(script)
         insmod = '''n=$(basename "$1" .ko)
 echo "load:$n" >> "$TRACE"
@@ -56,6 +65,10 @@ if [ "$n" = opairshare_route_b_probe ]; then
     if [ "${FAIL_RELOAD:-0}" = 1 ] && [ "$count" = 2 ]; then exit 1; fi
 fi
 mkdir "$MODULES/$n"
+if [ "$n" = mac80211 ]; then
+    mkdir "$MODULES/$n/notes"
+    printf 'mock stock build-id note' > "$MODULES/$n/notes/.note.gnu.build-id"
+fi
 case "$n" in
  opairshare_wonder_provider) mkdir "$DEVICE" ;;
  wonder)
@@ -74,7 +87,7 @@ case "$n" in
 esac'''
         rmmod = '''echo "unload:$1" >> "$TRACE"
 [ "${FAIL_UNLOAD:-none}" != "$1" ] || exit 1
-rmdir "$MODULES/$1"
+rm -rf "$MODULES/$1"
 case "$1" in
  wonder)
     rm -rf "$MASTER" "$PHY" "$NET/unexpected" ;;
@@ -95,7 +108,7 @@ esac'''
                    COUNT=str(root / 'count'), **flags)
         r = subprocess.run(['sh', root / 'run-test.sh'], env=env,
                            capture_output=True, text=True, timeout=15)
-        calls = (root / 'trace').read_text().splitlines()
+        calls = (root / 'trace').read_text().splitlines() if (root / 'trace').exists() else []
         archives = list((root / 'reports').glob('*.tar.gz'))
         self.assertEqual(len(archives), 1, r.stdout + r.stderr)
         with tarfile.open(archives[0]) as t:
@@ -105,6 +118,14 @@ esac'''
                 self.assertIn('WARNING: CPU: 0 at net/mac80211/main.c',
                               t.extractfile('dmesg-after.txt').read().decode())
         return r, calls, report, (modules / 'mac80211').exists()
+
+    def test_preloaded_dependency_identity_must_match(self):
+        for flag in ['BAD_MAC_FILE', 'BAD_MAC_NOTE']:
+            r, calls, report, mac = self.run_case(**{flag: '1'})
+            self.assertNotEqual(r.returncode, 0)
+            self.assertEqual(calls, [])  # No candidate loads, no preexisting unload.
+            self.assertIn('FAIL_OR_INTERRUPTED', report)
+            self.assertTrue(mac)
 
     def test_bind_unbind_rebind_and_dependency_order(self):
         r, calls, report, mac = self.run_case()
