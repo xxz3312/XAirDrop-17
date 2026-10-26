@@ -12,7 +12,7 @@ class XosSymbolsTests(unittest.TestCase):
     def test_linker_guard_uses_captured_executable_not_ld_android_stub(self):
         root = Path(__file__).resolve().parents[1]
         profile = json.loads((root / 'tools/xos/device-profile.json').read_text())
-        scripts = [(root / 'tools/device' / name).read_text() for name in ('popsicle-xos-linker-audit.sh', 'popsicle-xos-loader-smoke.sh', 'popsicle-xos-service-smoke.sh')]
+        scripts = [(root / 'tools/device' / name).read_text() for name in ('popsicle-xos-linker-audit.sh', 'popsicle-xos-loader-smoke.sh', 'popsicle-xos-service-smoke.sh', 'popsicle-xos-binder-smoke.sh')]
         for script in scripts:
             self.assertIn('check_hash /system/bin/linker64 ' + profile['linker_executable']['sha256'], script)
             self.assertNotIn('check_hash /system/bin/linker64 ' + profile['ld_android_stub']['sha256'], script)

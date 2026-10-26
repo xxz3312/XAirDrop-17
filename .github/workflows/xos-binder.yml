@@ -1,0 +1,80 @@
+name: Xiaomi XOS Binder metadata probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/xos-binder.yml
+      - native/xos/java/**
+      - tools/device/popsicle-xos-binder-smoke.sh
+      - tests/test_xos_binder.py
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Validate metadata-only client with Java fixtures
+        run: |
+          python3 -m unittest discover -s tests -p 'test_xos_binder.py'
+          sh -n tools/device/popsicle-xos-binder-smoke.sh
+      - uses: actions/cache/restore@v4
+        id: sdk
+        with:
+          path: .xos-sdk
+          key: xos-binder-sdk-${{ runner.os }}-api36-tools36.0.0-v1
+      - name: Prepare pinned Android platform and D8
+        run: |
+          mkdir -p .xos-sdk/platforms .xos-sdk/build-tools
+          cp -a "$ANDROID_HOME/licenses" .xos-sdk/
+          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] && [ -f "$ANDROID_HOME/platforms/android-36/android.jar" ]; then
+            cp -a "$ANDROID_HOME/platforms/android-36" .xos-sdk/platforms/
+          fi
+          if [ ! -x .xos-sdk/build-tools/36.0.0/d8 ] && [ -x "$ANDROID_HOME/build-tools/36.0.0/d8" ]; then
+            cp -a "$ANDROID_HOME/build-tools/36.0.0" .xos-sdk/build-tools/
+          fi
+          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] || [ ! -x .xos-sdk/build-tools/36.0.0/d8 ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-sdk" 'platforms;android-36' 'build-tools;36.0.0'
+          fi
+          test -f .xos-sdk/platforms/android-36/android.jar
+          test -x .xos-sdk/build-tools/36.0.0/d8
+      - name: Save verified tool paths before compilation
+        if: steps.sdk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .xos-sdk
+          key: ${{ steps.sdk.outputs.cache-primary-key }}
+      - name: Build diagnostic DEX
+        run: |
+          out="$RUNNER_TEMP/xos-binder-probe"
+          mkdir -p "$out" "$RUNNER_TEMP/xos-binder-classes"
+          javac -source 17 -target 17 -cp .xos-sdk/platforms/android-36/android.jar \
+            -d "$RUNNER_TEMP/xos-binder-classes" native/xos/java/io/github/xairdrop17/XosBinderProbe.java
+          .xos-sdk/build-tools/36.0.0/d8 --lib .xos-sdk/platforms/android-36/android.jar --min-api 31 \
+            --output "$out" "$RUNNER_TEMP/xos-binder-classes/io/github/xairdrop17/XosBinderProbe.class"
+          mv "$out/classes.dex" "$out/xos-binder-probe.dex"
+          cp tools/device/popsicle-xos-binder-smoke.sh "$out/"
+          cd "$out"
+          sha256sum xos-binder-probe.dex > binder.sha256
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path('xos-binder-probe.dex')
+          report={'status':'BUILT_NOT_DEVICE_TESTED','commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
+                  'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,'api':31,
+                  'scope':'Root-only Binder descriptor, ping and generated AIDL version/hash. No XOS start/stop/status/config, MiShare caller or radio test.'}
+          pathlib.Path('build.json').write_text(json.dumps(report,indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xos-binder-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/xos-binder-probe/
+          if-no-files-found: error
+          retention-days: 7

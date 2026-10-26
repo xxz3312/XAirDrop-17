@@ -1,5 +1,5 @@
 {
-  "status": "DEVICE_DLOPEN_DLSYM_PASSED_SERVICE_AND_RADIO_UNTESTED",
+  "status": "DEVICE_XOS_REGISTRATION_AND_LAZY_EXIT_PASSED_CLIENT_AND_RADIO_UNTESTED",
   "reference_results": {
     "DomesticXOsComm": {
       "strong_import_count": 61,
@@ -149,5 +149,28 @@
       "whether a reboot followed installation"
     ],
     "scope": "No new SELinux service registration denial is established. Do not add policy rules based on unrelated AVC entries."
+  },
+  "vintf_namespace_evidence": {
+    "archive_sha256": "27c9f470cc98d5cb24e8bc5e03c78777be2217a19e2c500a74ab72755c6bdd78",
+    "caller_namespace": "mnt:[4026536543]",
+    "init_and_servicemanager_namespace": "mnt:[4026532903]",
+    "servicemanager_pid": 1204,
+    "fragment_readable_in_all_views": true,
+    "fragment_sha256": "272f638bcfb54634d7b817218f5c33aef8cc6f2326fd247136f92c213870c220",
+    "fragment_label": "u:object_r:vendor_configs_file:s0",
+    "uptime_seconds": 104051.73,
+    "user_clarification": "A soft restart had been performed; uptime cannot establish that no restart of any kind occurred. A normal reboot was subsequently requested."
+  },
+  "service_registration_pass_evidence": {
+    "archive_sha256": "af9970dbb07bf2f2957793b2f13be569ca0e91a7184b9aba4730c8f9530a6bf5",
+    "status": "REGISTERED_ONLY_NOT_CLIENT_OR_RADIO_TESTED",
+    "service_pid": 30119,
+    "registered_observed": true,
+    "service_exit": 0,
+    "state_unchanged": true,
+    "registration_timestamp": "10-26 18:59:39.919",
+    "lazy_exit_timestamp": "10-26 18:59:43.453",
+    "exit_reason": "Lazy service observed zero clients, unregistered and exited normally.",
+    "limits": "Root service lookup and lazy lifecycle observed. No protocol metadata/client transactions, MiShare UID/domain or radio transfer tested. This report does not itself include boot ID/uptime."
   }
 }

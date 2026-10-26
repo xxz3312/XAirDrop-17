@@ -381,3 +381,44 @@ AOSP 存在基于 APEX 信息列表修改时间检测更新的 VINTF 逻辑，
 
 使用现有模块，直接执行只读采集脚本，上传 Download/17pm-vintf-view-*.tar.gz。
 本轮无需重装或另行重启，以便保留当前问题现场。
+
+
+## 声明可见性确认、软重启说明与注册通过
+
+只读视图报告 SHA256：
+`27c9f470cc98d5cb24e8bc5e03c78777be2217a19e2c500a74ab72755c6bdd78`。
+caller/init/servicemanager 均能读取同一声明，摘要为
+`272f638bcfb54634d7b817218f5c33aef8cc6f2326fd247136f92c213870c220`，标签正确。
+init 与 servicemanager 在同一挂载命名空间，本次排除了该时刻的挂载视图不可见。
+当时 uptime 104051.73 秒；用户说明做过软重启，不能据此断言完全没有重启过。
+在保留内核/相关服务的软重启后可能仍保留缓存，因此请用户通过普通电源菜单重启再测。
+
+18:59 注册报告 SHA256：
+`af9970dbb07bf2f2957793b2f13be569ca0e91a7184b9aba4730c8f9530a6bf5`。
+服务 PID 30119 在 18:59:39.919 明确记录 Service registered successfully；
+service check 曾观察到 found。18:59:43.453 服务在没有客户端时注销并正常退出，退出 0，
+前后可观察状态一致。结果 REGISTERED_ONLY_NOT_CLIENT_OR_RADIO_TESTED。
+末尾 not found 是此次临时 lazy 服务退出后的正常状态，不是前面的注册失败。
+本报告未收集 boot ID/uptime，不能单凭它认证重启类型或证明全部缓存细节。
+服务注册这一步已通过，不需要增加 SELinux 放行或再改 VINTF XML。
+
+下一步 `native/xos/java/io/github/xairdrop17/XosBinderProbe.java`：
+使用 root app_process 查询接口描述符、ping、生成 AIDL 的接口版本和哈希。
+预期版本 1、哈希 5240962a28e277f0b9764b8f7d1986b35c106edb，来自固定配套原生库。
+只使用元数据事务 16777215/16777214，不调用 XOS start/stop/status/config。
+客户端引用释放后临时服务按原有流程清理。
+
+该客户端不是以 MiShare 的 UID/SELinux 域运行；即使通过也只证明 root 侧协议元数据通信，
+不能宣称 MiShare 应用权限通过或 AWDL 传输可用。
+宿主 Java 夹具测试在 Actions 验证仅允许元数据事务，并拒绝错误描述符、ping、版本、哈希、
+不支持的事务及找不到服务。Android API36 与 D8 36.0.0 在 Android DEX 编译前缓存。
+构建流程为 `.github/workflows/xos-binder.yml`，设备测试脚本为
+`tools/device/popsicle-xos-binder-smoke.sh`。
+
+下载探针产物并解压至 Download/xos-binder-probe，保留已安装声明模块和现有参考 ZIP：
+
+```sh
+su -c 'sh /sdcard/Download/xos-binder-probe/popsicle-xos-binder-smoke.sh /sdcard/Download/XAirDrop-reference-1.0.zip /sdcard/Download/xos-binder-probe'
+```
+
+上传 Download/17pm-xos-binder-*.tar.gz。不需要重装声明模块，不启用 wonder_enable。
