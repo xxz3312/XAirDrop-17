@@ -1,0 +1,39 @@
+{
+  "status": "PASS_MISHARE_BINDER_METADATA_ONLY",
+  "report": "17pm-mishare-binder-20261026-200150-23363.tar.gz",
+  "report_sha256": "c931f73077214d1603616cf00bc8aa60108ed13595cce7cefaa7da466721c4b7",
+  "device": "popsicle",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "host_apk_sha256": "3ca8032f3c55d53e1912a44e42a17334ff739a064cf603e6cb9afb09d810905d",
+  "caller_uid": 10132,
+  "caller_context": "u:r:platform_app_36:s0:c512,c768",
+  "processes": [
+    {
+      "name": "com.miui.mishare.connectivity:ui",
+      "pid": 23595,
+      "metadata_version": 1,
+      "metadata_hash": "5240962a28e277f0b9764b8f7d1986b35c106edb",
+      "result": "PASS"
+    },
+    {
+      "name": "com.miui.mishare.connectivity",
+      "pid": 23810,
+      "metadata_version": 1,
+      "metadata_hash": "5240962a28e277f0b9764b8f7d1986b35c106edb",
+      "result": "PASS"
+    }
+  ],
+  "server_pid": 23547,
+  "server_context": "u:r:ksu:s0",
+  "service_exit": 143,
+  "cleanup": "Owned temporary process stopped by diagnostic; service absent afterwards",
+  "state_unchanged": true,
+  "wonder_enable_present": false,
+  "wonder_phy_present": false,
+  "xos0_present": false,
+  "original_mishare_business_path_tested": false,
+  "wireless_tx_rx_tested": false,
+  "firmware_passthru_support": "UNVERIFIED",
+  "next_stage": "Port real popsicle WLAN backend; do not force UI availability or treat metadata access as AWDL capability",
+  "unrelated_avc": "Observed hexlp/migt/system_server/Termux denials are not evidence of failed XOS metadata calls; no policy expansion based on them"
+}

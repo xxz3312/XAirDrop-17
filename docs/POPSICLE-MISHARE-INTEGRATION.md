@@ -525,3 +525,24 @@ su -c 'sh /sdcard/Download/popsicle-mishare-binder-smoke.sh /sdcard/Download/XAi
 上传 `17pm-mishare-binder-*.tar.gz`。PASS_MISHARE_BINDER_METADATA_ONLY 只代表
 实际应用进程完成元数据调用，不代表原生 AirDrop 业务路径、回调或 AWDL 收发通过。
 诊断后可在 LSPosed 停用并卸载本 APK。
+
+
+## 20:01 真实 MiShare 主进程和 UI 进程元数据调用通过
+
+报告 SHA256 `c931f73077214d1603616cf00bc8aa60108ed13595cce7cefaa7da466721c4b7`。
+本轮诊断 APK 在 UID 10132、`u:r:platform_app_36:s0:c512,c768` 中执行，
+原互传 APK SHA 匹配。`:ui` PID 23595 与主进程 PID 23810 均记录
+`PASS_MISHARE_BINDER_METADATA_ONLY`，version=1、hash 与预期完全一致。
+这是真实应用进程调用证据，仍非原始 AwdlServiceClient 业务启动路径证据。
+
+临时服务 PID 23547 为 ksu 域；脚本结束后服务不存在，exit=143 对应脚本清理时 TERM。
+state_unchanged=1；Wonder 节点和 xos0 仍不存在，没有 AWDL 收发证据。
+日志内 hexlp/migt、system_server 和 Termux 的其他 AVC 不影响已经成功的 XOS 元数据调用，
+不据此继续扩展 SELinux 权限。
+
+应用到临时 XOS 服务的元数据访问阶段完成。下一阶段回到
+[真实 WLAN 后端](POPSICLE-WLAN-BACKEND.md)：先适配本机 HDD 接口生命周期、
+操作表与失败回滚，再分层验证 RX/TX、频道和目标固件能力。
+目前 provider 的 init 仍为 -EOPNOTSUPP；不伪造 wonder_enable=1、xos0 或
+AirDrop 可用性，不把参考平台驱动文件当成本机已适配后端。
+无需再次运行同一元数据诊断；后续无线测试必须使用对应阶段新构建产物。
