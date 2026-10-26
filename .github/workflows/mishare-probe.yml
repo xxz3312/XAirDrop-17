@@ -26,19 +26,20 @@ jobs:
         id: sdk
         with:
           path: .xos-sdk
-          key: xos-binder-sdk-${{ runner.os }}-api36-tools36.0.0-v1
+          key: mishare-sdk-${{ runner.os }}-api36-tools36.0.0-platform-tools-v2
       - name: Prepare pinned Android SDK
         run: |
           mkdir -p .xos-sdk/platforms .xos-sdk/build-tools
           cp -a "$ANDROID_HOME/licenses" .xos-sdk/
-          for part in platforms/android-36 build-tools/36.0.0; do
+          for part in platforms/android-36 build-tools/36.0.0 platform-tools; do
             if [ ! -d ".xos-sdk/$part" ] && [ -d "$ANDROID_HOME/$part" ]; then cp -a "$ANDROID_HOME/$part" ".xos-sdk/$(dirname "$part")/"; fi
           done
-          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] || [ ! -x .xos-sdk/build-tools/36.0.0/aapt2 ]; then
-            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-sdk" 'platforms;android-36' 'build-tools;36.0.0'
+          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] || [ ! -x .xos-sdk/build-tools/36.0.0/aapt2 ] || [ ! -x .xos-sdk/platform-tools/adb ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-sdk" 'platforms;android-36' 'build-tools;36.0.0' 'platform-tools'
           fi
           test -f .xos-sdk/platforms/android-36/android.jar
           test -x .xos-sdk/build-tools/36.0.0/aapt2
+          test -x .xos-sdk/platform-tools/adb
           printf 'sdk.dir=%s/.xos-sdk\n' "$PWD" > mishare-probe/local.properties
       - name: Save SDK before compilation
         if: steps.sdk.outputs.cache-hit != 'true'
