@@ -50,9 +50,11 @@
 外置无线模块的 `CONFIG_NL80211_TESTMODE` 与 GKI 配置不同。
 首轮修订构建 40281240881 虽成功，但产物核对证明其仍是旧模块；
 原因是编译设置误放在被 Kbuild 覆盖的 Makefile 中，未实际启用。
-现已移至实际 Kbuild，并加入链接后真实 ELF 回调位置必过检查，等待新 Actions。
-19 个编译期断言与产物检查均通过后，才会分发新实机包。
-详见 [审计](research/popsicle-mac80211-allocator-audit.json)。旧测试包继续暂停。
+现已移至实际 Kbuild，并加入链接后真实 ELF 回调位置必过检查。
+[Actions 40284559893](https://github.com/xxz3312/XAirDrop-17/actions/runs/40284559893)
+已通过全部当前检查；下载原始产物后独立重验确认三个频道回调位置正确。
+[修订产物报告](research/popsicle-master-rebuild-allocator-pass.json) 已记录，现等待新版绑定生命周期实测。
+详见 [审计](research/popsicle-mac80211-allocator-audit.json)。旧测试包作废，新实机包只使用修订后的原始 Actions 模块。
 
 ## 仍未完成
 

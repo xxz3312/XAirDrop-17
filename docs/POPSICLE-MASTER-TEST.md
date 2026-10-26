@@ -1,57 +1,37 @@
 # 第三阶段：Wonder component 绑定生命周期
 
-## 当前结果：暂停重复测试
+## 当前状态：修订产物通过离线检查，等待实机测试
 
-首次实机尝试在 `load-master` 阶段失败，尚未绑定到 component。
-`wonder_mac80211_init` 分配 mac80211 硬件失败，内核警告堆栈出现在该调用附近。
-原筛选日志漏掉了警告标题，补采的 `warning.txt` 也为空。
-但原机模块 SHA256 与基线一致，对其 allocator 指令和旧候选 ELF 回调重定位的
-核对已确认：原机 `add_chanctx` 位于 `0x250`，旧候选位于 `0x240`。
-原机按自己的偏移读取旧候选表会得到错误回调，触发部分 emulated channel ops 检查。
-精确运行警告 PC 未保留，不能声称已从日志确认具体 WARN 行。
-详见 [allocator 审计](research/popsicle-mac80211-allocator-audit.json)。
+[Actions 40284559893](https://github.com/xxz3312/XAirDrop-17/actions/runs/40284559893)
+已完成原生编译、19 个 allocator 回调偏移断言、严格链接、依赖/重复导出检查、
+选定布局与记录的原厂加载规则检查。下载产物后再次直接核对实际 ELF：
+`add/remove/change_chanctx` 分别位于 `0x250/0x258/0x260`，
+必要回调均存在，assign/unassign 为空；与 Actions 生成的检查报告完全一致。
+[修订产物报告](research/popsicle-master-rebuild-allocator-pass.json)。
 
-原因是 GKI 配置不包含外置无线模块的 `CONFIG_NL80211_TESTMODE` 设置；该设置
-控制两个回调成员，造成后续成员相差 16 字节。popsicle Wonder 构建已单独补上
-该编译设置，并加入 19 个 allocator 回调偏移的编译期断言。
-没有添加假回调、修改结构布局、改 CRC 或关闭检查。
+原实机失败候选的 `add_chanctx` 位于 `0x240`。第一轮修订 40281240881 的设置
+误放在被 Kbuild 覆盖的 Makefile 中，产物仍是旧模块，已拒绝分发。
+当前修订使用真正的 Kbuild，并强制检查链接后的实际回调重定位。
+[问题与旧构建记录](research/popsicle-mac80211-allocator-audit.json)、
+[首次实机失败记录](research/popsicle-master-device-failure.json) 均保留。
 
-旧包继续暂停。首轮修订构建 Actions 40281240881 虽成功，但下载后检查发现 Wonder
-与旧失败模块字节完全相同：Kbuild 优先于 Makefile，第一轮编译设置未生效，
-所谓“19 项断言已通过”不成立。这份构建不用于实机测试、不分发新包。
-
-现已将设置移入实际 Kbuild，并在 Wonder 链接后强制核对真实 ELF 回调重定位：
-必须有 `0x250/0x258/0x260` 的三个正确 helper、全部 allocator 必要回调，
-且 assign/unassign 为空。旧实物 `.ko` 已由该检查明确拒绝。
-5 项新 ELF 回归覆盖正确布局、旧 16 字节错位、缺少必要回调、非法 assign
-及错误重定位类型。等待新 Actions 通过此项后再生成新实机包。
-本次只解决已确认的 callback table 差异，不代表完整 mac80211 ABI 已验证。
-模块清理完成，各 owned 标志均为 0，网络接口名称前后一致。
-[原实机失败记录](research/popsicle-master-device-failure.json) 保留。
-
-以下保留原测试说明，供定位问题时参考；不代表现在可以重试。
-
-前两阶段已在目标设备验证最小 sysctl 加载/卸载和 provider/probe 注册/注销。
-Wonder 的失败路径已修复，并由
-[Actions 40274658306](https://github.com/xxz3312/XAirDrop-17/actions/runs/40274658306)
-完成完整模块链接、依赖/重复导出检查、选定布局与原厂加载规则检查。
-这些仍是离线检查，Wonder 主模块尚未在目标设备加载。
-
-本测试使用该运行的 3 个原始 `.ko`，不本地重新编译、strip 或改写版本/CRC：
+旧测试包作废。以下说明只适用于新产物；不代表完整 mac80211 ABI 或实机验证已通过。
+原生源码提交 `36f5a9cba7a13ca16639bb14fdbabab1e63c8ff3`。
+本包使用 Actions 原始字节，不本地重新编译、strip 或改写版本/CRC。
 
 | 模块 | SHA256 |
 | --- | --- |
-| wonder.ko | `5270dab5e09c33c39f4b2a70f3ab766cb36cd072bb8464bbe152e8b79e0560a9` |
+| wonder.ko | `967d50c09eb217ff4dacb47e505ad5c8ae11fae454c7afc28d0e72f1bf333755` |
 | opairshare_wonder_provider.ko | `8b1c55b4d98d2867209671e47b4e2b676e64d19553f7e2bf611201dadfc4ab6a` |
 | opairshare_route_b_probe.ko | `158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade` |
 
 仅用于 popsicle / OS4.0.5.0.XPBCNXM /
 `6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k`。
-这是首次加载 Wonder 主模块，测试前保存正在编辑的内容。
+测试前保存正在编辑的内容。
 
 ## 运行
 
-本 ZIP 是终端测试包。解压到 Download，使脚本路径为
+本 ZIP 是终端测试包。先删除旧的 `17pm-master-smoke` 解压目录，再解压新包到 Download，使脚本路径为
 `/sdcard/Download/17pm-master-smoke/run-test.sh`，然后执行：
 
 ```sh

@@ -1,0 +1,17 @@
+{
+  "status": "ALLOCATOR_TABLE_OFFSETS_MATCH_ONLY",
+  "ops_table_bytes": 1000,
+  "channel_relocations": {
+    "0x250": "ieee80211_emulate_add_chanctx",
+    "0x258": "ieee80211_emulate_remove_chanctx",
+    "0x260": "ieee80211_emulate_change_chanctx"
+  },
+  "mandatory_allocator_callbacks_have_relocations": true,
+  "assign_and_unassign_are_null": true,
+  "limitations": "Not full mac80211 ABI, KCFI or runtime certification.",
+  "wonder_sha256": "967d50c09eb217ff4dacb47e505ad5c8ae11fae454c7afc28d0e72f1bf333755",
+  "actions_run": 40284559893,
+  "native_commit": "36f5a9cba7a13ca16639bb14fdbabab1e63c8ff3",
+  "artifact_sha256": "83e35edf4afa31a73f53595519a85b7fb6cc43ec72f04edb2550b61028be7c8c",
+  "runtime_status": "NOT_YET_TESTED"
+}

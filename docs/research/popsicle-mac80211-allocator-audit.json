@@ -42,7 +42,7 @@
   "consequence": "Stock allocator reads candidate change_chanctx as add_chanctx, followed by NULL remove/change entries; its partial-emulation check rejects this table.",
   "runtime_limit": "Exact runtime warning PC was not recaptured; the rejecting path is predicted from original module instructions and actual old candidate ELF relocations.",
   "fix": "Move popsicle-only CONFIG_NL80211_TESTMODE and 19 offset assertions into the selected Kbuild; require independent ELF relocation audit immediately after linking Wonder.",
-  "validation_pending": "New Actions rebuild with active Kbuild assertions and mandatory ELF callback-table audit, followed by device lifecycle test. No full ABI, firmware or AirDrop certification.",
+  "validation_pending": "Actions 40284559893 and independent downloaded-ELF audit passed allocator slot checks. Device lifecycle test still pending. No full ABI, firmware or AirDrop certification.",
   "stock_mac80211_build_id": "6086b536b2d52fe7bcd16d12f44f89486e3c5f95",
   "stock_mac80211_build_id_note_sha256": "899f5b3a74a889052e6cd74bf50381e29d67fcd156b09bdfe9baf01add52a7aa",
   "new_device_preflight": "Always hash stock module file and loaded build-id note before loading experimental modules. Stop if unavailable or mismatched; do not unload preexisting mac80211.",
@@ -53,5 +53,6 @@
     "workflow_conclusion": "success",
     "artifact_verdict": "REJECT_CALLBACK_LAYOUT_UNCHANGED",
     "reason": "Kbuild takes precedence over Makefile; the first flag/assertion change was in the inactive Makefile. The real linked module remained byte-identical to the failed candidate. No package distributed."
-  }
+  },
+  "validated_rebuild_report": "popsicle-master-rebuild-allocator-pass.json"
 }

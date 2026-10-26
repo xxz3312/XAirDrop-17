@@ -93,7 +93,7 @@ for name in opairshare_wonder_provider opairshare_route_b_probe wonder; do
     case "$name" in
         opairshare_wonder_provider) expected=8b1c55b4d98d2867209671e47b4e2b676e64d19553f7e2bf611201dadfc4ab6a ;;
         opairshare_route_b_probe) expected=158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade ;;
-        *) expected=5270dab5e09c33c39f4b2a70f3ab766cb36cd072bb8464bbe152e8b79e0560a9 ;;
+        *) expected=967d50c09eb217ff4dacb47e505ad5c8ae11fae454c7afc28d0e72f1bf333755 ;;
     esac
     actual=$(sha256sum "$src/$name.ko") || fail "Missing $name.ko"
     [ "${actual%% *}" = "$expected" ] || fail "Checksum mismatch: $name"
