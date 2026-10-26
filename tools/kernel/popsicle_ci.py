@@ -409,7 +409,7 @@ def modules(work, link_only=False):
         # Add the actual newly built private provider's CRC records. No synthetic exports.
         wlan_symbols = inputs / 'wlan-providers.symvers'
         provider_symbols = REPO / 'kernel/provider/Module.symvers'
-        wlan_symbols.write_text(vendor.read_text().rstrip() + '\n' + provider_symbols.read_text())
+        wlan_symbols.write_text(vendor.read_text() + provider_symbols.read_text())
         env['POPSICLE_EXTRA_SYMBOLS'] = str(wlan_symbols)
         command(['bash', REPO / 'tools/kernel/popsicle_trial_build.sh', 'wlan-modules',
                  work / 'baseline', work / 'common', work / 'soc', work / 'wlan',
