@@ -82,9 +82,13 @@ def setup(work):
 
     # Dormant host helper is compiled into the real target WLAN, not a new module.
     for source, destination in [
-        ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc')]:
+        ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc'),
+        ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc')]:
         shutil.copy2(REPO / 'kernel/popsicle-hdd' / source,
                      work / 'wlan/qcacld-3.0/core/hdd' / destination / source)
+
+    shutil.copy2(REPO / 'kernel/provider/wondertap.h',
+                 work / 'wlan/qcacld-3.0/core/hdd/inc/wlan_hdd_mishare_wonder_api.h')
 
     tools = lock['toolchain_record']
     for key, folder in [('clang', 'clang-r536225'), ('rust', 'rust-1.82.0.p2')]:
@@ -143,7 +147,8 @@ def setup(work):
 
 def check_mishare_host_symbols(work, module, report_name):
     names = ['mishare_wonder_host_create_locked', 'mishare_wonder_host_destroy_locked',
-             'hdd_mishare_host_adapter_open']
+             'hdd_mishare_host_adapter_open', 'mishare_wonder_backend_register',
+             'mishare_wonder_backend_unregister']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -151,6 +156,11 @@ def check_mishare_host_symbols(work, module, report_name):
     result = {'status': 'HOST_HELPER_SYMBOLS_PRESENT_ONLY' if not missing else 'MISSING_HOST_HELPER_SYMBOLS',
               'sha256': hashlib.sha256(module.read_bytes()).hexdigest(), 'symbols': names, 'missing': missing,
               'limitations': 'Actual linked symbol presence only; not host registration, firmware or radio validation.'}
+    if module.suffix == '.ko':
+        dependencies = inspect(module)['modinfo'].get('depends', [])
+        result['dependencies'] = dependencies
+        if not any('opairshare_wonder_provider' in value.split(',') for value in dependencies):
+            raise ValueError('Missing strong private provider dependency')
     (work / 'artifacts/reports' / report_name).write_text(json.dumps(result, indent=2) + '\n')
     if missing:
         raise ValueError('Host helper was not built: ' + ', '.join(missing))
@@ -186,6 +196,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/mishare_host_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-host-fixture.json'],
                'mishare-host-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_backend_fixture.py',
+                '--output', artifacts / 'reports/mishare-backend-fixture.json'],
+               'mishare-backend-fixture.log')
         logged(args, 'build.log')
         if phase != 'prepare':
             check_mishare_host_symbols(work, work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.o',
@@ -393,7 +406,11 @@ def modules(work, link_only=False):
             result['status'] = 'BLOCKED_MISSING_WLAN_EXPORTS'
             return 2
         env['POPSICLE_HWID_INCLUDE'] = str(REPO / 'kernel/compat/popsicle')
-        env['POPSICLE_EXTRA_SYMBOLS'] = str(vendor)
+        # Add the actual newly built private provider's CRC records. No synthetic exports.
+        wlan_symbols = inputs / 'wlan-providers.symvers'
+        provider_symbols = REPO / 'kernel/provider/Module.symvers'
+        wlan_symbols.write_text(vendor.read_text().rstrip() + '\n' + provider_symbols.read_text())
+        env['POPSICLE_EXTRA_SYMBOLS'] = str(wlan_symbols)
         command(['bash', REPO / 'tools/kernel/popsicle_trial_build.sh', 'wlan-modules',
                  work / 'baseline', work / 'common', work / 'soc', work / 'wlan',
                  work / 'reference-modules/vendor/qcom/opensource/dataipa',

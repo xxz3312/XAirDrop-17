@@ -31,3 +31,10 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
    factory's registered-netdev rollback saves the MAC before adapter reclamation.
    The real lifecycle helper C/header are overlaid from kernel/popsicle-hdd and
    built into WLAN; there is no module init, export, runtime caller or radio path.
+
+6. `0006-mishare-wonder-table-lifetime.patch` wires an optional typed table
+   registration after successful HDD probe and synchronous detach before HDD
+   context teardown. The module parameter is false by default and read-only.
+   Callbacks remain metadata-only/unsupported, with no host handle published.
+   A strong dependency on the private provider pins its module while WLAN is
+   loaded; actual provider Module.symvers records are included in strict modpost.

@@ -1,0 +1,41 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -29,6 +29,7 @@
+ #include "epping_main.h"
+ #include "osif_sync.h"
+ #include "wlan_hdd_main.h"
++#include "wlan_hdd_mishare_backend.h"
+ #include "wlan_hdd_power.h"
+ #include "wlan_logging_sock_svc.h"
+ #include "wma_api.h"
+@@ -830,6 +831,11 @@
+ 	hdd_set_sar_init_index(hdd_ctx);
+ 	hdd_soc_load_unlock(dev);
+ 
++	/* Optional bridge failure leaves normal WLAN startup intact. */
++	errno = mishare_wonder_backend_register(hdd_ctx);
++	if (errno)
++		hdd_err("MiShare Wonder table registration failed: %d", errno);
++
+ 	return 0;
+ 
+ wlan_exit:
+@@ -1023,6 +1029,8 @@
+ 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
+ 		QWLAN_VERSIONSTR);
+ 
++	/* Synchronous component unbind before any HDD context teardown. */
++	mishare_wonder_backend_unregister(hdd_ctx);
+ 	qdf_rtpm_sync_resume();
+ 	cds_set_driver_loaded(false);
+ 	cds_set_unload_in_progress(true);
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -264,6 +264,7 @@
+ 
+ # MiShare DOWN host-adapter lifecycle; no runtime caller yet.
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_host.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_backend.o
+ 
+ ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o

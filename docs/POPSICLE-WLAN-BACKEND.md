@@ -227,3 +227,32 @@ owner/sync/adapter 分配失败、无效上下文、重复 owner、活动接口�
 不能替代内核并发、cfg80211 注册或驱动卸载实测。
 完整 WLAN 对象和最终 .ko 都必须实际包含三个新函数，避免源码存在但未编入。
 工具链和 bindgen 沿用编译前缓存；后续仍跑严格链接、依赖与选定布局检查。
+
+### 原生 Wonder 操作表注册/撤销接线
+
+新增 `wlan_hdd_mishare_backend.c/.h`。HDD probe 全部成功后尝试可选表注册，
+SoC remove 在销毁 HDD context 前同步撤销；注册失败只记录附加功能失败，
+普通 WLAN 的已完成启动不被改成失败。重复注册同 owner 幂等，其他 owner 返回 busy，
+错误 owner 或重复撤销不清除其他注册。
+
+`mishare_wonder_attach` 参数默认 false、权限 0444。默认不注册、不创建接口、不调用固件。
+即使将来受限实测时启用该参数，本阶段也只有强类型操作表绑定：init 清空输出 handle 并
+返回 EOPNOTSUPP，频道/过滤/速率操作返回 EOPNOTSUPP，capabilities 全零，
+不会把 DOWN host helper 的成功冒充无线初始化。host helper 尚未由无线 init 调用。
+
+表头直接复制已验证 provider 的 wondertap.h，夹具也使用同一原始头文件。
+注册/撤销可能在持 owner mutex 时同步触发表查询，因此所有回调不获取该 mutex、
+不解引用 HDD context，也不启动硬件，避免组件回调重入形成递归锁。
+模拟 provider 会在 bind/unbind 时实际调用 capabilities/init 来验证这一点。
+
+WLAN 使用强导入 `opairshare_set_wonder_priv_data`，不覆盖原厂 CNSS 导出、
+不通过动态符号查找跳过依赖验证。候选 WLAN 因此新增 private provider 模块依赖，
+即使默认关闭参数也需要匹配 provider 存在；这也是当前不能直接替换手机原厂 WLAN 的原因之一。
+provider 的实际生成 Module.symvers 与原厂供应者记录合并后交给严格 modpost，
+最终 .ko 必须记录 opairshare_wonder_provider 依赖。静态模块依赖保证 provider 在
+WLAN 存活期间不能先卸载，满足其 NULL 清除操作同步且成功的约定。
+
+测试覆盖默认关闭、注册失败回滚、重复/冲突 owner、错误 owner 撤销、回调重入、
+零能力、init 不发布 handle、不支持的控制操作、重复撤销和重新注册。
+这仍是表归属与生命周期接线，尚未验证真实内核组件并发、恢复过程或无线功能。
+完整对象和最终模块现在都需包含三个 host helper/工厂函数及两个表注册/撤销函数。
