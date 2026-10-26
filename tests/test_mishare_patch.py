@@ -3,7 +3,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/mishare'))
-from ble_patch import patch_text, VERSION_OLD, VERSION_NEW, OFFSET_OLD, OFFSET_NEW
+from ble_patch import patch_text, VERSION_OLD, VERSION_NEW, OFFSET_OLD, OFFSET_NEW, normalize_smali
 
 
 def fixture():
@@ -19,6 +19,13 @@ class MiShareBleTests(unittest.TestCase):
         original = fixture(); patched = patch_text(original)
         self.assertEqual(patched.replace(VERSION_NEW, VERSION_OLD).replace(OFFSET_NEW, OFFSET_OLD), original)
         self.assertTrue(patched.endswith('.method public unrelated()V\n    return-void\n.end method\n'))
+
+    def test_only_static_default_encoding_is_normalized(self):
+        self.assertEqual(normalize_smali('.field private static x:Z = false\n'),
+                         normalize_smali('.field private static x:Z\n'))
+        for line in ['.field private x:Z = false', '.field private static x:Z = true',
+                     '.field private static x:I = 0x1', '    const/4 v0, 0x0']:
+            self.assertIn(line, normalize_smali(line))
 
     def test_already_patched_rejected(self):
         with self.assertRaises(ValueError):

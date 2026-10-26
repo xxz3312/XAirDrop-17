@@ -49,6 +49,29 @@ def patch_text(text):
     return text.replace(VERSION_OLD, VERSION_NEW).replace(OFFSET_OLD, OFFSET_NEW)
 
 
+def normalize_smali(text):
+    """Only ignore empty lines and explicitly encoded static default values.
+
+    Smali assembly removes redundant static false/zero/null initializers.
+    Never normalize methods, nonzero values or non-static fields.
+    """
+    result = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        if line.startswith('.field ') and ' static ' in line and ' = ' in line:
+            declaration, value = line.rsplit(' = ', 1)
+            typ = declaration.rsplit(':', 1)[-1]
+            default = ((typ == 'Z' and value == 'false') or
+                       (typ in ['I', 'B', 'S', 'C'] and value == '0x0') or
+                       (typ == 'J' and value == '0x0L') or
+                       ((typ.startswith('L') or typ.startswith('[')) and value == 'null'))
+            if default:
+                line = declaration
+        result.append(line)
+    return '\n'.join(result)
+
+
 def run(*args):
     subprocess.run(list(map(str, args)), check=True)
 
@@ -65,6 +88,8 @@ def build(reference, apktool, work, output):
     originals = {str(p.relative_to(decoded)): digest(p.read_bytes()) for p in decoded.rglob('*.smali')}
     path = decoded / CLASS
     path.write_text(patch_text(path.read_text()))
+    expected_classes = {str(p.relative_to(decoded)): digest(normalize_smali(p.read_text()).encode())
+                        for p in decoded.rglob('*.smali')}
     changed = [name for name, sha in originals.items() if digest((decoded / name).read_bytes()) != sha]
     if changed != [str(CLASS)]:
         raise ValueError('Unexpected changed smali classes: ' + repr(changed))
@@ -78,9 +103,15 @@ def build(reference, apktool, work, output):
     result = (checked / CLASS).read_text()
     if result.count(VERSION_NEW) != 1 or result.count(OFFSET_NEW) != 1:
         raise ValueError('Compiled BLE DEX does not contain the expected patch')
+    compiled_classes = {str(p.relative_to(checked)): digest(normalize_smali(p.read_text()).encode())
+                        for p in checked.rglob('*.smali')}
+    if compiled_classes != expected_classes:
+        raise ValueError('Compiled classes differ beyond patched BLE instructions and redundant static defaults')
     (output / 'classes.dex').write_bytes(dex)
     report = {'status': 'BUILT_BLE_PATCH_ONLY_NOT_RUNTIME_TESTED',
               'changed_smali_classes': changed, 'patched_dex_sha256': digest(dex),
+              'compiled_all_classes_compared': True,
+              'normalization_scope': 'Empty lines and redundant static false/zero/null field initializers only.',
               'input_dex_sha256': PROFILE['shared_entries']['classes.dex'],
               'profile': PROFILE,
               'limitations': 'Not a signed installable APK, XOS service, network broker, AWDL driver or functional AirDrop package. Wi-Fi and region logic remain original.'}

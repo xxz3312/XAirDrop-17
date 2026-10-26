@@ -1,5 +1,5 @@
 {
-  "status": "EXACT_SHARED_DEX_CONFIRMED_PATCH_BUILD_PENDING",
+  "status": "BLE_DEX_BUILD_PASSED_INDEPENDENT_CLASS_REVIEW_PASSED",
   "profile": {
     "package": "com.miui.mishare.connectivity",
     "version_name": "5.4.2_20260923_1315",
@@ -37,5 +37,13 @@
   "planned_contact_hash_offset": 11,
   "patch_scope": "BLE manufacturer payload only. Keep original availability, region, network registration, Wi-Fi policy and chooser logic. No new radio backend or service.",
   "assembly_policy": "Use target original APK; replace classes.dex only. Preserve target resources, other DEX, native libs and manifest. Modified APK will not retain valid original signature. No installation/mount scripts provided in this step.",
-  "limitations": "No patched DEX compilation or runtime/iPhone validation yet. A source-level patch is not a working AirDrop stack."
+  "limitations": "Build and static review only. No APK mounting/installation, XOS service, network broker, AWDL backend, BLE observation or AirDrop transfer validated.",
+  "initial_actions_run": 40296410028,
+  "initial_artifact_sha256": "ece407e6c3c267758634bb3177c18804bcdf28c358f47340c6f9d4bbf8f91255",
+  "patched_classes_dex_sha256": "2c446d031ed31e634a320cc5a505d7c1ac96a52e15ef7bbf344794f9d4614e7f",
+  "independent_reassembly_non_target_entries_unchanged": true,
+  "compiled_semantic_comparison": "All smali classes match the expected patched sources after ignoring only empty lines and redundant static false/zero/null field encodings. No method/instruction normalization.",
+  "non_target_class_default_encoding_changes": 18,
+  "cache_saved_before_compilation": true,
+  "validation_pending": "Actions rebuild with the independent all-class comparison added as a required build check. No device runtime or iPhone test."
 }
