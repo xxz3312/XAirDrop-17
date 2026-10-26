@@ -62,7 +62,8 @@ Wonder/provider/probe 均无本次加载残留，前后网络接口名称一致�
 
 用户入口保持为小米互传。已重新核对小米 15 XAirDrop 的 DEX 补丁、Bridge、
 网络注册 broker 与系统服务路线，见 [MiShare 接入说明](POPSICLE-MISHARE-INTEGRATION.md)。
-待获取本机原始 APK 后，按 SHA256 和实际方法体适配；不盲套旧混淆类名。
+已核对本机 APK 与参考包的两个 DEX 完全一致，首段 BLE 广播补丁已适配，
+由独立 MiShare Actions 构建并反汇编复核；未启用网络 broker 或改变 Wi-Fi 共存策略。
 未推送的 MONITOR adapter 生命周期草稿已暂停。它不是存储预留模块，也不能替代互传接入。
 
 ## 无线后端仍需完成

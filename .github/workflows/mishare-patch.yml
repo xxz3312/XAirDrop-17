@@ -1,0 +1,73 @@
+name: MiShare BLE patch build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/mishare-patch.yml
+      - tools/mishare/**
+      - tests/test_mishare_patch.py
+permissions:
+  contents: read
+concurrency:
+  group: mishare-patch-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Patch regression checks
+        run: python3 -m unittest discover -s tests -p 'test_mishare_patch.py'
+      - name: Restore pinned patch tool and public reference cache
+        id: patchtools
+        uses: actions/cache/restore@v4
+        with:
+          path: .mishare-cache
+          key: mishare-ble-v1-${{ runner.os }}-${{ hashFiles('tools/mishare/profile.json') }}
+      - name: Fetch and verify public inputs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib,shutil,urllib.request
+          p=json.loads(pathlib.Path('tools/mishare/profile.json').read_text())
+          cache=pathlib.Path('.mishare-cache'); cache.mkdir(exist_ok=True)
+          for name,url,want in [
+              ('apktool.jar',f"https://github.com/iBotPeaches/Apktool/releases/download/v{p['apktool_version']}/apktool_{p['apktool_version']}.jar",p['apktool_sha256']),
+              ('reference.apk',p['public_reference_url'],p['public_reference_sha256'])]:
+              target=cache/name
+              if not target.exists():
+                  partial=cache/(name+'.partial')
+                  with urllib.request.urlopen(url,timeout=90) as src,partial.open('wb') as out:
+                      shutil.copyfileobj(src,out)
+                  partial.replace(target)
+              if hashlib.sha256(target.read_bytes()).hexdigest()!=want:
+                  raise SystemExit('Input hash mismatch: '+name)
+          PY
+      - name: Save verified inputs before DEX compilation
+        if: steps.patchtools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .mishare-cache
+          key: ${{ steps.patchtools.outputs.cache-primary-key }}
+      - name: Build and re-disassemble patched DEX
+        run: |
+          python3 tools/mishare/ble_patch.py build \
+            --reference .mishare-cache/reference.apk \
+            --apktool .mishare-cache/apktool.jar \
+            --work "$RUNNER_TEMP/mishare-ble-work" \
+            --output "$RUNNER_TEMP/mishare-ble-output"
+      - name: Upload DEX patch and bounded report only
+        uses: actions/upload-artifact@v4
+        with:
+          name: mishare-ble-dex-${{ github.run_id }}
+          path: ${{ runner.temp }}/mishare-ble-output/
+          if-no-files-found: error
+          retention-days: 7

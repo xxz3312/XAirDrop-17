@@ -11,3 +11,7 @@
 | `third-party/` | 对应版本的 WebUI 依赖原许可文件 |
 
 第三方来源和版本见 [第三方声明](../THIRD_PARTY_NOTICES.md)。
+
+MiShare BLE patch tooling (`tools/mishare/ble_patch.py`) derives from Leekin2/XAirDrop,
+commit eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76, `patches/build.py`; GPL-3.0-only.
+See `GPL-3.0-only.txt`. Xiaomi APKs remain third-party binaries and are not committed.
