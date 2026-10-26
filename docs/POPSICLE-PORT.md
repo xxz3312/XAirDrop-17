@@ -58,7 +58,14 @@ Wonder/provider/probe 均无本次加载残留，前后网络接口名称一致�
 [修订产物报告](research/popsicle-master-rebuild-allocator-pass.json) 已记录，新版已通过目标设备绑定、解绑、重新绑定及卸载实测。
 详见 [审计](research/popsicle-mac80211-allocator-audit.json)。旧测试包作废，新实机包只使用修订后的原始 Actions 模块。
 
-## 下一步：真实 WLAN 后端
+## 当前优先：小米 MiShare 接入
+
+用户入口保持为小米互传。已重新核对小米 15 XAirDrop 的 DEX 补丁、Bridge、
+网络注册 broker 与系统服务路线，见 [MiShare 接入说明](POPSICLE-MISHARE-INTEGRATION.md)。
+待获取本机原始 APK 后，按 SHA256 和实际方法体适配；不盲套旧混淆类名。
+未推送的 MONITOR adapter 生命周期草稿已暂停。它不是存储预留模块，也不能替代互传接入。
+
+## 无线后端仍需完成
 
 component 绑定问题已通过受限实测，后续重点转向 Xiaomi WLAN 驱动源码。
 已核对公开源代码没有 Wonder/PASSTHRU 后端，且现有 monitor netdev 不含发送入口。
