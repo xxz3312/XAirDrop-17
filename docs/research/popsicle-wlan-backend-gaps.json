@@ -1,0 +1,114 @@
+{
+  "status": "SOURCE_PORT_REQUIRED",
+  "native_anchors": {
+    "adapter_lifecycle": {
+      "file": "qcacld-3.0/core/hdd/src/wlan_hdd_main.c",
+      "exists": true,
+      "identifiers": {
+        "hdd_open_adapter": true,
+        "hdd_close_adapter": true,
+        "hdd_start_adapter": true,
+        "hdd_stop_adapter": true
+      }
+    },
+    "driver_lifecycle": {
+      "file": "qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c",
+      "exists": true,
+      "identifiers": {
+        "hdd_soc_load_unlock": true,
+        "__hdd_soc_remove": true
+      }
+    },
+    "monitor_frequency": {
+      "file": "qcacld-3.0/core/hdd/src/wlan_hdd_main.c",
+      "exists": true,
+      "identifiers": {
+        "wlan_hdd_set_mon_chan": true
+      }
+    },
+    "monitor_control": {
+      "file": "qcacld-3.0/core/hdd/src/wlan_hdd_rx_monitor.c",
+      "exists": true,
+      "identifiers": {
+        "hdd_enable_monitor_mode": true,
+        "hdd_disable_monitor_mode": true
+      }
+    },
+    "management_tx": {
+      "file": "qcacld-3.0/core/hdd/src/wlan_hdd_p2p.c",
+      "exists": true,
+      "identifiers": {
+        "wlan_hdd_mgmt_tx": true
+      }
+    }
+  },
+  "port_requirements": {
+    "hdd_wonder_backend": {
+      "file": "qcacld-3.0/core/hdd/src/wlan_hdd_wondertap.c",
+      "exists": false,
+      "identifiers": {
+        "wlan_hdd_wondertap_register_ops": false,
+        "wlan_hdd_wondertap_unregister_ops": false
+      }
+    },
+    "hdd_backend_contract": {
+      "file": "qcacld-3.0/core/hdd/inc/wlan_hdd_wondertap.h",
+      "exists": false,
+      "identifiers": {
+        "hdd_wondertap_context": false
+      }
+    },
+    "host_passthru_mode": {
+      "file": "qca-wifi-host-cmn/qdf/inc/qdf_types.h",
+      "exists": true,
+      "identifiers": {
+        "QDF_PASSTHRU_MODE": false
+      }
+    },
+    "datapath_passthru_mode": {
+      "file": "qca-wifi-host-cmn/dp/inc/cdp_txrx_cmn_struct.h",
+      "exists": true,
+      "identifiers": {
+        "wlan_op_mode_passthru": false
+      }
+    },
+    "firmware_passthru_type": {
+      "file": "fw-api/fw/wmi_unified.h",
+      "exists": true,
+      "identifiers": {
+        "WMI_VDEV_TYPE_WIFI_PASSTHRU": false
+      }
+    },
+    "backend_build_entry": {
+      "file": "qcacld-3.0/Kbuild",
+      "exists": true,
+      "identifiers": {
+        "wlan_hdd_wondertap": false
+      }
+    }
+  },
+  "missing_source_plumbing": [
+    "hdd_wonder_backend",
+    "hdd_backend_contract",
+    "host_passthru_mode",
+    "datapath_passthru_mode",
+    "firmware_passthru_type",
+    "backend_build_entry"
+  ],
+  "monitor_netdev_has_start_xmit": false,
+  "file_sha256": {
+    "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "e8762297c54dc6dcc87418c95d43dc874e27f4ea4b9fdca87edab50d4c444f6a",
+    "qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c": "43c6240a82d9fc2451d1dc3f1e32d78a8c2a23c5fa985a76449019a22dc8a44d",
+    "qcacld-3.0/core/hdd/src/wlan_hdd_rx_monitor.c": "6ff1744daed91d427bef58359506b2d4c71a4d6da3893ffc8f60a29342aa2c18",
+    "qcacld-3.0/core/hdd/src/wlan_hdd_p2p.c": "8ed92fd95f0560c8c79fea0d2e5977837e9b20869d2a1a70cae0bd5d2348b2f6",
+    "qca-wifi-host-cmn/qdf/inc/qdf_types.h": "153c2773f51ac5e38d2ebe05ac520a0a6dbad19d47be0e23527859e1f89b3f98",
+    "qca-wifi-host-cmn/dp/inc/cdp_txrx_cmn_struct.h": "57c9dbcc689348813c5b00df8d93572454a77cb69fa18d23f465db0f4c1875d8",
+    "fw-api/fw/wmi_unified.h": "0adc26eebc7a657eca229f534ff9142a484b9368ad4e8fb9ab2fbc698c4f3683",
+    "qcacld-3.0/Kbuild": "b62e318f3fc7696d8721e1c16abf407c4cc5dd3fcfa240e5fcc4e7f11118d5bf"
+  },
+  "radio_usable": null,
+  "firmware_passthru_support": "UNVERIFIED",
+  "limitations": "Source identifiers only: even all present does not prove implementations, semantics, ownership, ABI, KCFI, firmware support, loading, TX/RX or AWDL. Monitor RX and management TX are distinct paths; no assumption of raw data injection or firmware type 0x9 support.",
+  "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+  "source_dirty": false
+}

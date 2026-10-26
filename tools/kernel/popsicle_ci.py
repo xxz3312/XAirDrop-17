@@ -16,6 +16,7 @@ from module_abi import inspect, symvers
 from popsicle_modpost import write_inputs, module_report, merge_generated_exports
 from btf_layout import Btf, RecordedLayouts, compare
 from module_mac80211_ops import audit as audit_mac80211_ops
+from popsicle_backend_audit import audited_inventory
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -125,6 +126,13 @@ def setup(work):
     reports = work / 'artifacts/reports'
     reports.mkdir(parents=True, exist_ok=True)
     shutil.copy2(REPO / 'docs/popsicle-source-lock.json', reports / 'source-lock.json')
+    # This inventory reports missing backend plumbing, never radio readiness.
+    # Hash the actual patched working files rather than trusting HEAD alone.
+    backend = audited_inventory(work / 'wlan')
+    (reports / 'wlan-backend-gaps.json').write_text(json.dumps(backend, indent=2) + '\n')
+    print(f"WLAN backend inventory: {backend['status']}; "
+          f"{len(backend['missing_source_plumbing'])} missing source groups; "
+          'firmware support unverified.', flush=True)
 
 
 def build(work, phase):

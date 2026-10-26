@@ -61,7 +61,11 @@ Wonder/provider/probe 均无本次加载残留，前后网络接口名称一致�
 ## 下一步：真实 WLAN 后端
 
 component 绑定问题已通过受限实测，后续重点转向 Xiaomi WLAN 驱动源码。
-先核对真实接口创建/销毁、频道设置、发送完成通知和 monitor/native RX 的调用链，
+已核对公开源代码没有 Wonder/PASSTHRU 后端，且现有 monitor netdev 不含发送入口。
+[第四阶段源码审核与移植顺序](POPSICLE-WLAN-BACKEND.md) 和
+[固定版本源码缺口报告](research/popsicle-wlan-backend-gaps.json) 已记录。
+Actions setup 现在会持续报告这些缺口；没有将源码标识存在当作后端可用。
+后续需完成真实接口创建/销毁、频道设置、发送完成通知和 monitor/native RX 的调用链，
 再移植 Wonder 操作表；不能将 probe 的不支持返回值改成成功来充当实现。
 在构建检查通过、失败路径与回滚明确之前，不进入原厂 WLAN 替换测试。
 
