@@ -119,3 +119,11 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
           compression-level: 0
+      - name: Upload compact validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .popsicle-ci/artifacts/reports/
+          if-no-files-found: warn
+          retention-days: 7

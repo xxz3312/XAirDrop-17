@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Host allocation/lifetime only. No module init, firmware, channel or TX/RX. */
+#include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/slab.h>
