@@ -28,7 +28,7 @@
   "target_signer_file": "META-INF/PLATFORM.RSA",
   "reference_signer_file": "META-INF/CERT.RSA",
   "certificate_identity_verified": false,
-  "manifest_min_sdk": 27,
+  "manifest_min_sdk": 26,
   "manifest_target_sdk": 36,
   "target_ble_method": "La/u0;->b(Lcom/xiaomi/sharop/service/AirDropService;)V",
   "ble_original_version_byte_missing": true,
@@ -51,5 +51,6 @@
   "required_all_class_check_conclusion": "success",
   "device_network_factory_granted": true,
   "device_xos_service_found": false,
-  "device_permission_evidence": "User terminal output: android.permission.NETWORK_FACTORY: granted=true; service check returned not found."
+  "device_permission_evidence": "User terminal output: android.permission.NETWORK_FACTORY: granted=true; service check returned not found.",
+  "manifest_sdk_evidence": "Full Manifest-only decode apktool.yml and device package dump agree on minSdk 26. Earlier no-resource smali decode inferred 27; that inferred value was incorrect for original APK metadata."
 }

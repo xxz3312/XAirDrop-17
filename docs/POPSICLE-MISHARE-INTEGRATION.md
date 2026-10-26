@@ -43,7 +43,7 @@
 ## 本机 APK 分析与第一段应用补丁
 
 用户提供 APK 的 SHA256 为 `3ca8032f3c55d53e1912a44e42a17334ff739a064cf603e6cb9afb09d810905d`。
-确认版本 `5.4.2_20260923_1315` / 50402，minSdk 27、targetSdk 36。
+确认版本 `5.4.2_20260923_1315` / 50402，minSdk 26、targetSdk 36。
 两个 DEX 与二进制 Manifest 和上游公开参考包完全一致，但整包、签名文件、资源表与部分文件不同。
 因此 Actions 可以只从公开参考包编译 DEX；最终合成必须保留本机原包的所有非目标条目，不能替换成参考 APK。
 [原始 APK 审计](research/popsicle-mishare-apk-audit.json)。
@@ -129,3 +129,28 @@ libdl、liblog、libm、libnl、libpcap、libutils（后缀均为 .so）。
 不会加载模块、挂载、改 SELinux/VINTF、运行参考程序或切换 Wi-Fi。
 报告用于后续离线符号与依赖比对，不应提交公开仓库。
 底层无线 backend init 当前仍拒绝运行；即使完成服务依赖核对，完整 AirDrop 也未实现。
+
+
+## 2026-10-26 设备库比对结果
+
+用户上传的 XOS 报告 SHA256 为
+`354f64e21587e09e9d4b5831dac51a0d7bf03031e44bf286bfea18e7c667d38e`。
+设备为 OS4.0.5.0.XPBCNXM / API 37 / 4 KiB，SELinux Enforcing。
+NETWORK_FACTORY 已授予，XOS 服务、xos0、Wonder PHY 和 wonder_enable 均不存在。
+
+新增 `tools/xos/compare_device.py`，对参考 ELF 强引用与已采集 /system/lib64 导出逐项比较，
+保留符号版本，支持 Android readelf 的 IFUNC（`<OS specific>: 10`）输出。
+不使用 vendor/product 库填补系统符号，不把弱引用缺失误报为必需符号缺失。
+4 项回归覆盖版本、默认版本、IFUNC、可见性与弱引用处理。
+
+四个参考文件的强引用计数分别为 61、60、115、39（逐文件计数，有重复），
+全部在候选作用域中找到版本匹配的导出。仅代表候选符号覆盖，不是实际 linker 加载、
+符号选择顺序或完整原生 ABI 认证。
+依赖递归核对发现还未采集 `libbinder.so`、`libvndksupport.so`、`ld-android.so`。
+因此状态为 `REFERENCE_IMPORT_CANDIDATES_COVERED_CLOSURE_INCOMPLETE`，
+见 [设备静态比对报告](research/popsicle-xos-device-audit.json)。
+
+采集脚本已补充传递依赖常见库、bootstrap 路径、链接器、root 进程域和当前 APK 摘要，
+用于下一轮补齐依赖链。当前没有启动 XOS、应用 SELinux 规则或启用 AirDrop。
+完整 Manifest 解码与设备元数据均为 minSdk 26；先前无资源解码工作目录推断的 27
+不能作为原 APK 的 minSdk，现已更正审计记录。DEX 输入指纹和非目标 APK 条目未改变。

@@ -7,6 +7,7 @@ on:
       - .github/workflows/xos-audit.yml
       - tools/xos/**
       - tools/device/popsicle-xos-audit.sh
+      - tests/test_xos_symbols.py
 permissions:
   contents: read
 jobs:
@@ -19,7 +20,8 @@ jobs:
           persist-credentials: false
       - name: Check Python and shell syntax
         run: |
-          python3 -m py_compile tools/xos/audit_reference.py
+          python3 -m py_compile tools/xos/audit_reference.py tools/xos/compare_device.py
+          python3 -m unittest discover -s tests -p 'test_xos_symbols.py'
           sh -n tools/device/popsicle-xos-audit.sh
       - uses: actions/cache/restore@v4
         id: reference

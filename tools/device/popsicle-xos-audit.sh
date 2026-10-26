@@ -15,10 +15,15 @@ mkdir -p "$work/libs" /sdcard/Download || exit 1
     getprop ro.build.version.sdk
     uname -r
     getenforce
+    id
+    cat /proc/self/attr/current
     getconf PAGESIZE
 } > "$work/device.txt" 2>&1
 {
     dumpsys package com.miui.mishare.connectivity | grep -E 'codePath=|versionName=|versionCode=|appId=|userId=|NETWORK_FACTORY'
+    pm path com.miui.mishare.connectivity | while IFS= read -r line; do
+        case "$line" in package:*) sha256sum "${line#package:}";; esac
+    done
     service check com.domestic.xoscomm.IDomesticXOsComm/default
     ps -AZ | grep -E 'mishare|DomesticXOsComm'
     ls -ldZ /sys/class/net/xos0 /sys/class/ieee80211/wonder /proc/sys/net/wonder/wonder_enable
@@ -26,8 +31,8 @@ mkdir -p "$work/libs" /sdcard/Download || exit 1
 } > "$work/state.txt" 2>&1
 # Preserve separate candidate paths. File existence alone is not linker compatibility.
 : > "$work/libraries.txt"
-for name in liblog.so libbinder_ndk.so libutils.so libcutils.so libbase.so libc++.so libc.so libm.so libdl.so libnl.so libpcap.so; do
-    for dir in /system/lib64 /system_ext/lib64 /product/lib64 /vendor/lib64 /apex/com.android.runtime/lib64/bionic; do
+for name in liblog.so libbinder_ndk.so libutils.so libcutils.so libbase.so libc++.so libc.so libm.so libdl.so libnl.so libpcap.so libbinder.so libvndksupport.so ld-android.so libprocessgroup.so libselinux.so libandroid_runtime_lazy.so libbinderthreadstate.so libdl_android.so libdebuggerd_client.so libunwindstack.so libc++demangle.so liblzma.so libz.so libpackagelistparser.so libcap.so libstatssocket.so libcgrouprc.so libjsoncpp.so libpcre2.so; do
+    for dir in /system/lib64 /system_ext/lib64 /product/lib64 /vendor/lib64 /apex/com.android.runtime/lib64/bionic /system/lib64/bootstrap; do
         file=$dir/$name
         [ -f "$file" ] || continue
         dest=$work/libs$dir
@@ -39,6 +44,14 @@ for name in liblog.so libbinder_ndk.so libutils.so libcutils.so libbase.so libc+
             echo "COPY_FAILED $file" >> "$work/libraries.txt"
         fi
     done
+done
+# ld-android.so can be supplied by the linker executable itself.
+for file in /system/bin/linker64 /apex/com.android.runtime/bin/linker64; do
+    [ -f "$file" ] || continue
+    dest=$work/libs${file%/*}
+    mkdir -p "$dest" || exit 1
+    cp -L "$file" "$dest/" || exit 1
+    sha256sum "$file" >> "$work/libraries.txt" 2>&1
 done
 if [ -r /linkerconfig/ld.config.txt ]; then
     cp /linkerconfig/ld.config.txt "$work/ld.config.txt" || exit 1

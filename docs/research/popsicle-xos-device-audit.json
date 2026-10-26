@@ -1,0 +1,63 @@
+{
+  "status": "REFERENCE_IMPORT_CANDIDATES_COVERED_CLOSURE_INCOMPLETE",
+  "reference_results": {
+    "DomesticXOsComm": {
+      "strong_import_count": 60,
+      "missing_strong_imports": [],
+      "unresolved_weak_imports": [],
+      "needed_not_captured": []
+    },
+    "com.domestic.xoscomm-V1-ndk.so": {
+      "strong_import_count": 59,
+      "missing_strong_imports": [],
+      "unresolved_weak_imports": [],
+      "needed_not_captured": []
+    },
+    "libxos.so": {
+      "strong_import_count": 114,
+      "missing_strong_imports": [],
+      "unresolved_weak_imports": [],
+      "needed_not_captured": []
+    },
+    "libev.so": {
+      "strong_import_count": 38,
+      "missing_strong_imports": [],
+      "unresolved_weak_imports": [],
+      "needed_not_captured": []
+    }
+  },
+  "loader_captured_with_ld_android_soname": false,
+  "transitive_dependencies_not_captured": [
+    "ld-android.so",
+    "libbinder.so",
+    "libvndksupport.so"
+  ],
+  "device_system_library_sha256": {
+    "libbase.so": "12d3935ecf47794b177c9c101ea1f734c41997f13a204beff61900014c28765d",
+    "libbinder_ndk.so": "deec4072c13cfcb6421dce9edc9e19496a9fd937447e939976fdfd9edc45ecfe",
+    "libc++.so": "cb118e98c74d3454858921123b9b51ba13df9cad7dfa141dd892c453661a4d78",
+    "libc.so": "b963b539545b64aa8fbcaed3228d04bcb6466bfd47055aa16e4ccdcadfdc461e",
+    "libcutils.so": "09ea7e79326ee62d7a35a14703456f2285b805dd3854ab35e489415dafb7fa32",
+    "libdl.so": "9805c2a013d994bdefc1c124027c53de81060afc901d2188b6eafdf6783140d4",
+    "liblog.so": "601494f5b7a4d282eed1effadf8b40097b4182298de7e0bbc6a7ec69bda5667d",
+    "libm.so": "646b2a1cab7cb7b035df3fe9f7beee11ab22d5e6bd6dc7d66e96e2429a05586e",
+    "libnl.so": "0dcfe50851de7915478fc3ec39e6f3b06dcdce19e4e7e31cc2a1415925f9e647",
+    "libpcap.so": "cbf8dedf4780bb44f92984b5e021ccfb557291f1762bd1bcf33b6fa753a4d5a3",
+    "libutils.so": "6bc35b75712c4fd262dd4fa2c297de532ad5f0ef0d7ecd3f5f3fa479abdbba57"
+  },
+  "candidate_scope": "Pinned four reference ELF files plus captured /system/lib64 files. Versioned symbols must match; IFUNC definitions included. Product/vendor candidates excluded.",
+  "limitations": "Candidate symbol coverage only; no actual linker resolution/order or dependency symbol closure proof. No constructors, service or radio code executed. Binder/VINTF/SELinux and runtime behavior remain untested.",
+  "evidence": {
+    "archive_sha256": "354f64e21587e09e9d4b5831dac51a0d7bf03031e44bf286bfea18e7c667d38e",
+    "device": "popsicle",
+    "firmware": "OS4.0.5.0.XPBCNXM",
+    "api": 37,
+    "selinux": "Enforcing",
+    "page_size": 4096,
+    "network_factory_granted": true,
+    "xos_service_found": false,
+    "xos_interface_present": false,
+    "wonder_phy_present": false,
+    "wonder_enable_present": false
+  }
+}
