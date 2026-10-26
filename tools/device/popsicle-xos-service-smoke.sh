@@ -73,15 +73,16 @@ cleanup() {
 }
 trap 'cleanup; exit 130' 1 2 15
 trap cleanup 0
-# Start capture at the current log tail; never clear the system log buffer.
-logcat -b all -v threadtime -T 1 '*:W' > "$work/logcat-window.txt" 2>&1 &
-log_pid=$!
+# Record the phone's own logcat timestamp before launch. A post-exit dump avoids
+# losing diagnostics when the daemon exits before a streaming logcat is attached.
+start_time=$(date '+%m-%d %H:%M:%S.000')
 (
     unset LD_PRELOAD LD_AUDIT LD_DEBUG LD_LIBRARY_PATH
     export LD_LIBRARY_PATH="$stage:/system/lib64"
     exec "$stage/DomesticXOsComm"
 ) > "$work/report/daemon.txt" 2>&1 &
 service_pid=$!
+observed_pid=$service_pid
 registered=0
 : > "$work/report/service-observations.txt"
 n=0
@@ -102,9 +103,15 @@ else
     service_rc=$?
     service_pid=
 fi
-# Keep only service/linker/SELinux evidence, not unrelated application logs.
-grep -iE 'xoscomm|libxos|servicemanager|avc:.*denied|CANNOT LINK EXECUTABLE' "$work/logcat-window.txt" | tail -n 150 > "$work/report/registration-log.txt"
-rm -f "$work/logcat-window.txt"
+# Allow Android's log transport to deliver a fast-exit process's final messages.
+sleep 1
+collect_registration_log() {
+    logcat -b all -d -v threadtime -T "$start_time" '*:V' 2> "$work/report/logcat-errors.txt" |
+        grep -iE "DomesticXOs|xoscomm|libxos|servicemanager|LazyServiceRegistrar|VINTF|avc:.*denied|CANNOT LINK EXECUTABLE|[[:space:]]$observed_pid[[:space:]]" |
+        tail -n 300 > "$work/report/registration-log.txt"
+}
+collect_registration_log
+printf 'start_time=%s\nservice_pid=%s\n' "$start_time" "$observed_pid" > "$work/report/log-window.txt"
 # Capture the outstanding dependency for full offline symbol analysis.
 mkdir -p "$work/report/libs/system/lib64" || exit 1
 if [ -f /system/lib64/libapexsupport.so ]; then

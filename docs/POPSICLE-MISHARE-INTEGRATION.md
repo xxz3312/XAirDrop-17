@@ -281,3 +281,19 @@ su -c 'sh /sdcard/Download/popsicle-xos-service-smoke.sh /sdcard/Download/XAirDr
 ```
 
 上传 Download/17pm-xos-service-*.tar.gz。此脚本不是安装模块，不设置开机启动。
+
+
+### 首轮服务立即退出与日志采集修正
+
+设备 18:24 注册诊断报告 SHA256：
+`8c0d7804e11182f879f0535aa2031a3b4be7ce4af64c2796c291bc71714051b7`。
+未观察到服务注册，进程退出 255，前后所观察状态一致；标准输出、标准错误与筛选日志均为空。
+不能单凭退出 255 判断为 VINTF、SELinux 或其他具体原因。
+
+原采集方式在启动服务前异步启动 logcat，并且只采 Warning 以上优先级；
+服务立即退出时可能来不及附加采集，INFO 日志也不会保留。
+脚本现于服务启动前记录设备时间，退出/清理后等待 1 秒再按该时间窗口 dump 全优先级日志。
+仅保留服务 PID、XOS、servicemanager、VINTF 和 SELinux 拒绝相关行，另存 logcat 自身错误。
+不清空日志、不改权限、不添加 VINTF 或 SELinux 放行。
+回归验证立即退出的 INFO/服务 PID 诊断可保留，且无关应用文本被排除。
+需使用更新脚本重新获取真实退出原因，原参考 ZIP 和原加载探针无需重下载或重跑。

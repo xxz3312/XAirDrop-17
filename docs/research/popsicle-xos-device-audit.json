@@ -106,5 +106,15 @@
       "domestic_xoscomm_set_aggregation_config"
     ],
     "limits": "Actual RTLD_NOW loading and dlsym passed. Constructors/destructors ran. Service executable, Binder registration, MiShare calls and AWDL traffic not tested."
+  },
+  "service_registration_evidence": {
+    "archive_sha256": "8c0d7804e11182f879f0535aa2031a3b4be7ce4af64c2796c291bc71714051b7",
+    "status": "REGISTRATION_BLOCKED_OR_NOT_OBSERVED",
+    "registered_observed": false,
+    "service_exit": 255,
+    "state_unchanged": true,
+    "daemon_stdout_stderr_empty": true,
+    "registration_log_empty": true,
+    "cause": "UNKNOWN: initial streaming warning-level capture did not retain a diagnostic. Do not infer VINTF or SELinux cause from exit status alone."
   }
 }

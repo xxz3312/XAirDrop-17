@@ -10,6 +10,7 @@ on:
       - tools/device/popsicle-xos-linker-audit.sh
       - tools/device/popsicle-xos-service-smoke.sh
       - tests/test_xos_service_cleanup.py
+      - tests/test_xos_service_logs.py
       - tests/test_xos_symbols.py
 permissions:
   contents: read
@@ -26,6 +27,7 @@ jobs:
           python3 -m py_compile tools/xos/audit_reference.py tools/xos/compare_device.py
           python3 -m unittest discover -s tests -p 'test_xos_symbols.py'
           python3 -m unittest discover -s tests -p 'test_xos_service_cleanup.py'
+          python3 -m unittest discover -s tests -p 'test_xos_service_logs.py'
           sh -n tools/device/popsicle-xos-audit.sh
           sh -n tools/device/popsicle-xos-linker-audit.sh
           sh -n tools/device/popsicle-xos-service-smoke.sh
