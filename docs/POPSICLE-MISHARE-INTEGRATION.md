@@ -355,3 +355,29 @@ customize.sh、action.sh、service-smoke.sh、system/，可直接在 KernelSU �
 原打包摘要仍保留在构建日志；下载包自身摘要以 GitHub artifact 元数据为准。
 这只是发布产物布局调整，声明和安装逻辑未改变，设备安装/重启效果仍待验证。
 后续安装说明以本段为准，无需再解压寻找内层 ZIP。
+
+
+## 声明模块安装后仍为 VINTF 错误：先核对实际视图
+
+18:46 设备报告 SHA256：
+`c66ea532757b881364120095463b625697ec6c74f5c4078eb300d587e2fa90f7`。
+KernelSU 调用了该模块 Action，随后 PID 12598 服务仍在注册时返回 VINTF declaration error，
+退出 255、未观察到注册，前后可观察状态一致。
+Action 到达服务诊断表明按其代码路径 init 命名空间下的声明摘要检查已经通过；
+这属于根据执行路径作出的推断，报告本身没有完整挂载快照。
+不能据此断言 servicemanager 也看到相同文件，或证明它已经重新读取该声明。
+附近其他应用/系统进程的 AVC 不作为 XOS 的 SELinux 注册拒绝证据。
+
+本轮只增加 `tools/device/popsicle-vintf-view.sh`：对比调用者、init、servicemanager 的
+挂载命名空间、声明是否可读、标签、摘要、XML、选定挂载路径以及 APEX 信息列表的时间/摘要。
+记录系统启动时间、模块启用/待更新状态，以及相关 VINTF 日志，帮助区分视图、解析与缓存问题。
+脚本通过 nsenter 读取目标命名空间，不更改挂载，不启动 XOS，不修改缓存、时间戳或策略。
+收集的缓存文件属性本身不能证明 servicemanager 当前内存缓存内容，不能把假设当成结论。
+
+AOSP 存在基于 APEX 信息列表修改时间检测更新的 VINTF 逻辑，
+见 [Apex.cpp](https://android.googlesource.com/platform/system/libvintf/+/android16-release/Apex.cpp)。
+尚未证明本机此次错误由该缓存造成，本项目本轮不触碰 apex-info-list.xml。
+没有修正前的实际服务管理器视图证据，不继续叠加声明或 SELinux 放行。
+
+使用现有模块，直接执行只读采集脚本，上传 Download/17pm-vintf-view-*.tar.gz。
+本轮无需重装或另行重启，以便保留当前问题现场。

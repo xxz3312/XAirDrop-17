@@ -130,5 +130,24 @@
     "confirmed_blocker": "AIDL service VINTF declaration validation",
     "selinux_service_registration_denial_confirmed": false,
     "unrelated_avc": "Termux/untrusted_app search denials were from PID 19868, not the service PID 19902; not evidence of this registration failure."
+  },
+  "post_declaration_module_registration_evidence": {
+    "archive_sha256": "c66ea532757b881364120095463b625697ec6c74f5c4078eb300d587e2fa90f7",
+    "status": "REGISTRATION_BLOCKED_OR_NOT_OBSERVED",
+    "registered_observed": false,
+    "service_exit": 255,
+    "state_unchanged": true,
+    "service_pid": 12598,
+    "failure_timestamp": "10-26 18:46:57.402",
+    "failure": "VINTF declaration error.",
+    "module_action_observed": true,
+    "init_fragment_visibility": "Inferred from module Action reaching the service test after its init-namespace hash guard. Direct namespace snapshots pending.",
+    "remaining_unknowns": [
+      "servicemanager mount-namespace visibility",
+      "VINTF cached declaration state",
+      "fragment parsing or manifest selection errors",
+      "whether a reboot followed installation"
+    ],
+    "scope": "No new SELinux service registration denial is established. Do not add policy rules based on unrelated AVC entries."
   }
 }

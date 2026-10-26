@@ -9,6 +9,7 @@ on:
       - tools/device/popsicle-xos-audit.sh
       - tools/device/popsicle-xos-linker-audit.sh
       - tools/device/popsicle-xos-service-smoke.sh
+      - tools/device/popsicle-vintf-view.sh
       - tests/test_xos_service_cleanup.py
       - tests/test_xos_service_logs.py
       - tests/test_xos_symbols.py
@@ -31,6 +32,7 @@ jobs:
           sh -n tools/device/popsicle-xos-audit.sh
           sh -n tools/device/popsicle-xos-linker-audit.sh
           sh -n tools/device/popsicle-xos-service-smoke.sh
+          sh -n tools/device/popsicle-vintf-view.sh
       - uses: actions/cache/restore@v4
         id: reference
         with:
@@ -59,7 +61,7 @@ jobs:
       - name: Inspect ELF dependencies and aggregation bypass without execution
         run: |
           python3 tools/xos/audit_reference.py --archive .xos-cache/reference.zip --output "$RUNNER_TEMP/xos-audit/reference.json"
-          cp tools/device/popsicle-xos-audit.sh tools/device/popsicle-xos-linker-audit.sh tools/device/popsicle-xos-service-smoke.sh "$RUNNER_TEMP/xos-audit/"
+          cp tools/device/popsicle-xos-audit.sh tools/device/popsicle-xos-linker-audit.sh tools/device/popsicle-xos-service-smoke.sh tools/device/popsicle-vintf-view.sh "$RUNNER_TEMP/xos-audit/"
       - uses: actions/upload-artifact@v4
         with:
           name: xos-static-audit-${{ github.run_id }}
