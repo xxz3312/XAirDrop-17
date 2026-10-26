@@ -24,7 +24,8 @@ exec >"$work/test.log" 2>&1
 say() { printf '%s\n' "$*"; printf '%s\n' "$*" >&3; }
 fail() { say "FAIL: $*"; exit 1; }
 snapshot() {
-    dmesg 2>&1 | grep -iE 'wonder|opairshare|unknown symbol|disagrees|version magic|cfi failure|oops:|kernel panic|avc:.*module_load' | tail -n 200
+    # Keep warning headers and surrounding stack frames, not just our caller.
+    dmesg 2>&1 | grep -iE -B 8 -A 40 'wonder|opairshare|ieee80211_alloc_hw_nm|unknown symbol|disagrees|version magic|cfi failure|WARNING:.*mac80211|oops:|kernel panic|avc:.*module_load' | tail -n 400
 }
 last_bind() { dmesg 2>&1 | grep -F 'Connected to wlan ver 5 (cur: wonder ver 7)' | tail -n 1; }
 last_unbind() { dmesg 2>&1 | grep -F 'Unregistered vendor operations.' | tail -n 1; }

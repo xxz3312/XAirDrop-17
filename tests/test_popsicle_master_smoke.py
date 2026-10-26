@@ -59,7 +59,10 @@ mkdir "$MODULES/$n"
 case "$n" in
  opairshare_wonder_provider) mkdir "$DEVICE" ;;
  wonder)
-    if [ "${NO_DRIVER:-0}" = 1 ]; then exit 0; fi
+    if [ "${NO_DRIVER:-0}" = 1 ]; then
+        echo '[new] WARNING: CPU: 0 at net/mac80211/main.c:1234 ieee80211_alloc_hw_nm+0x10' >> "$LOG"
+        exit 0
+    fi
     mkdir -p "$MASTER/driver" "$PHY"
     [ "${NEW_INTERFACE:-0}" = 0 ] || mkdir "$NET/unexpected"
     [ "${SILENT_BIND:-0}" = 0 ] || exit 0
@@ -98,6 +101,9 @@ esac'''
         with tarfile.open(archives[0]) as t:
             self.assertFalse(any(n.endswith('.ko') for n in t.getnames()))
             report = t.extractfile('result.txt').read().decode()
+            if flags.get('NO_DRIVER') == '1':
+                self.assertIn('WARNING: CPU: 0 at net/mac80211/main.c',
+                              t.extractfile('dmesg-after.txt').read().decode())
         return r, calls, report, (modules / 'mac80211').exists()
 
     def test_bind_unbind_rebind_and_dependency_order(self):

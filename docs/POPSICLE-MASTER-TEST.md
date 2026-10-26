@@ -1,5 +1,20 @@
 # 第三阶段：Wonder component 绑定生命周期
 
+## 当前结果：暂停重复测试
+
+首次实机尝试在 `load-master` 阶段失败，尚未绑定到 component。
+`wonder_mac80211_init` 分配 mac80211 硬件失败，内核警告堆栈出现在该调用附近。
+原筛选日志漏掉了警告标题与 allocator 位置，暂不能确定是哪项检查触发。
+模块清理完成，各 owned 标志均为 0，网络接口名称前后一致。
+记录见 [失败报告](research/popsicle-master-device-failure.json)。
+
+不要重复执行旧测试包。先补采旧警告的完整时间窗，以及手机原有的
+mac80211.ko 和已加载模块身份；不得据不完整堆栈直接改回调表、关闭 CFI 或强制加载。
+脚本的后续日志采集已增加警告上下文，并有模拟回归检查覆盖。
+此前分发 ZIP 中的脚本仍是旧版本，尚未重新分发主模块测试包。
+
+以下保留原测试说明，供定位问题时参考；不代表现在可以重试。
+
 前两阶段已在目标设备验证最小 sysctl 加载/卸载和 provider/probe 注册/注销。
 Wonder 的失败路径已修复，并由
 [Actions 40274658306](https://github.com/xxz3312/XAirDrop-17/actions/runs/40274658306)

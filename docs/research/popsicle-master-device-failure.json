@@ -1,0 +1,22 @@
+{
+  "status": "FAIL_BEFORE_MASTER_BIND",
+  "phase": "load-master",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "result_archive_sha256": "6afac767dabc5344ab4f04c3df49153d756682f17e6f1928c66d55ac6652f868",
+  "exit_code": 1,
+  "master_still_owned": 0,
+  "provider_still_owned": 0,
+  "probe_still_owned": 0,
+  "mac_still_owned": 0,
+  "mac_loaded_by_test": 0,
+  "network_interface_names_unchanged": true,
+  "test_log": [
+    "Loading Wonder master without creating a network interface.",
+    "FAIL: Wonder platform probe did not bind/register its PHY.",
+    "FAIL_OR_INTERRUPTED (component lifecycle only, no wireless interfaces or traffic requested)"
+  ],
+  "observation": "wonder_mac80211_init could not allocate mac80211 hardware; warning stack present, but old filtered capture omitted its header and allocator location. Root cause not yet determined.",
+  "next_evidence": "Unfiltered warning time window and actual stock mac80211 module/loaded identity.",
+  "limitations": "No component binding, unbinding, rebinding, wireless backend, AWDL or AirDrop operation validated in this attempt."
+}
