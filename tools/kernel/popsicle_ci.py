@@ -83,7 +83,8 @@ def setup(work):
     # Dormant host helper is compiled into the real target WLAN, not a new module.
     for source, destination in [
         ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc'),
-        ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc')]:
+        ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc'),
+        ('wlan_hdd_mishare_txn.c', 'src'), ('wlan_hdd_mishare_txn.h', 'inc')]:
         shutil.copy2(REPO / 'kernel/popsicle-hdd' / source,
                      work / 'wlan/qcacld-3.0/core/hdd' / destination / source)
 
@@ -148,7 +149,9 @@ def setup(work):
 def check_mishare_host_symbols(work, module, report_name):
     names = ['mishare_wonder_host_create_locked', 'mishare_wonder_host_destroy_locked',
              'hdd_mishare_host_adapter_open', 'mishare_wonder_backend_register',
-             'mishare_wonder_backend_unregister']
+             'mishare_wonder_backend_unregister', 'mishare_vdev_txn_init',
+             'mishare_vdev_txn_begin', 'mishare_vdev_txn_submitted',
+             'mishare_vdev_txn_response', 'mishare_vdev_txn_timeout']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -193,6 +196,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/passthru_mode_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/passthru-mode-fixture.json'],
                'passthru-mode-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_txn_fixture.py',
+                '--output', artifacts / 'reports/mishare-txn-fixture.json'],
+               'mishare-txn-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_mlme_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-mlme-fixture.json'],
                'mishare-mlme-fixture.log')

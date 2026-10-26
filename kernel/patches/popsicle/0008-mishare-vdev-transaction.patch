@@ -1,0 +1,10 @@
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -265,6 +265,7 @@
+ # MiShare DOWN host-adapter lifecycle; no runtime caller yet.
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_host.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_backend.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_txn.o
+ 
+ ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
