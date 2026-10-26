@@ -432,7 +432,7 @@ Actions 编译整份生产 events/txn C，并执行从四个真实插入点提�
 失败回收，再处理 DOWN/delete、恢复与 vdev ID 复用前的事件排空。
 目前仍保留创建拒绝和 Wonder init 不支持，没有向手机发送固件请求或提供安装步骤。
 
-## 原生 START/STOP 命令提交端（构建待验证）
+## 原生 START/STOP 命令提交端（离线构建验证通过）
 
 新增 `wlan_hdd_mishare_commands.c/.h`，0010 将它编入原有 WLAN。
 内部 START/STOP 入口调用现有 `vdev_mgr_start_send(mlme, false)` / `vdev_mgr_stop_send`，
@@ -463,3 +463,21 @@ Actions 编译实际 commands/events/txn C，以原生 vdev-manager 发送和组
 终态拒绝复用。错误码转换提取锁定源码的默认 QDF 映射函数；不会把替身执行称为真实
 native 参数打包或无线测试。新三个 API 必须实际出现在 WLAN 对象和 .ko 中。
 所有原生编译仍只由 Actions 执行，工具链缓存和严格链接/选定布局检查保留。
+
+
+### 原生命令提交端构建结果
+
+运行 40393976193，源码 c57d98ae55b837f66dcc669ce8c6e282483af850，所有步骤成功。
+提交端 ASan/UBSan C 测试、44 项基础回归，以及已有模式/来源/事务/MLME create/
+host/table 测试均通过。工具链及 bindgen 缓存命中。
+两个 command 提交函数、新增 checked begin 及此前 16 个 helper 均实际存在于
+完整 WLAN 对象和 .ko 中。574 条导入版本记录无不匹配，WLAN 未解析导入为 0，
+七项选定结构布局检查通过，没有改写 CRC/vermagic 或放宽链接检查。
+
+已下载并校验 23,262 字节 validation ZIP，独立重新生成测试 C 的摘要，并核对
+commands/events/txn 六份生产文件与 QDF 错误码映射源码摘要，均与 Actions 一致。
+详细状态和限制见 [原生命令提交端验证记录](research/popsicle-native-command-submit-build-pass.json)。
+
+本段实现并验证了命令提交端，尚无运行时调用者。专用 MLME ops、真实 vdev 创建、
+信道/并发配置、UP/DOWN/DELETE、恢复和事件排空仍待接通；没有向手机提交命令。
+下一段应完成这些调用端的状态与资源归属，不能把本段返回 0 直接当作 Wonder init 成功。
