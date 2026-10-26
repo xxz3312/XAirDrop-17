@@ -7,6 +7,15 @@ from compare_device import symbol_sets
 
 
 class XosSymbolsTests(unittest.TestCase):
+    def test_empty_undefined_row_does_not_consume_next_symbol(self):
+        strong, weak, exports = symbol_sets("""
+  0: 0000000000000000 0 NOTYPE LOCAL DEFAULT UND
+  1: 0000000000000000 0 FUNC GLOBAL DEFAULT UND real@ABI (2)
+""")
+        self.assertEqual(strong, {'real@ABI'})
+        self.assertEqual(weak, set())
+        self.assertEqual(exports, set())
+
     def test_android_ifunc_exports_and_versioned_import(self):
         strong, weak, exports = symbol_sets('''
   1: 0000000000000000 0 FUNC GLOBAL DEFAULT UND memcpy@LIBC (2)

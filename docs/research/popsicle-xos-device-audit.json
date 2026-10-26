@@ -2,58 +2,79 @@
   "status": "REFERENCE_IMPORT_CANDIDATES_COVERED_CLOSURE_INCOMPLETE",
   "reference_results": {
     "DomesticXOsComm": {
-      "strong_import_count": 60,
+      "strong_import_count": 61,
       "missing_strong_imports": [],
       "unresolved_weak_imports": [],
       "needed_not_captured": []
     },
     "com.domestic.xoscomm-V1-ndk.so": {
-      "strong_import_count": 59,
+      "strong_import_count": 60,
       "missing_strong_imports": [],
       "unresolved_weak_imports": [],
       "needed_not_captured": []
     },
     "libxos.so": {
-      "strong_import_count": 114,
+      "strong_import_count": 115,
       "missing_strong_imports": [],
       "unresolved_weak_imports": [],
       "needed_not_captured": []
     },
     "libev.so": {
-      "strong_import_count": 38,
+      "strong_import_count": 39,
       "missing_strong_imports": [],
       "unresolved_weak_imports": [],
       "needed_not_captured": []
     }
   },
-  "loader_captured_with_ld_android_soname": false,
+  "captured_dependency_missing_strong_import_candidates": {
+    "libbinder.so": [
+      "AApexSupport_loadLibrary"
+    ]
+  },
+  "loader_captured_with_ld_android_soname": true,
   "transitive_dependencies_not_captured": [
-    "ld-android.so",
-    "libbinder.so",
-    "libvndksupport.so"
+    "libapexsupport.so"
   ],
   "device_system_library_sha256": {
+    "ld-android.so": "e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305",
+    "libandroid_runtime_lazy.so": "af4bce91675fcc4d1dae6646cbca029e5d202e0a7bdde748ad3755203c1784ea",
     "libbase.so": "12d3935ecf47794b177c9c101ea1f734c41997f13a204beff61900014c28765d",
+    "libbinder.so": "7e292a21a87f4dd6ca25548465e7fbe6d00ddedb7594134ae5d15ca5cde8a069",
     "libbinder_ndk.so": "deec4072c13cfcb6421dce9edc9e19496a9fd937447e939976fdfd9edc45ecfe",
     "libc++.so": "cb118e98c74d3454858921123b9b51ba13df9cad7dfa141dd892c453661a4d78",
     "libc.so": "b963b539545b64aa8fbcaed3228d04bcb6466bfd47055aa16e4ccdcadfdc461e",
+    "libcap.so": "4ef8aa0c0336622d705a38d90335c97db2f17e193daa0b3b6c237d805e266102",
+    "libcgrouprc.so": "2df407af307558cafc245243e1422c1e0cf5e93cdd8256fe5fb760ad502810ef",
     "libcutils.so": "09ea7e79326ee62d7a35a14703456f2285b805dd3854ab35e489415dafb7fa32",
+    "libdebuggerd_client.so": "a2f8221151a19ef1d2cfdd061955e5d2c472f064d95cc1bb5298b6402f9956c7",
     "libdl.so": "9805c2a013d994bdefc1c124027c53de81060afc901d2188b6eafdf6783140d4",
+    "libdl_android.so": "6ad8ee8bc0a67a2582f9a9bcc37a40af4aa21236b968a08a895099058066305a",
+    "libjsoncpp.so": "d6f679b0863792d34b286d50279cc7a1675f26e387cff523719f5c0762cd5614",
     "liblog.so": "601494f5b7a4d282eed1effadf8b40097b4182298de7e0bbc6a7ec69bda5667d",
+    "liblzma.so": "0cc0f4dbb3239db2b97add98de56b5acdd4d7ec30eacfefb458fe8f4b3b20706",
     "libm.so": "646b2a1cab7cb7b035df3fe9f7beee11ab22d5e6bd6dc7d66e96e2429a05586e",
     "libnl.so": "0dcfe50851de7915478fc3ec39e6f3b06dcdce19e4e7e31cc2a1415925f9e647",
+    "libpackagelistparser.so": "183039485926b1ee4baf1bf6283da36685869a926ef0c751ef38d1728965d49a",
     "libpcap.so": "cbf8dedf4780bb44f92984b5e021ccfb557291f1762bd1bcf33b6fa753a4d5a3",
-    "libutils.so": "6bc35b75712c4fd262dd4fa2c297de532ad5f0ef0d7ecd3f5f3fa479abdbba57"
+    "libpcre2.so": "63abbcc0bddfff97108639fcda9f92e6248cfa98ceea08e10d594b30bbe4c9da",
+    "libprocessgroup.so": "a74b136d694470090e271d92e572ab0f9e36a7a4d9a457cb8fb184669ba3aa05",
+    "libselinux.so": "45a2097adc900fb2dd877fa088dd9a04fac21c85957432af3647b2284a72961c",
+    "libunwindstack.so": "b1d719287102dd411ee0aa1a033746682d7d279ea7f662cad3d24e6fda734f92",
+    "libutils.so": "6bc35b75712c4fd262dd4fa2c297de532ad5f0ef0d7ecd3f5f3fa479abdbba57",
+    "libvndksupport.so": "24a35b4ca97ebb2fd8cab02baf8d4e3af49ceb7309c93268e5670eda3930d112",
+    "libz.so": "13b31cd4dc1e997076bc0227923e7b95faa9be143766186ad7ea3c746737b247"
   },
-  "candidate_scope": "Pinned four reference ELF files plus captured /system/lib64 files. Versioned symbols must match; IFUNC definitions included. Product/vendor candidates excluded.",
+  "candidate_scope": "Pinned four reference ELF roots plus reachable captured /system/lib64 dependencies. Versioned symbols must match; IFUNC definitions included. Product/vendor candidates excluded.",
   "limitations": "Candidate symbol coverage only; no actual linker resolution/order or dependency symbol closure proof. No constructors, service or radio code executed. Binder/VINTF/SELinux and runtime behavior remain untested.",
   "evidence": {
-    "archive_sha256": "354f64e21587e09e9d4b5831dac51a0d7bf03031e44bf286bfea18e7c667d38e",
+    "archive_sha256": "ca069ddeada9453467e5f781a2b02d48b1d717e764b416dcfc8adb189332f540",
     "device": "popsicle",
     "firmware": "OS4.0.5.0.XPBCNXM",
     "api": 37,
+    "root_domain": "u:r:ksu:s0",
     "selinux": "Enforcing",
     "page_size": 4096,
+    "target_apk_sha256_confirmed": "3ca8032f3c55d53e1912a44e42a17334ff739a064cf603e6cb9afb09d810905d",
     "network_factory_granted": true,
     "xos_service_found": false,
     "xos_interface_present": false,

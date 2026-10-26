@@ -31,7 +31,7 @@ mkdir -p "$work/libs" /sdcard/Download || exit 1
 } > "$work/state.txt" 2>&1
 # Preserve separate candidate paths. File existence alone is not linker compatibility.
 : > "$work/libraries.txt"
-for name in liblog.so libbinder_ndk.so libutils.so libcutils.so libbase.so libc++.so libc.so libm.so libdl.so libnl.so libpcap.so libbinder.so libvndksupport.so ld-android.so libprocessgroup.so libselinux.so libandroid_runtime_lazy.so libbinderthreadstate.so libdl_android.so libdebuggerd_client.so libunwindstack.so libc++demangle.so liblzma.so libz.so libpackagelistparser.so libcap.so libstatssocket.so libcgrouprc.so libjsoncpp.so libpcre2.so; do
+for name in liblog.so libbinder_ndk.so libutils.so libcutils.so libbase.so libc++.so libc.so libm.so libdl.so libnl.so libpcap.so libbinder.so libapexsupport.so libvndksupport.so ld-android.so libprocessgroup.so libselinux.so libandroid_runtime_lazy.so libbinderthreadstate.so libdl_android.so libdebuggerd_client.so libunwindstack.so libc++demangle.so liblzma.so libz.so libpackagelistparser.so libcap.so libstatssocket.so libcgrouprc.so libjsoncpp.so libpcre2.so; do
     for dir in /system/lib64 /system_ext/lib64 /product/lib64 /vendor/lib64 /apex/com.android.runtime/lib64/bionic /system/lib64/bootstrap; do
         file=$dir/$name
         [ -f "$file" ] || continue

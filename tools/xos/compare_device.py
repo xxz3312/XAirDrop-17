@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 import subprocess
 
-ROW = re.compile(r'^\s*\d+:\s+\S+\s+\d+\s+.+?\s+(GLOBAL|WEAK|LOCAL)\s+(DEFAULT|PROTECTED|HIDDEN|INTERNAL)\s+(\S+)\s+(\S+)', re.M)
+ROW = re.compile(r'^[ \t]*\d+:[ \t]+\S+[ \t]+\d+[ \t]+.+?[ \t]+(GLOBAL|WEAK|LOCAL)[ \t]+(DEFAULT|PROTECTED|HIDDEN|INTERNAL)[ \t]+(\S+)[ \t]+(\S+)', re.M)
 
 
 def symbol_sets(text):
@@ -64,19 +64,7 @@ def compare(reference, device):
                 system.setdefault('ld-android.so', info)
                 break
     candidates = {**system, **refs}
-    providers = {}
-    for name, info in candidates.items():
-        for symbol in info['exports']:
-            providers.setdefault(symbol, []).append(name)
-    results = {}
-    for name, info in refs.items():
-        results[name] = {
-            'strong_import_count': len(info['strong']),
-            'missing_strong_imports': sorted(info['strong'] - providers.keys()),
-            'unresolved_weak_imports': sorted(info['weak'] - providers.keys()),
-            'needed_not_captured': sorted(set(info['needed']) - candidates.keys()),
-        }
-    # Walk all available dependencies from both startup and dlopen roots.
+    # Walk startup and dlopen roots before choosing the candidate symbol scope.
     missing, visited = set(), set()
     pending = list(refs)
     while pending:
@@ -88,15 +76,33 @@ def compare(reference, device):
             missing.add(name)
         else:
             pending.extend(candidates[name]['needed'])
+    providers = {}
+    for name in sorted(visited & candidates.keys()):
+        for symbol in candidates[name]['exports']:
+            providers.setdefault(symbol, []).append(name)
+    results = {}
+    for name, info in refs.items():
+        results[name] = {
+            'strong_import_count': len(info['strong']),
+            'missing_strong_imports': sorted(info['strong'] - providers.keys()),
+            'unresolved_weak_imports': sorted(info['weak'] - providers.keys()),
+            'needed_not_captured': sorted(set(info['needed']) - candidates.keys()),
+        }
+    dependency_missing = {
+        name: sorted(candidates[name]['strong'] - providers.keys())
+        for name in sorted((visited & candidates.keys()) - refs.keys())
+        if candidates[name]['strong'] - providers.keys()
+    }
     symbols_ok = all(not r['missing_strong_imports'] for r in results.values())
     return {
         'status': 'REFERENCE_IMPORT_CANDIDATES_COVERED_CLOSURE_INCOMPLETE' if symbols_ok and missing else
                   'REFERENCE_IMPORT_CANDIDATES_COVERED_RUNTIME_UNTESTED' if symbols_ok else 'REFERENCE_IMPORT_CANDIDATES_MISSING',
         'reference_results': results,
+        'captured_dependency_missing_strong_import_candidates': dependency_missing,
         'loader_captured_with_ld_android_soname': loader is not None,
         'transitive_dependencies_not_captured': sorted(missing),
         'device_system_library_sha256': {name: info['sha256'] for name, info in system.items()},
-        'candidate_scope': 'Pinned four reference ELF files plus captured /system/lib64 files. Versioned symbols must match; IFUNC definitions included. Product/vendor candidates excluded.',
+        'candidate_scope': 'Pinned four reference ELF roots plus reachable captured /system/lib64 dependencies. Versioned symbols must match; IFUNC definitions included. Product/vendor candidates excluded.',
         'limitations': 'Candidate symbol coverage only; no actual linker resolution/order or dependency symbol closure proof. No constructors, service or radio code executed. Binder/VINTF/SELinux and runtime behavior remain untested.',
     }
 

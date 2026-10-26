@@ -20,7 +20,6 @@
         "/system/bin/linker64"
       ],
       "undefined_symbols": [
-        "1:",
         "ABinderProcess_joinThreadPool@LIBBINDER_NDK",
         "ABinderProcess_setThreadPoolMaxThreadCount@LIBBINDER_NDK",
         "ABinderProcess_startThreadPool@LIBBINDER_NDK",
@@ -66,6 +65,7 @@
         "__cxa_atexit@LIBC",
         "__cxa_guard_acquire",
         "__cxa_guard_release",
+        "__libc_init@LIBC",
         "__system_property_get@LIBC",
         "_exit@LIBC",
         "dlclose@LIBC",
@@ -95,7 +95,6 @@
       ],
       "interpreter": [],
       "undefined_symbols": [
-        "1:",
         "AIBinder_Class_define@LIBBINDER_NDK",
         "AIBinder_Class_getDescriptor@LIBBINDER_NDK31",
         "AIBinder_Class_setHandleShellCommand@LIBBINDER_NDK30",
@@ -144,6 +143,7 @@
         "_Znwm",
         "__assert@LIBC",
         "__cxa_atexit@LIBC",
+        "__cxa_finalize@LIBC",
         "__cxa_guard_acquire",
         "__cxa_guard_release",
         "__cxa_pure_virtual",
@@ -174,8 +174,8 @@
       ],
       "interpreter": [],
       "undefined_symbols": [
-        "1:",
         "__android_log_print@LIBLOG",
+        "__cxa_finalize@LIBC",
         "__errno@LIBC",
         "__memcpy_chk@LIBC",
         "__memmove_chk@LIBC",
@@ -306,7 +306,7 @@
       ],
       "interpreter": [],
       "undefined_symbols": [
-        "1:",
+        "__cxa_finalize@LIBC",
         "__errno@LIBC",
         "abort@LIBC",
         "atoi@LIBC",

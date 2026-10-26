@@ -30,7 +30,7 @@ def elf_info(path):
         'sha256': sha(data),
         'needed': re.findall(r'\(NEEDED\).*?\[([^\]]+)\]', dynamic),
         'interpreter': re.findall(r'Requesting program interpreter: ([^\]]+)', headers),
-        'undefined_symbols': sorted(set(re.findall(r'^\s*\d+:.*?\bUND\s+(\S+)', symbols, re.M))),
+        'undefined_symbols': sorted(set(re.findall(r'^[ \t]*\d+:[^\r\n]*?\bUND[ \t]+(\S+)', symbols, re.M))),
         'exported_xos_symbols': sorted(set(re.findall(r'\b(domestic_xoscomm_\w+)\b', symbols))),
     }
 

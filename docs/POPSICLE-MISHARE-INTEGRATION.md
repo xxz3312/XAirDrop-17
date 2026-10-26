@@ -154,3 +154,45 @@ NETWORK_FACTORY 已授予，XOS 服务、xos0、Wonder PHY 和 wonder_enable 均
 用于下一轮补齐依赖链。当前没有启动 XOS、应用 SELinux 规则或启用 AirDrop。
 完整 Manifest 解码与设备元数据均为 minSdk 26；先前无资源解码工作目录推断的 27
 不能作为原 APK 的 minSdk，现已更正审计记录。DEX 输入指纹和非目标 APK 条目未改变。
+
+
+## 补充报告与设备链接器依赖检查
+
+第二轮设备报告 SHA256：
+`ca069ddeada9453467e5f781a2b02d48b1d717e764b416dcfc8adb189332f540`。
+已获得 libbinder、libvndksupport 和以 ld-android.so 为 SONAME 的真实 linker64。
+当前运行 root 域为 `u:r:ksu:s0`；当前安装 APK 摘要与提供的原始 APK 完全相同。
+四个参考 ELF 的强引用符号仍全部在候选依赖作用域中覆盖。
+范围现在限于可达的 DT_NEEDED 链，避免不相关的已采集库提供假匹配。
+传递依赖只剩未采集的 libapexsupport.so，libbinder 对 AApexSupport_loadLibrary
+的引用因此尚未覆盖。这是采集缺口，不是设备缺库的结论。
+
+符号解析现在拒绝跨行匹配空的 UND 条目，5 项回归包含该场景。
+之前的解析可把下一行的序号当符号，或漏掉第一项导入；修正后已重新计算报告。
+没有在 Android 设备上执行任何参考程序或修改系统状态。
+
+新增 `tools/device/popsicle-xos-linker-audit.sh`：
+
+- 只接受已核对的 popsicle / OS4.0.5.0.XPBCNXM / linker64 指纹。
+- 用户自行下载上游 XAirDrop-1.0.zip；脚本校验整包与四个 ELF，项目不重新分发这些二进制。
+- 将四个文件临时放在 /data/local/tmp 私有目录，权限 0400；清除继承的 LD_PRELOAD 等变量。
+- 仅调用系统 linker64 --list，分别列出服务和 libxos 的实际依赖路径，15 秒超时，无执行回退。
+- 不注册 Binder、不改 VINTF/SELinux、不加载模块、不启用 wonder_enable、不修改 MiShare 或 Wi-Fi。
+- 采集尚缺的 libapexsupport，记录检查前后服务/网卡/Wonder 状态。完成后移除四个参考 ELF。
+- 输出 PASS_DEPENDENCY_PATHS_ONLY 只代表两个 --list 成功且所观察状态相同；不是符号重定位或服务启动通过。
+
+AOSP 的 --list 会设置 g_is_ldd，跳过目标构造函数、目标入口和符号重定位。
+参考实现：[入口与模式](https://android.googlesource.com/platform/bionic/+/2fbbc253f6886524a4a6e56ad763100d05b6ddcd/linker/linker_main.cpp)、
+[构造函数跳过](https://android.googlesource.com/platform/bionic/+/1c33c4a26333258275cc6724a692d4ca7adc60e4/linker/linker_soinfo.cpp)、
+[重定位跳过](https://android.googlesource.com/platform/bionic/+/d512580522ab8024264b08b19fc2c1951aefbc5d/linker/linker_relocate.cpp)。
+已采集本机 linker64 含 --list 支持；本机运行结果仍待用户执行并回传。
+原生源码版本与本机二进制未建立逐指令一致性证明，这不是完整运行认证。
+
+用法（不安装参考 ZIP）：
+
+```sh
+su -c 'sh /sdcard/Download/popsicle-xos-linker-audit.sh /sdcard/Download/XAirDrop-reference-1.0.zip'
+```
+
+结果为 Download/17pm-xos-linker-*.tar.gz。该报告不包含四个参考 ELF。
+依赖路径检查完成后，仍须验证 Binder/VINTF/SELinux，底层 AWDL 后端缺口继续单独推进。

@@ -7,6 +7,7 @@ on:
       - .github/workflows/xos-audit.yml
       - tools/xos/**
       - tools/device/popsicle-xos-audit.sh
+      - tools/device/popsicle-xos-linker-audit.sh
       - tests/test_xos_symbols.py
 permissions:
   contents: read
@@ -23,6 +24,7 @@ jobs:
           python3 -m py_compile tools/xos/audit_reference.py tools/xos/compare_device.py
           python3 -m unittest discover -s tests -p 'test_xos_symbols.py'
           sh -n tools/device/popsicle-xos-audit.sh
+          sh -n tools/device/popsicle-xos-linker-audit.sh
       - uses: actions/cache/restore@v4
         id: reference
         with:
@@ -51,7 +53,7 @@ jobs:
       - name: Inspect ELF dependencies and aggregation bypass without execution
         run: |
           python3 tools/xos/audit_reference.py --archive .xos-cache/reference.zip --output "$RUNNER_TEMP/xos-audit/reference.json"
-          cp tools/device/popsicle-xos-audit.sh "$RUNNER_TEMP/xos-audit/"
+          cp tools/device/popsicle-xos-audit.sh tools/device/popsicle-xos-linker-audit.sh "$RUNNER_TEMP/xos-audit/"
       - uses: actions/upload-artifact@v4
         with:
           name: xos-static-audit-${{ github.run_id }}
