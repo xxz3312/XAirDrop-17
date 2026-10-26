@@ -472,3 +472,31 @@ su -c 'sh /sdcard/Download/xos-policy-probe/popsicle-xos-policy-audit.sh /sdcard
 ```
 
 上传 Download/17pm-xos-policy-*.tar.gz。现有声明模块保留，不需要重装或启用无线。
+
+
+## 现行策略仅拒绝服务查找，模块 0.2 补一条规则
+
+19:32 报告 SHA256：
+`e040fc5641514183d123b88b59fdce3e08650378c9cb6c3e0b82c549b862602d`。
+真实 MiShare UID/域再次匹配；新解析的服务标签为 default_android_service。
+六项查询中仅 service_manager/find 被 EACCES 拒绝；Binder call/transfer 双向及应用使用服务端
+FD 的候选权限均允许。denied=1/errors=0，Enforcing 与策略摘要前后不变。
+service_contexts 的重复项提示未阻止本次 lookup 和六项查询，不能当作权限查询失败。
+
+模块 0.2 在原声明和手动测试基础上只加入：
+
+```text
+allow platform_app_36 default_android_service service_manager find
+```
+
+规则以域/类型生效，覆盖 platform_app_36 对 default_android_service 标记服务的查找，
+不只限 MiShare UID 10132 或 XOS 单个服务名；不得称作 per-app/per-service 精确隔离。
+未加入已允许的 Binder/FD 权限，也未扩展到 untrusted_app 或其他应用域。
+打包器固定这条规则字节，拒绝通配权限、附加规则和开机脚本。
+原有 XML、原生文件指纹以及无线开关策略保持不变。
+
+产物名为 XAirDrop-17-XOS-VINTF-0.2，可直接在 KernelSU 覆盖安装，随后普通重启使规则生效。
+不需卸载旧版；不能仅靠安装成功推断现行策略已更新。
+保留现有 xos-policy-probe 工具，重启后重新执行同一采集命令并上传报告，
+预期 find 查询转为允许后再验证实际 MiShare 调用链。
+此处仍只有策略证据，没有 MiShare 实际 Binder 或 AWDL 收发结论。

@@ -1,5 +1,5 @@
 {
-  "status": "DEVICE_ROOT_BINDER_METADATA_PASSED_MISHARE_AND_RADIO_UNTESTED",
+  "status": "MISHARE_POLICY_FIND_DENIED_SINGLE_RULE_FIX_PREPARED_DEVICE_TEST_PENDING",
   "reference_results": {
     "DomesticXOsComm": {
       "strong_import_count": 61,
@@ -205,5 +205,22 @@
     "binder_server_context": "u:r:ksu:s0",
     "binder_server_context_evidence": "Prior root Binder report processes.txt for DomesticXOsComm PID 14462",
     "limits": "Identity only. No actual MiShare-to-XOS Binder call observed."
+  },
+  "mishare_policy_query_evidence": {
+    "archive_sha256": "e040fc5641514183d123b88b59fdce3e08650378c9cb6c3e0b82c549b862602d",
+    "source_context": "u:r:platform_app_36:s0:c512,c768",
+    "uid": 10132,
+    "fresh_service_context": "u:object_r:default_android_service:s0",
+    "service_find": "DENY_EACCES",
+    "app_to_server_call": "ALLOW",
+    "app_to_server_transfer": "ALLOW",
+    "server_to_app_call": "ALLOW",
+    "server_to_app_transfer": "ALLOW",
+    "app_use_server_fd": "ALLOW",
+    "denied": 1,
+    "errors": 0,
+    "enforcing_before_after": true,
+    "policy_sha256_before_after": "4ac953e97b937f71ee8fd28203b7bca83bed3c5f2ef103b84d5470fcf6841ffc",
+    "scope": "Live policy queries using captured app context; not an actual MiShare Binder transaction."
   }
 }

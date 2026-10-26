@@ -13,7 +13,15 @@ class VintfModuleTests(unittest.TestCase):
         files = validated_files(ROOT / 'modules/xos-vintf')
         self.assertNotIn('@MANIFEST_SHA256@', files['action.sh'].decode())
         self.assertNotIn('service.sh', files)
-        self.assertNotIn('sepolicy.rule', files)
+        self.assertEqual(files['sepolicy.rule'], b'allow platform_app_36 default_android_service service_manager find\n')
+
+    def test_additional_or_wider_policy_rejected(self):
+        for rule in ['allow platform_app_36 default_android_service service_manager *\n',
+                     'allow platform_app_36 default_android_service service_manager find\nallow untrusted_app ksu binder call\n']:
+            with self.subTest(rule=rule), tempfile.TemporaryDirectory() as tmp:
+                source=Path(tmp)/'source';shutil.copytree(ROOT/'modules/xos-vintf',source)
+                (source/'sepolicy.rule').write_text(rule)
+                with self.assertRaises(ValueError):validated_files(source)
 
     def test_unexpected_boot_script_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:

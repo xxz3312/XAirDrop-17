@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package the declaration-only KernelSU module. No vendor binaries or boot scripts."""
+"""Package the XOS declaration and measured lookup-permission KernelSU module. No vendor binaries or boot scripts."""
 import argparse
 import hashlib
 import json
@@ -10,14 +10,16 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 FRAGMENT = 'system/vendor/etc/vintf/manifest/manifest_xairdrop17_xos.xml'
-ALLOWED = {'module.prop', 'customize.sh', 'action.sh', FRAGMENT}
+ALLOWED = {'module.prop', 'customize.sh', 'action.sh', 'sepolicy.rule', FRAGMENT}
 
 
 def validated_files(source):
     paths = {p.relative_to(source).as_posix(): p for p in source.rglob('*') if p.is_file()}
     if set(paths) != ALLOWED or any(p.is_symlink() for p in source.rglob('*')):
-        raise ValueError('Unexpected module content; only the declaration and manual scripts are allowed')
+        raise ValueError('Unexpected module content; only the declaration, measured rule and manual scripts are allowed')
     data = {name: path.read_bytes() for name, path in paths.items()}
+    if data['sepolicy.rule'] != b'allow platform_app_36 default_android_service service_manager find\n':
+        raise ValueError('Unexpected SELinux rule: only the measured service lookup permission is allowed')
     manifest = ET.fromstring(data[FRAGMENT])
     hal = manifest.find('hal')
     if (manifest.attrib != {'version': '2.0', 'type': 'device'} or len(manifest) != 1 or hal is None or
@@ -35,7 +37,7 @@ def package(output):
     data = validated_files(ROOT / 'modules/xos-vintf')
     data['service-smoke.sh'] = (ROOT / 'tools/device/popsicle-xos-service-smoke.sh').read_bytes()
     output.mkdir(parents=True, exist_ok=True)
-    path = output / 'XAirDrop-17-XOS-VINTF-0.1.zip'
+    path = output / 'XAirDrop-17-XOS-VINTF-0.2.zip'
     with zipfile.ZipFile(path, 'x', compression=zipfile.ZIP_DEFLATED) as z:
         for name, content in sorted(data.items()):
             info = zipfile.ZipInfo(name, date_time=(2026, 10, 26, 0, 0, 0))
@@ -44,7 +46,7 @@ def package(output):
             z.writestr(info, content, compress_type=zipfile.ZIP_DEFLATED)
     record = {'status': 'PACKAGED_NOT_DEVICE_TESTED', 'commit': os.environ.get('GITHUB_SHA'), 'run_id': os.environ.get('GITHUB_RUN_ID'), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
               'bytes': path.stat().st_size, 'entries': sorted(data),
-              'scope': 'One systemless VINTF declaration, installer checks and manual registration test. No boot service, native ELF, kernel modules, SELinux rules or APKs.'}
+              'scope': 'One systemless VINTF declaration and measured platform_app_36/default_android_service find rule. Domain/type scope; not per UID or service name. Manual registration test only; no boot service, native ELF, kernel modules or APKs.'}
     (output / 'build.json').write_text(json.dumps(record, indent=2) + '\n')
     print(json.dumps(record, indent=2))
 
