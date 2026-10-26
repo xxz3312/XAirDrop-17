@@ -24,3 +24,10 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
    not add a firmware type, policy table rows, adapter implementation or TX/RX.
    Actions compares the original and patched C functions for all legacy modes
    and checks the new rejection paths before compiling the complete WLAN.
+
+5. `0005-mishare-host-lifecycle.patch` adds a private DOWN PASSTHRU factory
+   while keeping the original hdd_open_adapter signature and rejection behavior.
+   Its netdev open/type-change/delete paths reject ordinary control. The private
+   factory's registered-netdev rollback saves the MAC before adapter reclamation.
+   The real lifecycle helper C/header are overlaid from kernel/popsicle-hdd and
+   built into WLAN; there is no module init, export, runtime caller or radio path.

@@ -80,6 +80,12 @@ def setup(work):
             run(check + ['--check', patch])
             run(check + [patch])
 
+    # Dormant host helper is compiled into the real target WLAN, not a new module.
+    for source, destination in [
+        ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc')]:
+        shutil.copy2(REPO / 'kernel/popsicle-hdd' / source,
+                     work / 'wlan/qcacld-3.0/core/hdd' / destination / source)
+
     tools = lock['toolchain_record']
     for key, folder in [('clang', 'clang-r536225'), ('rust', 'rust-1.82.0.p2')]:
         url = (f"{tools[key + '_repository']}/+archive/"
@@ -135,6 +141,21 @@ def setup(work):
           'firmware support unverified.', flush=True)
 
 
+def check_mishare_host_symbols(work, module, report_name):
+    names = ['mishare_wonder_host_create_locked', 'mishare_wonder_host_destroy_locked',
+             'hdd_mishare_host_adapter_open']
+    output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
+                                      '--defined-only', str(module)], text=True)
+    defined = {line.split()[-1] for line in output.splitlines() if line.split()}
+    missing = sorted(set(names) - defined)
+    result = {'status': 'HOST_HELPER_SYMBOLS_PRESENT_ONLY' if not missing else 'MISSING_HOST_HELPER_SYMBOLS',
+              'sha256': hashlib.sha256(module.read_bytes()).hexdigest(), 'symbols': names, 'missing': missing,
+              'limitations': 'Actual linked symbol presence only; not host registration, firmware or radio validation.'}
+    (work / 'artifacts/reports' / report_name).write_text(json.dumps(result, indent=2) + '\n')
+    if missing:
+        raise ValueError('Host helper was not built: ' + ', '.join(missing))
+
+
 def build(work, phase):
     artifacts = work / 'artifacts'
     logs = artifacts / 'logs'
@@ -162,8 +183,13 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/passthru_mode_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/passthru-mode-fixture.json'],
                'passthru-mode-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_host_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-host-fixture.json'],
+               'mishare-host-fixture.log')
         logged(args, 'build.log')
         if phase != 'prepare':
+            check_mishare_host_symbols(work, work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.o',
+                                       'mishare-host-object.json')
             host = tools / 'host'
             env['PATH'] = f"{host}/usr/bin:{tools}/rust-1.82.0.p2/bin:" + env.get('PATH', '')
             env['LD_LIBRARY_PATH'] = f'{host}/usr/lib/x86_64-linux-gnu'
@@ -375,6 +401,7 @@ def modules(work, link_only=False):
                 'modpost-wlan.log')
         path = work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.ko'
         produced.append(path)
+        check_mishare_host_symbols(work, path, 'mishare-host-module.json')
         merge_generated_exports(known, symvers([path.parent / 'Module.symvers']))
         result['modules']['wlan'] = module_report(path, expected, known)
         result['status'] = result['modules']['wlan']['status']

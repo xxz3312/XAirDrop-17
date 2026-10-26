@@ -18,6 +18,7 @@ on:
       - tools/kernel/popsicle_*.py
       - tools/kernel/popsicle_*.sh
       - tools/kernel/passthru_mode_fixture.py
+      - tools/kernel/mishare_host_fixture.py
       - tools/kernel/test_*.py
       - tools/kernel/module_*.py
       - tools/kernel/btf_layout.py
@@ -28,6 +29,7 @@ on:
       - kernel/provider/**
       - kernel/wonder/**
       - kernel/popsicle-availability/**
+      - kernel/popsicle-hdd/**
       - docs/popsicle-source-lock.json
 
 permissions:

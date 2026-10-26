@@ -1,0 +1,186 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -28,6 +28,7 @@
+ #include <wbuff.h>
+ #include "cfg_ucfg_api.h"
+ #include <wlan_hdd_includes.h>
++#include "wlan_hdd_mishare_host.h"
+ #include <cds_api.h>
+ #include <cds_sched.h>
+ #include <linux/cpu.h>
+@@ -7294,6 +7295,17 @@
+ 	}
+ }
+ 
++/* DOWN host-only PASSTHRU interface; never enters the STA open path. */
++static int hdd_mishare_host_only_open(struct net_device *dev)
++{
++	(void)dev;
++	return -EOPNOTSUPP;
++}
++
++static const struct net_device_ops wlan_mishare_host_ops = {
++	.ndo_open = hdd_mishare_host_only_open,
++};
++
+ static const struct net_device_ops wlan_drv_ops = {
+ 	.ndo_open = hdd_open,
+ 	.ndo_stop = hdd_stop,
+@@ -7447,7 +7459,8 @@
+ 			      name_assign_type,
+ #endif
+ 			      ((cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE ||
+-			       wlan_hdd_is_session_type_monitor(session_type)) ?
++			       wlan_hdd_is_session_type_monitor(session_type) ||
++			       session_type == QDF_PASSTHRU_MODE) ?
+ 			       hdd_mon_mode_ether_setup : ether_setup),
+ 			      ((session_type == QDF_STA_MODE) ?
+ 			       NDP_NUM_TX_QUEUES : NUM_TX_QUEUES),
+@@ -7487,7 +7500,9 @@
+ 	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
+ 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
+ 
+-	if (wlan_hdd_is_session_type_monitor(session_type)) {
++	if (session_type == QDF_PASSTHRU_MODE) {
++		adapter->dev->netdev_ops = &wlan_mishare_host_ops;
++	} else if (wlan_hdd_is_session_type_monitor(session_type)) {
+ 		if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) !=
+ 						PACKET_CAPTURE_MODE_DISABLE)
+ 			hdd_set_pktcapture_ops(adapter->dev);
+@@ -9658,13 +9673,14 @@
+  *
+  * Return: the pointer of hdd adapter, otherwise NULL.
+  */
+-struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
++static struct hdd_adapter *__hdd_open_adapter(struct hdd_context *hdd_ctx,
+ 				     uint8_t session_type,
+ 				     const char *iface_name,
+ 				     tSirMacAddr mac_addr,
+ 				     unsigned char name_assign_type,
+ 				     bool rtnl_held,
+-				     struct hdd_adapter_create_param *params)
++				     struct hdd_adapter_create_param *params,
++				     bool mishare_host_only)
+ {
+ 	struct net_device *ndev = NULL;
+ 	struct hdd_adapter *adapter = NULL, *sta_adapter = NULL;
+@@ -9673,7 +9689,7 @@
+ 	bool eht_capab = 0;
+ 
+ 	/* Mode plumbing only: no host adapter or firmware vdev yet. */
+-	if (session_type == QDF_PASSTHRU_MODE) {
++	if (session_type == QDF_PASSTHRU_MODE && !mishare_host_only) {
+ 		hdd_err("MiShare PASSTHRU backend is not implemented");
+ 		return NULL;
+ 	}
+@@ -9728,6 +9744,7 @@
+ 	case QDF_NDI_MODE:
+ 	case QDF_MONITOR_MODE:
+ 	case QDF_NAN_DISC_MODE:
++	case QDF_PASSTHRU_MODE:
+ 		adapter = hdd_alloc_station_adapter(hdd_ctx, mac_addr,
+ 						    name_assign_type,
+ 						    iface_name, session_type);
+@@ -9749,7 +9766,8 @@
+ 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_CLIENT;
+ 		else if (QDF_P2P_DEVICE_MODE == session_type)
+ 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_DEVICE;
+-		else if (QDF_MONITOR_MODE == session_type)
++		else if (QDF_MONITOR_MODE == session_type ||
++			 QDF_PASSTHRU_MODE == session_type)
+ 			adapter->wdev.iftype = NL80211_IFTYPE_MONITOR;
+ 		else if (QDF_NAN_DISC_MODE == session_type)
+ 			wlan_hdd_set_nan_if_type(adapter);
+@@ -9935,6 +9953,15 @@
+ 	hdd_adapter_feature_update_work_deinit(adapter);
+ 
+ err_cleanup_adapter:
++	if (mishare_host_only && adapter) {
++		struct qdf_mac_addr saved_mac;
++
++		/* The host factory always registers a full netdev. Cleanup frees it. */
++		qdf_copy_macaddr(&saved_mac, &adapter->mac_addr);
++		hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
++		ucfg_dp_destroy_intf(hdd_ctx->psoc, &saved_mac);
++		return NULL;
++	}
+ 	if (adapter) {
+ 		hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
+ 		adapter = NULL;
+@@ -9948,6 +9975,29 @@
+ 		free_netdev(ndev);
+ 
+ 	return NULL;
++}
++
++struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
++				     uint8_t session_type,
++				     const char *iface_name,
++				     tSirMacAddr mac_addr,
++				     unsigned char name_assign_type,
++				     bool rtnl_held,
++				     struct hdd_adapter_create_param *params)
++{
++	return __hdd_open_adapter(hdd_ctx, session_type, iface_name, mac_addr,
++				  name_assign_type, rtnl_held, params, false);
++}
++
++struct hdd_adapter *hdd_mishare_host_adapter_open(struct hdd_context *hdd,
++						 u8 *mac)
++{
++	struct hdd_adapter_create_param params = {0};
++
++	ASSERT_RTNL();
++	params.num_sessions = 1;
++	return __hdd_open_adapter(hdd, QDF_PASSTHRU_MODE, "misharewt%d", mac,
++				  NET_NAME_UNKNOWN, true, &params, true);
+ }
+ 
+ static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -261,6 +261,9 @@
+ ifeq ($(CONFIG_FEATURE_MONITOR_MODE_SUPPORT), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
+ endif
++
++# MiShare DOWN host-adapter lifecycle; no runtime caller yet.
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_host.o
+ 
+ ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c
+@@ -27623,6 +27623,9 @@
+ 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
+ 	struct wlan_hdd_link_info *link_info = adapter->deflink;
+ 
++	if (adapter->device_mode == QDF_PASSTHRU_MODE)
++		return -EOPNOTSUPP;
++
+ 	hdd_enter();
+ 
+ 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_p2p.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_p2p.c
+@@ -1167,6 +1167,9 @@
+ 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+ 	int errno;
+ 
++	if (adapter->device_mode == QDF_PASSTHRU_MODE)
++		return -EBUSY;
++
+ 	hdd_enter();
+ 
+ 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+@@ -1224,6 +1227,10 @@
+ 	int errno;
+ 	struct osif_vdev_sync *vdev_sync;
+ 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
++
++	/* Only the native owner can destroy a host-only PASSTHRU adapter. */
++	if (adapter->device_mode == QDF_PASSTHRU_MODE)
++		return -EBUSY;
+ 
+ 	adapter->delete_in_progress = true;
+ 	errno = osif_vdev_sync_trans_start_wait(wdev->netdev, &vdev_sync);

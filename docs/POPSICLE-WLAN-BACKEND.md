@@ -193,3 +193,37 @@ cfg80211_chan_def/ieee80211_channel 的选定直接布局核对通过。
 本轮模式层基础实现完成。仍未安装候选 WLAN，未调用固件或测试收发。
 诊断 Artifact 包含两份带调试信息的对象/模块归档，不是 KernelSU 模块或精简安装包。
 下一段是 HDD 接口生命周期和专用 Wonder 操作表；固件类型请求与收发需要独立实现及验证。
+
+## HDD 主机接口生命周期：尚无运行时调用者
+
+新增 `kernel/popsicle-hdd/wlan_hdd_mishare_host.c/.h`，使用 QDF_PASSTHRU_MODE=17，
+不是此前暂停的 QDF_MONITOR_MODE reservation 草稿，也没有另建模块。
+代码编入现有 WLAN；普通 `hdd_open_adapter` 的原型和新模式拒绝行为保留，
+专用内部工厂才可创建 `misharewt%d`。
+
+- create/destroy 均要求调用者持有 RTNL 和独占父 psoc transition，owner 访问由同一调用者串行化。
+  函数内只断言前置条件，不在持 RTNL 时再等待父锁，避免引入倒序等待。
+- 校验上下文、单播 MAC、已有 owner 与 PASSTHRU adapter；分配 owner、vdev sync、
+  真实 HDD adapter，再注册 sync。每一步失败按逆序释放，失败不发布 owner。
+- 接口只处于 DOWN 状态，ndo_open 返回 EOPNOTSUPP；没有 ndo_start_xmit。
+  Linux host 的 radiotap/wdev framing 使用 MONITOR 类型，QDF device_mode 仍为 PASSTHRU，
+  没有创建 QDF_MONITOR_MODE adapter 或向固件请求 monitor vdev。
+- cfg80211 类型切换和普通删除路径提前拒绝此模式，删除拒绝发生在 sync 注销前，
+  owner 专用销毁走 HDD close；避免用户态删除让 owner 保留已释放指针。
+- 销毁拒绝 running、DEVICE_IFACE_OPENED、SME_SESSION_OPENED 状态，保留 owner。
+  注销 sync、等候操作退出、关闭 adapter、销毁 sync、释放 owner；关闭后不再访问 adapter。
+  sync 注册关系异常则返回 EIO 并保留 owner 供诊断，不释放归属不明的资源。
+- 专用工厂注册 netdev 后发生失败时，先复制 MAC，再调用可能释放 adapter/netdev 的清理，
+  最后用保存的 MAC 回收 DP interface，并直接返回，避免读取已释放 adapter 或重复释放 netdev。
+
+它没有 start/channel/TX/RX/WMI 调用，没有开机入口、导出符号或运行时调用者，
+也尚未连接 Wonder 的 init/deinit；host create 成功只表示 DOWN 主机对象分配成功。
+调用者必须在 HDD context 销毁之前回收 owner。实际注册操作表和卸载/恢复接线还未完成，
+因此这一段不能装到手机上声称可运行，也不能让 Wonder init 返回成功。
+
+Actions 使用同一份生产 C 和提取的工厂/错误清理片段做 ASan/UBSan 失败注入：
+owner/sync/adapter 分配失败、无效上下文、重复 owner、活动接口拒绝、同步对象不匹配、
+注销/排空/关闭/销毁顺序、重复销毁及工厂失败后的释放顺序。底层 HDD/同步由夹具模拟，
+不能替代内核并发、cfg80211 注册或驱动卸载实测。
+完整 WLAN 对象和最终 .ko 都必须实际包含三个新函数，避免源码存在但未编入。
+工具链和 bindgen 沿用编译前缓存；后续仍跑严格链接、依赖与选定布局检查。
