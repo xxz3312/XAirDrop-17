@@ -340,3 +340,18 @@ Action 先进入 init 挂载命名空间，核对挂载的声明摘要，然后�
 如声明不可见会先停止，不能将“已安装模块”视作声明已被系统读取。
 上传新生成的 Download/17pm-xos-service-*.tar.gz，再确定后续必要改动。
 这只是服务声明模块，不是完整可用的 AirDrop 模块。
+
+
+### Actions 下载包直接安装
+
+KernelSU 截图报 `specified file not found in archive`，发生在读取 ZIP 根目录 module.prop
+的阶段，尚未执行本模块 customize.sh。原 Actions 外层 ZIP 只含内层模块 ZIP 和 build.json，
+直接安装外层会触发该错误；内层模块 ZIP 已独立核对包含根目录 module.prop。
+本次无法仅凭截图确认用户选中的文件名，不将此错误归因于设备挂载或 VINTF。
+
+现已调整工作流：打包校验后将模块内容展开到独立 installable 目录，Actions 只上传该目录内容，
+产物名为 XAirDrop-17-XOS-VINTF-0.1。因此 GitHub 下载的 ZIP 根目录直接是 module.prop、
+customize.sh、action.sh、service-smoke.sh、system/，可直接在 KernelSU 安装。
+原打包摘要仍保留在构建日志；下载包自身摘要以 GitHub artifact 元数据为准。
+这只是发布产物布局调整，声明和安装逻辑未改变，设备安装/重启效果仍待验证。
+后续安装说明以本段为准，无需再解压寻找内层 ZIP。

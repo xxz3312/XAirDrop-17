@@ -27,9 +27,26 @@ jobs:
           sh -n tools/device/popsicle-xos-service-smoke.sh
       - name: Package declaration-only module
         run: python3 tools/xos/package_vintf.py --output "$RUNNER_TEMP/xos-vintf"
+      - name: Stage module contents at the downloadable artifact root
+        run: |
+          python3 - <<'PYCODE'
+          import json,os,pathlib,zipfile
+          out=pathlib.Path(os.environ['RUNNER_TEMP'])/'xos-vintf'
+          stage=out/'installable';stage.mkdir()
+          report=json.loads((out/'build.json').read_text())
+          with zipfile.ZipFile(out/'XAirDrop-17-XOS-VINTF-0.1.zip') as z:
+              if sorted(z.namelist())!=report['entries']:
+                  raise SystemExit('Module archive entry mismatch')
+              for name in z.namelist():
+                  if pathlib.PurePosixPath(name).is_absolute() or '..' in pathlib.PurePosixPath(name).parts:
+                      raise SystemExit('Invalid module path')
+              z.extractall(stage)
+          if not (stage/'module.prop').is_file() or any(stage.rglob('*.zip')):
+              raise SystemExit('Artifact must itself contain the installable module, without a nested ZIP')
+          PYCODE
       - uses: actions/upload-artifact@v4
         with:
-          name: xos-vintf-module-${{ github.run_id }}
-          path: ${{ runner.temp }}/xos-vintf/
+          name: XAirDrop-17-XOS-VINTF-0.1
+          path: ${{ runner.temp }}/xos-vintf/installable/
           if-no-files-found: error
           retention-days: 7
