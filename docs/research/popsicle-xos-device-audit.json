@@ -186,5 +186,24 @@
     "service_pid": 14462,
     "service_exit_explanation": "The bounded test sent TERM during cleanup; 143 is not evidence of a service crash. Service was absent at end.",
     "limits": "Root-only Binder metadata. MiShare process identity/access, app integration and AWDL backend remain unvalidated."
+  },
+  "mishare_live_identity_evidence": {
+    "source": "User terminal output after opening original MiShareSettingsActivity",
+    "uid": 10132,
+    "android_user": "u0_a132",
+    "selinux_context": "u:r:platform_app_36:s0:c512,c768",
+    "processes": [
+      {
+        "name": "com.miui.mishare.connectivity:ui",
+        "pid": 27309
+      },
+      {
+        "name": "com.miui.mishare.connectivity",
+        "pid": 27415
+      }
+    ],
+    "binder_server_context": "u:r:ksu:s0",
+    "binder_server_context_evidence": "Prior root Binder report processes.txt for DomesticXOsComm PID 14462",
+    "limits": "Identity only. No actual MiShare-to-XOS Binder call observed."
   }
 }

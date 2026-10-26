@@ -1,0 +1,76 @@
+name: Xiaomi XOS policy query probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/xos-policy.yml
+      - native/xos/policy-probe.c
+      - tools/device/popsicle-xos-policy-audit.sh
+      - tests/test_xos_policy.py
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NDK_VERSION: 27.2.12479018
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Policy decision and error checks with host fixture library
+        run: |
+          python3 -m unittest discover -s tests -p 'test_xos_policy.py'
+          sh -n tools/device/popsicle-xos-policy-audit.sh
+      - uses: actions/cache/restore@v4
+        id: ndk
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Prepare pinned Android NDK
+        shell: bash
+        run: |
+          mkdir -p .xos-ndk
+          if [ ! -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
+            cp -a "$ANDROID_HOME/licenses" .xos-ndk/
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-ndk" "ndk;$NDK_VERSION"
+          fi
+          test -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang"
+          grep -F "Pkg.Revision = $NDK_VERSION" ".xos-ndk/ndk/$NDK_VERSION/source.properties"
+      - name: Save toolchain before compilation
+        if: steps.ndk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .xos-ndk
+          key: ${{ steps.ndk.outputs.cache-primary-key }}
+      - name: Compile ARM64 probe and record artifact fingerprints
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/xos-policy-probe"
+          mkdir -p "$out"
+          tc="$PWD/.xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$tc/aarch64-linux-android31-clang" -std=c11 -O2 -Wall -Wextra -Werror -fPIE -pie \
+            -Wl,-z,relro,-z,now -Wl,--build-id=sha1 native/xos/policy-probe.c -ldl -o "$out/xos-policy-probe"
+          "$tc/llvm-strip" --strip-unneeded "$out/xos-policy-probe"
+          "$tc/llvm-readelf" -h "$out/xos-policy-probe" | grep AArch64
+          cp tools/device/popsicle-xos-policy-audit.sh "$out/"
+          cd "$out"
+          sha256sum xos-policy-probe > policy.sha256
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path('xos-policy-probe')
+          report={'status':'BUILT_NOT_DEVICE_TESTED','commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
+                  'ndk':os.environ['NDK_VERSION'],'abi':'arm64-v8a','min_api':31,
+                  'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,
+                  'scope':'Read live SELinux decisions for captured MiShare context and freshly resolved XOS label. No policy, credential, Binder, service or radio changes.'}
+          pathlib.Path('build.json').write_text(json.dumps(report,indent=2)+'\n')
+
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xos-policy-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/xos-policy-probe/
+          if-no-files-found: error
+          retention-days: 7

@@ -439,3 +439,36 @@ su -c 'sh /sdcard/Download/xos-binder-probe/popsicle-xos-binder-smoke.sh /sdcard
 `com.miui.mishare.connectivity/com.miui.mishare.activity.MiShareSettingsActivity`，进程为 :ui。
 打开普通设置页后读取 ps -AZ 可以取得真实进程域，不需要开启 AirDrop 可用性或改签名。
 在取得实际身份和调用证据前，不加入基于猜测的广泛 SELinux 规则。
+
+
+## MiShare 真实身份确认与现行 SELinux 策略查询
+
+用户打开普通设置后，:ui（PID 27309）及主进程（PID 27415）均为
+UID 10132 / u0_a132 / `u:r:platform_app_36:s0:c512,c768`。
+原 root Binder 报告中的服务 PID 14462 为 `u:r:ksu:s0`，不再猜测调用双方类型。
+这只确定了身份，还没有实际 MiShare 调用证据。
+
+新增 `native/xos/policy-probe.c` 查询当前 SELinux 策略：
+动态使用设备已核对的 libselinux 导出 API，先从当前 service_contexts 配置解析服务标签，
+而非硬编码 default_android_service。查询 service_manager/find、双方 Binder call/transfer
+及应用使用服务端 FD 的候选权限，保留完整源/目标上下文和 errno。
+EACCES 记为 DENY，其他失败记为 ERROR，非 Enforcing 状态不作为通过。
+不会切换 UID/域，不修改策略、不注册服务、不调用 XOS 或 Binder。
+
+服务标签是新进程按当前配置解析的结果，不直接读取 servicemanager 内存中的缓存。
+POLICY_ALLOW_CANDIDATES_ONLY 仅代表所查询候选权限获准，不是实际 MiShare 调用或完整权限认证。
+QUERY 的回调/FD 项用于后续链路检查，不能把每个候选项都当作当前已经发生过的调用需求。
+
+脚本 `tools/device/popsicle-xos-policy-audit.sh` 打开普通互传设置、读取活跃进程身份，
+只有真实 UID/域匹配本轮证据才查询；记录 Enforcing 状态和策略摘要前后值。
+固定本轮 libselinux 摘要，构建只在 `.github/workflows/xos-policy.yml` 的 Actions 中运行，
+复用 NDK 27.2.12479018 缓存。宿主夹具区分允许、拒绝、查询异常、Permissive 与身份不符。
+不依据 root Binder 成功就加入广泛放行，也不把策略查询称为应用身份下执行测试。
+
+下载工具包并解压至 Download/xos-policy-probe，运行：
+
+```sh
+su -c 'sh /sdcard/Download/xos-policy-probe/popsicle-xos-policy-audit.sh /sdcard/Download/xos-policy-probe'
+```
+
+上传 Download/17pm-xos-policy-*.tar.gz。现有声明模块保留，不需要重装或启用无线。
