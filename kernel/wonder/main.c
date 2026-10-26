@@ -184,7 +184,9 @@ static int wonder_master_bind(struct device *dev)
 		goto err;
 	}
 	/* All matched, hook the ops to wondertap interface. */
-	wondertap_register_ops(wlan_priv->wonder_ops);
+	ret = wondertap_register_ops(wlan_priv->wonder_ops);
+	if (ret)
+		goto err;
 	wondertap->wonder_ops = wlan_priv->wonder_ops;
 	put_device(&wlan_pdev->dev);
 	dev_info(dev, "%s(): Connected to wlan ver %d (cur: wonder ver %d)!\n",
@@ -204,6 +206,7 @@ static void wonder_master_unbind(struct device *dev)
 	dev_info(dev, "%s(): Unbinding...\n", __func__);
 
 	wondertap_unregister_ops(wondertap->wonder_ops);
+	wondertap->wonder_ops = NULL;
 	component_unbind_all(dev, NULL);
 }
 
@@ -226,6 +229,7 @@ static int wonder_probe(struct platform_device *pdev)
 		return -ENODEV;
 
 	wondertap = &wonder->wondertap_data;
+	wondertap->wlan_node = NULL;
 
 	/*
 	 * Resolve the provider device this master will bind against.
@@ -245,7 +249,8 @@ static int wonder_probe(struct platform_device *pdev)
 	} else if (pdev->dev.of_node) {
 		/* DT product with a broken phandle: keep failing as before. */
 		dev_err(&pdev->dev, "%s(): Missing 'wondertap-provider' in DTS\n", __func__);
-		return -ENODEV;
+		ret = -ENODEV;
+		goto err_free_hw;
 	} else {
 		/* No-DT path: the provider component is matched by its device name. */
 		dev_info(&pdev->dev, "%s(): No DT node, matching provider by name '%s'\n",
@@ -261,19 +266,37 @@ static int wonder_probe(struct platform_device *pdev)
 	component_match_add_release(&pdev->dev, &match, NULL,
 						wonder_compare_dev, &wonder_provider);
 
-	of_node_put(provider_node);
 	ret = component_master_add_with_match(&pdev->dev, &wonder_comp_ops, match);
 	if (ret) {
 		dev_err(&pdev->dev, "%s(): Missing component\n", __func__);
-		return -ENODEV;
+		goto err_free_hw;
 	}
-	return wonder_debugfs_init(wonder);
+	ret = wonder_debugfs_init(wonder);
+	if (ret)
+		goto err_del_master;
+	return 0;
+
+err_del_master:
+	wonder_debugfs_exit();
+	component_master_del(&pdev->dev, &wonder_comp_ops);
+err_free_hw:
+	platform_set_drvdata(pdev, NULL);
+	/* Keep the parsed phandle alive until all component callbacks finish. */
+	of_node_put(wondertap->wlan_node);
+	wondertap->wlan_node = NULL;
+	wonder_mac80211_exit();
+	return ret;
 }
 
 static void wonder_remove(struct platform_device *pdev)
 {
+	struct wondertap_data *wondertap = platform_get_drvdata(pdev);
+
 	component_master_del(&pdev->dev, &wonder_comp_ops);
 	wonder_debugfs_exit();
+	platform_set_drvdata(pdev, NULL);
+	of_node_put(wondertap->wlan_node);
+	wondertap->wlan_node = NULL;
 	wonder_mac80211_exit();
 }
 
@@ -334,7 +357,8 @@ static int __init wonder_init(void)
 	ret = platform_driver_register(&wonder_driver);
 	if (ret) {
 		pr_err("wonder: failed to register platform driver (%d)\n", ret);
-		platform_device_unregister(wonder_device);
+		if (wonder_device)
+			platform_device_unregister(wonder_device);
 		wonder_device = NULL;
 		return ret;
 	}

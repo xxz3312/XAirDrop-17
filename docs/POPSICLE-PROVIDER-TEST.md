@@ -4,6 +4,11 @@
 本阶段验证私有桥接模块与探针的加载、注册、拒绝竞争注册、注销和卸载。
 尚不验证 Wonder 主模块、无线回调、WLAN、AWDL、XOS 服务或 AirDrop。
 
+本阶段现已在目标设备实测通过：日志确认版本 5 的探针重复/竞争注册检查通过，
+退出时清除了操作表，provider/probe 均卸载，退出码为 0。
+脱敏记录见 [第二阶段实机结果](research/popsicle-provider-device-pass.json)。
+下一阶段先修复 Wonder 主模块的 probe 失败清理，再构建验证，尚未提供主模块测试包。
+
 两份模块均来自成功运行
 [40229703474](https://github.com/xxz3312/XAirDrop-17/actions/runs/40229703474)，
 已校验 Artifact 和各模块 SHA256；没有本地编译或修改 ELF。

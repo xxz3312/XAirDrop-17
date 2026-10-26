@@ -60,18 +60,31 @@ static const struct file_operations fops_force_stop_tx = {
 
 int wonder_debugfs_init(void *wonder)
 {
-	wonder_debugfs_root = debugfs_create_dir("wonder", NULL);
-	if (!wonder_debugfs_root)
-		return -ENODEV;
+	struct dentry *entry;
+	int ret;
 
-	debugfs_create_file("force_stop_tx", 0200, wonder_debugfs_root,
-			    wonder, &fops_force_stop_tx);
+	wonder_debugfs_root = debugfs_create_dir("wonder", NULL);
+	if (IS_ERR_OR_NULL(wonder_debugfs_root)) {
+		ret = wonder_debugfs_root ? PTR_ERR(wonder_debugfs_root) : -ENOMEM;
+		wonder_debugfs_root = NULL;
+		return ret;
+	}
+
+	entry = debugfs_create_file("force_stop_tx", 0200, wonder_debugfs_root,
+				   wonder, &fops_force_stop_tx);
+	if (IS_ERR_OR_NULL(entry)) {
+		ret = entry ? PTR_ERR(entry) : -ENOMEM;
+		debugfs_remove_recursive(wonder_debugfs_root);
+		wonder_debugfs_root = NULL;
+		return ret;
+	}
 	return 0;
 }
 
 void wonder_debugfs_exit(void)
 {
 	debugfs_remove_recursive(wonder_debugfs_root);
+	wonder_debugfs_root = NULL;
 }
 #else /* !CONFIG_DEBUG_FS */
 int wonder_debugfs_init(void *wonder)

@@ -1156,7 +1156,14 @@ void *wonder_mac80211_init(void)
 		wonder = NULL;
 		goto end;
 	}
-	wonder_ssr_init(wonder);
+	ret = wonder_ssr_init(wonder);
+	if (ret) {
+		wonder_error("Failed to register netdevice notifier. Ret: %d\n", ret);
+		wonder_features_exit(wonder);
+		ieee80211_free_hw(hw);
+		wonder = NULL;
+		goto end;
+	}
 end:
 	g_wonder = wonder;
 	return wonder;

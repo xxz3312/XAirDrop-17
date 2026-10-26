@@ -1,0 +1,25 @@
+{
+  "status": "PASS_PROVIDER_PROBE_REGISTER_UNREGISTER",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "device": "popsicle",
+  "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "result_archive_sha256": "380eed59924107c4787098ecb58521da20f1a3234b02742ebb2f3445c2799a8e",
+  "provider_sha256": "8b1c55b4d98d2867209671e47b4e2b676e64d19553f7e2bf611201dadfc4ab6a",
+  "probe_sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+  "exit_code": 0,
+  "provider_still_owned": 0,
+  "probe_still_owned": 0,
+  "test_log": [
+    "Loading private provider only.",
+    "Loading probe to exercise duplicate-registration and competing-owner checks.",
+    "Probe unloaded; callbacks deregistered.",
+    "Provider unloaded.",
+    "PASS_PROVIDER_PROBE_REGISTER_UNREGISTER (registration lifecycle only; no wireless traffic tested)"
+  ],
+  "module_log": [
+    "opairshare_wonder_provider: created qcom,cnss-vendor-wlan-wonder; stock CNSS untouched",
+    "opairshare_route_b_probe: registered ver=5; duplicate/conflict checks passed",
+    "opairshare_route_b_probe: ops cleared"
+  ],
+  "limitations": "Only the private provider/probe registration lifecycle was exercised. No Wonder master, wireless callbacks, WLAN replacement, AWDL, XOS or AirDrop test."
+}
