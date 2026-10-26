@@ -52,8 +52,12 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            ~/.android/debug.keystore
           key: mishare-probe-${{ runner.os }}-${{ hashFiles('mishare-probe/**/*.kts', 'oshare/gradle/wrapper/*') }}-v1
+      - uses: actions/cache/restore@v4
+        id: signing
+        with:
+          path: ~/.android/debug.keystore
+          key: mishare-probe-diagnostic-signing-v1
       - name: Resolve build dependencies and diagnostic signing identity
         run: |
           mkdir -p "$HOME/.android"
@@ -61,6 +65,12 @@ jobs:
             keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -dname 'CN=Android Debug,O=Android,C=US' -keyalg RSA -keysize 2048 -validity 10000
           fi
           bash oshare/gradlew --project-dir mishare-probe --no-daemon -Pandroid.aapt2FromMavenOverride="$PWD/.xos-sdk/build-tools/36.0.0/aapt2" prepareProbeDependencies
+      - name: Save diagnostic signing identity
+        if: steps.signing.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: ${{ steps.signing.outputs.cache-primary-key }}
       - name: Save Gradle toolchain before APK compilation
         if: steps.gradle.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -68,7 +78,6 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-            ~/.android/debug.keystore
           key: ${{ steps.gradle.outputs.cache-primary-key }}
       - name: Validate exact host gate and compile diagnostic APK
         run: |

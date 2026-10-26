@@ -2,6 +2,7 @@ plugins { id("com.android.application") }
 android {
     namespace = "io.github.xairdrop17.mishareprobe"
     compileSdk = 36
+    buildToolsVersion = "36.0.0"
     defaultConfig {
         applicationId = "io.github.xairdrop17.mishareprobe"
         minSdk = 35

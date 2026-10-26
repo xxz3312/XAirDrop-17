@@ -46,3 +46,7 @@ local.properties
 /docs/verification.json
 /docs/OSHARE-DEXKIT.md
 /docs/OSHARE-RECEIVE-LIFECYCLE.md
+
+/mishare-probe/app/build/
+/mishare-probe/build/
+/.xos-sdk/
