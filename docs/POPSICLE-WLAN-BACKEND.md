@@ -318,7 +318,7 @@ host 生命周期与 typed table 测试均通过。工具链及 bindgen 缓存�
 本阶段完成的是类型转换和创建前置检查；没有向手机发送类型 9 请求，
 没有实现启动/停止异步事件及超时回收，没有启用 Wonder init、RX/TX 或 AirDrop。
 
-## 专用 START/STOP 事务记账（构建待验证）
+## 专用 START/STOP 事务记账（离线构建验证通过）
 
 新增 `wlan_hdd_mishare_txn.c/.h`，通过 0008 编入同一个实际 WLAN，
 没有新增模块。它是将来专用 MLME 适配层使用的事务控制器，当前没有运行时调用者，
@@ -352,3 +352,26 @@ Actions 夹具编译整份生产 C，用 ASan/UBSan 执行重点序列和深度 
 
 本段不提供无线功能或安装包。后续必须把专用 MLME 回调、真实响应状态、定时器取消/
 排空与 owner 生命周期接到此控制器，再处理 DOWN/delete 及恢复；目前创建保护仍保留。
+
+
+### 事务控制器验证与实际回调边界
+
+运行 40379831463，源码 05ebf2be7a81944d5e06709680669c3f65a54540，所有步骤成功。
+44 项基础回归、1,118,480 条事件边探索及重点序列、此前的模式/MLME create/host/table
+C 测试均通过。工具链及 bindgen 缓存命中，五个新事务函数在实际 WLAN 对象和 .ko
+中均存在。574 条导入版本记录无不匹配、WLAN 未解析导入为 0、七项选定布局通过。
+下载并校验了 20,665 字节的 validation ZIP，独立生成事务测试源码摘要并核对两份
+生产文件摘要，与 Actions 报告一致。
+详细结果见 [事务控制器验证记录](research/popsicle-vdev-txn-build-pass.json)。
+
+下一段还有一个必须明确处理的原生回调边界：锁定源码的 `struct vdev_stop_response`
+只有 vdev_id，没有状态或来源。正常 WMI stop handler 与
+`target_if_vdev_mgr_rsp_timer_cb` 的 STOP 超时分支都会调用同一个
+`rx_ops->vdev_mgr_stop_response`。因此不能在上层收到 STOP callback 后就向控制器
+传 success=true。未来桥接必须可靠保留真实响应与超时的来源，并在真实定时器/
+事件同步规则下使用；单独读取 timer_status 也尚未被本轮验证为安全方案。
+START 超时的合成响应则携带 WLAN_MLME_HOST_VDEV_START_TIMEOUT，仍需正确分类。
+两份原始源码的固定提交和 SHA256 记入本轮 JSON，未更改公开响应结构。
+
+本轮只是事务控制器完成及离线验证；实际 MLME callbacks、定时器、owner 引用与排空、
+DOWN/delete 和恢复尚未接通。原有创建拒绝与 Wonder init 不支持行为保留，未在手机加载。

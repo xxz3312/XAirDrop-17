@@ -1,0 +1,150 @@
+{
+  "status": "START_STOP_TRANSACTION_OFFLINE_CHECKS_PASS_ONLY",
+  "commit": "05ebf2be7a81944d5e06709680669c3f65a54540",
+  "run_id": 40379831463,
+  "job_id": 121772752187,
+  "validation_artifact": {
+    "id": 12678512948,
+    "bytes": 20665,
+    "sha256": "065cb8dd0b11cd7abf1672a59713a7f6701196be53209305b34d6cfce9cc2430",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12677838118,
+    "bytes": 335851031,
+    "github_reported_sha256": "ff2e61ea082d90aebe8b1277a40dc9c394786cdbd1bcf9e75f8fa5d0626b411d",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "fixture": {
+    "status": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "explored_event_edges": 1118480,
+    "max_sequence_length": 5,
+    "production_sha256": {
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8"
+    },
+    "fixture_sha256": "dd5ba8be1c9191667feed0565f1d3b2e5837337aa7e76222ebb06e793f298c41",
+    "checks": [
+      "early response",
+      "submission is not completion",
+      "wrong response kind and vdev",
+      "duplicate completion",
+      "definitely not sent retry",
+      "stale local ticket",
+      "timeout quarantine",
+      "uncertain send quarantine",
+      "negative response quarantine",
+      "contradictory not-sent quarantine",
+      "conflicting early response quarantine",
+      "terminal stop blocks same-command reuse",
+      "serial overflow"
+    ],
+    "limitations": "Serialized pure production transaction accounting, not real MLME callbacks, firmware, timers, event draining, object cleanup, synchronization or AirDrop. Local tickets are not firmware response cookies."
+  },
+  "fixture_source_independently_regenerated_sha256_match": true,
+  "production_sha256_independently_verified": true,
+  "other_fixture_statuses": {
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY"
+  },
+  "linked_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "e599581b39de71e8e8dda4f7354e47dfcfb9f1262c73fd586dcf15ae9cc9087b",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,cnss_utils,cnss_nl,ipam,opairshare_wonder_provider,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "object_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "8fecef2cf46bb95ac11981ef6679b132763050260eea447b3dfdb2884090a5f5",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation."
+  },
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "e599581b39de71e8e8dda4f7354e47dfcfb9f1262c73fd586dcf15ae9cc9087b",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "selected_layout_status": "SELECTED_LAYOUTS_MATCH_ONLY",
+  "selected_layout_types": [
+    "module",
+    "net_device",
+    "wiphy",
+    "wireless_dev",
+    "sk_buff",
+    "cfg80211_chan_def",
+    "ieee80211_channel"
+  ],
+  "cache": {
+    "toolchains_hit": true,
+    "bindgen_hit": true
+  },
+  "next_bridge_constraint": {
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "source_sha256": {
+      "qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/inc/wlan_vdev_mgr_tgt_if_rx_defs.h": "f8d4bd2fa9acd25f18f607cc07f7f8f4d086419ba33e675f23d3abc0f68dab31",
+      "qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c": "725910d9e5bc8dba247825656d2066c985e0ac58ee34ecf328b332ad7dad666c"
+    },
+    "stop_response_fields": [
+      "vdev_id"
+    ],
+    "real_stop_handler": "target_if_vdev_mgr_stop_response_handler",
+    "timeout_handler": "target_if_vdev_mgr_rsp_timer_cb",
+    "shared_upcall": "rx_ops->vdev_mgr_stop_response",
+    "consequence": "Upper STOP callback existence alone cannot prove firmware STOP success. Future bridge must preserve trustworthy origin/timeout information under the actual timer/event synchronization; a timer_status snapshot alone is not certified."
+  },
+  "runtime_callers_present": false,
+  "real_timer_connected": false,
+  "mlme_callback_bridge_connected": false,
+  "default_table_binding_enabled": false,
+  "driver_installed": false,
+  "radio_tested": false,
+  "firmware_passthru_support": "UNVERIFIED",
+  "limitations": "Pure START/STOP transaction accounting compiled into WLAN, not a real MLME ops implementation. No WMI, VDEV_UP/DOWN/delete, timer cancellation/draining, kernel concurrency, owner lifetime, recovery, firmware acceptance or AirDrop certification."
+}
