@@ -213,3 +213,38 @@ su -c 'sh /sdcard/Download/popsicle-xos-linker-audit.sh /sdcard/Download/XAirDro
 新增 tools/xos/device-profile.json 区分可执行链接器与系统 stub，回归检查脚本的
 可执行链接器门限与该设备证据一致；摘要不符时打印预期与实际值。
 未放宽校验或修改设备，原参考 ZIP 无需重下载。设备 --list 结果仍待回传。
+
+
+## 依赖路径实机通过与下一步加载探针
+
+2026-10-26 18:05（设备报告时间）结果为 PASS_DEPENDENCY_PATHS_ONLY：
+服务与 libxos 的 --list 均退出 0，检查前后网卡名称、服务存在性及 Wonder 状态相同。
+报告 SHA256 为 `319f83559599dbad3b93e2301d24dfcd644e94da14a43cc1133763b30e95c4bc`。
+libapexsupport 实际解析到 /system/lib64/libapexsupport.so，其摘要为
+`63a33ac9e7455b0834131a6786c81f4ec7a9f0d0432121e19ac0e4e3e8039c95`。
+合并补采库后，已捕获 DT_NEEDED 链完整，参考文件及可达已捕获库没有剩余强引用候选缺口。
+仍不是实际重定位、dlopen 或 XOS 服务启动通过。
+
+下一阶段 `native/xos/loader-probe.c` 在单独进程中对配套 NDK 库和 libxos
+执行 RTLD_NOW | RTLD_LOCAL，然后查询四个导出函数地址，绝不调用它们。
+与 --list 不同，dlopen 会执行库构造函数，退出时还会执行卸载析构；因此这是真实加载测试，
+不能描述为纯静态或不执行任何参考代码。它不运行服务程序，不做 Binder 注册、VINTF/SELinux
+修改、模块加载、可用性开关或 MiShare 挂载，不调用 AWDL start/stop/status/聚合配置函数。
+
+`tools/device/popsicle-xos-loader-smoke.sh` 继续固定设备、固件、链接器及参考文件摘要，
+拒绝已有 XOS/Wonder 状态。探针复制到私有目录校验，15 秒超时，比较前后可观察状态。
+报告 PASS_DLOPEN_DLSYM_ONLY 只代表两次实际加载与四个符号查询成功，不代表服务或传输可用。
+调用入口未启用；底层 WLAN/AWDL 后端缺口继续存在。
+
+独立 Actions `.github/workflows/xos-loader.yml` 编译 ARM64/API31 探针，
+NDK 27.2.12479018 缓存在编译前保存。宿主夹具测试也只在 Actions 编译和运行，
+覆盖缺库、缺符号、相对路径拒绝及所有 XOS 导出函数一旦被误调用即失败的情况。
+产物仅包含本项目探针、脚本和摘要，没有参考 APK、厂商 ELF 或安装模块。
+
+下载 Actions 产物并解压至 Download/xos-loader-probe 后执行：
+
+```sh
+su -c 'sh /sdcard/Download/xos-loader-probe/popsicle-xos-loader-smoke.sh /sdcard/Download/XAirDrop-reference-1.0.zip /sdcard/Download/xos-loader-probe'
+```
+
+上传 Download/17pm-xos-loader-*.tar.gz。当前编译/设备结果以对应 Actions 与设备报告为准。

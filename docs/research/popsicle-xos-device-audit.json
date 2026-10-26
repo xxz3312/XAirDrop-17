@@ -1,5 +1,5 @@
 {
-  "status": "REFERENCE_IMPORT_CANDIDATES_COVERED_CLOSURE_INCOMPLETE",
+  "status": "REFERENCE_IMPORT_CANDIDATES_COVERED_RUNTIME_UNTESTED",
   "reference_results": {
     "DomesticXOsComm": {
       "strong_import_count": 61,
@@ -26,18 +26,13 @@
       "needed_not_captured": []
     }
   },
-  "captured_dependency_missing_strong_import_candidates": {
-    "libbinder.so": [
-      "AApexSupport_loadLibrary"
-    ]
-  },
+  "captured_dependency_missing_strong_import_candidates": {},
   "loader_captured_with_ld_android_soname": true,
-  "transitive_dependencies_not_captured": [
-    "libapexsupport.so"
-  ],
+  "transitive_dependencies_not_captured": [],
   "device_system_library_sha256": {
     "ld-android.so": "e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305",
     "libandroid_runtime_lazy.so": "af4bce91675fcc4d1dae6646cbca029e5d202e0a7bdde748ad3755203c1784ea",
+    "libapexsupport.so": "63a33ac9e7455b0834131a6786c81f4ec7a9f0d0432121e19ac0e4e3e8039c95",
     "libbase.so": "12d3935ecf47794b177c9c101ea1f734c41997f13a204beff61900014c28765d",
     "libbinder.so": "7e292a21a87f4dd6ca25548465e7fbe6d00ddedb7594134ae5d15ca5cde8a069",
     "libbinder_ndk.so": "deec4072c13cfcb6421dce9edc9e19496a9fd937447e939976fdfd9edc45ecfe",
@@ -82,5 +77,15 @@
     "wonder_enable_present": false,
     "linker_executable_sha256": "b6dd216b7a775b8f04c825cada286bfe7ddaeecf2c0c10e617287118965abc00",
     "ld_android_stub_sha256": "e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305"
+  },
+  "dependency_listing_evidence": {
+    "archive_sha256": "319f83559599dbad3b93e2301d24dfcd644e94da14a43cc1133763b30e95c4bc",
+    "status": "PASS_DEPENDENCY_PATHS_ONLY",
+    "daemon_list_exit": 0,
+    "libxos_list_exit": 0,
+    "state_unchanged": true,
+    "libapexsupport_sha256": "63a33ac9e7455b0834131a6786c81f4ec7a9f0d0432121e19ac0e4e3e8039c95",
+    "resolved_system_dependency": "/system/lib64/libapexsupport.so",
+    "limits": "Bionic --list skips target constructors and relocation. No service, dlopen, Binder or radio runtime conclusion."
   }
 }

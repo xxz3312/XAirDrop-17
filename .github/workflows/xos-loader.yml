@@ -1,0 +1,76 @@
+name: Xiaomi XOS loader probe
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/xos-loader.yml
+      - native/xos/**
+      - tools/device/popsicle-xos-loader-smoke.sh
+      - tests/test_xos_loader.py
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NDK_VERSION: 27.2.12479018
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Probe failure paths and no-call checks with host fixture libraries
+        run: |
+          python3 -m unittest discover -s tests -p 'test_xos_loader.py'
+          sh -n tools/device/popsicle-xos-loader-smoke.sh
+      - uses: actions/cache/restore@v4
+        id: ndk
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Prepare pinned Android NDK
+        shell: bash
+        run: |
+          mkdir -p .xos-ndk
+          if [ ! -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
+            cp -a "$ANDROID_HOME/licenses" .xos-ndk/
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-ndk" "ndk;$NDK_VERSION"
+          fi
+          test -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang"
+          grep -F "Pkg.Revision = $NDK_VERSION" ".xos-ndk/ndk/$NDK_VERSION/source.properties"
+      - name: Save toolchain before compilation
+        if: steps.ndk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .xos-ndk
+          key: ${{ steps.ndk.outputs.cache-primary-key }}
+      - name: Compile ARM64 probe and record artifact fingerprints
+        shell: bash
+        run: |
+          out="$RUNNER_TEMP/xos-loader-probe"
+          mkdir -p "$out"
+          tc="$PWD/.xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$tc/aarch64-linux-android31-clang" -std=c11 -O2 -Wall -Wextra -Werror -fPIE -pie \
+            -Wl,-z,relro,-z,now -Wl,--build-id=sha1 native/xos/loader-probe.c -ldl -o "$out/xos-loader-probe"
+          "$tc/llvm-strip" --strip-unneeded "$out/xos-loader-probe"
+          "$tc/llvm-readelf" -h "$out/xos-loader-probe" | grep AArch64
+          cp tools/device/popsicle-xos-loader-smoke.sh "$out/"
+          cd "$out"
+          sha256sum xos-loader-probe > probe.sha256
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path('xos-loader-probe')
+          report={'status':'BUILT_NOT_DEVICE_TESTED','commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
+                  'ndk':os.environ['NDK_VERSION'],'abi':'arm64-v8a','min_api':31,
+                  'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size,
+                  'scope':'dlopen RTLD_NOW and dlsym only; constructors execute. No XOS entry point, Binder, service, radio or MiShare calls.'}
+          pathlib.Path('build.json').write_text(json.dumps(report,indent=2)+'\n')
+          pathlib.Path('README.txt').write_text('Extract this artifact to Download/xos-loader-probe. Keep the upstream reference ZIP; do not install it.\nRun: su -c "sh /sdcard/Download/xos-loader-probe/popsicle-xos-loader-smoke.sh /sdcard/Download/XAirDrop-reference-1.0.zip /sdcard/Download/xos-loader-probe"\nUpload Download/17pm-xos-loader-*.tar.gz. This tests loading only, not AirDrop. Constructors run; XOS functions are not called.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xos-loader-probe-${{ github.run_id }}
+          path: ${{ runner.temp }}/xos-loader-probe/
+          if-no-files-found: error
+          retention-days: 7
