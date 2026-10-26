@@ -1,0 +1,46 @@
+{
+  "status": "CONFIRMED_CALLBACK_TABLE_LAYOUT_MISMATCH",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "audit_archive_sha256": "0df945d09f49a0c4b7fb6e356ce11edf36a0261d390fb2da1c5e4d8d1e21c874",
+  "stock_mac80211_sha256": "01b40a32346277f30b807d31c4acd7011e18c38bdff594282f5e835d40f40dec",
+  "candidate_wonder_sha256": "5270dab5e09c33c39f4b2a70f3ab766cb36cd072bb8464bbe152e8b79e0560a9",
+  "warning_txt_bytes": 0,
+  "loaded_identity_limit": "/proc/modules reports mac80211 loaded; srcversion/version unavailable. On-disk module hash matches recorded stock; loaded image identity not independently proved.",
+  "stock_allocator": {
+    "symbol": "ieee80211_alloc_hw_nm",
+    "text_offset": "0x24dc4",
+    "size": 1860,
+    "mandatory_wake_tx_queue_read_offset": "0x2f0",
+    "channel_ops_offsets": {
+      "add_chanctx": "0x250",
+      "remove_chanctx": "0x258",
+      "change_chanctx": "0x260",
+      "assign_vif_chanctx": "0x268",
+      "unassign_vif_chanctx": "0x270"
+    },
+    "emulation_checks": "Exactly the three add/remove/change helpers must match; assign/unassign must be absent. No switch_vif_chanctx requirement in this stock allocator.",
+    "partial_emulation_warning_instruction_offset": "0x274"
+  },
+  "candidate_table_elf_relocations": {
+    "add_chanctx": "0x240",
+    "remove_chanctx": "0x248",
+    "change_chanctx": "0x250"
+  },
+  "source_explanation": {
+    "repository": "https://android.googlesource.com/kernel/common",
+    "commit": "e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5",
+    "file": "include/net/mac80211.h",
+    "conditional": "CONFIG_NL80211_TESTMODE",
+    "members": [
+      "testmode_cmd",
+      "testmode_dump"
+    ],
+    "effect": "Two function pointers before channel ops account for the 16-byte difference; PM and MAC80211_DEBUGFS slot positions otherwise match allocator reads.",
+    "gki_config": "Captured /proc/config.gz has CONFIG_CFG80211 disabled and no NL80211_TESTMODE setting; it does not describe the external stock wireless module build switches."
+  },
+  "consequence": "Stock allocator reads candidate change_chanctx as add_chanctx, followed by NULL remove/change entries; its partial-emulation check rejects this table.",
+  "runtime_limit": "Exact runtime warning PC was not recaptured; the rejecting path is predicted from original module instructions and actual old candidate ELF relocations.",
+  "fix": "Compile only popsicle Wonder with CONFIG_NL80211_TESTMODE=1; assert 19 stock allocator member offsets at compile time. No fake callbacks, padding, CRC or binary rewrites.",
+  "validation_pending": "Actions rebuild and a new device lifecycle test. Does not establish full ABI, firmware or AirDrop functionality."
+}

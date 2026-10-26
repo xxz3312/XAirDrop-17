@@ -45,7 +45,11 @@
 编译并通过当前离线检查。第三阶段首次实机尝试在 mac80211 硬件分配阶段失败，
 尚未完成主模块绑定；模块清理完成，接口名称未变化。
 [失败记录](research/popsicle-master-device-failure.json) 已保存，
-正补采完整警告及原厂 mac80211 模块，不重复旧测试、不把此结果归为成功。
+补采已确认原机 mac80211 文件与基线相同，但旧警告未保留。
+对原机 allocator 指令和旧候选 ELF 回调重定位的核对确认 callback table 相差 16 字节：
+外置无线模块的 `CONFIG_NL80211_TESTMODE` 与 GKI 配置不同。
+popsicle Wonder 编译已单独补上该设置，并增加 19 个回调偏移断言，等待 Actions 重建。
+详见 [审计](research/popsicle-mac80211-allocator-audit.json)。旧测试包继续暂停。
 
 ## 仍未完成
 

@@ -4,14 +4,22 @@
 
 首次实机尝试在 `load-master` 阶段失败，尚未绑定到 component。
 `wonder_mac80211_init` 分配 mac80211 硬件失败，内核警告堆栈出现在该调用附近。
-原筛选日志漏掉了警告标题与 allocator 位置，暂不能确定是哪项检查触发。
-模块清理完成，各 owned 标志均为 0，网络接口名称前后一致。
-记录见 [失败报告](research/popsicle-master-device-failure.json)。
+原筛选日志漏掉了警告标题，补采的 `warning.txt` 也为空。
+但原机模块 SHA256 与基线一致，对其 allocator 指令和旧候选 ELF 回调重定位的
+核对已确认：原机 `add_chanctx` 位于 `0x250`，旧候选位于 `0x240`。
+原机按自己的偏移读取旧候选表会得到错误回调，触发部分 emulated channel ops 检查。
+精确运行警告 PC 未保留，不能声称已从日志确认具体 WARN 行。
+详见 [allocator 审计](research/popsicle-mac80211-allocator-audit.json)。
 
-不要重复执行旧测试包。先补采旧警告的完整时间窗，以及手机原有的
-mac80211.ko 和已加载模块身份；不得据不完整堆栈直接改回调表、关闭 CFI 或强制加载。
-脚本的后续日志采集已增加警告上下文，并有模拟回归检查覆盖。
-此前分发 ZIP 中的脚本仍是旧版本，尚未重新分发主模块测试包。
+原因是 GKI 配置不包含外置无线模块的 `CONFIG_NL80211_TESTMODE` 设置；该设置
+控制两个回调成员，造成后续成员相差 16 字节。popsicle Wonder 构建已单独补上
+该编译设置，并加入 19 个 allocator 回调偏移的编译期断言。
+没有添加假回调、修改结构布局、改 CRC 或关闭检查。
+
+旧包继续暂停。等待修订版 Actions 编译和离线检查完成，再按新产物哈希更新脚本和分发测试包。
+本次只解决已确认的 callback table 差异，不代表完整 mac80211 ABI 已验证。
+模块清理完成，各 owned 标志均为 0，网络接口名称前后一致。
+[原实机失败记录](research/popsicle-master-device-failure.json) 保留。
 
 以下保留原测试说明，供定位问题时参考；不代表现在可以重试。
 

@@ -167,6 +167,7 @@ def build(work, phase):
             logged(make + [f'M={REPO}/kernel/provider', 'opairshare_wonder_provider.o',
                            'opairshare_route_b_probe.o'], 'provider.log')
             logged(make + [f'M={REPO}/kernel/wonder',
+                           'POPSICLE_STOCK_MAC80211_ABI=1',
                            f'EXTRA_CFLAGS=-I{REPO}/kernel/wonder/include/wonder', 'wonder.o'],
                    'wonder.log')
             objects = [work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.o',
@@ -325,7 +326,8 @@ def modules(work, link_only=False):
         ]:
             args = make + [f'M={REPO}/kernel/{directory}', f'KBUILD_EXTRA_SYMBOLS={vendor}']
             if directory == 'wonder':
-                args += [f'EXTRA_CFLAGS=-I{REPO}/kernel/wonder/include/wonder']
+                args += ['POPSICLE_STOCK_MAC80211_ABI=1',
+                         f'EXTRA_CFLAGS=-I{REPO}/kernel/wonder/include/wonder']
             command(args + ['modules'], f'modpost-{directory}.log')
             generated = REPO / 'kernel' / directory / 'Module.symvers'
             if generated.stat().st_size:
