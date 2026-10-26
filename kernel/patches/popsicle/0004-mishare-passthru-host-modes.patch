@@ -59,18 +59,20 @@
  		cdp_txrx_opmode = wlan_op_mode_unknown;
 --- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
 +++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
-@@ -154,6 +154,10 @@
+@@ -154,6 +154,12 @@
  
  	vdev = vdev_mlme->vdev;
  
 +	/* No STA fallback until the dedicated backend is implemented. */
-+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE)
++	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE) {
++		vdev_mlme->ops = NULL;
 +		return QDF_STATUS_E_NOSUPPORT;
++	}
 +
  	if (mlme_is_vdev_in_beaconning_mode(vdev->vdev_mlme.vdev_opmode))
  		vdev_mlme->ops = &ap_mlme_ops;
  	else if (vdev->vdev_mlme.vdev_opmode == QDF_MONITOR_MODE)
-@@ -1561,6 +1565,10 @@
+@@ -1561,6 +1567,10 @@
  	case QDF_NAN_DISC_MODE:
  		*type = WLAN_VDEV_MLME_TYPE_NAN;
  		break;

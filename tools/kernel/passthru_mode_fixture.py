@@ -66,7 +66,7 @@ static enum QDF_OPMODE wlan_vdev_mlme_get_opmode(struct wlan_objmgr_vdev *v) { r
 #ifdef NEW_TREE
  assert(QDF_PASSTHRU_MODE==17 && QDF_MAX_NO_OF_MODE==18 && wlan_op_mode_passthru==7);
  struct wlan_objmgr_vdev v={.vdev_mlme={.vdev_opmode=QDF_PASSTHRU_MODE}};
- struct vdev_mlme_obj m={.vdev=&v,.ops=NULL};
+ struct vdev_mlme_obj m={.vdev=&v,.ops=&sta_mlme_ops};
  uint8_t type=0xa5, sub=0xa5;
  assert(wlan_util_vdev_get_cdp_txrx_opmode(&v)==wlan_op_mode_passthru);
  assert(mlme_register_vdev_mgr_ops(&m)==QDF_STATUS_E_NOSUPPORT && m.ops==NULL);
