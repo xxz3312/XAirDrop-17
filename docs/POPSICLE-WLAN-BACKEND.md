@@ -376,7 +376,7 @@ START 超时的合成响应则携带 WLAN_MLME_HOST_VDEV_START_TIMEOUT，仍需�
 本轮只是事务控制器完成及离线验证；实际 MLME callbacks、定时器、owner 引用与排空、
 DOWN/delete 和恢复尚未接通。原有创建拒绝与 Wonder init 不支持行为保留，未在手机加载。
 
-## 原生响应/超时来源接线与 owner 注册表（构建待验证）
+## 原生响应/超时来源接线与 owner 注册表（离线构建验证通过）
 
 0009 在 native target-if 的四个来源插入 `mishare_events_notify`：正常 START、
 正常 STOP、原生 START 超时和 STOP 超时。正常来源只在原有响应解析与匹配 timer-stop
@@ -389,7 +389,7 @@ WLAN_HDD_ID_OBJ_MGR 引用。绑定错误按分配、引用逆序回收，重复
 相同 psoc/vdev ID 拒绝；不同 psoc 的相同 ID 独立。创建实例前必须已有真实 vdev，
 并且旧事件流已经排空；此约束不是由注册表自动证明。
 
-一个 IRQ-save spinlock 保护键查找、事务操作、快照和移除。通知过程没有分配、等待、
+一个 IRQ-save spinlock 保护键查找、事务操作、快照和移除。通知过程没有分配、睡眠操作、
 外部回调或保留 owner 指针；解绑取得同一锁、移除并清空 handle 后才在锁外释放存储
 和 vdev 引用。owner handle 的 bind/begin/submitted/snapshot/unbind 仍由调用者串行化，
 不能并发使用已解绑 handle。回调按 psoc/vdev ID 查找，不携带可能失效的 owner 指针。
@@ -411,3 +411,23 @@ Actions 编译整份生产 events/txn C，并执行从四个真实插入点提�
 当前只有 native 通知入口有运行时调用点，注册表默认空，没有实际 owner 绑定者。
 尚未把真实 vdev 创建、START/STOP 命令提交、专用 MLME ops、DOWN/delete 和恢复
 连成完整生命周期；不启用无线或 Wonder init，也未提供手机安装包。
+
+
+### 原生来源接线与 owner 注册表构建结果
+
+运行 40384338693，源码 1ac9d3523d97e5a3a69ea17d7d2176b86fa84370，所有步骤成功。
+新增来源/注册表 ASan/UBSan C 夹具（含 pthread 通知与解绑竞争）通过；
+44 项基础回归及已有模式、事务、MLME create、host、typed table 测试继续通过。
+六个新 events API 和此前十个 helper 均实际存在于 WLAN 对象和最终 .ko。
+工具链及 bindgen 缓存均命中，未改写 CRC/vermagic 或放宽链接检查。
+
+已下载并校验 21,959 字节 validation ZIP，独立生成实际四处来源插入的测试源码摘要，
+并核对 patched native RX 与 events/txn 四份生产文件摘要，均与 Actions 报告一致。
+仅插入通知及 include、公开响应定义未变的检查通过。
+574 条导入版本记录无不匹配，WLAN 未解析导入为 0，七项选定布局匹配。
+详细验证和限制见 [原生事件来源构建记录](research/popsicle-native-event-origin-build-pass.json)。
+
+本轮完成原生响应/超时通知来源与事务注册表的接线，没有实际 owner 绑定调用者。
+下一段要实现专用 MLME ops，以及真实 vdev 创建与 START/STOP 命令提交端的归属和
+失败回收，再处理 DOWN/delete、恢复与 vdev ID 复用前的事件排空。
+目前仍保留创建拒绝和 Wonder init 不支持，没有向手机发送固件请求或提供安装步骤。

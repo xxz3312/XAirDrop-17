@@ -1,0 +1,155 @@
+{
+  "status": "NATIVE_EVENT_ORIGIN_AND_OWNER_REGISTRY_OFFLINE_CHECKS_PASS_ONLY",
+  "commit": "1ac9d3523d97e5a3a69ea17d7d2176b86fa84370",
+  "run_id": 40384338693,
+  "job_id": 121788503306,
+  "validation_artifact": {
+    "id": 12680132272,
+    "bytes": 21959,
+    "sha256": "00943d05d94405ca99ee739efc823761af82dfbb774690e64442f1ebefb2d231",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12680647004,
+    "bytes": 335868660,
+    "github_reported_sha256": "747c7998147e58bb4f3b68ef9194d9187cb4415cb4dfb2b0939a5566a7677a1e",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "fixture": {
+    "status": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "f05316f65c841d09bdb513601035b9d702d710a4a84c7be35d104896db37182d",
+    "production_sha256": {
+      "wlan_hdd_mishare_events.c": "404a05bbdc83ae85626c419bce26e4bf5b6c1b6d894e72af6207b9a091e3d260",
+      "wlan_hdd_mishare_events.h": "1e27a23c71230e2e4fa39339f76324321bd4558c50c2c0003d8367a251cf944b",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8"
+    },
+    "native_rx_sha256": "1973546635abcf94df8c4ca04f6f5f64d89c548915b9fb4ce5c2f3b7a3a67ce7",
+    "native_rx_origin_insertions_only": true,
+    "public_response_definitions_unchanged": true,
+    "checks": [
+      "no owner leaves legacy flow",
+      "PASSTHRU-only bind",
+      "vdev reference and allocation failure rollback",
+      "duplicate key and owner rejection",
+      "same vdev ID across psocs",
+      "early real response",
+      "restart exclusion",
+      "wrong-command timeout exclusion",
+      "real start failure",
+      "native start/stop timeout quarantine",
+      "late firmware response remains quarantined",
+      "real stop completes",
+      "late timeout after completion ignored",
+      "unbind removes before reference release",
+      "concurrent key notification versus unregister/free"
+    ],
+    "limitations": "Production registry/transaction C with simulated object manager and pthread lock, plus extracted actual origin insertions. Not full native handler/timer execution, real IRQ locking, vdev/event draining, WMI, kernel teardown or AirDrop certification. No runtime owner binds yet."
+  },
+  "fixture_source_independently_regenerated_sha256_match": true,
+  "native_rx_and_production_sources_independently_verified": true,
+  "other_fixture_statuses": {
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY"
+  },
+  "linked_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "a2b0b2b9d8e74291205b3d0229806ea2f82a05cb8fa1b96916a9ebfd5ff5b75b",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout",
+      "mishare_events_bind",
+      "mishare_events_unbind",
+      "mishare_events_begin",
+      "mishare_events_submitted",
+      "mishare_events_snapshot",
+      "mishare_events_notify"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,cnss_utils,cnss_nl,ipam,opairshare_wonder_provider,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "object_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "a9d2b15155892923cf7240132c39ddebcaf04e79b6b0fa6a8cd08cddafaa3235",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout",
+      "mishare_events_bind",
+      "mishare_events_unbind",
+      "mishare_events_begin",
+      "mishare_events_submitted",
+      "mishare_events_snapshot",
+      "mishare_events_notify"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation."
+  },
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "a2b0b2b9d8e74291205b3d0229806ea2f82a05cb8fa1b96916a9ebfd5ff5b75b",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "selected_layout_status": "SELECTED_LAYOUTS_MATCH_ONLY",
+  "selected_layout_types": [
+    "module",
+    "net_device",
+    "wiphy",
+    "wireless_dev",
+    "sk_buff",
+    "cfg80211_chan_def",
+    "ieee80211_channel"
+  ],
+  "cache": {
+    "toolchains_hit": true,
+    "bindgen_hit": true
+  },
+  "native_response_and_timer_origin_call_sites_present": true,
+  "runtime_owner_binder_present": false,
+  "real_vdev_creation_and_command_submission_connected": false,
+  "default_table_binding_enabled": false,
+  "driver_installed": false,
+  "radio_tested": false,
+  "firmware_passthru_support": "UNVERIFIED",
+  "limitations": "Native source origin insertion and owner registry compiled/linked into WLAN, tested with simulated object manager/pthread locking and extracted origin snippets. Not complete native handler/timer execution, kernel IRQ/teardown, event draining, vdev creation/command ownership, firmware, loading or AirDrop certification."
+}
