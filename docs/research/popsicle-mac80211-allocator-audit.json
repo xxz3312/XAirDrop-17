@@ -41,9 +41,17 @@
   },
   "consequence": "Stock allocator reads candidate change_chanctx as add_chanctx, followed by NULL remove/change entries; its partial-emulation check rejects this table.",
   "runtime_limit": "Exact runtime warning PC was not recaptured; the rejecting path is predicted from original module instructions and actual old candidate ELF relocations.",
-  "fix": "Compile only popsicle Wonder with CONFIG_NL80211_TESTMODE=1; assert 19 stock allocator member offsets at compile time. No fake callbacks, padding, CRC or binary rewrites.",
-  "validation_pending": "Actions rebuild and a new device lifecycle test. Does not establish full ABI, firmware or AirDrop functionality.",
+  "fix": "Move popsicle-only CONFIG_NL80211_TESTMODE and 19 offset assertions into the selected Kbuild; require independent ELF relocation audit immediately after linking Wonder.",
+  "validation_pending": "New Actions rebuild with active Kbuild assertions and mandatory ELF callback-table audit, followed by device lifecycle test. No full ABI, firmware or AirDrop certification.",
   "stock_mac80211_build_id": "6086b536b2d52fe7bcd16d12f44f89486e3c5f95",
   "stock_mac80211_build_id_note_sha256": "899f5b3a74a889052e6cd74bf50381e29d67fcd156b09bdfe9baf01add52a7aa",
-  "new_device_preflight": "Always hash stock module file and loaded build-id note before loading experimental modules. Stop if unavailable or mismatched; do not unload preexisting mac80211."
+  "new_device_preflight": "Always hash stock module file and loaded build-id note before loading experimental modules. Stop if unavailable or mismatched; do not unload preexisting mac80211.",
+  "rejected_rebuild": {
+    "actions_run": 40281240881,
+    "artifact_sha256": "4af947c16c5d16d80142e52cfd8f3937d0bf06f41e1476e2af6143f49ca168e0",
+    "wonder_sha256": "5270dab5e09c33c39f4b2a70f3ab766cb36cd072bb8464bbe152e8b79e0560a9",
+    "workflow_conclusion": "success",
+    "artifact_verdict": "REJECT_CALLBACK_LAYOUT_UNCHANGED",
+    "reason": "Kbuild takes precedence over Makefile; the first flag/assertion change was in the inactive Makefile. The real linked module remained byte-identical to the failed candidate. No package distributed."
+  }
 }

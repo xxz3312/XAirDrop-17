@@ -15,6 +15,7 @@ import tarfile
 from module_abi import inspect, symvers
 from popsicle_modpost import write_inputs, module_report, merge_generated_exports
 from btf_layout import Btf, RecordedLayouts, compare
+from module_mac80211_ops import audit as audit_mac80211_ops
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -335,6 +336,13 @@ def modules(work, link_only=False):
             for name in names:
                 path = REPO / 'kernel' / directory / (name + '.ko')
                 produced.append(path)
+                if name == 'wonder':
+                    # Check the actual linked table even if a compile-time
+                    # assertion was accidentally put in an inactive Makefile.
+                    ops_report = audit_mac80211_ops(path)
+                    (reports / 'wonder-allocator-table.json').write_text(
+                        json.dumps(ops_report, indent=2) + '\n')
+                    print('Wonder ELF allocator callback slots verified.', flush=True)
                 result['modules'][name] = module_report(path, expected, known)
                 if result['modules'][name]['status'] == 'REJECT':
                     result['status'] = 'REJECT_MODULE_RECORDS_OR_HEADER'

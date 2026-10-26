@@ -48,7 +48,10 @@
 补采已确认原机 mac80211 文件与基线相同，但旧警告未保留。
 对原机 allocator 指令和旧候选 ELF 回调重定位的核对确认 callback table 相差 16 字节：
 外置无线模块的 `CONFIG_NL80211_TESTMODE` 与 GKI 配置不同。
-popsicle Wonder 编译已单独补上该设置，并增加 19 个回调偏移断言，等待 Actions 重建。
+首轮修订构建 40281240881 虽成功，但产物核对证明其仍是旧模块；
+原因是编译设置误放在被 Kbuild 覆盖的 Makefile 中，未实际启用。
+现已移至实际 Kbuild，并加入链接后真实 ELF 回调位置必过检查，等待新 Actions。
+19 个编译期断言与产物检查均通过后，才会分发新实机包。
 详见 [审计](research/popsicle-mac80211-allocator-audit.json)。旧测试包继续暂停。
 
 ## 仍未完成
