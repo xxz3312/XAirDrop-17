@@ -1,0 +1,13 @@
+{
+  "device": "popsicle",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "evidence_archive_sha256": "ca069ddeada9453467e5f781a2b02d48b1d717e764b416dcfc8adb189332f540",
+  "linker_executable": {
+    "path": "/system/bin/linker64",
+    "sha256": "b6dd216b7a775b8f04c825cada286bfe7ddaeecf2c0c10e617287118965abc00"
+  },
+  "ld_android_stub": {
+    "path": "/system/lib64/ld-android.so",
+    "sha256": "e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305"
+  }
+}

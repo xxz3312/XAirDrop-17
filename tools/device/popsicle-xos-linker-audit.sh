@@ -7,8 +7,15 @@ set -u
 [ "$(getprop ro.product.device)" = popsicle ] || exit 1
 [ "$(getprop ro.build.version.incremental)" = OS4.0.5.0.XPBCNXM ] || { echo 'Firmware changed; collect a fresh audit first.'; exit 1; }
 for tool in sha256sum unzip timeout tar cmp; do command -v "$tool" >/dev/null 2>&1 || { echo "Missing tool: $tool"; exit 1; }; done
-check_hash() { actual=$(sha256sum "$1") || return 1; [ "${actual%% *}" = "$2" ]; }
-check_hash /system/bin/linker64 e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305 || { echo 'Unexpected linker; stopped.'; exit 1; }
+check_hash() {
+    actual=$(sha256sum "$1") || return 1
+    actual=${actual%% *}
+    if [ "$actual" != "$2" ]; then
+        printf 'Hash mismatch: %s\nexpected=%s\nactual=%s\n' "$1" "$2" "$actual" >&2
+        return 1
+    fi
+}
+check_hash /system/bin/linker64 b6dd216b7a775b8f04c825cada286bfe7ddaeecf2c0c10e617287118965abc00 || { echo 'Unexpected linker; stopped.'; exit 1; }
 check_hash "$1" 64e81b259b920fd3946cf8b882089a607d9a01c07b240362044f108bf9d54419 || { echo 'Reference archive changed; stopped.'; exit 1; }
 umask 077
 tag=$(date +%Y%m%d-%H%M%S)-$$

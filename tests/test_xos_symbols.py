@@ -1,5 +1,7 @@
 """Symbol versions, IFUNC and visibility must not create false ABI findings."""
 import sys
+import json
+import re
 from pathlib import Path
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/xos'))
@@ -7,6 +9,14 @@ from compare_device import symbol_sets
 
 
 class XosSymbolsTests(unittest.TestCase):
+    def test_linker_guard_uses_captured_executable_not_ld_android_stub(self):
+        root = Path(__file__).resolve().parents[1]
+        profile = json.loads((root / 'tools/xos/device-profile.json').read_text())
+        script = (root / 'tools/device/popsicle-xos-linker-audit.sh').read_text()
+        guards = re.findall(r'^check_hash /system/bin/linker64 ([0-9a-f]{64}) ', script, re.M)
+        self.assertEqual(guards, [profile['linker_executable']['sha256']])
+        self.assertNotEqual(guards[0], profile['ld_android_stub']['sha256'])
+
     def test_empty_undefined_row_does_not_consume_next_symbol(self):
         strong, weak, exports = symbol_sets("""
   0: 0000000000000000 0 NOTYPE LOCAL DEFAULT UND

@@ -79,6 +79,8 @@
     "xos_service_found": false,
     "xos_interface_present": false,
     "wonder_phy_present": false,
-    "wonder_enable_present": false
+    "wonder_enable_present": false,
+    "linker_executable_sha256": "b6dd216b7a775b8f04c825cada286bfe7ddaeecf2c0c10e617287118965abc00",
+    "ld_android_stub_sha256": "e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305"
   }
 }

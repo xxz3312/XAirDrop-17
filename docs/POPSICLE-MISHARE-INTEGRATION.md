@@ -196,3 +196,20 @@ su -c 'sh /sdcard/Download/popsicle-xos-linker-audit.sh /sdcard/Download/XAirDro
 
 结果为 Download/17pm-xos-linker-*.tar.gz。该报告不包含四个参考 ELF。
 依赖路径检查完成后，仍须验证 Binder/VINTF/SELinux，底层 AWDL 后端缺口继续单独推进。
+
+
+### 链接器预检摘要修正
+
+首版依赖检查脚本误把 /system/lib64/ld-android.so 的摘要填入 /system/bin/linker64
+校验，设备输出 Unexpected linker 并在提取参考 ELF 或运行 --list 之前停止。
+已根据用户第二轮原始报告重新核对两个 linker64 路径：
+
+- /system/bin/linker64 与 /apex/com.android.runtime/bin/linker64：
+  `b6dd216b7a775b8f04c825cada286bfe7ddaeecf2c0c10e617287118965abc00`。
+- /system/lib64/ld-android.so 是独立文件：
+  `e6d7b18d770a8159e0670ca81e5357d10c47a56052db2e7d964c4da16498d305`。
+
+二者有相同相关 SONAME 不能推导文件摘要相同。
+新增 tools/xos/device-profile.json 区分可执行链接器与系统 stub，回归检查脚本的
+可执行链接器门限与该设备证据一致；摘要不符时打印预期与实际值。
+未放宽校验或修改设备，原参考 ZIP 无需重下载。设备 --list 结果仍待回传。
