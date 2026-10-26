@@ -275,7 +275,7 @@ init/频道/速率/过滤操作仍返回不支持，未提供手机安装或启�
 下一段是 MLME/vdev 初始化与完成/失败事件、固件类型 9 请求及 RX/TX 接线，
 需要另行处理真正启动后对象的停止、回收和恢复；不能直接撤掉保护返回成功。
 
-## MLME 类型转换与创建前置检查（构建待验证）
+## MLME 类型转换与创建前置检查（离线构建验证通过）
 
 0007 补丁把独立的主机类型转换补为 QDF_PASSTHRU_MODE=17 →
 WLAN_VDEV_MLME_TYPE_PASSTHRU=9 / subtype=0，与已经保存的原厂模块反汇编证据一致。
@@ -299,3 +299,21 @@ PASSTHRU（含分配失败注入时仍无任何副作用）、未知模式、既
 本段没有专用 start/stop 完成事件实现，没有 Wonder init 与 host helper 的运行时接线，
 没有 RX/TX，也没有可安装包。下一段需要实现专用 MLME 事件路径和失败/超时回收，
 之后才能考虑受控发送类型 9 的创建请求；不能通过撤掉当前拒绝条件代替这些实现。
+
+
+### MLME 前置检查构建结果
+
+运行 40374059815，源码 988031927e96bcb1d02c75aec79206c6f8e24eea，所有步骤成功。
+44 项基础回归、模式差分 C 测试、实际完整 MLME create 的 ASan/UBSan 测试、
+host 生命周期与 typed table 测试均通过。工具链及 bindgen 缓存均命中。
+已下载 19,720 字节的 validation ZIP 并核对 SHA256，独立重新生成 MLME 和
+补丁前/后 mode 测试的 C 源码摘要，均与报告一致；实际 patched MLME 文件摘要也一致。
+
+完整 WLAN 严格链接通过，574 条导入版本记录无不匹配，WLAN 未解析导入为 0，
+七项选定结构布局核对通过。最终 WLAN SHA256 为
+`cf2736b28b3470ae974a1b141a3d5c4d9828a5a06abdbcabf281555e3bd2b0d4`。
+它仍有 private provider 强依赖，离线检查不能代替完整 ABI、手机加载或无线验证。
+详细记录见 [MLME 前置检查构建结果](research/popsicle-mlme-preflight-build-pass.json)。
+
+本阶段完成的是类型转换和创建前置检查；没有向手机发送类型 9 请求，
+没有实现启动/停止异步事件及超时回收，没有启用 Wonder init、RX/TX 或 AirDrop。

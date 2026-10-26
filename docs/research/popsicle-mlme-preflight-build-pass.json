@@ -1,0 +1,132 @@
+{
+  "status": "MLME_TYPE_TRANSLATION_AND_PREFLIGHT_OFFLINE_CHECKS_PASS_ONLY",
+  "commit": "988031927e96bcb1d02c75aec79206c6f8e24eea",
+  "run_id": 40374059815,
+  "job_id": 121752173167,
+  "validation_artifact": {
+    "id": 12673184812,
+    "bytes": 19720,
+    "sha256": "4817aad6527b88b81c6334b282d82858a05df38739cae6e4bbba8ddda9c45be8",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12674269064,
+    "bytes": 335857536,
+    "github_reported_sha256": "855557492b5ed620eb19c9d97e68ba56bfb5df0dfa7e759dab81e353e493eb66",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "mlme_fixture": {
+    "status": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_source_sha256": "5602ad1e3daa91f12fd71b55fbf426617d68f5bf82aa5d79d1c05a086e9924fd",
+    "mlme_source_sha256": "0b4796ee0d063f8f69309daffb713aa51f20f9fbd749de11505948381ee5777b",
+    "host_translation": {
+      "qdf_mode": 17,
+      "type": 9,
+      "subtype": 0
+    },
+    "passthru_create": "E_NOSUPPORT_BEFORE_ALLOCATION_OR_COMMAND",
+    "limitations": "Actual production create/type conversion with mocked resource and WMI boundaries. No firmware acceptance, real cleanup, event, concurrency or radio certification."
+  },
+  "mode_fixture": {
+    "status": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "legacy_qdf_modes": 17,
+    "legacy_dp_modes": 7,
+    "legacy_results": [
+      "0|STA|3|0|2|0|0|1",
+      "1|SAP|1|0|1|0|0|2",
+      "2|P2P Client|3|0|2|2|0|1",
+      "3|P2P GO|1|0|1|3|0|2",
+      "4|FTM|0|4|0|0|0|1",
+      "5|IBSS|2|0|3|0|0|2",
+      "6|Monitor|4|0|4|0|0|3",
+      "7|P2P Device|1|0|1|1|0|1",
+      "8|OCB|5|0|6|0|0|1",
+      "9|EPPing|0|4|0|0|0|1",
+      "10|QVIT|0|4|0|0|0|1",
+      "11|NDI|6|0|7|0|0|2",
+      "12|WDS|0|4|0|0|0|1",
+      "13|BTAMP|0|4|0|0|0|1",
+      "14|AHDEMO|0|4|0|0|0|1",
+      "15|TDLS|0|4|0|0|0|1",
+      "16|NAN|0|0|5|0|0|1"
+    ],
+    "fixture_source_sha256": {
+      "before": "0a6fddebd943e38be92d30426c6925c29ffc4ceaec4ea957b4388465dbd3cef6",
+      "after": "c4ede563ff3ec2d156d4747c3a5e8041f85714056b6b3433fd141429d983d8da"
+    },
+    "passthru_qdf_mode": 17,
+    "passthru_dp_mode": 7,
+    "mlme_registration": "E_NOSUPPORT",
+    "firmware_type_conversion": "HOST_TYPE_9_SUBTYPE_0_ONLY",
+    "limitations": "Real C functions with object/log stubs. Not kernel concurrency, policy arrays, layout, firmware or radio certification."
+  },
+  "mlme_and_mode_fixture_sources_independently_regenerated_sha256_match": true,
+  "mlme_production_source_sha256_independently_verified": true,
+  "other_fixture_statuses": {
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY"
+  },
+  "linked_host_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "cf2736b28b3470ae974a1b141a3d5c4d9828a5a06abdbcabf281555e3bd2b0d4",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,cnss_utils,cnss_nl,ipam,opairshare_wonder_provider,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "cf2736b28b3470ae974a1b141a3d5c4d9828a5a06abdbcabf281555e3bd2b0d4",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "selected_layout_status": "SELECTED_LAYOUTS_MATCH_ONLY",
+  "selected_layout_types": [
+    "module",
+    "net_device",
+    "wiphy",
+    "wireless_dev",
+    "sk_buff",
+    "cfg80211_chan_def",
+    "ieee80211_channel"
+  ],
+  "cache": {
+    "toolchains_hit": true,
+    "bindgen_hit": true
+  },
+  "mlme_ops_registration": "E_NOSUPPORT_WITH_CLEARED_OPS",
+  "passthru_ext_create": "E_NOSUPPORT_BEFORE_ALLOCATION_OR_COMMAND",
+  "default_table_binding_enabled": false,
+  "host_helper_called_from_radio_init": false,
+  "driver_installed": false,
+  "radio_tested": false,
+  "firmware_passthru_support": "UNVERIFIED",
+  "limitations": "Host type mapping and production create preflight with simulated resource/WMI boundaries, plus full WLAN build and recorded offline checks. No dedicated MLME start/stop/event/timeout implementation, actual cleanup certification, real firmware request, loading or AirDrop certification."
+}
