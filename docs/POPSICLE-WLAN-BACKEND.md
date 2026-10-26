@@ -57,3 +57,35 @@ python3 tools/kernel/popsicle_backend_audit.py \
 Actions 在 setup 阶段自动产生 `reports/wlan-backend-gaps.json`，会包含已经应用的兼容补丁。
 本次新增的是源码审核与持续报告，没有启用或实现无线后端，不提供新的实机测试包。
 全部原生编译继续在 GitHub Actions 执行，沿用现有工具链缓存。
+
+## MiShare Binder 通过后的固件输入核对
+
+2026-10-26 20:01 的真实 MiShare main/:ui Binder 元数据测试均通过，结果见
+[应用调用记录](research/popsicle-mishare-binder-device-pass.json)。
+当前转向无线后端，暂停重复应用权限、服务注册及元数据测试。
+
+固定公开源码的 `fw-api/fw/wmi_unified.h` 定义 WMI vdev 类型 0x1 到 0x8，
+没有参考实现使用的 `WMI_VDEV_TYPE_WIFI_PASSTHRU`。QDF、DP、HDD 和 Kbuild
+对应接线也仍缺失。这是公开源码现状，不代表当前手机固件一定不支持 0x9。
+不能单独添加该数值、跳过错误或改成 MONITOR 就认定实现 PASSTHRU。
+此前暂停的 MONITOR adapter reservation 草稿继续保留在 stash，未恢复、未部署。
+
+新增 `popsicle-wlan-fw-audit.sh` 只读收集当前固件候选及已核对原厂 WLAN 文件：
+
+- 固定 popsicle/OS4.0.5.0；只复制 SHA 匹配的原厂 qca_cld 模块。
+- 在 vendor/odm 固件目录寻找 amss/qwlan/wlanmdsp 常见文件和分段，记录来源、
+  解析路径、大小、SHA256；按内容去重，单文件最多 64 MiB、总计最多 128 MiB。
+- 只读已有内核消息和公开模块信息；不读取 debugfs、原始分区、BDF/校准或 Wi-Fi 配置。
+- 不加载驱动、不启动 XOS、不重启 Wi-Fi、不创建网卡、不发送固件命令。
+- 文件候选不等于当前活动镜像；字符串命中或缺失均不直接认证 PASSTHRU 能力。
+
+Actions `wlan-fw-audit.yml` 做脚本语法检查并提供工具 ZIP，不触发原生编译。
+解压脚本到 Download 后执行：
+
+```sh
+su -c 'sh /sdcard/Download/popsicle-wlan-fw-audit.sh'
+```
+
+上传 `17pm-wlan-fw-*.tar.gz`。随后核对候选固件与驱动中的 vdev 类型转换、
+相关命令处理证据，再决定原生 PASSTHRU 后端的接线与受限实测方案。
+当前没有新的可刷无线模块，也未宣称后端初始化或收发通过。

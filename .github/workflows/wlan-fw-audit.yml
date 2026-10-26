@@ -1,0 +1,39 @@
+name: Popsicle WLAN firmware evidence tools
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/wlan-fw-audit.yml
+      - tools/device/popsicle-wlan-fw-audit.sh
+      - tests/test_wlan_fw_audit.py
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify shell and package read-only tool
+        run: |
+          python3 -m unittest discover -s tests -p 'test_wlan_fw_audit.py'
+          sh -n tools/device/popsicle-wlan-fw-audit.sh
+          out="$RUNNER_TEMP/wlan-fw-audit"
+          mkdir -p "$out"
+          cp tools/device/popsicle-wlan-fw-audit.sh "$out/"
+          python3 - <<'PY'
+          import pathlib,os,hashlib,json
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'wlan-fw-audit'
+          (p/'README.txt').write_text('Extract this tools ZIP into Download. Do not flash in KernelSU.\nRun: su -c "sh /sdcard/Download/popsicle-wlan-fw-audit.sh"\nUpload Download/17pm-wlan-fw-*.tar.gz.\nRead-only firmware/module file collection, no driver or radio activation.\nCandidate firmware is not confirmed active firmware; PASSTHRU support is unverified.\n')
+          (p/'build.json').write_text(json.dumps({'commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],'status':'TOOLS_PACKAGED_NOT_DEVICE_TESTED','scope':'Read-only WLAN firmware/module candidates and existing log collection'},indent=2)+'\n')
+          (p/'SHA256SUMS').write_text(''.join(hashlib.sha256(f.read_bytes()).hexdigest()+'  '+f.name+'\n' for f in sorted(p.iterdir()) if f.is_file()))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-wlan-fw-audit-${{ github.run_id }}
+          path: ${{ runner.temp }}/wlan-fw-audit/
+          if-no-files-found: error
+          retention-days: 7
