@@ -16,3 +16,11 @@ to `cnss_get_wlan_tsf_gpio`, absent from the recorded stock provider exports.
 The patch changes no profile options, adds no stub or fake success return,
 and retains the original implementation when the GPIO IRQ branch is selected.
 Fresh object compilation and symbol inspection are delegated to GitHub Actions.
+
+4. `0004-mishare-passthru-host-modes.patch` appends the host QDF/DP PASSTHRU
+   identifiers and their conversion without renumbering existing modes. MLME
+   registration and firmware-type conversion explicitly reject the new mode;
+   HDD also refuses it before the existing unknown-mode assertion. This does
+   not add a firmware type, policy table rows, adapter implementation or TX/RX.
+   Actions compares the original and patched C functions for all legacy modes
+   and checks the new rejection paths before compiling the complete WLAN.

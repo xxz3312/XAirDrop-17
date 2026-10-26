@@ -17,6 +17,7 @@ on:
       - .github/workflows/popsicle-build.yml
       - tools/kernel/popsicle_*.py
       - tools/kernel/popsicle_*.sh
+      - tools/kernel/passthru_mode_fixture.py
       - tools/kernel/test_*.py
       - tools/kernel/module_*.py
       - tools/kernel/btf_layout.py

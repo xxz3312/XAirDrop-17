@@ -133,3 +133,28 @@ Kiwi/WCN7750 是其他随系统提供的型号变体；现改为 OTHER_WLAN_VARI
 已有输入足以继续主机侧源码移植，无需重复固件采集。驱动生命周期、模式转换与收发路径
 需要真实实现；不能 hook 空函数、直接写模式数值或让 init 返回成功来替代。
 当前没有新可刷驱动；原生编译仍通过现有缓存的 GitHub Actions 执行。
+
+## 主机模式层第一段实现
+
+`0004-mishare-passthru-host-modes.patch` 面向固定的 Xiaomi popsicle 源码，
+没有恢复此前 MONITOR reservation 草稿，也没有另建 OP/OShare 模块。
+本段增加 QDF_PASSTHRU_MODE（17）、wlan_op_mode_passthru（7）、模式名称与
+QDF 到 CDP 的转换。原 QDF 0–16、CDP 0–6 数值保持，QDF_MAX_NO_OF_MODE 从 17 变为 18。
+上限变化会影响以它定义的数组，不能仅凭原枚举值不变宣称完整 ABI 不变。
+
+专用 MLME ops 和固件类型尚未实现，本轮明确拒绝新模式的 MLME 注册和固件类型转换，
+转换失败时 type/subtype 都为 0，不能落入 STA ops 或发送未经验证的 0x9。
+HDD open 也提前拒绝该模式，避免进入已有 unknown-mode QDF_ASSERT。
+未增加接口创建、操作表注册、开机动作、传输、频道操作或固件命令。
+此段是源码移植基础层，不是可工作的无线后端。
+
+`passthru_mode_fixture.py` 在 Actions 中提取固定原始源码和补丁后源码中的真实 C：
+模式名、QDF/CDP 转换、MLME ops 选择和固件类型转换。只模拟对象访问器及日志，
+逐一执行 17 种既有 QDF 模式并比较前后结果；同时核对原 7 种 DP 模式数值，
+断言新模式转换及两条拒绝路径。使用真实 QDF_STATUS 和类型宏，不改写生产函数。
+主机夹具不验证真实对象管理、并发、策略数组或固件。
+
+完整 WLAN 仍需走现有 Actions 编译、严格链接、依赖/重复导出检查及选定布局检查。
+源码缺口报告现在有两组模式标识接上，但其余 HDD、合同、构建入口及固件类型仍缺失，
+不能将缺口计数降低当成初始化、收发或硬件能力验证。
+本轮不提供替换原厂 WLAN 的安装步骤；后续继续接口生命周期和真实后端接线。

@@ -1,0 +1,98 @@
+--- a/qca-wifi-host-cmn/qdf/inc/qdf_types.h
++++ b/qca-wifi-host-cmn/qdf/inc/qdf_types.h
+@@ -754,6 +754,7 @@
+  * @QDF_AHDEMO_MODE: AHDEMO mode
+  * @QDF_TDLS_MODE: TDLS device mode
+  * @QDF_NAN_DISC_MODE: NAN Discovery device mode
++ * @QDF_PASSTHRU_MODE: Host passthrough mode (backend not yet enabled)
+  * @QDF_MAX_NO_OF_MODE: Max place holder
+  *
+  * These are generic IDs that identify the various roles
+@@ -777,6 +778,7 @@
+ 	QDF_AHDEMO_MODE,
+ 	QDF_TDLS_MODE,
+ 	QDF_NAN_DISC_MODE,
++	QDF_PASSTHRU_MODE,
+ 
+ 	/* Add new OP Modes to qdf_opmode_str as well */
+ 
+--- a/qca-wifi-host-cmn/qdf/src/qdf_types.c
++++ b/qca-wifi-host-cmn/qdf/src/qdf_types.c
+@@ -61,6 +61,8 @@
+ 		return "TDLS";
+ 	case QDF_NAN_DISC_MODE:
+ 		return "NAN";
++	case QDF_PASSTHRU_MODE:
++		return "PASSTHRU";
+ 	default:
+ 		return "Invalid operating mode";
+ 	}
+--- a/qca-wifi-host-cmn/dp/inc/cdp_txrx_cmn_struct.h
++++ b/qca-wifi-host-cmn/dp/inc/cdp_txrx_cmn_struct.h
+@@ -784,6 +784,7 @@
+  * @wlan_op_mode_monitor: Monitor mode
+  * @wlan_op_mode_ocb: OCB mode
+  * @wlan_op_mode_ndi: NDI mode
++ * @wlan_op_mode_passthru: Host passthrough mode (TX/RX not implemented)
+  */
+ enum wlan_op_mode {
+ 	wlan_op_mode_unknown,
+@@ -793,6 +794,7 @@
+ 	wlan_op_mode_monitor,
+ 	wlan_op_mode_ocb,
+ 	wlan_op_mode_ndi,
++	wlan_op_mode_passthru,
+ };
+ 
+ /**
+--- a/qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_utils_api.c
++++ b/qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_utils_api.c
+@@ -112,6 +112,9 @@
+ 		break;
+ 	case QDF_NDI_MODE:
+ 		cdp_txrx_opmode = wlan_op_mode_ndi;
++		break;
++	case QDF_PASSTHRU_MODE:
++		cdp_txrx_opmode = wlan_op_mode_passthru;
+ 		break;
+ 	default:
+ 		cdp_txrx_opmode = wlan_op_mode_unknown;
+--- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
++++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+@@ -154,6 +154,10 @@
+ 
+ 	vdev = vdev_mlme->vdev;
+ 
++	/* No STA fallback until the dedicated backend is implemented. */
++	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE)
++		return QDF_STATUS_E_NOSUPPORT;
++
+ 	if (mlme_is_vdev_in_beaconning_mode(vdev->vdev_mlme.vdev_opmode))
+ 		vdev_mlme->ops = &ap_mlme_ops;
+ 	else if (vdev->vdev_mlme.vdev_opmode == QDF_MONITOR_MODE)
+@@ -1561,6 +1565,10 @@
+ 	case QDF_NAN_DISC_MODE:
+ 		*type = WLAN_VDEV_MLME_TYPE_NAN;
+ 		break;
++	case QDF_PASSTHRU_MODE:
++		/* Target firmware type 0x9 is not yet verified. */
++		status = QDF_STATUS_E_NOSUPPORT;
++		break;
+ 	default:
+ 		mlme_err("Invalid device mode %d", mode);
+ 		status = QDF_STATUS_E_INVAL;
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -9672,6 +9672,12 @@
+ 	uint32_t i;
+ 	bool eht_capab = 0;
+ 
++	/* Mode plumbing only: no host adapter or firmware vdev yet. */
++	if (session_type == QDF_PASSTHRU_MODE) {
++		hdd_err("MiShare PASSTHRU backend is not implemented");
++		return NULL;
++	}
++
+ 	status = wlan_hdd_validate_mac_address((struct qdf_mac_addr *)mac_addr);
+ 	if (QDF_IS_STATUS_ERROR(status)) {
+ 		/* Not received valid mac_addr */

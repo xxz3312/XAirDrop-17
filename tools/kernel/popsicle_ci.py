@@ -159,6 +159,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/passthru_mode_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/passthru-mode-fixture.json'],
+               'passthru-mode-fixture.log')
         logged(args, 'build.log')
         if phase != 'prepare':
             host = tools / 'host'
