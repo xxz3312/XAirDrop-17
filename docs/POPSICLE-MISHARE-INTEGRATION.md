@@ -297,3 +297,46 @@ su -c 'sh /sdcard/Download/popsicle-xos-service-smoke.sh /sdcard/Download/XAirDr
 不清空日志、不改权限、不添加 VINTF 或 SELinux 放行。
 回归验证立即退出的 INFO/服务 PID 诊断可保留，且无关应用文本被排除。
 需使用更新脚本重新获取真实退出原因，原参考 ZIP 和原加载探针无需重下载或重跑。
+
+
+## 服务阻断点已确定：VINTF 声明
+
+18:29 第二轮注册报告 SHA256：
+`191c3ee13b0a372b5f9f5cfd242b9c1aec84ecf712c97e73846c2f939b2dd067`。
+PID 19902 的日志确认服务进入入口并创建 DomesticXOsCommService，
+在 AidlLazyServiceRegistrar 注册默认实例时返回
+`Status(-3, EX_ILLEGAL_ARGUMENT): VINTF declaration error.`，随后退出 255。
+没有观察到注册，前后状态一致。本轮确定了 VINTF 声明校验阻断；还不能断言声明修正后
+不会再遇到 SELinux、Binder 客户端或其他问题。
+PID 19868 的 Termux/untrusted_app search AVC 与服务 PID 不同，不作为该服务注册拒绝证据。
+筛选器还修正为精确 servicemanager 标签，排除 MiuiDataServiceManager 的无关电话日志。
+
+下一步模块源码位于 `modules/xos-vintf`，独立 Actions 为 `.github/workflows/xos-vintf.yml`。
+模块 ID 为 `xairdrop17_xos_vintf`，只叠加以下文件：
+`/vendor/etc/vintf/manifest/manifest_xairdrop17_xos.xml`。
+使用 manifest meta-version 2.0、AIDL version 1、包 com.domestic.xoscomm、
+实例 IDomesticXOsComm/default；AIDL 要求 meta-version >= 2.0。
+该版本与格式规则见 [AOSP VINTF 文档](https://source.android.com/docs/core/architecture/vintf/objects)。
+
+安装器限定 KernelSU/popsicle/OS4.0.5.0.XPBCNXM，检查启用的挂载元模块，并设置声明文件
+为 vendor_configs_file 标签。不会写原始分区、修改 SELinux 规则或在线触碰 VINTF 缓存。
+KernelSU system 目录需要挂载元模块，见 [官方模块指南](https://kernelsu.org/guide/module.html)。
+通过重启让挂载与 VINTF 配置在启动流程中生效；不重启 servicemanager，不修改 apex-info-list。
+
+模块不含 service.sh/post-fs-data/init rc 等启动脚本，也没有 APK、原生 ELF、内核模块、
+system.prop 或 sepolicy.rule。禁用/移除模块并重启可移除声明叠加。
+完整模块产物打包只在 Actions；测试拒绝未知文件、开机脚本或错误实例。
+源文件 XML 已做结构检查，但未在本机使用 libvintf 原生解析器或设备重启验证。
+
+安装 Actions 产物中内层 `XAirDrop-17-XOS-VINTF-0.1.zip` 并重启后，
+在 KernelSU 对该模块点“执行”，或手动运行：
+
+```sh
+su -c 'sh /data/adb/modules/xairdrop17_xos_vintf/action.sh'
+```
+
+Action 先进入 init 挂载命名空间，核对挂载的声明摘要，然后使用 Download 中原参考 ZIP
+执行短时注册测试；仍不调用无线 start/status/stop，不启用 wonder_enable。
+如声明不可见会先停止，不能将“已安装模块”视作声明已被系统读取。
+上传新生成的 Download/17pm-xos-service-*.tar.gz，再确定后续必要改动。
+这只是服务声明模块，不是完整可用的 AirDrop 模块。

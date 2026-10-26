@@ -1,0 +1,35 @@
+name: Xiaomi XOS VINTF module
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/xos-vintf.yml
+      - modules/xos-vintf/**
+      - tools/xos/package_vintf.py
+      - tools/device/popsicle-xos-service-smoke.sh
+      - tests/test_xos_vintf.py
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check module boundaries and shell syntax
+        run: |
+          python3 -m unittest discover -s tests -p 'test_xos_vintf.py'
+          sh -n modules/xos-vintf/customize.sh
+          sh -n modules/xos-vintf/action.sh
+          sh -n tools/device/popsicle-xos-service-smoke.sh
+      - name: Package declaration-only module
+        run: python3 tools/xos/package_vintf.py --output "$RUNNER_TEMP/xos-vintf"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xos-vintf-module-${{ github.run_id }}
+          path: ${{ runner.temp }}/xos-vintf/
+          if-no-files-found: error
+          retention-days: 7

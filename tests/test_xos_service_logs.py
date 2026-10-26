@@ -22,6 +22,7 @@ cat <<'LOG'
 10-26 18:24:29.101 9 9 I unrelated: private user text
 10-26 18:24:29.102 16613 16613 I libc: process final message
 10-26 18:24:29.103 8 8 I servicemanager: registration rejected
+10-26 18:24:29.104 9 9 I MiuiDataServiceManagerImpl: unrelated telephony text
 LOG
 ''')
             logcat.chmod(0o700)
@@ -33,6 +34,7 @@ LOG
             self.assertIn('process final message',output)
             self.assertIn('registration rejected',output)
             self.assertNotIn('private user text',output)
+            self.assertNotIn('unrelated telephony text',output)
             args=(root/'args').read_text().splitlines()
             self.assertIn('-d',args)
             self.assertIn('*:V',args)

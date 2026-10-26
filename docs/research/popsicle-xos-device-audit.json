@@ -116,5 +116,19 @@
     "daemon_stdout_stderr_empty": true,
     "registration_log_empty": true,
     "cause": "UNKNOWN: initial streaming warning-level capture did not retain a diagnostic. Do not infer VINTF or SELinux cause from exit status alone."
+  },
+  "service_registration_retry_evidence": {
+    "archive_sha256": "191c3ee13b0a372b5f9f5cfd242b9c1aec84ecf712c97e73846c2f939b2dd067",
+    "status": "REGISTRATION_BLOCKED_OR_NOT_OBSERVED",
+    "registered_observed": false,
+    "service_exit": 255,
+    "state_unchanged": true,
+    "service_pid": 19902,
+    "failure_timestamp": "10-26 18:29:02.949",
+    "failure": "Status(-3, EX_ILLEGAL_ARGUMENT): VINTF declaration error.",
+    "stage_reached": "Service executable entered main, created DomesticXOsCommService and attempted lazy registration.",
+    "confirmed_blocker": "AIDL service VINTF declaration validation",
+    "selinux_service_registration_denial_confirmed": false,
+    "unrelated_avc": "Termux/untrusted_app search denials were from PID 19868, not the service PID 19902; not evidence of this registration failure."
   }
 }

@@ -107,7 +107,7 @@ fi
 sleep 1
 collect_registration_log() {
     logcat -b all -d -v threadtime -T "$start_time" '*:V' 2> "$work/report/logcat-errors.txt" |
-        grep -iE "DomesticXOs|xoscomm|libxos|servicemanager|LazyServiceRegistrar|VINTF|avc:.*denied|CANNOT LINK EXECUTABLE|[[:space:]]$observed_pid[[:space:]]" |
+        grep -iE "DomesticXOs|xoscomm|libxos|(^|[[:space:]])servicemanager([[:space:]:]|$)|LazyServiceRegistrar|VINTF|avc:.*denied|CANNOT LINK EXECUTABLE|[[:space:]]$observed_pid[[:space:]]" |
         tail -n 300 > "$work/report/registration-log.txt"
 }
 collect_registration_log
