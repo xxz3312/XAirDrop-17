@@ -1,0 +1,62 @@
+--- a/qca-wifi-host-cmn/umac/mlme/include/wlan_vdev_mlme.h
++++ b/qca-wifi-host-cmn/umac/mlme/include/wlan_vdev_mlme.h
+@@ -42,6 +42,8 @@
+ #define WLAN_VDEV_MLME_TYPE_NAN 0x5
+ #define WLAN_VDEV_MLME_TYPE_OCB 0x6
+ #define WLAN_VDEV_MLME_TYPE_NDI 0x7
++/* Stock host maps QDF PASSTHRU=17 to type 9; target acceptance unverified. */
++#define WLAN_VDEV_MLME_TYPE_PASSTHRU 0x9
+ 
+ /* values for vdev_subtype */
+ #define WLAN_VDEV_MLME_SUBTYPE_UNKNOWN   0x0
+--- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
++++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+@@ -1568,8 +1568,8 @@
+ 		*type = WLAN_VDEV_MLME_TYPE_NAN;
+ 		break;
+ 	case QDF_PASSTHRU_MODE:
+-		/* Target firmware type 0x9 is not yet verified. */
+-		status = QDF_STATUS_E_NOSUPPORT;
++		/* Host translation only; create is gated independently below. */
++		*type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
+ 		break;
+ 	default:
+ 		mlme_err("Invalid device mode %d", mode);
+@@ -1716,6 +1716,20 @@
+ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
+ {
+ 	QDF_STATUS status;
++	uint8_t type, subtype;
++
++	if (!vdev_mlme || !vdev_mlme->vdev)
++		return QDF_STATUS_E_INVAL;
++
++	/* No command or allocation until dedicated MLME lifecycle is ready. */
++	if (wlan_vdev_mlme_get_opmode(vdev_mlme->vdev) == QDF_PASSTHRU_MODE)
++		return QDF_STATUS_E_NOSUPPORT;
++
++	/* Reject unsupported modes before allocating partially initialized locks. */
++	status = mlme_get_vdev_types(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
++				     &type, &subtype);
++	if (QDF_IS_STATUS_ERROR(status))
++		return status;
+ 
+ 	mlme_legacy_debug("vdev id = %d ",
+ 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
+@@ -1743,14 +1757,8 @@
+ 			      &vdev_mlme->proto.generic.nss_2g,
+ 			      &vdev_mlme->proto.generic.nss_5g);
+ 
+-	status = mlme_get_vdev_types(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
+-				     &vdev_mlme->mgmt.generic.type,
+-				     &vdev_mlme->mgmt.generic.subtype);
+-	if (QDF_IS_STATUS_ERROR(status)) {
+-		mlme_err("Get vdev type failed; status:%d", status);
+-		mlme_ext_handler_destroy(vdev_mlme);
+-		return status;
+-	}
++	vdev_mlme->mgmt.generic.type = type;
++	vdev_mlme->mgmt.generic.subtype = subtype;
+ 
+ 	qdf_atomic_init(&vdev_mlme->ext_vdev_ptr->set_key_wakelock_counter);
+ 	qdf_wake_lock_create(&vdev_mlme->ext_vdev_ptr->peer_set_key_wakelock,

@@ -70,7 +70,7 @@ static enum QDF_OPMODE wlan_vdev_mlme_get_opmode(struct wlan_objmgr_vdev *v) { r
  uint8_t type=0xa5, sub=0xa5;
  assert(wlan_util_vdev_get_cdp_txrx_opmode(&v)==wlan_op_mode_passthru);
  assert(mlme_register_vdev_mgr_ops(&m)==QDF_STATUS_E_NOSUPPORT && m.ops==NULL);
- assert(mlme_get_vdev_types(QDF_PASSTHRU_MODE,&type,&sub)==QDF_STATUS_E_NOSUPPORT && type==0 && sub==0);
+ assert(mlme_get_vdev_types(QDF_PASSTHRU_MODE,&type,&sub)==QDF_STATUS_SUCCESS && type==9 && sub==0);
 #else
  assert(QDF_MAX_NO_OF_MODE==17);
 #endif
@@ -108,7 +108,7 @@ def audit(root):
         raise ValueError('Existing mode behavior changed')
     return {'status':'HOST_MODE_FIXTURE_PASS_ONLY','source_commit':head,'legacy_qdf_modes':17,'legacy_dp_modes':7,
             'legacy_results':results['after'].splitlines(),'fixture_source_sha256':inputs,
-            'passthru_qdf_mode':17,'passthru_dp_mode':7,'mlme_registration':'E_NOSUPPORT','firmware_type_conversion':'E_NOSUPPORT_ZERO_OUTPUTS',
+            'passthru_qdf_mode':17,'passthru_dp_mode':7,'mlme_registration':'E_NOSUPPORT','firmware_type_conversion':'HOST_TYPE_9_SUBTYPE_0_ONLY',
             'limitations':'Real C functions with object/log stubs. Not kernel concurrency, policy arrays, layout, firmware or radio certification.'}
 
 

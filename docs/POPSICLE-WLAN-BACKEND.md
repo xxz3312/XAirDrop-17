@@ -274,3 +274,28 @@ validation artifact，重新生成两组 C 测试片段摘要并核对生产文�
 init/频道/速率/过滤操作仍返回不支持，未提供手机安装或启用步骤。
 下一段是 MLME/vdev 初始化与完成/失败事件、固件类型 9 请求及 RX/TX 接线，
 需要另行处理真正启动后对象的停止、回收和恢复；不能直接撤掉保护返回成功。
+
+## MLME 类型转换与创建前置检查（构建待验证）
+
+0007 补丁把独立的主机类型转换补为 QDF_PASSTHRU_MODE=17 →
+WLAN_VDEV_MLME_TYPE_PASSTHRU=9 / subtype=0，与已经保存的原厂模块反汇编证据一致。
+这是主机字段映射，不表示当前固件接受该类型，也没有新增 WMI 类型发送。
+
+`vdevmgr_mlme_ext_hdl_create` 现在首先检查对象与 vdev，PASSTHRU 在任何分配、
+锁/计时器初始化或命令之前返回 E_NOSUPPORT；MLME ops 注册仍拒绝此模式。
+其余模式先转换到局部 type/subtype，确认支持后才分配对象，再在原位置提交字段。
+这避开原来未知模式在 key wakelock 尚未初始化时进入通用销毁的路径。
+既有受支持模式仍使用原有的资源初始化和 create-send 流程。
+
+新增 Actions 专用 `mishare_mlme_fixture.py`，提取并编译实际完整的 create 函数及
+类型转换函数，模拟资源/WMI 边界，使用 ASan/UBSan。覆盖空对象、空 vdev、
+PASSTHRU（含分配失败注入时仍无任何副作用）、未知模式、既有受支持模式、
+分配失败及 create-send 失败。检查只有全部锁初始化后才发送或进入模拟销毁。
+销毁实现、异步事件、固件和内核并发不由此夹具认证。
+17 项既有模式的差分 C 检查仍保留；新模式转换预期更新为 type=9/subtype=0，
+其 MLME ops 拒绝与旧 ops 清空预期保留。所有原生编译继续只在 Actions 执行，
+保留编译前工具链缓存和精简 validation Artifact。
+
+本段没有专用 start/stop 完成事件实现，没有 Wonder init 与 host helper 的运行时接线，
+没有 RX/TX，也没有可安装包。下一段需要实现专用 MLME 事件路径和失败/超时回收，
+之后才能考虑受控发送类型 9 的创建请求；不能通过撤掉当前拒绝条件代替这些实现。
