@@ -248,3 +248,36 @@ su -c 'sh /sdcard/Download/xos-loader-probe/popsicle-xos-loader-smoke.sh /sdcard
 ```
 
 上传 Download/17pm-xos-loader-*.tar.gz。当前编译/设备结果以对应 Actions 与设备报告为准。
+
+
+## 真实加载实机通过，继续服务注册诊断
+
+设备 18:14 报告 SHA256 为
+`6ecea146cafa100e765ca73c6ba21a6a11847eb7a73b880a247deee4a5498c87`。
+状态 PASS_DLOPEN_DLSYM_ONLY，退出 0，前后可观察状态相同。
+配套 NDK 库和 libxos 的 RTLD_NOW 加载成功，四个预期导出函数均查询成功且未调用。
+这是实际构造/加载/卸载通过，不只是静态符号候选匹配；服务和无线仍未验证。
+
+下一步脚本 `tools/device/popsicle-xos-service-smoke.sh` 对同一固定参考包做短时服务启动诊断：
+固定设备/固件/链接器/原生文件摘要，要求无既有服务进程、xos0、Wonder PHY 或可用性节点。
+仅运行 DomesticXOsComm 的服务入口，观察最多约 5 秒的 service check 结果，
+不调用 Binder 的 start/status/stop，不更改 VINTF、service_contexts、SELinux 或 wonder_enable。
+由于当前缺少系统注册配置，可能返回注册阻断；这不是完整功能失败结论，日志用于确定真实阻断点。
+
+只清理本次启动且 /proc/PID/exe 与私有服务路径相符的进程，不使用 pkill/killall。
+TERM 后必要时对仍确认属于本次启动的进程 KILL；不得杀死其他同名服务。
+失败/注册阻断也打包报告，若进程无法确认退出则保留临时文件并标明检查状态。
+Linux 进程所有权与清理测试在 GitHub Ubuntu 执行；本地执行环境不能可靠反映子进程 procfs。
+日志只保留本次窗口中的 XOS、servicemanager 和 SELinux 拒绝相关行，不清空日志缓冲区。
+
+成功观察注册也只记 REGISTERED_ONLY_NOT_CLIENT_OR_RADIO_TESTED。
+没有观察到注册记 REGISTRATION_BLOCKED_OR_NOT_OBSERVED；结束后仍检查服务、网卡名称与 Wonder 状态。
+后续需完成 Binder 客户端、必要的精确系统配置以及 WLAN/AWDL 后端，不能将本轮视为 AirDrop 可用。
+
+下载脚本后使用现有参考 ZIP：
+
+```sh
+su -c 'sh /sdcard/Download/popsicle-xos-service-smoke.sh /sdcard/Download/XAirDrop-reference-1.0.zip'
+```
+
+上传 Download/17pm-xos-service-*.tar.gz。此脚本不是安装模块，不设置开机启动。

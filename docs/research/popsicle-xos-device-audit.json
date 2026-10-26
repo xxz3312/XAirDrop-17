@@ -1,5 +1,5 @@
 {
-  "status": "REFERENCE_IMPORT_CANDIDATES_COVERED_RUNTIME_UNTESTED",
+  "status": "DEVICE_DLOPEN_DLSYM_PASSED_SERVICE_AND_RADIO_UNTESTED",
   "reference_results": {
     "DomesticXOsComm": {
       "strong_import_count": 61,
@@ -87,5 +87,24 @@
     "libapexsupport_sha256": "63a33ac9e7455b0834131a6786c81f4ec7a9f0d0432121e19ac0e4e3e8039c95",
     "resolved_system_dependency": "/system/lib64/libapexsupport.so",
     "limits": "Bionic --list skips target constructors and relocation. No service, dlopen, Binder or radio runtime conclusion."
+  },
+  "loader_runtime_evidence": {
+    "archive_sha256": "6ecea146cafa100e765ca73c6ba21a6a11847eb7a73b880a247deee4a5498c87",
+    "status": "PASS_DLOPEN_DLSYM_ONLY",
+    "probe_exit": 0,
+    "state_unchanged": true,
+    "probe_sha256": "523b5189682ad5ec09943ba31e1183e95f20001101075a6f9cee3bb925531644",
+    "probe_actions_run": 40305307435,
+    "loaded_libraries": [
+      "com.domestic.xoscomm-V1-ndk.so",
+      "libxos.so"
+    ],
+    "resolved_not_called": [
+      "domestic_xos_start",
+      "domestic_xoscomm_stop",
+      "domestic_xoscomm_get_status",
+      "domestic_xoscomm_set_aggregation_config"
+    ],
+    "limits": "Actual RTLD_NOW loading and dlsym passed. Constructors/destructors ran. Service executable, Binder registration, MiShare calls and AWDL traffic not tested."
   }
 }
