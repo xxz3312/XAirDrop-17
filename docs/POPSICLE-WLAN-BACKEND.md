@@ -158,3 +158,38 @@ HDD open 也提前拒绝该模式，避免进入已有 unknown-mode QDF_ASSERT�
 源码缺口报告现在有两组模式标识接上，但其余 HDD、合同、构建入口及固件类型仍缺失，
 不能将缺口计数降低当成初始化、收发或硬件能力验证。
 本轮不提供替换原厂 WLAN 的安装步骤；后续继续接口生命周期和真实后端接线。
+
+### 与当前原厂模式表的交叉核对
+
+独立解析原厂 ELF 的 AArch64 ADRP/ADD 重定位目标和字符串表项后，确认原厂
+`qdf_opmode_str` 的第 17 项已经是 PASSTHRU；对应 `wlan_util_vdev_get_cdp_txrx_opmode`
+数据表也将 17 映射到 7。本轮补丁的新增编号与当前原厂这两张表一致，
+不只是沿用参考项目的编号。[原厂表记录](research/popsicle-stock-passthru-modes.json)
+保存模块摘要、函数位置、表所在节和偏移以及全部表项。
+
+这同时说明：公开源码缺少模式定义，与原厂二进制中已有模式表是两件事。
+原厂表项存在和此前两个空实现可以同时成立；不能由表项存在认定后端或固件已启用。
+
+进一步反汇编原厂 `vdevmgr_mlme_ext_hdl_create`：0x16e7d8 比较 mode=17，
+0x16e7e0 将 9 写入 w8，0x16e83c 存储该字节，0x16e88c 的调用重定位指向
+`vdev_mgr_create_send`。结合公开源码的同名创建路径，这是原厂主机侧
+17→类型9 的请求构造证据；不能当作固件已接受该请求的证据。
+本轮仍保留新模式创建拒绝路径，没有因此提前启用 WMI 或无线。
+
+### 本轮 Actions 验证完成
+
+运行 40324761015（源码 fc94047e0021e5fdf4ccaee2f14fb826044f083d）全部通过。
+已下载并核对 Artifact SHA256，再独立重新生成补丁前/后 C 夹具源码，摘要均与
+Actions 报告一致。17 项既有模式名称/转换的结果也与原厂表交叉匹配。
+新模式的转换、拒绝注册并清空旧 ops、类型输出清零均通过 C 断言。
+
+完整 WLAN 编译、严格链接及 CNSS 名称覆盖检查通过；未解析 WLAN 依赖为 0。
+573 条导入版本记录无不匹配，离线状态为 RECORDED_LOADER_CHECKS_MATCH_ONLY，
+这不独立认证声明或完整 ABI。module/net_device/wiphy/wireless_dev/sk_buff/
+cfg80211_chan_def/ieee80211_channel 的选定直接布局核对通过。
+工具链及 bindgen 缓存均命中，没有改写 vermagic、CRC 或放宽 modpost。
+详细结果见 [本轮构建记录](research/popsicle-passthru-host-mode-build-pass.json)。
+
+本轮模式层基础实现完成。仍未安装候选 WLAN，未调用固件或测试收发。
+诊断 Artifact 包含两份带调试信息的对象/模块归档，不是 KernelSU 模块或精简安装包。
+下一段是 HDD 接口生命周期和专用 Wonder 操作表；固件类型请求与收发需要独立实现及验证。
