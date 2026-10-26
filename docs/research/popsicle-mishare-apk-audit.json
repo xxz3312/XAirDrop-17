@@ -1,5 +1,5 @@
 {
-  "status": "BLE_DEX_BUILD_PASSED_INDEPENDENT_CLASS_REVIEW_PASSED",
+  "status": "BLE_DEX_BUILD_AND_REQUIRED_ALL_CLASS_CHECK_PASSED",
   "profile": {
     "package": "com.miui.mishare.connectivity",
     "version_name": "5.4.2_20260923_1315",
@@ -45,5 +45,8 @@
   "compiled_semantic_comparison": "All smali classes match the expected patched sources after ignoring only empty lines and redundant static false/zero/null field encodings. No method/instruction normalization.",
   "non_target_class_default_encoding_changes": 18,
   "cache_saved_before_compilation": true,
-  "validation_pending": "Actions rebuild with the independent all-class comparison added as a required build check. No device runtime or iPhone test."
+  "validation_pending": "Device NETWORK_FACTORY actual grant and XOS service status; no device runtime, BLE observation or iPhone transfer test.",
+  "required_all_class_check_actions_run": 40297139875,
+  "required_all_class_check_commit": "1c9a87bf3a58f9c871b474609fd0a372d94ea8b0",
+  "required_all_class_check_conclusion": "success"
 }

@@ -78,7 +78,19 @@ Apktool 3.0.3 和公开参考包均按 SHA256 校验并缓存。
 不能宣称所有非目标类的反汇编文本完全相同。现已加入严格的全类比对，
 只忽略空行及这些类型匹配的默认静态字段编码，不归一化任何方法指令、非零值或实例字段。
 在此范围之外，所有编译后类都与预期补丁源码一致。
-这项独立验证正在成为 Actions 的必过项，6 项 Python 补丁回归已通过。
+[Actions 40297139875](https://github.com/xxz3312/XAirDrop-17/actions/runs/40297139875)
+已通过这项必需的全类检查和 6 项 Python 补丁回归；工具及参考包缓存命中。
 
 尚无设备运行结论；分析用 APK 没有签名和 ZIP 对齐认证，不提供为安装包或挂载测试包。
 下一步需确认 MiShare 的 NETWORK_FACTORY 实际授权及 XOS 服务状态，不能根据 Manifest 声明推断已授予权限。
+
+设备下一步只需进行只读检查，贴回以下输出以决定是否需要 root 网络代理：
+
+```sh
+su -c '
+dumpsys package com.miui.mishare.connectivity | grep "NETWORK_FACTORY"
+service check com.domestic.xoscomm.IDomesticXOsComm/default
+'
+```
+
+仅出现 requested permissions 条目不代表已授权；需要结合 granted 状态判断。
