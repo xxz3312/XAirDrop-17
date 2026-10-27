@@ -3,13 +3,27 @@
 第三阶段已验证 Wonder/mac80211 与诊断 provider/probe 的绑定生命周期。
 它没有调用探针的无线 init，也没有创建 netdev；该结果不能证明收发路径已存在。
 
-## 已核对的源码
+## 当前代码状态
+
+候选 WLAN 尚未在手机加载，以下是代码与离线验证状态。
+
+| 部分 | 已有代码 | 当前限制 |
+| --- | --- | --- |
+| 主机模式 | PASSTHRU=17、DP=7、主机 type=9 转换 | 固件接受情况未验证 |
+| MLME 表 | 专用 32 回调表接入注册 | 30 个状态回调仍拒绝操作，2 个通知不发布完成；硬件创建仍拒绝 |
+| 生命周期基础 | DOWN host helper、事务、原生来源通知、命令提交 API | 尚无真实 owner/命令调用生命周期 |
+| 无线与互传 | 没有成功无线 init 或 RX/TX | AirDrop 不可用，没有安装包 |
+
+最新离线检查见 [专用 MLME 表验证记录](research/popsicle-dedicated-mlme-ops-build-pass.json)。
+下面的源码缺口表是最初未打补丁的基线；后续小节记录各次变更和各自限制。
+
+## 已核对的未打补丁源码基线
 
 MiCode WLAN 固定提交 `36df473046706a5259942e1bf7222108dbbb860f`，
 版本 5.2.1.137C；原机驱动 5.2.1.146N。具体文件字节哈希及检查结果见
 [源码缺口报告](research/popsicle-wlan-backend-gaps.json)。
 
-| 层 | 当前源码 | 移植工作 |
+| 层 | 锁定源码基线 | 移植工作 |
 | --- | --- | --- |
 | HDD 后端与构建 | 没有 `wlan_hdd_wondertap.c/.h` 和对应 Kbuild 条目 | 适配真实 Wonder ops，接入当前 HDD 生命周期，核对返回值和失败回滚 |
 | 主机工作模式 | 没有 `QDF_PASSTHRU_MODE` | 核对所有模式转换、策略数组、并发与 vdev 创建/销毁分支；保留已有枚举值 |
@@ -482,7 +496,7 @@ commands/events/txn 六份生产文件与 QDF 错误码映射源码摘要，均�
 信道/并发配置、UP/DOWN/DELETE、恢复和事件排空仍待接通；没有向手机提交命令。
 下一段应完成这些调用端的状态与资源归属，不能把本段返回 0 直接当作 Wonder init 成功。
 
-## 专用 MLME host 表与受保护创建回收（构建待验证）
+## 专用 MLME host 表与受保护创建回收（离线构建验证通过）
 
 0011 将 PASSTHRU 的注册从 NULL ops/拒绝注册改为专用 `passthru_mlme_ops`。
 这次确实接到现有 `mlme_register_vdev_mgr_ops` 的 PASSTHRU 分支，返回 SUCCESS
@@ -513,3 +527,22 @@ CM 只执行原始模式 guard，没有把完整 SM/CM 或内核 IRQ 行为称�
 缓存、严格链接和选定布局检查保留，所有原生编译仍只在 Actions。
 目前是 host 表注册和拒绝创建时的回收接线，硬件回调仍拒绝，真实 vdev/owner 绑定、
 UP/DOWN/DELETE、恢复及命令调用端还未接通，没有手机安装包或启用步骤。
+
+
+### 专用主机 MLME 表构建结果
+
+运行 40437269852，源码 6860cbbde8a3af704eb74eb891ce506e3340d30a，全部步骤成功。
+32 个强类型/非空回调检查、真实 MLME component create handler 的受保护失败回收、
+context/SM 分配失败、timer already/busy 测试均通过 ASan/UBSan。
+44 项基础回归及既有模式/提交/来源/事务/完整 ext-create/host/table 测试继续通过，
+17 项已有模式的差分结果保持不变。工具链及 bindgen 缓存命中。
+
+专用表符号和此前 19 个 API 都存在于实际 WLAN 对象与 .ko 中。
+574 条导入版本记录无不匹配，WLAN 未解析导入为 0，七项选定布局匹配。
+已下载校验 24,634 字节 validation ZIP，独立重新生成 ops 和前/后 mode 测试 C 的摘要，
+并核对四份 native 源码摘要，与 Actions 一致；未独立下载完整诊断调试归档。
+详细状态和限制见 [专用 MLME 表验证记录](research/popsicle-dedicated-mlme-ops-build-pass.json)。
+
+本轮接通的是主机表注册及创建被拒绝时的回收，不是无线可用的专用 MLME 实现。
+硬件回调仍 E_NOSUPPORT，ext-create 保护保留；没有成功创建 vdev、调用 WMI 或在手机加载。
+后续重点仍是真实创建/删除与失败回收，再将 owner、命令及完成状态连到可运行生命周期。
