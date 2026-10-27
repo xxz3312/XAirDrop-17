@@ -1,0 +1,59 @@
+--- a/qca-wifi-host-cmn/wmi/src/wmi_unified_vdev_tlv.c
++++ b/qca-wifi-host-cmn/wmi/src/wmi_unified_vdev_tlv.c
+@@ -214,7 +214,7 @@
+ 	wmi_vdev_start_response_event_fixed_param *ev;
+ 
+ 	param_buf = (WMI_VDEV_START_RESP_EVENTID_param_tlvs *)evt_buf;
+-	if (!param_buf) {
++	if (!param_buf || !vdev_rsp) {
+ 		wmi_err("Invalid start response event buffer");
+ 		return QDF_STATUS_E_INVAL;
+ 	}
+@@ -224,6 +224,10 @@
+ 		wmi_err("Invalid start response event buffer");
+ 		return QDF_STATUS_E_INVAL;
+ 	}
++
++	/* Validate the wire ID before narrowing into the public u8 field. */
++	if (ev->vdev_id > 0xff)
++		return QDF_STATUS_E_INVAL;
+ 
+ 	qdf_mem_zero(vdev_rsp, sizeof(*vdev_rsp));
+ 
+@@ -238,7 +242,7 @@
+ 		break;
+ 	default:
+ 		wmi_err("Invalid start response event buffer");
+-		break;
++		return QDF_STATUS_E_INVAL;
+ 	};
+ 	vdev_rsp->status = ev->status;
+ 	vdev_rsp->chain_mask = ev->chain_mask;
+@@ -309,11 +313,13 @@
+ 	wmi_vdev_stopped_event_fixed_param *resp_event;
+ 
+ 	param_buf = (WMI_VDEV_STOPPED_EVENTID_param_tlvs *)evt_buf;
+-	if (!param_buf) {
++	if (!param_buf || !vdev_id) {
+ 		wmi_err("Invalid event buffer");
+ 		return QDF_STATUS_E_INVAL;
+ 	}
+ 	resp_event = param_buf->fixed_param;
++	if (!resp_event || resp_event->vdev_id > 0xff)
++		return QDF_STATUS_E_INVAL;
+ 	*vdev_id = resp_event->vdev_id;
+ 
+ 	return QDF_STATUS_SUCCESS;
+--- a/qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c
++++ b/qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c
+@@ -533,6 +533,10 @@
+ 		return -EINVAL;
+ 	}
+ 
++	/* Reject wide IDs before timer lookup and the u8 owner notification. */
++	if (vdev_id > 0xff)
++		return -EINVAL;
++
+ 	vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc, vdev_id);
+ 	if (!vdev_rsp) {
+ 		mlme_err("vdev response timer is null VDEV_%d PSOC_%d",

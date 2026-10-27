@@ -29,6 +29,7 @@ on:
       - tools/kernel/mishare_ops_fixture.py
       - tools/kernel/mishare_commands_fixture.py
       - tools/kernel/mishare_events_fixture.py
+      - tools/kernel/mishare_response_fixture.py
       - tools/kernel/mishare_txn_fixture.py
       - tools/kernel/mishare_mlme_fixture.py
       - tools/kernel/mishare_host_fixture.py

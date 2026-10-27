@@ -173,8 +173,8 @@ def extract_hooks(root):
             exit_gate=after.index('goto err;',gate)
             if not gate<exit_gate<m.start():raise ValueError('Response timer gate moved')
     before=subprocess.check_output(['git','-C',str(root),'show','HEAD:'+RX],text=True)
-    from mishare_ndi_origins import remove_owned_delete_hooks
-    restored=remove_owned_delete_hooks(restored)
+    from mishare_ndi_origins import remove_owned_delete_hooks, remove_stop_id_guard
+    restored=remove_stop_id_guard(remove_owned_delete_hooks(restored))
     if restored!=before:raise ValueError('Native RX change exceeds origin-only insertions')
     # Public response layouts must remain byte-identical to the locked source.
     for path in [TXDEFS,RXDEFS]:

@@ -246,6 +246,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/mishare_commands_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-commands-fixture.json'],
                'mishare-commands-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_response_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-response-fixture.json'],
+               'mishare-response-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_events_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-events-fixture.json'],
                'mishare-events-fixture.log')

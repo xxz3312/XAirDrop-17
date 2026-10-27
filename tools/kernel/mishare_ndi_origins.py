@@ -9,3 +9,10 @@ def remove_owned_delete_hooks(text):
         if text.count(block)!=1:raise ValueError('Unexpected owned DELETE hook: '+name)
         text=text.replace(block,'')
     return text.replace(header,'')
+
+STOP_ID_GUARD = '\t/* Reject wide IDs before timer lookup and the u8 owner notification. */\n\tif (vdev_id > 0xff)\n\t\treturn -EINVAL;\n\n'
+
+def remove_stop_id_guard(text):
+    if text.count(STOP_ID_GUARD) != 1:
+        raise ValueError('Missing or repeated STOP wire ID guard')
+    return text.replace(STOP_ID_GUARD, '')

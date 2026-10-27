@@ -376,3 +376,27 @@ MLME 状态或实现频道跳转。`channel_prepared` 仅代表这次主机频�
 输出不符与部分准备失败、错误身份/重复完成以及 pending 时禁止提前 teardown。
 原生 regulatory/scan/policy 和完整 `lim_pre_vdev_start` 是明确的模型边界；
 后者会随完整 WLAN 编译，但这组 fixture 不执行其完整实现。不新增上机调用者。
+
+## 0020：START/STOP 响应解码与会话匹配补强
+
+接入 START 前检查发现，目标 WMI START 解码器把 32 位固件 vdev ID 直接写入
+公开的 8 位字段；未知响应类型仅打印日志，随后仍返回成功，零初始化的类型
+可能被解释为 START。STOP 解码器还直接解引用 fixed_param，且其 32 位输出
+在后续 timer / owner 接口会缩窄。上述情况可能误触另一个 ID 的等待事务。
+
+新增补丁在 START 缩窄前拒绝超过 255 的 wire ID，未知 START/RESTART 类型
+明确返回错误；STOP 检查 fixed_param、输出指针和 wire ID，并在原生 STOP
+handler 的 timer 查询之前再次检查范围。合法响应保留原有回调路径，公开结构
+布局不变。这里的 255 是字段可表示上限；实际 vdev 是否存在仍由原生 timer /
+对象管理器判断，不把所有 0–255 ID 当成有效会话。
+
+新增 Actions-only 回归直接执行完整原生 START/STOP TLV 解码函数、完整原生
+响应 handler、真实 registry 和 transaction 代码，覆盖 263→7 截断别名、未知
+类型、空 fixed_param、timer 错误、RESTART 隔离、普通模式回调与 PM 清理。
+TLV envelope / wire 字段、对象管理器、timer、PM 与 RX ops 使用主机模型；
+不测试真实二进制 TLV 校验、IRQ/MC 竞争或固件。原有 origin fixture 继续验证
+除明确新增的 STOP 范围检查外，原生响应文件仅含已记录的 bounded insertions。
+
+本项不增加运行时调用方，不发送 START/STOP，不开放专用 PAS MLME 操作表。
+完整启停、DOWN、SSR/remove 和 TX/RX 接线仍待完成。构建结果须以本次 Actions
+实际产出为准，不能沿用 0019 的成功记录。
