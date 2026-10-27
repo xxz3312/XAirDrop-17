@@ -14,6 +14,8 @@ API=pe.API
 BEFORE='76ea35d256592c2944dab21abb85a9e03081bd6cfd2d27d1105a397c4a1015b2'
 
 STUBS=r'''
+#define WLAN_UMAC_COMP_POLICY_MGR 1
+#define WLAN_UMAC_COMP_SCAN 2
 #define WLAN_VDEV_S_INIT 0
 #define SCAN_NOT_IN_PROGRESS 0
 #define REG_CURRENT_PWR_MODE 0
@@ -23,6 +25,8 @@ STUBS=r'''
 struct ch_params {int ch_width;uint32_t mhz_freq_seg0,mhz_freq_seg1;u8 center_freq_seg0,sec_ch_offset;};
 static bool ch_passive,ch_dfs,ch_invalid,ch_bad_params,ch_scan,ch_bad_des;
 static unsigned ch_connections,ch_prepares,ch_state;
+static bool ch_missing_policy,ch_missing_scan;
+static void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *p,int id) {assert(p && (id==1 || id==2));return (id==1?ch_missing_policy:ch_missing_scan)?NULL:p;}
 static int ch_power=20;static QDF_STATUS ch_prepare_status;
 static bool wlan_reg_is_24ghz_ch_freq(uint32_t f) {return f>=2412 && f<=2484;}
 static bool wlan_reg_is_5ghz_ch_freq(uint32_t f) {return f>=5180 && f<=5825;}
@@ -52,7 +56,7 @@ NATIVE_CHANNEL_HELPERS
 HARNESS=r'''
 static void reset_channel(void) {
  reset_pe();pe_mac.pdev=&pdev;ch_passive=ch_dfs=ch_invalid=ch_bad_params=ch_scan=ch_bad_des=false;
- ch_connections=ch_prepares=ch_state=0;ch_power=20;ch_prepare_status=QDF_STATUS_SUCCESS;
+ ch_missing_policy=ch_missing_scan=false;ch_connections=ch_prepares=ch_state=0;ch_power=20;ch_prepare_status=QDF_STATUS_SUCCESS;
 }
 static struct mishare_runtime_owner *with_session(void) {
  struct mishare_runtime_owner *o=prepared();assert(mishare_runtime_ndi_session(o)==-EINPROGRESS);run_pe(false);assert(state(o).ndi.pe_ready);return o;
@@ -94,13 +98,13 @@ int main(void) {
  reset_channel();o=with_session();pe_early=true;
  assert(mishare_runtime_ndi_channel(o,2437)==-EINPROGRESS && state(o).ndi.channel_submitted && state(o).ndi.channel_prepared && !pe_pending.bodyptr);
  pe_early=false;channel_end(&o);
- for(int fault=0;fault<7;fault++) {
+ for(int fault=0;fault<9;fault++) {
   reset_channel();pid_t child=fork();assert(child>=0);
   if(!child) {
    o=with_session();
    if(fault==0)pe_slot.mishare_owner=(void*)1;
    ch_prepare_status=fault==1?QDF_STATUS_E_FAILURE:QDF_STATUS_SUCCESS;
-   ch_bad_des=fault==2;ch_state=fault==3?1:0;
+   ch_bad_des=fault==2;ch_state=fault==3?1:0;ch_missing_policy=fault==7;ch_missing_scan=fault==8;
    if(fault==4)last_vdev->mlme->proto.generic.nss_2g=0;
    assert(mishare_runtime_ndi_channel(o,2437)==-EINPROGRESS);
    if(fault==5)mishare_runtime_ndi_channel_event(&psoc,7,o,5180,0); /* same owner wrong expected frequency */

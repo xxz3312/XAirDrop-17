@@ -1,6 +1,6 @@
 --- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
 +++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
-@@ -5347,3 +5347,171 @@
+@@ -5347,3 +5347,176 @@
  	return 0;
  }
  /* MISHARE_END:pe_helpers */
@@ -59,6 +59,11 @@
 +	/* PAS is not yet integrated into the target policy manager. Reject all
 +	 * active connections and scans instead of borrowing STA/monitor policy.
 +	 */
++	if (!wlan_objmgr_psoc_get_comp_private_obj(mac->psoc,
++						 WLAN_UMAC_COMP_POLICY_MGR) ||
++	    !wlan_objmgr_psoc_get_comp_private_obj(mac->psoc,
++						 WLAN_UMAC_COMP_SCAN))
++		return -EUCLEAN;
 +	if (policy_mgr_get_connection_count(mac->psoc) ||
 +	    ucfg_scan_get_pdev_status(mac->pdev) != SCAN_NOT_IN_PROGRESS)
 +		return -EBUSY;
