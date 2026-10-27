@@ -49,8 +49,9 @@ static struct mac_context pe_mac;
 static struct scheduler_msg pe_pending;
 static bool pe_alloc_fail,pe_queue_fail,pe_early,pe_no_mac,pe_idxpool_fail,pe_create_fail;
 static unsigned pe_request_allocs,pe_posts,pe_creates,pe_deletes;
-static void *qdf_mem_malloc(size_t n) {if(pe_alloc_fail)return NULL;void *p=calloc(1,n);assert(p);pe_request_allocs++;return p;}
-static void qdf_mem_free(void *);
+static void *pe_request_ptr;
+static void *qdf_mem_malloc(size_t n) {if(pe_alloc_fail)return NULL;assert(!pe_request_ptr);void *p=calloc(1,n);assert(p);pe_request_allocs++;pe_request_ptr=p;return p;}
+static void pe_qdf_mem_free(void *p) {assert(p==pe_request_ptr && pe_request_allocs==1);pe_request_ptr=NULL;pe_request_allocs--;free(p);}
 static int qdf_mem_cmp(const void *a,const void *b,size_t n) {return memcmp(a,b,n);}
 static void sir_copy_mac_addr(u8 *d,const u8 *s) {memcpy(d,s,6);}
 static struct mac_context *pe_cds_get_context(int id) {assert(id==4);return pe_no_mac?NULL:&pe_mac;}
@@ -77,14 +78,16 @@ static QDF_STATUS scheduler_post_message(int from,int dest,int queue,struct sche
  assert(!lock_depth && from==5 && dest==4 && queue==6 && !pe_pending.bodyptr && msg->bodyptr && msg->callback && msg->flush_callback);pe_posts++;
  if(pe_queue_fail)return QDF_STATUS_E_FAILURE;
  pe_pending=*msg;
- if(pe_early) {struct scheduler_msg m=pe_pending;pe_pending.bodyptr=NULL;assert(!m.callback(&m) && !m.bodyptr);pe_request_allocs--;}
+ if(pe_early) {struct scheduler_msg m=pe_pending;pe_pending.bodyptr=NULL;assert(!m.callback(&m) && !m.bodyptr && !pe_request_allocs);}
  return QDF_STATUS_SUCCESS;
 }
+#define qdf_mem_free pe_qdf_mem_free
 NATIVE_PE_HELPERS
+#undef qdf_mem_free
 #undef cds_get_context
 static void run_pe(bool flush) {
  struct scheduler_msg m=pe_pending;assert(m.bodyptr);pe_pending.bodyptr=NULL;
- assert(!(flush?m.flush_callback(&m):m.callback(&m)) && !m.bodyptr && pe_request_allocs);pe_request_allocs--;
+ assert(!(flush?m.flush_callback(&m):m.callback(&m)) && !m.bodyptr && !pe_request_allocs);
 }
 '''
 HARNESS=r'''
