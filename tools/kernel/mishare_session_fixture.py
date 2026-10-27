@@ -32,6 +32,7 @@ def source_guard(root):
             raise ValueError('Ordinary native source changed outside PE additions: '+name)
 
 STUBS=r'''
+#define QDF_MAC_ADDR_SIZE 6
 #define QDF_MODULE_ID_PE 4
 #define QDF_MODULE_ID_HDD 5
 #define QDF_MODULE_ID_TARGET_IF 6
@@ -58,11 +59,11 @@ static struct mac_context *pe_cds_get_context(int id) {assert(id==4);return pe_n
 #define cds_get_context pe_cds_get_context
 static struct pe_session *pe_find_session_by_vdev_id(struct mac_context *m,u8 id) {assert(m==&pe_mac && id==7);return pe_slot.valid?&pe_slot:NULL;}
 static struct pe_session *pe_find_session_by_bssid(struct mac_context *m,u8 *b,u8 *id) {assert(m==&pe_mac && b && id);return pe_slot.valid && !memcmp(pe_slot.bssId,b,6)?&pe_slot:NULL;}
-static struct pe_session *pe_create_session(struct mac_context *m,u8 *b,u8 *id,unsigned count,int bssType,u8 vdev_id) {
+static struct pe_session *pe_create_session(struct mac_context *m,u8 *bssid,u8 *id,unsigned count,int bssType,u8 vdev_id) {
  assert(!lock_depth && m==&pe_mac && id && count==32 && bssType==5 && vdev_id==7 && !pe_slot.valid);pe_creates++;
  if(pe_create_fail)return NULL;
  struct pe_session *session_ptr=&pe_slot;memset(session_ptr,0,sizeof(*session_ptr));
- assert(!wlan_objmgr_vdev_try_get_ref(last_vdev,4));session_ptr->vdev=last_vdev;session_ptr->bssType=bssType;memcpy(session_ptr->bssId,b,6);
+ assert(!wlan_objmgr_vdev_try_get_ref(last_vdev,4));session_ptr->vdev=last_vdev;session_ptr->bssType=bssType;memcpy(session_ptr->bssId,bssid,6);
  NATIVE_PE_IDENTITY
  if(pe_idxpool_fail) {
   NATIVE_PE_FAILED_REF
