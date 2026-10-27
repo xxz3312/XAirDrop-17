@@ -20,6 +20,7 @@ STUBS=r'''
 #define WLAN_FEATURE_11BE_MLO 1
 #define WLAN_PEER_SELF 1
 #define WLAN_MLME_SB_ID 9
+#define WLAN_VDEV_MLME_TYPE_AP 1
 #define WMI_HOST_MODE_11NG_HT20 5
 #define WMI_HOST_MODE_11NA_HT20 4
 enum QDF_OPMODE {QDF_STA_MODE=1,QDF_SAP_MODE=2,QDF_P2P_GO_MODE=3};
@@ -76,7 +77,7 @@ int main(void) {
  assert(mishare_ndi_start_plan_nonmobile(NULL,0,NULL)==-EOPNOTSUPP && !plan_builds && !plan_pdev_refs);
  reset_plan();o=with_session();assert(mishare_runtime_ndi_start_plan(o)==-EBUSY && !pe_pending.bodyptr);channel_end(&o);
  for(int band=0;band<2;band++) {
-  reset_plan();unsigned freq=band?5745:2437;o=with_channel(freq);unsigned peer_creates=ctx_create_calls;
+  reset_plan();unsigned freq=band?5745:2437;o=with_channel(freq);int peer_creates=ctx_create_calls;
   assert(mishare_runtime_ndi_start_plan(o)==-EINPROGRESS && !state(o).ndi.start_plan_completed && last_vdev->refs==6);
   assert(mishare_runtime_destroy(&o)==-EINPROGRESS && !state(o).ndi.pe_delete_requested && !ctx_delete_calls);
   struct wlan_objmgr_psoc wrong={9};
