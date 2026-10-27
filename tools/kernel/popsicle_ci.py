@@ -202,6 +202,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/passthru_mode_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/passthru-mode-fixture.json'],
                'passthru-mode-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_create_delete_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-create-delete-fixture.json'],
+               'mishare-create-delete-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_ops_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-ops-fixture.json'],
                'mishare-ops-fixture.log')
