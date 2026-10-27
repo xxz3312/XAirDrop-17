@@ -36,6 +36,12 @@ int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
  */
 int mishare_runtime_ndi_create(struct mishare_runtime_owner *owner,
                                u8 nss_2g, u8 nss_5g);
+/* Prepare only owned legacy locks/timer, WMA slot/ref and DEFAULT self-peer.
+ * No CSR session, START/UP, channel or TX/RX. Same caller serialization/lifetime
+ * contract; failed attempted peer create quarantines. Destroy now consumes the
+ * exact owned peer-delete request before issuing vdev DELETE.
+ */
+int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *owner);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);

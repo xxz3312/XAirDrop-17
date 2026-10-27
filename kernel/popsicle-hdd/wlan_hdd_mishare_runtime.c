@@ -376,6 +376,98 @@ int mishare_runtime_ndi_create(struct mishare_runtime_owner *entry,
     return ret;
 }
 
+void mishare_runtime_ndi_peer_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                    const u8 *mac, void *owner, bool firmware)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+
+    if (!mac || !owner)
+        return;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if ((void *)entry != owner || entry->psoc != psoc || !entry->vdev ||
+            wlan_vdev_get_id(entry->vdev) != id ||
+            !ether_addr_equal(entry->mac, mac))
+            continue;
+        ndi = &entry->state.ndi;
+        if (!ndi->active || !ndi->wma_bound || !ndi->peer_created ||
+            !ndi->peer_delete_pending || !firmware || ndi->peer_delete_replied)
+            ndi->blocked = true;
+        else if (!ndi->blocked)
+            ndi->peer_delete_replied = true;
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *ndi;
+    struct vdev_mlme_obj *mlme;
+    unsigned long flags;
+    int ret, cleanup;
+
+    if (!entry)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi = &entry->state.ndi;
+    if (entry->state.blocked || ndi->blocked) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (!entry->vdev || entry->state.draining || !ndi->active ||
+        !ndi->create.wire_accepted || !ndi->create.dp_attached ||
+        ndi->delete_pending || ndi->legacy_ready || ndi->wma_bound ||
+        ndi->peer_create_attempted) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EBUSY;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    mlme = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+    ret = mishare_ndi_legacy_prepare(mlme);
+    if (ret)
+        goto result;
+    ndi->legacy_ready = true; /* API calls serialized; no native calls under lock */
+    ret = mishare_ndi_wma_bind(entry->vdev);
+    if (ret)
+        goto local_unwind;
+    ndi->wma_bound = true;
+    ret = mishare_ndi_self_peer_create(entry->vdev, &ndi->peer_create_attempted);
+    if (ret && !ndi->peer_create_attempted && ret != -EUCLEAN)
+        goto local_unwind;
+    if (ret) {
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        ndi->blocked = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = -EUCLEAN;
+    } else {
+        ndi->peer_created = true; /* native API success, not firmware confirmation */
+    }
+    goto result;
+local_unwind:
+    if (ndi->wma_bound) {
+        cleanup = mishare_ndi_wma_unbind(entry->vdev);
+        if (cleanup)
+            goto failed_unwind;
+        ndi->wma_bound = false;
+    }
+    cleanup = mishare_ndi_legacy_release(mlme);
+    if (cleanup)
+        goto failed_unwind;
+    ndi->legacy_ready = false;
+    goto result;
+failed_unwind:
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi->blocked = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = -EUCLEAN;
+result:
+    ndi->context_error = ret;
+    return ret;
+}
+
 static void mishare_runtime_ndi_dp_freed(void *context)
 {
     struct mishare_runtime_owner *entry = context;
@@ -404,6 +496,23 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     if (entry->state.blocked || ndi->blocked) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
+    }
+    if (ndi->peer_created && !ndi->peer_delete_pending) {
+        ndi->peer_delete_pending = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_self_peer_delete(entry->vdev, entry);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        ndi->peer_delete_submitted = !ret;
+        if (ret)
+            ndi->blocked = true;
+        ret = ndi->blocked ? -EUCLEAN : -EINPROGRESS;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+    if (ndi->peer_created && (!ndi->peer_delete_submitted ||
+                              !ndi->peer_delete_replied)) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
     }
     if (!ndi->delete_pending) {
         ndi->delete_pending = true;
@@ -458,6 +567,16 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
     }
+    if (ndi->wma_bound) {
+        if (mishare_ndi_wma_unbind(entry->vdev))
+            goto context_blocked;
+        ndi->wma_bound = false;
+    }
+    if (ndi->legacy_ready) {
+        if (mishare_ndi_legacy_release(mlme))
+            goto context_blocked;
+        ndi->legacy_ready = false;
+    }
     mlme->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
     mlme->proto.generic.nss_2g = 0;
     mlme->proto.generic.nss_5g = 0;
@@ -465,4 +584,9 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     ndi->active = false;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     return 0;
+context_blocked:
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi->blocked = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return -EUCLEAN;
 }

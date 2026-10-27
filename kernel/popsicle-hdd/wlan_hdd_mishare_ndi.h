@@ -26,6 +26,14 @@ struct mishare_ndi_status {
     bool delete_replied;
     bool dp_detaching;
     bool dp_freed;
+    bool legacy_ready;
+    bool wma_bound;
+    bool peer_create_attempted;
+    bool peer_created;
+    bool peer_delete_pending;
+    bool peer_delete_submitted;
+    bool peer_delete_replied;
+    int context_error;
     int create_error;
     struct mishare_ndi_create_result create;
 };
@@ -45,6 +53,14 @@ int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *vdev,
                                  void (*callback)(void *), void *context);
 int mishare_ndi_release_stats(struct vdev_mlme_obj *mlme,
                               struct mishare_ndi_create_result *result);
+int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *mlme);
+int mishare_ndi_legacy_release(struct vdev_mlme_obj *mlme);
+int mishare_ndi_wma_bind(struct wlan_objmgr_vdev *vdev);
+int mishare_ndi_wma_unbind(struct wlan_objmgr_vdev *vdev);
+int mishare_ndi_self_peer_create(struct wlan_objmgr_vdev *vdev, bool *attempted);
+int mishare_ndi_self_peer_delete(struct wlan_objmgr_vdev *vdev, void *owner);
+void mishare_runtime_ndi_peer_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                    const u8 *mac, void *owner, bool firmware);
 /* Real DELETE origin only, after native timer/PM cleanup. Timeout is explicit.
  * Matching an owned ID suppresses the ordinary SME/WMA delete callback: this
  * owner has never taken their session references or published their context.

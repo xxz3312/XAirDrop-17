@@ -48,7 +48,7 @@ struct wlan_objmgr_psoc { int id; };
 struct wlan_objmgr_pdev { struct wlan_objmgr_psoc *psoc; };
 struct wireless_dev { int dummy; };
 struct vdev_osif_priv { struct wireless_dev *wdev;void *legacy_osif_priv; };
-struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;void *ext_vdev_ptr;struct { struct { u8 type,subtype; } generic; } mgmt; struct {struct {u8 nss_2g,nss_5g;} generic;} proto; };
+struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;struct mlme_legacy_priv *ext_vdev_ptr;struct { struct { u8 type,subtype; } generic; } mgmt; struct {struct {u8 nss_2g,nss_5g;} generic;} proto; };
 struct wlan_objmgr_vdev {
  struct wlan_objmgr_pdev *pdev;u8 mac[6];int mode,refs,dead,vdev_lock;
  struct { void *bss_chan,*des_chan; } vdev_mlme;
@@ -74,8 +74,8 @@ static u8 *wlan_vdev_mlme_get_macaddr(struct wlan_objmgr_vdev *v) { return v->ma
 static struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *v) { return v->mlme; }
 static struct vdev_osif_priv *wlan_vdev_get_ospriv(struct wlan_objmgr_vdev *v) { return &v->osif; }
 static void simulated_component_destroy(struct wlan_objmgr_vdev *v);
-static int wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *v,int id) { assert(!lock_depth && id==1);ref_calls++;if(v->dead || ref_calls==fail_ref_at)return -1;v->refs++;return 0; }
-static void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *v,int id) { assert(!lock_depth && (id==1 || id==2) && v->refs>0);v->refs--;if(!v->refs){assert(v->dead);simulated_component_destroy(v);} }
+static int wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *v,int id) { assert(!lock_depth && (id==1 || id==3));ref_calls++;if(v->dead || ref_calls==fail_ref_at)return -1;v->refs++;return 0; }
+static void wlan_objmgr_vdev_release_ref(struct wlan_objmgr_vdev *v,int id) { assert(!lock_depth && (id==1 || id==2 || id==3) && v->refs>0);v->refs--;if(!v->refs){assert(v->dead);simulated_component_destroy(v);} }
 static QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *v) { assert(!lock_depth && v && !v->dead);delete_calls++;if(delete_fail)return QDF_STATUS_E_FAILURE;v->dead=1;assert(v->refs>0);v->refs--;if(!v->refs)simulated_component_destroy(v);return QDF_STATUS_SUCCESS; }
 static struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(struct wlan_objmgr_pdev*,struct wlan_vdev_create_params*);
 #include "wlan_hdd_mishare_txn.c"
@@ -86,6 +86,14 @@ int mishare_ndi_native_delete(struct wlan_objmgr_vdev *v) { (void)v;assert(0);re
 int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *v,void (*cb)(void *),void *c) { (void)v;(void)cb;(void)c;assert(0);return -EIO; }
 int mishare_ndi_release_stats(struct vdev_mlme_obj *m,struct mishare_ndi_create_result *r) { (void)m;(void)r;assert(0);return -EIO; }
 /* END_NDI_TRANSPORT_STUBS */
+/* CONTEXT_TRANSPORT_STUBS */
+int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }
+int mishare_ndi_legacy_release(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }
+int mishare_ndi_wma_bind(struct wlan_objmgr_vdev *v) { (void)v;assert(0);return -EIO; }
+int mishare_ndi_wma_unbind(struct wlan_objmgr_vdev *v) { (void)v;assert(0);return -EIO; }
+int mishare_ndi_self_peer_create(struct wlan_objmgr_vdev *v,bool *a) { (void)v;(void)a;assert(0);return -EIO; }
+int mishare_ndi_self_peer_delete(struct wlan_objmgr_vdev *v,void *c) { (void)v;(void)c;assert(0);return -EIO; }
+/* END_CONTEXT_TRANSPORT_STUBS */
 #include "wlan_hdd_mishare_runtime.c"
 /* Native final free is executed below; component teardown / parent list / lock
  * primitives are models. No component handler, native lock or scheduler runs. */

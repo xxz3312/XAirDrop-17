@@ -1,0 +1,351 @@
+diff --git a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+--- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
++++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+@@ -22,6 +22,7 @@
+  */
+ #include "wlan_mlme_main.h"
+ #include "wlan_mlme_vdev_mgr_interface.h"
++#include "wlan_hdd_mishare_ndi.h"
+ #include "lim_utils.h"
+ #include "wma_api.h"
+ #include "wma.h"
+@@ -1801,6 +1802,82 @@
+ 	vdev_mlme->ext_vdev_ptr = NULL;
+ }
+ 
++/* MISHARE_BEGIN:legacy_helpers */
++int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *m)
++{
++	QDF_STATUS status;
++
++	if (!m || !m->vdev || m->ext_vdev_ptr ||
++	    wlan_vdev_mlme_get_opmode(m->vdev) != QDF_PASSTHRU_MODE ||
++	    m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI)
++		return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
++	m->ext_vdev_ptr = qdf_mem_common_alloc(sizeof(struct mlme_legacy_priv));
++	if (!m->ext_vdev_ptr)
++		return qdf_status_to_os_return(QDF_STATUS_E_NOMEM);
++	qdf_mem_zero(m->ext_vdev_ptr, sizeof(struct mlme_legacy_priv));
++	status = mlme_init_rate_config(m);
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_ext;
++	status = mlme_init_connect_chan_info_config(m);
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_ext;
++	m->ext_vdev_ptr->wait_key_timer.vdev = m->vdev;
++	status = qdf_mc_timer_init(&m->ext_vdev_ptr->wait_key_timer.timer,
++				  QDF_TIMER_TYPE_SW,
++				  cm_wait_for_key_time_out_handler,
++				  &m->ext_vdev_ptr->wait_key_timer);
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_ext;
++	status = qdf_wake_lock_create(&m->ext_vdev_ptr->bss_color_change_wakelock,
++				      "mishare_bss_color");
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_timer;
++	status = qdf_runtime_lock_init(&m->ext_vdev_ptr->bss_color_change_runtime_lock);
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_color_wake;
++	status = qdf_runtime_lock_init(&m->ext_vdev_ptr->disconnect_runtime_lock);
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_color_rt;
++	qdf_atomic_init(&m->ext_vdev_ptr->set_key_wakelock_counter);
++	status = qdf_wake_lock_create(&m->ext_vdev_ptr->peer_set_key_wakelock,
++				      "mishare_peer_key");
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_disconnect;
++	status = qdf_runtime_lock_init(&m->ext_vdev_ptr->peer_set_key_rt_wakelock);
++	if (QDF_IS_STATUS_ERROR(status))
++		goto free_peer_wake;
++	/* PAS has no STA roam stats/FILS or CSR session. All optional pointers
++	 * are explicitly zeroed; native full legacy destruction handles them.
++	 * No NSS override, second CREATE, SME or WMI operation occurs here.
++	 */
++	return 0;
++free_peer_wake:
++	qdf_wake_lock_destroy(&m->ext_vdev_ptr->peer_set_key_wakelock);
++free_disconnect:
++	qdf_runtime_lock_deinit(&m->ext_vdev_ptr->disconnect_runtime_lock);
++free_color_rt:
++	qdf_runtime_lock_deinit(&m->ext_vdev_ptr->bss_color_change_runtime_lock);
++free_color_wake:
++	qdf_wake_lock_destroy(&m->ext_vdev_ptr->bss_color_change_wakelock);
++free_timer:
++	qdf_mc_timer_destroy(&m->ext_vdev_ptr->wait_key_timer.timer);
++free_ext:
++	qdf_mem_common_free(m->ext_vdev_ptr);
++	m->ext_vdev_ptr = NULL;
++	return qdf_status_to_os_return(status);
++}
++
++int mishare_ndi_legacy_release(struct vdev_mlme_obj *m)
++{
++	if (!m || !m->vdev || !m->ext_vdev_ptr ||
++	    wlan_vdev_mlme_get_opmode(m->vdev) != QDF_PASSTHRU_MODE ||
++	    m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI)
++		return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
++	mlme_ext_handler_destroy(m);
++	return 0;
++}
++/* MISHARE_END:legacy_helpers */
++
+ static QDF_STATUS
+ mlme_wma_vdev_detach_post_cb(struct scheduler_msg *msg)
+ {
+diff --git a/qcacld-3.0/core/wma/src/wma_dev_if.c b/qcacld-3.0/core/wma/src/wma_dev_if.c
+--- a/qcacld-3.0/core/wma/src/wma_dev_if.c
++++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
+@@ -121,6 +121,7 @@
+ #include "wlan_objmgr_vdev_obj.h"
+ #include "wlan_twt_cfg_ext_api.h"
+ #include "wma_mishare_ndi.h"
++#include "wlan_hdd_mishare_ndi.h"
+ 
+ /*
+  * FW only supports 8 clients in SAP/GO mode for D3 WoW feature
+@@ -3955,6 +3956,11 @@
+ 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+ 	struct del_sta_self_rsp_params *data;
+ 
++/* MISHARE_BEGIN:peer_fw_locals */
++	void *mishare_cookie = NULL;
++	uint8_t mishare_id = 0;
++/* MISHARE_END:peer_fw_locals */
++
+ 	if (!mac) {
+ 		wma_err("mac context is null");
+ 		return -EINVAL;
+@@ -3971,6 +3977,12 @@
+ 		return -EINVAL;
+ 	}
+ 
++
++/* MISHARE_BEGIN:peer_fw_bounds */
++	/* Reject before uint32 event IDs can truncate into uint8 queue keys. */
++	if (event->vdev_id >= wma->max_bssid)
++		return -EINVAL;
++/* MISHARE_END:peer_fw_bounds */
+ 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->peer_macaddr, macaddr);
+ 	wma_debug("Peer Delete Response, vdev %d Peer "QDF_MAC_ADDR_FMT,
+ 			event->vdev_id, QDF_MAC_ADDR_REF(macaddr));
+@@ -3993,6 +4005,13 @@
+ 	qdf_mc_timer_destroy(&req_msg->event_timeout);
+ 
+ 	switch (req_msg->type) {
++
++/* MISHARE_BEGIN:peer_fw_case */
++	case WMA_MISHARE_SELF_PEER_DELETE_RSP:
++		mishare_cookie = req_msg->user_data;
++		mishare_id = event->vdev_id;
++		break;
++/* MISHARE_END:peer_fw_case */
+ 	case WMA_DELETE_STA_RSP_START:
+ 		del_sta = req_msg->user_data;
+ 		if (del_sta->respReqd) {
+@@ -4041,6 +4060,12 @@
+ 	wma_cdp_cp_peer_del_response(wma->psoc, macaddr, event->vdev_id);
+ 	qdf_mem_free(req_msg);
+ 
++/* MISHARE_BEGIN:peer_fw_notify */
++	if (mishare_cookie)
++		mishare_runtime_ndi_peer_event(wma->psoc, mishare_id, macaddr,
++					       mishare_cookie, true);
++/* MISHARE_END:peer_fw_notify */
++
+ 	return status;
+ }
+ 
+@@ -4082,6 +4107,12 @@
+ 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+ 	QDF_STATUS status;
+ 
++/* MISHARE_BEGIN:peer_timeout_locals */
++	void *mishare_cookie = NULL;
++	uint8_t mishare_id = 0;
++	uint8_t mishare_mac[QDF_MAC_ADDR_SIZE];
++/* MISHARE_END:peer_timeout_locals */
++
+ 	if (!mac)
+ 		return;
+ 
+@@ -4102,6 +4133,17 @@
+ 	wma_alert("request %d is timed out for vdev_id - %d",
+ 		 tgt_req->msg_type, tgt_req->vdev_id);
+ 
++
++/* MISHARE_BEGIN:peer_timeout_case */
++	if (tgt_req->msg_type == WMA_DELETE_STA_REQ &&
++	    tgt_req->type == WMA_MISHARE_SELF_PEER_DELETE_RSP) {
++		mishare_cookie = tgt_req->user_data;
++		mishare_id = tgt_req->vdev_id;
++		qdf_mem_copy(mishare_mac, tgt_req->addr.bytes, QDF_MAC_ADDR_SIZE);
++		wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
++		goto timer_destroy;
++	}
++/* MISHARE_END:peer_timeout_case */
+ 	if (tgt_req->msg_type == WMA_ADD_STA_REQ) {
+ 		tpAddStaParams params = (tpAddStaParams) tgt_req->user_data;
+ 
+@@ -4323,6 +4365,16 @@
+ timer_destroy:
+ 	qdf_mc_timer_destroy(&tgt_req->event_timeout);
+ 	qdf_mem_free(tgt_req);
++
++/* MISHARE_BEGIN:peer_timeout_notify */
++	if (mishare_cookie) {
++		mishare_runtime_ndi_peer_event(wma->psoc, mishare_id, mishare_mac,
++					       mishare_cookie, false);
++		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
++			wma_trigger_recovery_assert_on_fw_timeout(
++				WMA_DELETE_STA_REQ, QDF_PEER_DELETION_TIMEDOUT);
++	}
++/* MISHARE_END:peer_timeout_notify */
+ }
+ 
+ /**
+@@ -7525,3 +7577,131 @@
+ 	}
+ 	return status;
+ }
++
++/* MISHARE_BEGIN:wma_helpers */
++int mishare_ndi_wma_bind(struct wlan_objmgr_vdev *vdev)
++{
++	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++	struct wma_txrx_node *iface;
++	struct vdev_mlme_obj *m;
++	uint8_t id;
++
++	if (!wma || !vdev || wma->psoc != wlan_vdev_get_psoc(vdev))
++		return -EINVAL;
++	id = wlan_vdev_get_id(vdev);
++	if (id >= wma->max_bssid)
++		return -EINVAL;
++	m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++	iface = &wma->interfaces[id];
++	if (!m || m->vdev != vdev || !m->ext_vdev_ptr || !wma_mishare_pas_ndi(vdev, m->mgmt.generic.type) ||
++	    m->mgmt.generic.subtype || iface->vdev || iface->peer_count ||
++	    iface->vdev_active || iface->del_staself_req || iface->is_del_sta_deferred)
++		return -EBUSY;
++	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_WMA_ID) != QDF_STATUS_SUCCESS)
++		return -ENODEV;
++	iface->type = WMI_VDEV_TYPE_NDI;
++	iface->sub_type = 0;
++	iface->pause_bitmap = 0;
++	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
++	iface->vdev = vdev;
++	iface->vdev_active = true; /* created slot, not START/UP or radio proof */
++	return 0;
++}
++
++int mishare_ndi_wma_unbind(struct wlan_objmgr_vdev *vdev)
++{
++	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++	struct wma_txrx_node *iface;
++	uint8_t id;
++
++	if (!wma || !vdev || wma->psoc != wlan_vdev_get_psoc(vdev))
++		return -EINVAL;
++	id = wlan_vdev_get_id(vdev);
++	if (id >= wma->max_bssid)
++		return -EINVAL;
++	iface = &wma->interfaces[id];
++	if (iface->vdev != vdev || !wma_mishare_pas_ndi(vdev, iface->type) ||
++	    iface->peer_count || iface->del_staself_req || iface->is_del_sta_deferred ||
++	    qdf_atomic_read(&iface->bss_status) != WMA_BSS_STATUS_STOPPED)
++		return -EBUSY;
++	iface->vdev = NULL;
++	iface->vdev_active = false;
++	iface->type = 0;
++	iface->sub_type = 0;
++	iface->pause_bitmap = 0;
++	/* DP detach belongs to the runtime owner, never generic wma_cleanup_vdev. */
++	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
++	return 0;
++}
++
++int mishare_ndi_self_peer_create(struct wlan_objmgr_vdev *vdev, bool *attempted)
++{
++	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++	struct wlan_objmgr_peer *peer;
++	uint8_t id;
++	QDF_STATUS status;
++
++	if (!attempted)
++		return -EINVAL;
++	*attempted = false;
++	if (!wma || !vdev || wma->psoc != wlan_vdev_get_psoc(vdev))
++		return -EINVAL;
++	id = wlan_vdev_get_id(vdev);
++	if (id >= wma->max_bssid || wma->interfaces[id].vdev != vdev ||
++	    !wma_mishare_pas_ndi(vdev, wma->interfaces[id].type) ||
++	    wma->interfaces[id].peer_count)
++		return -EINVAL;
++	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_nan_data) ||
++	    !wmi_service_enabled(wma->wmi_handle, wmi_service_sync_delete_cmds))
++		return -EOPNOTSUPP;
++	peer = wlan_objmgr_get_peer_by_mac(wma->psoc,
++					 wlan_vdev_mlme_get_macaddr(vdev), WLAN_LEGACY_WMA_ID);
++	if (peer) {
++		bool same_vdev = wlan_peer_get_vdev(peer) == vdev;
++
++		wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
++		/* Unknown pre-existing resources on this owner cannot be unwound
++		 * as an empty vdev; a foreign vdev's peer must remain untouched.
++		 */
++		return same_vdev ? -EUCLEAN : -EEXIST;
++	}
++	*attempted = true; /* a generic error cannot prove no peer command escaped */
++	status = wma_create_peer(wma, wlan_vdev_mlme_get_macaddr(vdev), NULL,
++				 WMI_PEER_TYPE_DEFAULT, id, NULL, false);
++	if (QDF_IS_STATUS_ERROR(status))
++		return qdf_status_to_os_return(status);
++	if (wma->interfaces[id].peer_count != 1)
++		return -EUCLEAN;
++	return 0;
++}
++
++int mishare_ndi_self_peer_delete(struct wlan_objmgr_vdev *vdev, void *owner)
++{
++	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++	struct wma_target_req *req;
++	uint8_t id, *mac;
++
++	if (!wma || !vdev || !owner || wma->psoc != wlan_vdev_get_psoc(vdev))
++		return -EINVAL;
++	id = wlan_vdev_get_id(vdev);
++	if (id >= wma->max_bssid || wma->interfaces[id].vdev != vdev ||
++	    !wma_mishare_pas_ndi(vdev, wma->interfaces[id].type) ||
++	    wma->interfaces[id].peer_count != 1 ||
++	    !wmi_service_enabled(wma->wmi_handle, wmi_service_sync_delete_cmds))
++		return -EINVAL;
++	mac = wlan_vdev_mlme_get_macaddr(vdev);
++	wma_acquire_wakelock(&wma->wmi_cmd_rsp_wake_lock, WMA_DELETE_STA_TIMEOUT);
++	req = wma_fill_hold_req(wma, id, WMA_DELETE_STA_REQ,
++			       WMA_MISHARE_SELF_PEER_DELETE_RSP, mac, owner,
++			       WMA_DELETE_STA_TIMEOUT);
++	if (!req) {
++		wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
++		return -ENOMEM;
++	}
++	/* Fully armed request precedes the wire call. On generic send failure
++	 * leave it to consume a late real reply or timeout exactly once; userdata
++	 * is a stable owner token, never an ordinary SME delete parameter.
++	 */
++	return qdf_status_to_os_return(wma_remove_peer(wma, mac, id, false));
++}
++/* MISHARE_END:wma_helpers */
+diff --git a/qcacld-3.0/core/wma/inc/wma.h b/qcacld-3.0/core/wma/inc/wma.h
+--- a/qcacld-3.0/core/wma/inc/wma.h
++++ b/qcacld-3.0/core/wma/inc/wma.h
+@@ -196,6 +196,10 @@
+ #define WMA_TDLS_PEER_DELETE_RESPONSE 0x10
+ /* Delete peer response for existing ranging peer */
+ #define WMA_DELETE_STA_EXISTING_PASN_PEER_RSP 0x11
++
++/* MISHARE_BEGIN:peer_req_type */
++#define WMA_MISHARE_SELF_PEER_DELETE_RSP 0x12
++/* MISHARE_END:peer_req_type */
+ 
+ /* FW response timeout values in milli seconds */
+ #define WMA_VDEV_PLCY_MGR_TIMEOUT        SIR_VDEV_PLCY_MGR_TIMEOUT

@@ -58,3 +58,13 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
     CREATE/DELETE helpers remain unchanged; only owned DELETE origins branch.
     Unknown/partially published failures retain resources. No runtime caller,
     START, legacy/session/self-peer preparation, TX/RX or SSR recovery is added.
+
+17. `0017-mishare-owned-legacy-wma-self-peer.patch` adds checked local legacy
+    preparation/unwind and dedicated WMA slot/reference binding. The owner uses
+    native DEFAULT peer creation and a distinct 0x12 hold-request type for peer
+    deletion. Real/timeout notifications follow native request cleanup; only
+    their matching stable owner token can advance teardown. WMA/legacy survive
+    until confirmed peer/vdev deletion and DP final-free. Native peer errors
+    quarantine; no CSR, generic post-create configuration, START or radio caller
+    is introduced. Existing native paths match their recorded source hashes
+    after removing the bounded additions (plus a pre-truncation event-ID guard).

@@ -225,3 +225,42 @@ WLAN SHA-256 为 `704d5162639d3dc4432ce9caeb9b66b4d7db5434d93cdf22f0d822eed60134
 本轮已将资源 CREATE/DP/DELETE/最终释放接进私有 owner API，但没有运行时调用方，
 未在手机发送固件命令。下一阶段需准备 legacy/WMA 上下文与固件 self-peer，
 同时扩展对应回收，再接 START/频道和 RAW 收发；SSR/remove 仍须在启用前完成。
+
+## 实施进展：0017 legacy / WMA / self-peer 接入
+
+新增私有 `mishare_runtime_ndi_prepare(owner)`，仅接受已完成资源 CREATE 和 DP
+挂接、尚未开始删除的 owner。它检查并分配 native legacy 扩展，初始化 rate/
+connect 默认值、wait-key timer、两个 wake lock 与三个 runtime lock；每一步
+检查失败并逆序只释放已初始化部分。保留原 NSS，不调用 SME/CSR，不再次 CREATE。
+正常释放执行原生完整 legacy destructor。PAS 不申请 STA roam stats/FILS。
+
+WMA 使用独立绑定函数，检查相同 psoc/vdev、空闲 slot 与引用获取结果后，保存
+NDI 类型、STOPPED 状态及额外 WMA 引用。不调用普通 post-create 的全局配置、
+普通数据回调注册或会隐式 detach DP 的 `wma_cleanup_vdev()`。
+这是最小 WMA 绑定，不代表普通会话配置已经完成。
+
+self-peer 直接复用目标 `wma_create_peer(DEFAULT)`，拒绝已存在的 MAC，检查原生
+返回和 peer count。一次尝试后的通用错误不能证明没有发送命令，因此保留所有
+资源并隔离，不在同一 owner 重试。成功仅表示原生 API 成功，未等待固件创建确认。
+
+删除采用新的内部 request type `0x12`（原 0x01–0x11 不变），复用 WMA hold
+queue、timer 与 `wma_remove_peer()`。完整的 hold request 必须先建立，再调用
+删除。userdata 是保持存活的 owner token，不能进入普通 SME 删除参数转换。
+真实响应在原生 timer/wake/CDP/request 清理后通知 owner；超时单独标记为失败，
+清理 request 后才通知 owner 并保留原恢复策略。匹配还要求 token、psoc、vdev ID
+和 MAC 一致。WMI event ID 在转换成 uint8 队列键之前检查范围。
+
+owner 的回收顺序扩展为 self-peer DELETE 确认 → VDEV DELETE 确认 → DP 最终
+释放 → WMA 解绑/引用释放 → native legacy destructor → 主机对象删除。
+早到回复仍需等待提交函数返回。创建结果不明、hold-request 分配/发送错误或
+超时均不释放父资源、不发送后续 VDEV DELETE。未增加强制释放/引用重置接口。
+
+新增 Actions-only fixture 执行真实 owner、legacy 初始化及完整 destructor、
+WMA 绑定/解绑和 peer helper，以及原生响应/超时的限定插入片段。外部 QDF 资源、
+WMA 队列/timer、原生 wma_create_peer/wma_remove_peer 与固件/DP 传输被模型替代；
+未执行完整 WMA handler、真实 peer 最终释放或 IRQ/list 竞争。全文件去掉命名
+新增片段后哈希须与 0016 前的固定文件相同，防止改动普通路径。
+
+新 API 尚无运行时调用方。没有 CSR/PE session、普通 post-create 参数准备、
+START/频道或 TX/RX；专用 MLME 拒绝操作仍保留。SSR/remove 与失败隔离后的恢复
+仍须在手机启用前接通。目前未在手机运行新命令。
