@@ -212,7 +212,7 @@ def audit(root):
     return {'status':'MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY','source_commit':PIN,
       'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),
       'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_events.c','wlan_hdd_mishare_events.h','wlan_hdd_mishare_txn.c','wlan_hdd_mishare_txn.h']},
-      'native_rx_sha256':hashlib.sha256((root/RX).read_bytes()).hexdigest(),'native_rx_origin_insertions_only':True,'public_response_definitions_unchanged':True,
+      'native_rx_sha256':hashlib.sha256((root/RX).read_bytes()).hexdigest(),'native_rx_origin_insertions_only':False,'native_rx_origin_insertions_and_stop_id_guard_only':True,'public_response_definitions_unchanged':True,
       'checks':['no owner leaves legacy flow','PASSTHRU-only bind','vdev reference and allocation failure rollback','duplicate key and owner rejection','same vdev ID across psocs','early real response','restart exclusion','wrong-command timeout exclusion','real start failure','native start/stop timeout quarantine','late firmware response remains quarantined','real stop completes','late timeout after completion ignored','unbind removes before reference release','concurrent key notification versus unregister/free'],
       'limitations':'Production registry/transaction C with simulated object manager and pthread lock, plus extracted actual origin insertions. Not full native handler/timer execution, real IRQ locking, vdev/event draining, WMI, kernel teardown or AirDrop certification. No runtime owner binds yet.'}
 

@@ -1,0 +1,114 @@
+{
+  "status": "NATIVE_START_STOP_RESPONSE_VALIDATION_OFFLINE_PASS_ONLY",
+  "commit": "dde8d940599f9eb207950c0ce6f2a8da16d5cede",
+  "run_id": 40569344422,
+  "job_id": 122419047255,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40569344422",
+  "validation_artifact": {
+    "id": 12763779647,
+    "bytes": 35989,
+    "sha256": "d67a298c5ea2d9cfccac276b828647c314b510955ced7195030dd2a1c88782be",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12764379095,
+    "bytes": 337728626,
+    "github_reported_sha256": "1076d45244a3c5f89194e060a0ec058485dd369dc76eee87b1d301678b730a20",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "response_fixture": {
+    "status": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "e6d6e089ad742e3a4602a4b2f848d0a6a660f2ff1a4e6921423ddf2a739fc167",
+    "native_sha256": {
+      "qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c": "e76f95e9af575b48ea3d6191f9107894b9dafbc86e8e170660565d15e73588b5",
+      "qca-wifi-host-cmn/wmi/src/wmi_unified_vdev_tlv.c": "5bea89ba2c920155f41af77f48025066f5d1ec3f2dfbb9aa4d5ef3a35a7c5477",
+      "qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/inc/wlan_vdev_mgr_tgt_if_rx_defs.h": "f8d4bd2fa9acd25f18f607cc07f7f8f4d086419ba33e675f23d3abc0f68dab31"
+    },
+    "checks": [
+      "wire ID overflow rejected before narrowing/timer/PM access",
+      "unknown START type fails extraction",
+      "null fixed TLV/output rejection",
+      "complete native START/STOP handlers",
+      "native timer failure prevents owned notification",
+      "RESTART native callback preserved without completing START",
+      "real START rejection quarantines",
+      "real START/STOP success",
+      "ordinary unbound callbacks and PM release preserved",
+      "native callback error does not undo real firmware completion",
+      "u8 representable boundaries"
+    ],
+    "limitations": "Actual complete native decoder/handler and production registry/transaction C. WMI TLV envelope/fixed fields, RX ops, object manager, timer and PM are host models; binary TLV parsing, actual timers, IRQ/MC races, WMI, radio and phone execution are not tested. No new runtime caller or START/STOP submission."
+  },
+  "native_fixtures": {
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY"
+  },
+  "independent_verification": {
+    "response_generated_fixture_and_three_native_hashes_match": true,
+    "existing_origin_fixture_generated_c_hash_matches_after_report_label_correction": true
+  },
+  "python_tests": 44,
+  "required_host_symbols": 51,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "9fc4df8f8c36877f5a46955f663076c286ccc4c902648964229e37786dfe0144",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "report_label_correction": "Built origin report retained its old native_rx_origin_insertions_only label. Follow-up changes this to false and records native_rx_origin_insertions_and_stop_id_guard_only=true. Generated C is byte-identical; native code is unchanged.",
+  "runtime_backend_caller": false,
+  "phone_driver_loaded": false,
+  "airdrop_connected": false,
+  "remaining": [
+    "owned native MLME START/host-only UP/STOP/DOWN and PM lifetime",
+    "channel switching and concurrency/hardware mode",
+    "RAW TX/monitor/native RX and Wonder callbacks",
+    "SSR/remove and quarantine recovery",
+    "phone firmware acceptance and Apple bidirectional transfers"
+  ]
+}

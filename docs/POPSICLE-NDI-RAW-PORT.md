@@ -400,3 +400,22 @@ TLV envelope / wire 字段、对象管理器、timer、PM 与 RX ops 使用主�
 本项不增加运行时调用方，不发送 START/STOP，不开放专用 PAS MLME 操作表。
 完整启停、DOWN、SSR/remove 和 TX/RX 接线仍待完成。构建结果须以本次 Actions
 实际产出为准，不能沿用 0019 的成功记录。
+
+
+### 0020 构建验证结果
+
+[Actions 40569344422](https://github.com/xxz3312/XAirDrop-17/actions/runs/40569344422)
+在源提交 `dde8d940599f9eb207950c0ce6f2a8da16d5cede` 全部通过：44 项 Python
+检查、16 组原生 fixture、完整 WLAN 编译、严格链接与 7 项选定结构布局检查。
+51 个要求符号存在，WLAN 574 条版本记录无不匹配，未解决依赖为空。
+工具链/bindgen 缓存均命中。新增完整响应 fixture 通过 ASan/UBSan。
+
+紧凑报告 ZIP 已独立下载并核对大小、SHA-256；本地重新生成的完整响应 fixture、
+原有 origin fixture C 哈希以及三个相关原生文件哈希均与报告相同。完整诊断大包
+仅记录 GitHub 报告的哈希，未独立下载，也不可安装。详见
+[响应检查构建报告](research/popsicle-start-stop-response-build-pass.json)。
+
+后续仅修正 origin 报告中的范围标签：应为“origin 插入及 STOP ID guard”，
+而非旧的“仅 origin 插入”；生成的 C 和被编译的原生代码未变化。
+本轮未在手机发送新命令。START/STOP 的完整 owner/MLME/WMA 调用闭环仍未实现；
+尤其 STOP 回应不代表 DOWN 与 PM/runtime lock 已清理，不可据此直接释放会话。
