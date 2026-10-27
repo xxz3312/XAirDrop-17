@@ -151,7 +151,8 @@ def fixture(root):
     # This file had no changes in patches 0001-0011. Exact removal prevents
     # the tests from overlooking any unrelated transport edits.
     guard=re.compile(r'\n\t/\* PASSTHRU teardown must not rely.*?\n\t\treturn QDF_STATUS_E_NOSUPPORT;\n',re.S)
-    stripped,count=guard.subn('',after)
+    from mishare_radio_origins import remove_radio_additions
+    stripped,count=guard.subn('',remove_radio_additions(after))
     # 0016 adds separate owned helpers. Remove only those complete additions;
     # the remaining legacy file must still match the pinned source byte-for-byte.
     stripped=stripped.replace('#include "wlan_hdd_mishare_ndi.h"\n','')
