@@ -1,0 +1,136 @@
+{
+  "status": "PASSTHRU_CREATE_DELETE_PREFLIGHT_OFFLINE_PASS_ONLY",
+  "commit": "bd0ec1c2337155235407ab1835427d473f8a5300",
+  "run_id": 40460384194,
+  "job_id": 122043306580,
+  "validation_artifact": {
+    "id": 12715016751,
+    "bytes": 25560,
+    "sha256": "f132ca5eb3e8e7dc7e1c0bbe0412350da5f56edce0214c1e3ddc759d06651e8d",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12715076638,
+    "bytes": 337119939,
+    "github_reported_sha256": "bf1364f3290463e4e6f4851fe627bced9cb9b02da68854e9a205e9be759fe65c",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "fixture": {
+    "status": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "885099a0f0c484d0b3dc2cf59a07af71aea7991c70f382a3e2ba30542d35ed81",
+    "tx_source_sha256": "7e194e29e0fadda39649b374da27b2f48bc8d124dbb8a06a5dddc5f9af2c53a1",
+    "legacy_mode_differential_cases": 4352,
+    "passthru_requires": [
+      "sync_delete_cmds capability",
+      "testmode disabled"
+    ],
+    "checks": [
+      "two guards are the only TX source edits",
+      "invalid inputs rejected",
+      "PASSTHRU unsupported delete rejected before commands/timers/locks",
+      "CREATE send precedes timer initialization even on send error",
+      "CREATE return failure can occur after WMI accepted",
+      "DELETE accepted keeps native completion pending",
+      "DELETE send error cancels native timer/locks",
+      "old 17 modes preserve returns and side effects across dependencies/capabilities/errors"
+    ],
+    "limitations": "Actual complete native CREATE/DELETE transport functions with mocked WMI, object getters, timers, locks and fallback dispatch. No firmware acknowledgments, scheduler execution, timer lifetime, delete-origin tracking, safe ID reuse, runtime owner binding or AirDrop certification. The MLME PASSTHRU create gate still rejects before this transport."
+  },
+  "independently_regenerated_fixture_and_source_hashes_match": true,
+  "fixture_statuses": {
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY"
+  },
+  "host_regression_tests": 44,
+  "toolchain_cache_hit": true,
+  "bindgen_cache_hit": true,
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "db1c6d69fce1de8646de784ddb7c5cae0b787f444608a362c4d83b11e57ca64d",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "linked_required_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "db1c6d69fce1de8646de784ddb7c5cae0b787f444608a362c4d83b11e57ca64d",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout",
+      "mishare_events_bind",
+      "mishare_events_unbind",
+      "mishare_events_begin",
+      "mishare_events_submitted",
+      "mishare_events_snapshot",
+      "mishare_events_notify",
+      "mishare_events_begin_vdev",
+      "mishare_command_submit_start",
+      "mishare_command_submit_stop",
+      "passthru_mlme_ops"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,cnss_utils,cnss_nl,ipam,opairshare_wonder_provider,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "object_required_symbols_status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+  "selected_layouts": {
+    "status": "SELECTED_LAYOUTS_MATCH_ONLY",
+    "types": {
+      "module": "MATCH",
+      "net_device": "MATCH",
+      "wiphy": "MATCH",
+      "wireless_dev": "MATCH",
+      "sk_buff": "MATCH",
+      "cfg80211_chan_def": "MATCH",
+      "ieee80211_channel": "MATCH"
+    }
+  },
+  "source_review_constraints": [
+    "No CREATE firmware acknowledgment at this transport boundary; WMI send precedes response timer initialization, including send-error paths.",
+    "Upper tgt_vdev_mgr_create_send performs DP attach after transport success and can fail after WMI accepted.",
+    "Upper tgt_vdev_mgr_delete_send detaches DP before reaching the transport guard; the guard does not prove the entire call has no side effects.",
+    "DELETE firmware response and timeout still need distinct origin tracking and DP completion/drain before releasing owner or reusing ID."
+  ],
+  "runtime": {
+    "mlme_passthru_ext_create": "E_NOSUPPORT_BEFORE_COMMAND",
+    "owner_binding_present": false,
+    "candidate_loaded_on_phone": false,
+    "firmware_type9_acceptance_verified": false,
+    "airdrop_usable": false
+  },
+  "limitations": "Offline native boundary-stub tests and recorded loader/layout checks only. No full private ABI/KCFI, firmware, real timer/scheduler/DP teardown, object-ID drain/reuse, module load or AirDrop certification. No CRC/vermagic rewriting or relaxed modpost."
+}

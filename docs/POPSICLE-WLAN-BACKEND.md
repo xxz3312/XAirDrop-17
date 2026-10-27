@@ -14,7 +14,7 @@
 | 生命周期基础 | DOWN host helper、事务、原生来源通知、命令提交 API | 尚无真实 owner/命令调用生命周期 |
 | 无线与互传 | 没有成功无线 init 或 RX/TX | AirDrop 不可用，没有安装包 |
 
-最新离线检查见 [专用 MLME 表验证记录](research/popsicle-dedicated-mlme-ops-build-pass.json)。
+最新离线检查见 [创建/删除前置检查验证记录](research/popsicle-create-delete-preflight-build-pass.json)。
 下面的源码缺口表是最初未打补丁的基线；后续小节记录各次变更和各自限制。
 
 ## 已核对的未打补丁源码基线
@@ -572,3 +572,34 @@ MLME 的 PASSTHRU ext-create 拒绝条件仍保留，当前没有实机创建入
 接下来需要把 CREATE 发送结果与本地初始化结果分别保存，并在真实 DELETE
 响应源、超时源处区分结果，接入保持对象引用的 runtime owner，之后才能放开
 硬件创建。STOP 成功仍不能作为删除确认或对象已可回收的证据。
+
+
+### 后续 runtime owner 的接入边界
+
+此轮前置检查位于 target-if 传输层，不能保证整个上层调用没有副作用：
+`tgt_vdev_mgr_delete_send()` 在进入传输层前已经调用 `cdp_vdev_detach()`；
+`tgt_vdev_mgr_create_send()` 则在 CREATE 传输返回成功后才进行 DP 绑定，
+其失败也会使上层收到错误。新增传输测试不执行这两个上层函数，不能据此
+声称 DP 资源已回收。后续实现必须分别记录这些阶段。
+
+计划先让 PASSTHRU 的对象组件创建仅做主机初始化，待对象发布、专用 owner
+持有对象引用后再显式提交固件 CREATE。当前 ext-create 仍拒绝，尚未实现
+这个分离。不能直接删掉拒绝条件后依赖通用组件创建失败路径释放对象。
+DELETE 必须在真实固件响应和超时的各自入口记录来源，并结合 DP detach
+完成回调与原生命令/定时器排空，才能释放引用和允许 ID 复用。此处是后续
+实现约束，不是已经接通的回收流程。
+
+
+### 本轮 Actions 结果
+
+提交 `bd0ec1c2337155235407ab1835427d473f8a5300` 的
+[Actions 40460384194](https://github.com/xxz3312/XAirDrop-17/actions/runs/40460384194)
+全部通过：44 项 Python 检查、9 组原生测试、完整 WLAN 编译、严格 modpost、
+574 条 WLAN 导入版本记录和 7 项已选结构布局检查。新增测试的 4,352 组旧模式
+差分通过；工具链和 bindgen 缓存均命中。
+
+已下载 25,560 字节的小型验证 ZIP 并核对 SHA-256，独立重新生成新增原生测试
+源码，测试源码及真实 target-if 源码哈希均与 Actions 报告一致。337,119,939
+字节的完整诊断 ZIP 未独立下载，也不是安装包。完整结果及范围限制见
+[验证记录](research/popsicle-create-delete-preflight-build-pass.json)。
+候选驱动没有在手机加载，硬件创建仍拒绝，AirDrop 仍不可用。
