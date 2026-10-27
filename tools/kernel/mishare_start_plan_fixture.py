@@ -93,7 +93,7 @@ int main(void) {
   assert(mishare_runtime_ndi_start_plan(o)==-EBUSY);channel_end(&o);
  }
  /* Host PHY enums must never be compared as firmware PHY mode values. */
- reset_plan();o=with_channel(2437);last_vdev->mlme->mgmt.generic.phy_mode=7;
+ reset_plan();o=with_channel(2437);last_vdev->mlme->mgmt.generic.phy_mode=6;
  struct mishare_ndi_start_summary wrong_phy={0};
  assert(mishare_ndi_start_plan_build(last_vdev->mlme,2437,&wrong_phy)==-EUCLEAN && !plan_builds && !plan_pdev_refs);
  channel_end(&o);
@@ -119,7 +119,7 @@ int main(void) {
  assert(mishare_runtime_ndi_start_plan(o)==-EINPROGRESS && state(o).ndi.start_plan_submitted && state(o).ndi.start_plan_ready && !pe_pending.bodyptr);
  pe_early=false;channel_end(&o);
  /* Ambiguous native state/partial preparation must retain the complete owner. */
- for(int fault=0;fault<13;fault++) {
+ for(int fault=0;fault<15;fault++) {
   reset_plan();pid_t child=fork();assert(child>=0);
   if(!child) {
    o=with_channel(2437);
@@ -130,6 +130,8 @@ int main(void) {
    if(fault==7)pe_slot.mishare_owner=(void*)1;
    if(fault==8)ch_prepare_status=QDF_STATUS_E_FAILURE;
    if(fault==9)ch_bad_des=true;
+   if(fault==13)wma_context.wmi_handle=NULL;
+   if(fault==14)wma_context.interfaces=NULL;
    assert(mishare_runtime_ndi_start_plan(o)==-EINPROGRESS);
    if(fault==10)mishare_runtime_ndi_start_plan_event(&psoc,7,o,5745,0,NULL);
    if(fault==11)mishare_runtime_ndi_start_plan_event(&psoc,7,o,2437,0,NULL);
@@ -156,6 +158,9 @@ def fixture(root):
         if not re.search(r'\b'+name+r'\s*=\s*'+str(value)+r'\b',param):
             raise ValueError('Review changed firmware PHY mode: '+name)
     src=channel.fixture(root)
+    src=src.replace('struct wma_txrx_node interfaces[32];','struct wma_txrx_node *interfaces;')
+    src=src.replace('static struct wma wma_context;', 'static struct wma_txrx_node plan_interfaces[32];\nstatic struct wma wma_context;')
+    src=src.replace('memset(&wma_context,0,sizeof(wma_context));', 'memset(plan_interfaces,0,sizeof(plan_interfaces));memset(&wma_context,0,sizeof(wma_context));wma_context.interfaces=plan_interfaces;')
     # Extend only platform layouts exercised by the real native builder.
     src=src.replace('struct wlan_channel {uint32_t ch_freq,ch_cfreq1,ch_cfreq2;int ch_width;};','struct wlan_channel {uint32_t ch_freq,ch_cfreq1,ch_cfreq2,ch_ieee,ch_flags,ch_flagext,ch_freq_seg1,ch_freq_seg2;int ch_width;};')
     src=src.replace('struct vdev_mlme_obj {', 'struct vdev_mlme_mbss_11ax {unsigned mbssid_flags,is_multi_mbssid,grp_id,vdevid_trans;};\nstruct vdev_mlme_obj {', 1)

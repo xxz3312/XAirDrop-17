@@ -83,7 +83,7 @@
 +/* MISHARE_END:start_plan_builder */
 --- a/qcacld-3.0/core/wma/src/wma_dev_if.c
 +++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
-@@ -7705,3 +7705,40 @@
+@@ -7705,3 +7705,41 @@
  	return qdf_status_to_os_return(wma_remove_peer(wma, mac, id, false));
  }
  /* MISHARE_END:wma_helpers */
@@ -100,7 +100,8 @@
 +	uint8_t id;
 +	bool same;
 +
-+	if (!wma || !vdev || wma->psoc != wlan_vdev_get_psoc(vdev))
++	if (!wma || !vdev || !wma->wmi_handle || !wma->interfaces ||
++	    wma->psoc != wlan_vdev_get_psoc(vdev))
 +		return -EUCLEAN;
 +	id = wlan_vdev_get_id(vdev);
 +	if (id >= wma->max_bssid)
