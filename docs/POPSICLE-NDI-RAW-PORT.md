@@ -1,6 +1,6 @@
 # 小米 17 PAS / NDI / RAW 原生驱动接入分析
 
-本文先记录源码分析起点，再记录 0015 的实际 WMA 兼容改动。
+本文先记录源码分析起点，再记录 0015 的 WMA 兼容与 0016 的资源创建/删除接入。
 固件命令尚未在手机发送。目标源码固定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f`，
 分析起点包含 0001–0014 popsicle 补丁；其文件 SHA-256 记录在
 [源码快照](research/popsicle-xiaomi15-native-port-source-map.json)。
@@ -166,3 +166,45 @@ WMA/CSR/peer 已准备等状态，依据真实 STOP/DELETE 事件及回收结果
 
 本轮没有重新构建应用层，也没有在手机启动新的固件会话。下一阶段是实际
 创建与 owner/legacy/DP 的接通，并补齐停止、真实删除和 SSR/remove 回收。
+
+## 实施进展：0016 owner 管理 CREATE / DP / DELETE
+
+新增私有 `mishare_runtime_ndi_create(owner, nss_2g, nss_5g)`。
+原有 `mishare_runtime_create()` 仍只创建主机对象。只有显式调用新 API，才会
+临时选择 NDI type=7，使用目标原生参数准备器和 WMI 编码器提交 CREATE，
+随后调用原生 CDP vdev attach。调用方必须提供经过平台校验的每频段 NSS
+（API 仅检查 1–2 范围），并保持 RTNL、父 psoc 排他过渡及相关父资源有效。
+
+新建的内部接口把三个层次的结果写到 owner：timer 已准备、WMI 已尝试/传输
+已接受、DP 已尝试/成功、stats ID 仍归本次创建所有。timer 在 WMI CREATE
+之前初始化；stats 不会因一个可能已经发出 CREATE 的通用错误而立即回收。
+传输接受不等于固件确认，不会把这个结果报告为 START/UP 或无线可用。
+
+普通 DELETE dispatcher 会先拆 DP，再发送 DELETE。owner 采用专用路径调用
+原生 target-if DELETE，保留 DP 和主机引用，直到真实 DELETE 响应完成原生
+响应 timer、runtime lock 和 wake lock 清理。真实响应与超时在源头分开记录；
+这个 owner 没有普通 SME/WMA session 引用，因此只对其匹配的 ID 抑制普通
+删除回调，其他 vdev 保持原处理。
+
+`mishare_runtime_destroy()` 现在会先推进这段回收：
+
+1. 最多发送一次 DELETE，等待真实确认；接受提交不代替确认。
+2. 确认后调用 CDP detach，等待 DP 的最终释放回调。
+3. DP 释放后才允许逻辑删除主机对象，继续等待原有最终释放通知。
+
+早到 DELETE 回复与同步 DP 回调不会让发起调用尚未返回就提前释放 owner。
+CREATE 结果不明、删除失败/超时、DP detach 失败等情况保留引用并返回 EUCLEAN。
+目标 DP attach 的晚期错误可能已发布部分对象：收到 DELETE 后也不会据此
+自动拆除未知状态的 DP 对象；该情况保留父资源，等待后续完整恢复路径。
+没有提供强制释放、重置引用或在同一 vdev 上重复发送 CREATE 的接口。
+
+新增 Actions-only fixture 执行真实 owner、跨层 owned helper、完整原生 DELETE
+handler 和原生主机最终释放函数；外部平台/WMI/timer/DP 和参数准备边界被替代。
+覆盖能力/上下文/准备失败、timer 在 WMI 前初始化、早到回复、响应提取与 timer
+拒绝、错误 psoc/ID、DP 延迟/同步回调、剩余对象引用和故障保留。DP 最终释放
+回调的位置做源码校验，没有执行完整原生 DP final-free 函数。
+
+当前新 API 尚无运行时 HDD/Wonder 调用方；没有在手机发送 CREATE。
+本轮不准备 legacy/CSR/WMA session、不创建 firmware self-peer，不发送 START，
+不接通 TX/RX。原有命令前置检查、专用 MLME 拒绝操作和 Wonder init 限制仍保留。
+SSR/remove 与部分 DP 初始化失败的完整恢复仍须在启用运行时调用方前完成。

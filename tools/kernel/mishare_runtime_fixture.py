@@ -34,6 +34,7 @@ COMMON=r'''
 #define WLAN_HDD_ID_OBJ_MGR 1
 #define WLAN_UMAC_MAX_COMPONENTS 4
 #define WLAN_VDEV_MLME_TYPE_PASSTHRU 9
+#define WLAN_VDEV_MLME_TYPE_NDI 7
 #define GFP_KERNEL 0
 #define ETH_ALEN 6
 #define WARN_ON(x) (x)
@@ -47,7 +48,7 @@ struct wlan_objmgr_psoc { int id; };
 struct wlan_objmgr_pdev { struct wlan_objmgr_psoc *psoc; };
 struct wireless_dev { int dummy; };
 struct vdev_osif_priv { struct wireless_dev *wdev;void *legacy_osif_priv; };
-struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;void *ext_vdev_ptr;struct { struct { u8 type,subtype; } generic; } mgmt; };
+struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;void *ext_vdev_ptr;struct { struct { u8 type,subtype; } generic; } mgmt; struct {struct {u8 nss_2g,nss_5g;} generic;} proto; };
 struct wlan_objmgr_vdev {
  struct wlan_objmgr_pdev *pdev;u8 mac[6];int mode,refs,dead,vdev_lock;
  struct { void *bss_chan,*des_chan; } vdev_mlme;
@@ -79,6 +80,12 @@ static QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *v) { asse
 static struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(struct wlan_objmgr_pdev*,struct wlan_vdev_create_params*);
 #include "wlan_hdd_mishare_txn.c"
 #include "wlan_hdd_mishare_events.c"
+/* NDI_TRANSPORT_STUBS: host-only cases must never submit native transport. */
+int mishare_ndi_native_create(struct vdev_mlme_obj *m, struct mishare_ndi_create_result *r) { (void)m;(void)r;assert(0);return -EIO; }
+int mishare_ndi_native_delete(struct wlan_objmgr_vdev *v) { (void)v;assert(0);return -EIO; }
+int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *v,void (*cb)(void *),void *c) { (void)v;(void)cb;(void)c;assert(0);return -EIO; }
+int mishare_ndi_release_stats(struct vdev_mlme_obj *m,struct mishare_ndi_create_result *r) { (void)m;(void)r;assert(0);return -EIO; }
+/* END_NDI_TRANSPORT_STUBS */
 #include "wlan_hdd_mishare_runtime.c"
 /* Native final free is executed below; component teardown / parent list / lock
  * primitives are models. No component handler, native lock or scheduler runs. */
@@ -213,7 +220,7 @@ def audit(root):
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint64_t u64;\n')
-        for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h']:(d/n).write_text('/* boundary declarations */\n')
+        for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h','qdf_status.h']:(d/n).write_text('/* boundary declarations */\n')
         p=d/'owner.c';p.write_text(source);exe=d/'owner'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(p),'-o',str(exe)],check=True)
         out=subprocess.check_output([exe],text=True,timeout=20,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})

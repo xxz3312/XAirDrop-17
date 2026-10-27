@@ -48,3 +48,13 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
     parameter, auto-start or firmware acceptance is added. Actions runs actual
     extracted peer create/delete/detach and UP functions with mocked external
     operations, followed by complete target WLAN compilation and strict linking.
+
+16. `0016-mishare-owned-ndi-create-delete.patch` adds an explicitly owned
+    resource CREATE route: native parameter preparation, pre-wire timer setup,
+    WMI CREATE and DP attach retain separate outcomes and stats ownership.
+    The optional runtime owner API drives DELETE without the generic early DP
+    detach, observes real DELETE versus timeout at native origins, and waits
+    for DP's final-free callback before object-manager destruction. Legacy
+    CREATE/DELETE helpers remain unchanged; only owned DELETE origins branch.
+    Unknown/partially published failures retain resources. No runtime caller,
+    START, legacy/session/self-peer preparation, TX/RX or SSR recovery is added.

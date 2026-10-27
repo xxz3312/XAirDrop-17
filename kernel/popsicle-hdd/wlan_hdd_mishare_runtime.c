@@ -10,6 +10,7 @@
 #include <wlan_osif_priv.h>
 #include "wlan_hdd_mishare_events.h"
 #include "wlan_hdd_mishare_runtime.h"
+#include <qdf_status.h>
 
 struct mishare_runtime_owner {
     struct mishare_runtime_owner *next;
@@ -23,6 +24,7 @@ struct mishare_runtime_owner {
 };
 static DEFINE_SPINLOCK(mishare_runtime_lock);
 static struct mishare_runtime_owner *mishare_runtime_owners;
+static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
 
 void mishare_runtime_allocated(struct wlan_objmgr_vdev *vdev)
 {
@@ -64,6 +66,11 @@ bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev,
         /* Some native component failures leave an attached private object.
          * Never release its vdev/ID/netdev underneath it. No refcount reset.
          */
+        if (entry->state.ndi.active) {
+            entry->state.blocked = true;
+            allowed = false;
+            break;
+        }
         for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
             if (vdev->vdev_comp_priv_obj[id]) {
                 entry->state.blocked = true;
@@ -116,12 +123,16 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
     unsigned long flags;
     QDF_STATUS status;
     bool referenced;
+    int ret;
 
     if (!owner)
         return -EINVAL;
     entry = *owner;
     if (!entry)
         return 0;
+    ret = mishare_runtime_ndi_drain(entry);
+    if (ret)
+        return ret;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     if (entry->state.blocked) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -263,4 +274,193 @@ failed:
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     cleanup = mishare_runtime_destroy(owner);
     return cleanup ? cleanup : ret;
+}
+
+
+bool mishare_runtime_ndi_delete_owned(struct wlan_objmgr_psoc *psoc, u8 id)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    bool owned = false;
+
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc == psoc && entry->state.ndi.active && entry->vdev &&
+            wlan_vdev_get_id(entry->vdev) == id) {
+            owned = true;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return owned;
+}
+
+void mishare_runtime_ndi_delete_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                      bool firmware)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        ndi = &entry->state.ndi;
+        if (entry->psoc != psoc || !ndi->active || !entry->vdev ||
+            wlan_vdev_get_id(entry->vdev) != id)
+            continue;
+        if (!firmware || !ndi->delete_pending || ndi->delete_replied)
+            ndi->blocked = true;
+        else if (!ndi->blocked)
+            ndi->delete_replied = true;
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+int mishare_runtime_ndi_create(struct mishare_runtime_owner *entry,
+                               u8 nss_2g, u8 nss_5g)
+{
+    struct vdev_mlme_obj *mlme;
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+    int ret;
+
+    if (!entry || !nss_2g || nss_2g > 2 || !nss_5g || nss_5g > 2)
+        return -EINVAL;
+    /* Owner-handle calls are serialized by the caller; only notifications
+     * run concurrently. No lock is held across native allocations/transports.
+     */
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi = &entry->state.ndi;
+    if (entry->state.blocked || ndi->blocked) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (!entry->vdev || !entry->referenced || !entry->events ||
+        entry->state.draining || ndi->active || ndi->create.wire_attempted) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EBUSY;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    mlme = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+    if (!mlme || mlme->vdev != entry->vdev || mlme->ext_vdev_ptr ||
+        mlme->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_PASSTHRU ||
+        mlme->mgmt.generic.subtype || mlme->proto.generic.nss_2g ||
+        mlme->proto.generic.nss_5g)
+        return -EINVAL;
+    mlme->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_NDI;
+    mlme->proto.generic.nss_2g = nss_2g;
+    mlme->proto.generic.nss_5g = nss_5g;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi->active = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_ndi_native_create(mlme, &ndi->create);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi->create_error = ret;
+    if (ret && !ndi->create.wire_attempted && !ndi->create.timer_ready &&
+        !ndi->create.stats_owned && !ndi->blocked) {
+        /* Proven pre-wire failure; native helper returned its stats ID. */
+        ndi->active = false;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        mlme->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
+        mlme->proto.generic.nss_2g = 0;
+        mlme->proto.generic.nss_5g = 0;
+        return ret;
+    }
+    if (!ndi->create.timer_ready || !ndi->create.wire_accepted ||
+        (!ret && !ndi->create.dp_attached))
+        ndi->blocked = true;
+    if (ndi->blocked)
+        ret = -EUCLEAN;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
+static void mishare_runtime_ndi_dp_freed(void *context)
+{
+    struct mishare_runtime_owner *entry = context;
+    unsigned long flags;
+
+    /* Native DP calls this after its actual vdev storage has been freed.
+     * The owner cannot disappear while active/detaching is set.
+     */
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    entry->state.ndi.dp_freed = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *ndi = &entry->state.ndi;
+    struct vdev_mlme_obj *mlme;
+    unsigned long flags;
+    int ret;
+
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (!ndi->active) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return 0;
+    }
+    if (entry->state.blocked || ndi->blocked) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (!ndi->delete_pending) {
+        ndi->delete_pending = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_native_delete(entry->vdev);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        ndi->delete_submitted = !ret;
+        if (ret)
+            ndi->blocked = true;
+        ret = ndi->blocked ? -EUCLEAN : -EINPROGRESS;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+    if (!ndi->delete_submitted || !ndi->delete_replied) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
+    }
+    ndi->create.timer_ready = false; /* real origin completed native deinit */
+    if (ndi->create.dp_attempted && !ndi->create.dp_attached) {
+        /* Target DP may have published a partially attached vdev on failure.
+         * Do not treat failure as no-resource or call an unproven detach path.
+         */
+        ndi->blocked = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (ndi->create.dp_attached && !ndi->dp_detaching) {
+        ndi->dp_detaching = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_native_dp_detach(entry->vdev,
+                                           mishare_runtime_ndi_dp_freed, entry);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        if (ret)
+            ndi->blocked = true;
+        ret = ndi->blocked ? -EUCLEAN : -EINPROGRESS;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+    if (ndi->create.dp_attached && !ndi->dp_freed) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
+    }
+    if (ndi->dp_freed)
+        ndi->create.stats_owned = false; /* native DP detach reset this ID */
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    mlme = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+    if (!mlme || mishare_ndi_release_stats(mlme, &ndi->create)) {
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        ndi->blocked = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    mlme->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
+    mlme->proto.generic.nss_2g = 0;
+    mlme->proto.generic.nss_5g = 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi->active = false;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return 0;
 }

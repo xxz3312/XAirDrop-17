@@ -2,6 +2,7 @@
 #ifndef WLAN_HDD_MISHARE_RUNTIME_H
 #define WLAN_HDD_MISHARE_RUNTIME_H
 #include <linux/types.h>
+#include "wlan_hdd_mishare_ndi.h"
 struct wlan_objmgr_pdev;
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -13,6 +14,7 @@ struct mishare_runtime_status {
     bool draining;
     bool blocked;
     int create_error;
+    struct mishare_ndi_status ndi;
 };
 /* Host-only raw object-manager factory. No SME self-peer/post-setup or WMI.
  * Caller owns RTNL, an exclusive parent psoc transition, and a live netdev/DP
@@ -25,6 +27,15 @@ struct mishare_runtime_status {
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
                            void *osif, struct wireless_dev *wdev,
                            struct mishare_runtime_owner **owner);
+/* Optional one-shot resource CREATE, not START/UP or radio ready. The caller
+ * must supply platform-validated per-band NSS (range 1..2), own the same RTNL /
+ * exclusive psoc transition as create/destroy, and retain parent resources.
+ * After any attempted wire CREATE, never retry on this owner. Destroy drives
+ * real DELETE then DP final-free; EINPROGRESS needs polling, EUCLEAN needs
+ * diagnosis/parent recovery, never a forced free. No live backend caller yet.
+ */
+int mishare_runtime_ndi_create(struct mishare_runtime_owner *owner,
+                               u8 nss_2g, u8 nss_5g);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);
