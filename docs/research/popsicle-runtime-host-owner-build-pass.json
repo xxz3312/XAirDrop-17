@@ -1,0 +1,208 @@
+{
+  "status": "REFERENCED_HOST_VDEV_OWNER_AND_DOWN_HOST_ATTACHMENT_OFFLINE_PASS_ONLY",
+  "commit": "01f3157875b10fb540ea96fa56ebc7b1fd448894",
+  "run_id": 40481772679,
+  "job_id": 122113575907,
+  "validation_artifact": {
+    "id": 12722884897,
+    "bytes": 27264,
+    "sha256": "dd48726627b5c84fa93a2c2c73f9cbd0fe9aa50362aed3f8ce04fbf1f514bc65",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12724525185,
+    "bytes": 337621721,
+    "github_reported_sha256": "2cd360b513cdc87411a7f3fdb97ee53e2373f053f8ce5ee359216f8c8cb47259",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "runtime_fixture": {
+    "status": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "dd74e5d70665b6f76a768d39600af12096284ec275730e8bc7e307400a69469e",
+    "object_manager_sha256": "56c582ef61014a0f409abd1ce5da1aa03d0f989bc365a4a3c0b2d4e7c0ff0739",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "e2a95a3bb2809d366d9eb45ddabaf04a47fb0717c40c7336f91c859810f454a9",
+      "wlan_hdd_mishare_runtime.h": "8cedb7ed6e924cc6ba2b644311aeb54b0ba88ef61165e040af15049a939fe2f9",
+      "wlan_hdd_mishare_events.c": "efe2f13b636e2a643a19c305e6e0886e3649d754a75044ce4c06f69ec40ec114",
+      "wlan_hdd_mishare_events.h": "1eea0cc60479860c05b3be8e32938e754306b62db0e8f7d3fae24b77dc1cfe39",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8"
+    },
+    "checks": [
+      "native origin edits exclusively restored to pinned baseline",
+      "allocation observation before component dispatch",
+      "free veto before parent detach",
+      "completion strictly after native storage free",
+      "actual production owner/events/transaction C",
+      "owned and observer references unwind outside registry lock",
+      "constructor NULL before and after observation",
+      "duplicate owner and duplicate MAC rejection",
+      "reference/bind/allocation and MLME validation failures",
+      "nonblocking delayed-reference cleanup retains owner",
+      "failed attached component quarantines before free/ID detach",
+      "parent detach failure retains owner",
+      "unknown delete failure retains all references in isolated child"
+    ],
+    "limitations": "Owner, event and transaction C plus complete native final-free function with object-manager creation/components/ref/synchronization/parent-detach stubs. No full object-manager/component construction or native locking/scheduler, actual recovery/drain, ID reuse, firmware, module load or radio certification. Quarantined child intentionally retains resources until process exit; modeled component/parent cleanup retry does not certify a production recovery API."
+  },
+  "down_host_fixture": {
+    "status": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "production_sha256": {
+      "wlan_hdd_mishare_events.c": "efe2f13b636e2a643a19c305e6e0886e3649d754a75044ce4c06f69ec40ec114",
+      "wlan_hdd_mishare_runtime.c": "e2a95a3bb2809d366d9eb45ddabaf04a47fb0717c40c7336f91c859810f454a9",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_events.h": "1eea0cc60479860c05b3be8e32938e754306b62db0e8f7d3fae24b77dc1cfe39",
+      "wlan_hdd_mishare_host.h": "5f58039a77dc1f836b46ed5e6c9e6e3f709de01e712ced8d7eaf14c9ed5d52c1",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8",
+      "wlan_hdd_mishare_commands.c": "adc1b5eb12937bde9d3beae7d6ac37c44fe0d8d235edd7726252dca034a5972c",
+      "wlan_hdd_mishare_backend.h": "b1eaeffe1b3df58f13072288cda17a8fe08c53ee739fe90e2994b74a55d41c24",
+      "wlan_hdd_mishare_backend.c": "76f93f4b92a674810822f9a9ae8d65811b4449f99b82425856dea95352140ee4",
+      "wlan_hdd_mishare_commands.h": "c692a595444c79be0b9ba4835311563c513c47d0ecf1a84f5b7efe8c416a5fe8",
+      "wlan_hdd_mishare_host.c": "05d3c3d7736d14c7e33a247062ce801a432f2bfc8bfd271f608afe00ba411a33",
+      "wlan_hdd_mishare_runtime.h": "8cedb7ed6e924cc6ba2b644311aeb54b0ba88ef61165e040af15049a939fe2f9"
+    },
+    "fixture_sha256": "61e150dd7a7df22cf36d9ddb956ddece3d77d1c5d93ac95fc9d9be707164306c",
+    "checks": [
+      "invalid input",
+      "owner allocation failure",
+      "sync allocation failure",
+      "adapter creation failure",
+      "context rejection",
+      "existing adapter rejection",
+      "duplicate owner rejection",
+      "running/open/session rejection retaining owner",
+      "sync registry mismatch retaining owner",
+      "unregister/drain/close/destroy ordering",
+      "repeat destroy",
+      "ordinary wrapper rejection",
+      "ndo_open rejection",
+      "factory registered-netdev failure rollback"
+    ],
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "limitations": "Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Not native kernel locking, netdev registration, teardown or radio validation."
+  },
+  "independent_checks": {
+    "runtime_fixture_regenerated_and_hash_matched": true,
+    "host_fixture_regenerated_and_hash_matched": true,
+    "native_object_manager_source_hash_matched": true,
+    "production_helper_hashes_matched": 12
+  },
+  "new_checks": [
+    "registered owner before raw construction and observation before component dispatch",
+    "owned and event observer references on published host vdev",
+    "no generic SME post-setup or self-peer call in dedicated factory",
+    "invalid partial component status rejected",
+    "constructor NULL after partial asynchronous construction retains parent resources",
+    "nonblocking destroy releases references outside registry lock and keeps parent until actual final-free notification",
+    "attached component remnants veto native final free before parent/ID detach",
+    "post-free completion uses stable owner token instead of reusable vdev address",
+    "HDD destroy cannot unregister sync or close adapter while runtime is pending",
+    "unknown native delete error retains all references with no reset or blind retry"
+  ],
+  "fixture_statuses": {
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY"
+  },
+  "host_regression_tests": 44,
+  "toolchain_cache_hit": true,
+  "bindgen_cache_hit": true,
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "24aad84d81fe22304cf6b77ba3971da2a988f98bfbd3697d4eb65a3f530a789d",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "linked_required_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "24aad84d81fe22304cf6b77ba3971da2a988f98bfbd3697d4eb65a3f530a789d",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout",
+      "mishare_events_bind",
+      "mishare_events_unbind",
+      "mishare_events_begin",
+      "mishare_events_submitted",
+      "mishare_events_snapshot",
+      "mishare_events_notify",
+      "mishare_events_begin_vdev",
+      "mishare_command_submit_start",
+      "mishare_command_submit_stop",
+      "passthru_mlme_ops",
+      "mishare_wonder_host_vdev_create_locked",
+      "mishare_wonder_host_vdev_destroy_locked",
+      "mishare_runtime_create",
+      "mishare_runtime_destroy",
+      "mishare_runtime_snapshot",
+      "mishare_runtime_allocated",
+      "mishare_runtime_prepare_free",
+      "mishare_runtime_freed"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,cnss_utils,cnss_nl,ipam,opairshare_wonder_provider,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "object_required_symbols_status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+  "selected_layouts": {
+    "status": "SELECTED_LAYOUTS_MATCH_ONLY",
+    "types": {
+      "module": "MATCH",
+      "net_device": "MATCH",
+      "wiphy": "MATCH",
+      "wireless_dev": "MATCH",
+      "sk_buff": "MATCH",
+      "cfg80211_chan_def": "MATCH",
+      "ieee80211_channel": "MATCH"
+    }
+  },
+  "runtime": {
+    "dedicated_host_factory_implemented": true,
+    "owner_bound_to_down_host_lifecycle": true,
+    "automatic_or_phone_entry_enabled": false,
+    "all_native_component_handlers_executed": false,
+    "driver_remove_recovery_integration_complete": false,
+    "firmware_create_submitted_on_phone": false,
+    "firmware_create_acceptance_verified": false,
+    "candidate_loaded_on_phone": false,
+    "airdrop_usable": false
+  },
+  "limitations": "Owner/events/transaction C, native final-free function and HDD helper are executed with creation/component/ref/parent/lock boundaries mocked. No full 19-handler construction/teardown, native synchronization, production recovery/drain or ID-reuse certification. Unknown-delete quarantine intentionally retains references in a child process; modeled component/parent cleanup retries are not a production recovery API. Callers must serialize under RTNL/exclusive parent transition, retain the matching adapter/DP interface, and finish before HDD/pdev teardown. No automatic caller, full ABI/KCFI, WMI, load or radio validation. No CRC/vermagic rewrites or relaxed modpost."
+}

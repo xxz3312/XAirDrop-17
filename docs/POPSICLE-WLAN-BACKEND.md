@@ -14,7 +14,7 @@
 | 生命周期基础 | DOWN host 可显式挂接 raw objmgr 主机 vdev；owner 持有自身与事件观察引用 | 没有自动/实机调用；固件 CREATE/DELETE 与收发未接通 |
 | 无线与互传 | 没有成功无线 init 或 RX/TX | AirDrop 不可用，没有安装包 |
 
-最新离线检查见 [MLME 主机组件生命周期验证记录](research/popsicle-mlme-host-component-build-pass.json)。
+最新离线检查见 [专用主机 vdev owner 验证记录](research/popsicle-runtime-host-owner-build-pass.json)。
 下面的源码缺口表是最初未打补丁的基线；后续小节记录各次变更和各自限制。
 
 ## 已核对的未打补丁源码基线
@@ -705,3 +705,22 @@ ID/父列表并返回 EUCLEAN；未知逻辑删除错误同样保留引用。仅
 最终释放回调使用释放前在 registry 中取得的 owner token，而非释放后可被
 分配器复用的 vdev 地址。owner 在该唯一最终释放通知之前保持分配，避免
 旧对象释放到通知之间的新对象地址复用被误认成新 owner 的完成事件。
+
+
+### 专用主机 vdev owner 的 Actions 结果
+
+提交 `01f3157875b10fb540ea96fa56ebc7b1fd448894` 的
+[Actions 40481772679](https://github.com/xxz3312/XAirDrop-17/actions/runs/40481772679)
+全部通过：44 项 Python 检查、10 组原生测试、完整 WLAN 编译、严格链接。
+28 个所需命名符号在实际对象与模块中存在；574 条 WLAN 导入版本记录无
+不匹配，7 项已选结构布局匹配。工具链与 bindgen 缓存均命中。
+
+已下载并校验 27,264 字节验证 ZIP，独立重新生成 runtime 与 DOWN host 两组
+测试源码并核对哈希；原生 object-manager 源码和 12 个 helper 文件哈希也与
+Actions 报告一致。337,621,721 字节完整诊断 ZIP 未独立下载，也不是安装包。
+完整结果和范围见 [验证记录](research/popsicle-runtime-host-owner-build-pass.json)。
+
+专用 raw host factory、引用 owner 和 DOWN host 的可选挂接/销毁现已接线，
+但没有自动或手机端调用；10 组原生测试不等于完整运行 19 个注册组件。
+驱动退出/恢复流程与实机 ABI、组件、无线生命周期仍需验证；固件 CREATE/
+DELETE 未接通，Wonder init 仍拒绝，AirDrop 不可用，手机暂时无需操作。
