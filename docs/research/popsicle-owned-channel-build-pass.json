@@ -1,0 +1,118 @@
+{
+  "status": "OWNED_CHANNEL_PREPARATION_OFFLINE_PASS_ONLY",
+  "commit": "99f289f3b9e6e8b56880078679302569b8a398c8",
+  "run_id": 40564544719,
+  "job_id": 122402599069,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40564544719",
+  "validation_artifact": {
+    "id": 12763188079,
+    "bytes": 34915,
+    "sha256": "aba853779af030de3493ee15a4b4568dd0e8bd26677963a3d0f4575b2700d76b",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12763531877,
+    "bytes": 337726431,
+    "github_reported_sha256": "38b10467d2b6496d50fd3d75b1c9507453b274f511da4ccc26c7815ea598265c",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "channel_fixture": {
+    "status": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "a83ef7b7ec4f888bfb8e26cd473bd270f594bad0c3cc5037169dcb16a0abae67",
+    "native_sha256": {
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "96cafddb540845d75e576e2f1c10d8662b09d705a18b7622036ee46651785f07"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "5e6983a260679c22b13bd7b0218c2c1bd002f25dcc1d14a8525c0b8e226673ec",
+      "wlan_hdd_mishare_runtime.h": "3ea0f0b22af9e7c3206835934c5489b5aac3c7ec0749c49c17d25f05826f5a6a",
+      "wlan_hdd_mishare_ndi.h": "cd4a6e5eb270ce2bccbe8f0f2b25d645c0e41d9e3c4369c6f360ef090e7ae837"
+    },
+    "pre_channel_native_api_sha256": "76ea35d256592c2944dab21abb85a9e03081bd6cfd2d27d1105a397c4a1015b2",
+    "checks": [
+      "MC request pins VDEV, has flush callback and actual completion",
+      "allocation/ref/queue failures release local resources before publication",
+      "no peer/PE/VDEV/DP teardown while channel request is pending",
+      "invalid/6GHz/passive/disabled/DFS/scan/concurrent/bonding/power rejects before host mutation",
+      "per-band validated NSS used for 2.4/5GHz HT20 preparation",
+      "stable PE/owner/VDEV/MAC identity and native INIT required",
+      "early completion retained until post returns",
+      "partial native preparation/error or bad output quarantines",
+      "wrong expected frequency/duplicate matching reply quarantines; foreign token/PSOC/ID ignored"
+    ],
+    "limitations": "Actual production owner and native owned channel/queue/flush helpers execute with ASan/UBSan. Native regulatory/scan/policy primitives, lim_pre_vdev_start, full PE allocation/destruction and scheduler are modeled boundaries. Native parameter preparation itself is compiled as part of full WLAN but not executed by this fixture. No WMI START/STOP/DOWN, MLME UP state, hardware mode or concurrency lease, firmware acceptance, actual radio or SSR/remove certification. No runtime backend caller is added."
+  },
+  "independent_verification": {
+    "generated_fixture_hash_matches": true,
+    "native_and_three_owner_file_hashes_match": true
+  },
+  "native_fixtures": {
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY"
+  },
+  "python_tests_passed": 44,
+  "full_wlan_compile": "PASS",
+  "strict_link": "PASS",
+  "required_host_symbols": 51,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "f9b48bf1e45dad7a2ad9a173dcee1c645dea22919fc8c18387447397fd5bfdd6",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "runtime_backend_caller": false,
+  "phone_driver_loaded": false,
+  "airdrop_connected": false,
+  "remaining": [
+    "native MLME START/STOP/DOWN and host-only UP integration",
+    "channel hopping and hardware/concurrency policy",
+    "RAW TX and monitor/native RX",
+    "Wonder radio backend callbacks",
+    "SSR/remove/quarantine recovery",
+    "firmware acceptance, phone validation and end-to-end transfer"
+  ],
+  "limitations": "Actual production owner and native owned channel/queue/flush helpers execute with ASan/UBSan. Native regulatory/scan/policy primitives, lim_pre_vdev_start, full PE allocation/destruction and scheduler are modeled boundaries. Native parameter preparation itself is compiled as part of full WLAN but not executed by this fixture. No WMI START/STOP/DOWN, MLME UP state, hardware mode or concurrency lease, firmware acceptance, actual radio or SSR/remove certification. No runtime backend caller is added."
+}
