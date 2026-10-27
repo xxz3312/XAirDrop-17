@@ -208,3 +208,20 @@ handler 和原生主机最终释放函数；外部平台/WMI/timer/DP 和参数�
 本轮不准备 legacy/CSR/WMA session、不创建 firmware self-peer，不发送 START，
 不接通 TX/RX。原有命令前置检查、专用 MLME 拒绝操作和 Wonder init 限制仍保留。
 SSR/remove 与部分 DP 初始化失败的完整恢复仍须在启用运行时调用方前完成。
+
+## 0016 构建验证结果
+
+[Actions 40498357106](https://github.com/xxz3312/XAirDrop-17/actions/runs/40498357106)
+在提交 `6a1d8475b580014431c0d9800fb3c969ed67c057` 全部通过：44 项 Python 检查、
+12 组原生 fixture、完整 WLAN 对象编译和严格模块链接。37 个要求的主机符号
+存在，WLAN 574 条版本记录无不匹配，没有未解决依赖；7 项选定结构布局 MATCH。
+clang/rust 工具链和 bindgen 缓存均命中。
+
+紧凑报告 ZIP、生成 fixture、五个原生文件及三个 owner 文件哈希已独立核对。
+WLAN SHA-256 为 `704d5162639d3dc4432ce9caeb9b66b4d7db5434d93cdf22f0d822eed60134f0`。
+完整记录见 [owned NDI 资源构建报告](research/popsicle-owned-ndi-resource-build-pass.json)。
+这些结果不构成完整 ABI/KCFI、模块加载或固件接受的证明。
+
+本轮已将资源 CREATE/DP/DELETE/最终释放接进私有 owner API，但没有运行时调用方，
+未在手机发送固件命令。下一阶段需准备 legacy/WMA 上下文与固件 self-peer，
+同时扩展对应回收，再接 START/频道和 RAW 收发；SSR/remove 仍须在启用前完成。
