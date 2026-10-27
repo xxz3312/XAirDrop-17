@@ -194,11 +194,11 @@ def patch_wifi(text):
     .locals 1
     :try_start_0
     invoke-direct {{p0}}, La/k0;->xairdrop17Reconnect()V
-    :try_end_3
-    .catchall {{:try_start_0 .. :try_end_3}} :catchall_7
+    :try_end_0
+    .catchall {{:try_start_0 .. :try_end_0}} :catchall_0
     invoke-static {{}}, {bridge}->restoreWifi()V
     return-void
-    :catchall_7
+    :catchall_0
     move-exception v0
     invoke-static {{}}, {bridge}->restoreWifi()V
     throw v0
@@ -281,6 +281,18 @@ def build(reference,apktool,sdk,work,output):
     if base!=expected:
         changed=[k for k in sorted(set(base)|set(expected)) if base.get(k)!=expected.get(k)]
         print('Compiled class mismatches:',changed,flush=True)
+        if str(K0) in changed:
+            a=wifi_class_fingerprint((decoded/K0).read_text());b=wifi_class_fingerprint((checked/K0).read_text())
+            print('Wi-Fi prefix matches:',a['class_and_fields']==b['class_and_fields'],flush=True)
+            for header in sorted(set(a['methods'])|set(b['methods'])):
+                if a['methods'].get(header)!=b['methods'].get(header):
+                    print('Wi-Fi method differs:',header,flush=True)
+                    blocks=[]
+                    for root in [decoded,checked]:
+                        text=(root/K0).read_text();start=text.find(header+'\n')
+                        blocks.append(text[start:text.find('.end method',start)+len('.end method')].splitlines() if start>=0 else [])
+                    print('\n'.join(difflib.unified_diff(*blocks,fromfile='expected method',tofile='compiled method')),flush=True)
+
         for name in changed[:3]:
             if (decoded/name).exists() and (checked/name).exists():
                 diff=difflib.unified_diff((decoded/name).read_text().splitlines(),(checked/name).read_text().splitlines(),fromfile='expected/'+name,tofile='compiled/'+name)
