@@ -11,7 +11,7 @@
 @@ -185,27 +186,55 @@
  	return QDF_STATUS_E_NOSUPPORT;
  }
- 
+
 +/* MISHARE_BEGIN:radio_wrappers */
 +static QDF_STATUS passthru_radio_beacon(struct vdev_mlme_obj *m,
 + enum beacon_update_op op, uint16_t len, void *data)
@@ -198,3 +198,15 @@
 + return 0;
 +}
 +/* MISHARE_END:radio_pm */
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -268,7 +268,8 @@
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_txn.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_events.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_commands.o \
+-	$(HDD_SRC_DIR)/wlan_hdd_mishare_runtime.o
++	$(HDD_SRC_DIR)/wlan_hdd_mishare_runtime.o \
++	$(HDD_SRC_DIR)/wlan_hdd_mishare_radio.o
+
+ ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o
