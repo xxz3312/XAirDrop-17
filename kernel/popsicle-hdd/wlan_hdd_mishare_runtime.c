@@ -43,13 +43,17 @@ void mishare_runtime_allocated(struct wlan_objmgr_vdev *vdev)
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
 }
 
-bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev)
+bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev,
+                                   unsigned long *owner_token)
 {
     struct mishare_runtime_owner *entry;
     unsigned long flags;
     unsigned int id;
     bool allowed = true;
 
+    if (!owner_token)
+        return false;
+    *owner_token = 0;
     if (wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
         return true;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
@@ -67,20 +71,22 @@ bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev)
                 break;
             }
         }
+        if (allowed)
+            *owner_token = (unsigned long)entry;
         break;
     }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     return allowed;
 }
 
-void mishare_runtime_freed(struct wlan_objmgr_psoc *psoc, unsigned long cookie)
+void mishare_runtime_freed(struct wlan_objmgr_psoc *psoc, unsigned long owner_token)
 {
     struct mishare_runtime_owner *entry;
     unsigned long flags;
 
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next) {
-        if (entry->psoc == psoc && entry->cookie == cookie &&
+        if (entry->psoc == psoc && (unsigned long)entry == owner_token &&
             entry->state.allocated && !entry->state.freed) {
             entry->state.freed = true;
             entry->state.blocked = false;

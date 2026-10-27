@@ -13,7 +13,7 @@ diff --git a/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_ob
  {
  	struct wlan_objmgr_pdev *pdev;
  	struct wlan_objmgr_psoc *psoc;
-+	unsigned long mishare_cookie;
++	unsigned long mishare_owner_token;
 +	bool mishare_passthru;
  
  	if (!vdev) {
@@ -22,9 +22,9 @@ diff --git a/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_ob
  		return QDF_STATUS_E_FAILURE;
  	}
  
-+	mishare_cookie = (unsigned long)vdev;
 +	mishare_passthru = wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE;
-+	if (mishare_passthru && !mishare_runtime_prepare_free(vdev))
++	if (mishare_passthru && !mishare_runtime_prepare_free(vdev,
++						       &mishare_owner_token))
 +		return QDF_STATUS_E_BUSY;
 +
  	/* Detach VDEV from PDEV VDEV's list */
@@ -36,7 +36,7 @@ diff --git a/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_ob
  	qdf_mem_free(vdev);
 +	/* Signal only after components, parent lists, locks and storage are gone. */
 +	if (mishare_passthru)
-+		mishare_runtime_freed(psoc, mishare_cookie);
++		mishare_runtime_freed(psoc, mishare_owner_token);
 +
  
  	return QDF_STATUS_SUCCESS;

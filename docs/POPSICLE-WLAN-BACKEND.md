@@ -670,7 +670,7 @@ MLD/MAT/flags 和真实 osif 私有区大小，不经过已拒绝 PASSTHRU 的�
 CREATE/START/STOP/DELETE。它不是新的自动启动或实机安装入口。
 
 raw objmgr 构造可能调用其他已注册组件。owner 在构造之前登记 psoc+MAC，
-在组件分发之前记录对象地址 token；成功发布后取得独立 HDD 引用，再绑定
+在组件分发之前记录对象身份；成功发布后取得独立 HDD 引用，再绑定
 事件注册表取得第二个引用。组件状态必须都是 SUCCESS/COMP_DISABLED，且
 必须找到 type=9/subtype=0、无 legacy 扩展的 MLME 主机组件。其他失败状态
 不能因原生聚合函数未将其判为 E_FAILURE 就被接受。
@@ -679,7 +679,7 @@ raw objmgr 构造可能调用其他已注册组件。owner 在构造之前登记
 锁之外。最后一个引用可能稍后才释放，因此 `EINPROGRESS` 时保留 owner、
 adapter、netdev、DP interface 和 sync；重复 destroy 只检查进度，不再逻辑
 删除、不重置引用计数，也不阻塞等待。对象最终释放函数在清理所有组件、
-父列表、锁和存储之后以地址 token 通知 owner，随后才能关闭 adapter。
+父列表、锁和存储之后以预先取得的稳定 owner token 通知 owner，随后才能关闭 adapter。
 即便构造返回 NULL，中途创建的对象仍可能被异步引用，故失败也可能返回
 非空 owner 与 EINPROGRESS，不能立即释放父资源。
 
@@ -700,3 +700,8 @@ ID/父列表并返回 EUCLEAN；未知逻辑删除错误同样保留引用。仅
 证明所有传递调用均无副作用。Wonder init 仍拒绝，caps 仍为 0；新入口只供
 后续受控测试/固件 owner 接线使用。下一步还需完成专用入口的完整组件/teardown
 验证，再接固件创建结果与真实 DELETE 来源、DP 完成和排空；AirDrop 不可用。
+
+
+最终释放回调使用释放前在 registry 中取得的 owner token，而非释放后可被
+分配器复用的 vdev 地址。owner 在该唯一最终释放通知之前保持分配，避免
+旧对象释放到通知之间的新对象地址复用被误认成新 owner 的完成事件。

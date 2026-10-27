@@ -29,9 +29,12 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);
 /* Native object-manager origins; no pointer retention/ref acquisition here.
- * The free notification takes an address token captured BEFORE deallocation.
+ * prepare_free captures a stable OWNER token before deallocation; the owner
+ * cannot be freed until that one final-free notification arrives. Never match
+ * post-free events by a reusable vdev address.
  */
 void mishare_runtime_allocated(struct wlan_objmgr_vdev *vdev);
-bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev);
-void mishare_runtime_freed(struct wlan_objmgr_psoc *psoc, unsigned long cookie);
+bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev,
+                                   unsigned long *owner_token);
+void mishare_runtime_freed(struct wlan_objmgr_psoc *psoc, unsigned long owner_token);
 #endif

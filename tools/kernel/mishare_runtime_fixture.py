@@ -139,6 +139,8 @@ int main(void) {
  assert(state(o).allocated && !state(o).freed && !state(o).draining && !state(o).blocked);
  assert(create(&o)==-EBUSY && create(&other)==-EEXIST && !other);
  mishare_runtime_freed(&psoc,1);assert(!state(o).freed);
+ /* A recycled object address cannot stand in for the stable owner token. */
+ mishare_runtime_freed(&psoc,(unsigned long)last_vdev);assert(!state(o).freed);
  assert(!mishare_runtime_destroy(&o) && !o && delete_calls==1 && !objects_live && !allocations);
  assert(!mishare_runtime_destroy(&o));
  /* Binding failure reverses both observer and owner references before free. */
@@ -189,9 +191,9 @@ def fixture(root):
     before=subprocess.check_output(['git','-C',str(root),'show',f'{PIN}:{OBJ}'],text=True)
     # No other patch changes this core source. Verify the three exact origins.
     stripped=text.replace('#include "wlan_hdd_mishare_runtime.h"\n','')
-    stripped=stripped.replace('\tunsigned long mishare_cookie;\n\tbool mishare_passthru;\n','')
-    for pattern in [r'\n\tmishare_cookie = .*?\n\t\treturn QDF_STATUS_E_BUSY;\n',
-                    r'\t/\* Signal only after components, parent lists, locks and storage are gone\. \*/.*?mishare_runtime_freed\(psoc, mishare_cookie\);\n\n',
+    stripped=stripped.replace('\tunsigned long mishare_owner_token;\n\tbool mishare_passthru;\n','')
+    for pattern in [r'\n\tmishare_passthru = .*?\n\t\treturn QDF_STATUS_E_BUSY;\n',
+                    r'\t/\* Signal only after components, parent lists, locks and storage are gone\. \*/.*?mishare_runtime_freed\(psoc, mishare_owner_token\);\n\n',
                     r'\n\t/\* Capture failed/partial construction before any component can attach\. \*/\n\tmishare_runtime_allocated\(vdev\);\n']:
         stripped,count=re.subn(pattern,'',stripped,flags=re.S)
         if count!=1:raise ValueError('Object manager origin changed')
@@ -211,7 +213,7 @@ def audit(root):
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint64_t u64;\n')
-        for n in ['linux/errno.h','linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h']:(d/n).write_text('/* boundary declarations */\n')
+        for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h']:(d/n).write_text('/* boundary declarations */\n')
         p=d/'owner.c';p.write_text(source);exe=d/'owner'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(p),'-o',str(exe)],check=True)
         out=subprocess.check_output([exe],text=True,timeout=20,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})
