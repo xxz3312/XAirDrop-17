@@ -1,0 +1,112 @@
+# 小米 17 PAS / NDI / RAW 原生驱动接入分析
+
+本轮为源码分析，没有新增驱动补丁，没有发送固件命令。
+目标源码固定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f`，
+本地包含已有 popsicle 补丁。读取文件的 SHA-256 记录在
+[源码快照](research/popsicle-xiaomi15-native-port-source-map.json)。
+
+## 参考来源须分清
+
+Leekin2/XAirDrop 固定提交 `eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76`
+提供本轮直接复用的 Java、应用补丁和实际加载参数。
+逐项检查其 Git tree 后确认：该提交没有完整 WLAN 驱动源码。
+这里的 `kernel/driver/` 是仓库原有 OPAirDrop / SM8750 参考实现；
+不能将它表述为“从小米 15 仓库拿到的目标驱动源码”。
+
+小米 15 启动参数选择 NDI type 7、self-peer、host-only UP、WMI RAW 和辅助 monitor。
+这支持把相同组合当作 17 的优先移植路线，但不证明 17 固件接受此组合。
+SM8750 上 type 9 断言、NDI 可用的记录，也不构成 17 的测试结果。
+
+## 1. NDI 会话必须同时接通创建、响应和销毁
+
+目标 `qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c` 的
+`mlme_vdev_uses_self_peer()` 不包含 NDI。目标 `core/wma/src/wma_dev_if.c`
+在 `wma_vdev_self_peer_create()`、`wma_vdev_self_peer_delete()`、
+`wma_vdev_detach()` 共用该判断。只改 create 会导致删除和同步删除响应不一致。
+
+参考 `kernel/driver/wma_dev_if.c` 的 `opairshare_pas_ndi_peer()` 限定
+PAS 主机模式与 NDI 固件类型，`opairshare_uses_self_peer()` 扩展原判断；
+创建还检查 `wmi_service_nan_data`。迁入时保留原生 NDI、STA、monitor 行为。
+
+同一文件还在以下函数使用 PAS＋NDI 判断：
+
+| 接口 | 要对齐的行为 |
+| --- | --- |
+| `wma_vdev_start_resp_handler` | PAS＋NDI 的 START 响应不能落入普通关联/BSSID 分支 |
+| `wma_handle_channel_switch_resp` | 频道切换失败清理与 START/RESTART 事件分发 |
+| `wma_set_and_update_mac_id` | 固件响应中的 MAC ID 与 DP 路由同步 |
+| `wma_post_vdev_start_setup` | NDI 的保护模式与启动后处理 |
+| self-peer create/delete、vdev detach | 对称创建、删除、等待真正完成事件 |
+
+目标 `core/mac/src/pe/lim/lim_utils.c` 的 `lim_ap_mlme_vdev_up_send()`
+已有 NDI 不发送固件 UP 的分支；`core/wma/src/wma_utils.c` 的
+`wma_mon_mlme_vdev_up_send()` 则会调用 `vdev_mgr_up_send()`。
+参考 `passthru_ndi_no_up` 的含义是按 PAS＋NDI 条件完成主机 UP，
+不能把 monitor 的 UP 函数原样用于这个组合。
+
+当前 popsicle host-only owner 没有 legacy ext 对象，也没有真实固件会话；
+START/STOP 入口有相应拒绝条件。现有 mgmt.type=9 是占位。
+所以不能只把 9 改成 7 或打开模块参数：下一项驱动修改须为完整会话建立
+所需上下文、WMA/DP 绑定、事件路由，并与既有 owner、超时、失败回滚、
+DELETE 和 SSR/remove 回收统一。成功条件是收到并关联真实完成响应，
+不能用本地主机对象创建成功替代固件成功。
+
+## 2. RAW TX 有现成目标接口，仍须适配所有权
+
+目标速率参数编码器 `wma_update_tx_send_params()` 在
+`qcacld-3.0/core/wma/src/wma_data.c`，不是参考文件位置。
+目标 `tx_send_params` 已定义 DATA frame_type=1、MGMT=0，以及带宽位；
+应调用目标编码器后按参考设置 DATA 和 20 MHz，避免复制旧结构布局。
+
+目标与参考都提供七参数 `wlan_mgmt_txrx_mgmt_frame_tx()`。
+目标实现只在该入口检查 802.11 version，没有在这里排除 DATA 帧；
+这说明源码接口可以承接参考桥接逻辑，不代表固件一定接收或实际发射。
+
+参考 `wma_opairshare_pas_mgmt.h` 可按函数复用 radiotap 解析、完整帧队列、
+probe/action 与 AWDL QoS DATA 分类、self-peer 选择和完成处理。
+peer 必须属于本次 PAS vdev，不能依赖普通按目的地址查找的 peer。
+
+目标 `wma_mgmt_unified_cmd_send()` 在 `wmi_service_mgmt_tx_wmi` 缺失时
+会回退 `cdp_mgmt_send_ext()`。RAW 路径必须明确检查该服务并拒绝不支持情况，
+不能把这个回退当成等价的 RAW 通路。
+目标 `wmi_unified_tlv.c` 的 HL 和非 HL 两个 `send_mgmt_cmd_tlv()` 分支
+均存在显式发送参数编码；非 HL 分支另负责 DMA map/unmap 和 MLO 参数。
+不能由源码包含两个分支推定实际目标启用了哪一个。
+
+移植须逐一对齐提交失败、完成回调和停止时的 skb、nbuf、descriptor、peer、
+vdev 引用。目标 mgmt_txrx 在 tx_ops 提交失败时清空 descriptor 的 nbuf 并回收
+内部 peer 引用；桥接层不能据此重复释放内部引用，也不能遗漏自己拥有的缓冲。
+停止先关新请求并排空 worker/完成事件，再删 peer/vdev。
+
+## 3. RX 不止 monitor 回调
+
+目标 monitor 回调在 `qcacld-3.0/components/dp/core/src/wlan_dp_txrx.c`
+的 `dp_mon_rx_packet_cbk()`；context 是 `wlan_dp_link *`。
+它遍历 skb 链，释放 QDF debug tracking，处理统计与 mac_header，
+并区分最后一个包的 push 类型。接入时须保留这些所有权和批处理约定。
+
+参考辅助 monitor 路由 `wlan_hdd_opairshare_aux_rx.h` 使用 packet_type
+接收已上送的 radiotap skb，检查、去重/排序后克隆到 PAS netdev。
+因此“直接改 DP monitor 回调”不是唯一方案；优先评估复用这条较少侵入的路由，
+确认目标 monitor 帧格式和上送行为后再决定是否增加 DP hook。
+
+参考同时有 `dp_rx.c`、`dp_be_rx.c`、`dp_rx_err.c` 的 native RAW 接纳，
+以及目标地址过滤、peer-map、ADDBA/BA 和 RX ring 配置。
+复制 monitor 路由只能覆盖其中一部分，不能据此宣称单播数据 RX 已完成。
+
+## 4. 频道与启停需成为同一事务
+
+目标 `wlan_hdd_set_mon_chan()` 在 `core/hdd/src/wlan_hdd_main.c`，
+会遍历 link、必要时创建普通 monitor vdev，并执行带宽、信道及硬件模式检查。
+它不能直接接收现有的 PAS owner 来完成整个会话。
+需复用参考 WonderTap init/set_freq/stop 的组织方式，分别绑定 PAS＋NDI 与
+辅助 monitor 的实际上下文，保留目标 regulatory/concurrency 校验，
+在两个频道状态和完成响应一致后才报告 set_freq 成功。
+
+## 下一项实际修改的边界
+
+先迁入一个完整的 PAS＋NDI 会话：类型选择、真实固件创建、self-peer、
+START/host-only UP、频道响应、STOP/DELETE、失败回滚与回收。
+接着在该真实会话上接入 WMI RAW TX 和 monitor/native RX。
+构建仍使用 Actions 和工具链缓存。当前仅有应用层复用载荷构建成功；
+本分析不构成 WLAN 加载或 AirDrop 可用的结论。

@@ -75,3 +75,18 @@ APK 或可刷模块。**不输出参考资源拼装的 APK，不挂载应用，�
 4. 只有无线后端可用且恢复/权限验证完成后，才制作整合启动和安装包。
 
 目前 AirDrop 不可用；本轮无需手机安装或执行新命令。
+
+## 已完成构建与独立复核
+
+应用层构建 [40488962018](https://github.com/xxz3312/XAirDrop-17/actions/runs/40488962018)
+在提交 `f6ad95ef216035502b906b8715cde3cc559099e7` 成功。8 项新增 Python 测试、
+6 项原有测试、真实衍生 broker 的主机 holder fixture、Java/D8 和 DEX 全类比较通过。
+Apktool/参考 APK 与 Android 工具链缓存均命中。
+
+下载的 Actions ZIP 为 3,179,063 字节，SHA-256 为
+`8d69fdac8495622f9f4201573dff5fdccba3977c597fd793113cdeddb8416997`。
+已在本地独立复核 ZIP、三个 DEX、衍生 Java 源码哈希和五个原始文件的上游 Git blob ID。
+完整结果见 [构建报告](research/popsicle-xiaomi15-session-port-build-pass.json)。
+这个结果证明构建与限定范围的代码比较通过，尚未验证手机上的 IWifiManager 调用与无线会话。
+
+驱动接入位置与下一项完整修改见 [17 原生驱动移植分析](POPSICLE-NDI-RAW-PORT.md)。

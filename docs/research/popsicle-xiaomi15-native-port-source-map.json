@@ -1,0 +1,27 @@
+{
+  "status": "SOURCE_ANALYSIS_ONLY_NOT_FIRMWARE_VALIDATION",
+  "target_source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+  "target_worktree_contains_existing_popsicle_patches": true,
+  "sha256_at_analysis": {
+    "qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c": "033f335a1cb188577379367668a200c6a4ad626dd77349022ad6a2bbd6647df2",
+    "qcacld-3.0/core/wma/src/wma_dev_if.c": "e1d6dc0fb212a3e3396866f3625dd132d32f87659cab9106570294051a533688",
+    "qcacld-3.0/core/wma/src/wma_data.c": "68b885e8e383a35c6a24414c8fdaf9771d6c3255679f8f78a985079c836058f6",
+    "qcacld-3.0/core/wma/src/wma_mgmt.c": "35b3395573a3244ac735a40c90e505b1bad838f63e08e7df59bb7a908eece7af",
+    "qcacld-3.0/core/wma/src/wma_utils.c": "49a4f97509c7eec2a0fcc1a795b5275b9a9421b8746f9b4f5d025488d9f7974c",
+    "qcacld-3.0/core/mac/src/pe/lim/lim_utils.c": "790917eedb6a177186b6861050bc437927a967f07415526256c4348a334153ba",
+    "qcacld-3.0/components/dp/core/src/wlan_dp_txrx.c": "5c5801b623970a91b92f659255b99508940a0863fad631d83a1d7a648d2f03b2",
+    "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "becc33f8c7ee68b6b806d944951ebb591034e0060ee1d86f23012eeba08aa891",
+    "qca-wifi-host-cmn/wmi/inc/wmi_unified_param.h": "6b82b778bcb75361daf9c0497290666a4153479d40339ed2b0c5d9bd4a0d7df8",
+    "qca-wifi-host-cmn/wmi/src/wmi_unified_tlv.c": "a111b1c0210edfe229c1eacdc0c54f7c57d7500cccb676ce0f3931d67397a1bb",
+    "qca-wifi-host-cmn/umac/cmn_services/mgmt_txrx/dispatcher/src/wlan_mgmt_txrx_utils_api.c": "c4606735ad287da82779a6264b736390dc2cccdb948b7ce4080c2d74d7d4b4fe"
+  },
+  "local_reference_sha256_at_analysis": {
+    "kernel/driver/wma_dev_if.c": "f95e5d5dd93e2c5c46b3b6bbbc58b2866bbbfe18f8558dd9eeb58172a402ed06",
+    "kernel/driver/wma_opairshare_pas_mgmt.h": "6d582c9fb1042f3e68e7581f2c5ba37ff43f9fc3810396cb00a02ce8fe625191",
+    "kernel/driver/wlan_hdd_opairshare_aux_rx.h": "2e3b9af23604cae343c52b7d6ec9d3e25d474c3bb00ba16b9dc1f02ab8dc2210",
+    "kernel/driver/dp_be_rx.c": "b1cbac111c2dfcc113b15e32108074460e7069b7f3d91ca4c52445caaf8c206a",
+    "kernel/driver/wlan_hdd_wondertap.c": "c84e914c583c89745ee3541c3ea9cd1544e2dedcde06412dfb710878e46187f0"
+  },
+  "reference_scope": "kernel/driver is existing OPAirDrop/SM8750 reference; these files are not present in pinned Leekin2/XAirDrop tree. Xiaomi15 action.sh supplies selected runtime arguments; Java source is separately pinned and verified.",
+  "runtime_tested": false
+}

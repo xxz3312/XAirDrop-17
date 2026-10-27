@@ -1,0 +1,155 @@
+{
+  "status": "BUILT_XIAOMI15_SESSION_PORT_NOT_RUNTIME_TESTED",
+  "commit": "f6ad95ef216035502b906b8715cde3cc559099e7",
+  "run_id": 40488962018,
+  "job_id": 122137774415,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40488962018",
+  "artifact": {
+    "id": 12726880881,
+    "name": "xiaomi15-mishare-session-40488962018",
+    "bytes": 3179063,
+    "sha256": "8d69fdac8495622f9f4201573dff5fdccba3977c597fd793113cdeddb8416997",
+    "downloaded_and_checksum_verified": true,
+    "installable": false
+  },
+  "validation": {
+    "new_python_tests_passed": 8,
+    "existing_python_tests_passed": 6,
+    "host_fixture": "WIFI_HOLD_STATE_LOGIC_PASS_ONLY",
+    "all_other_application_classes_compared": true,
+    "native_network_agent_unchanged": true,
+    "local_independent_dex_hash_verification": true,
+    "local_independent_adapted_source_hash_verification": true,
+    "upstream_five_git_blob_ids_verified": true,
+    "cache_hits": [
+      "existing Apktool/reference APK",
+      "Android API36/build-tools36.0.0"
+    ],
+    "local_java_or_native_compilation": false
+  },
+  "manifest": {
+    "status": "BUILT_XIAOMI15_SESSION_PORT_NOT_RUNTIME_TESTED",
+    "profile": "optional-wifi-session-compat",
+    "provenance": {
+      "repository": "https://github.com/Leekin2/XAirDrop",
+      "commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76",
+      "authors": [
+        "Leekin2",
+        "mertcqnkld"
+      ],
+      "license": "GPL-3.0",
+      "files": {
+        "reference/action.sh.txt": "2178ad55756d5d9e04be55f32e1fc5791f2c599f493973dcbfb555e3acd3d810",
+        "reference/build.py.txt": "791e063970e6f95563f8754d42ff08d2c5749d86979b94c7f86d73d12b93eede",
+        "src/io/github/leekin2/xairdrop/NetworkBroker.java": "ea3adad81e5dbe3ca64572cf8cc4a23e1096eb2b7a99fcc6a2628a08db06c7ec",
+        "src/io/github/leekin2/xairdrop/WifiControl.java": "9804db9bcdeb79b29df527628c957708c9ee3e0bea8b9c6d1102789b128a772a",
+        "src/io/github/leekin2/xairdrop/Bridge.java": "9b2c90bca1f07032a0d2c2a750abe0b7dad350f5f45dbfa6ec5c3f50979aa5f7"
+      },
+      "reference_files_executable": false,
+      "binary_modules_included": false
+    },
+    "route": {
+      "reference_commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76",
+      "target": {
+        "device": "popsicle",
+        "soc": "SM8850",
+        "kernel_series": "6.12"
+      },
+      "reference_driver": {
+        "soc": "SM8750",
+        "kernel_series": "6.6",
+        "module_parameters": {
+          "passthru_awdl_addba": "1",
+          "passthru_awdl_native_rx": "1",
+          "passthru_ht": "1",
+          "passthru_fwtype": "7",
+          "passthru_mon_rings": "0",
+          "passthru_dry_run": "0",
+          "passthru_mon_chan_sync": "1",
+          "passthru_ndi_peer": "1",
+          "passthru_ndi_no_up": "1",
+          "passthru_mgmt_bridge": "1",
+          "passthru_aux_monitor": "1",
+          "passthru_tx_audit": "1",
+          "passthru_ndi_fw_authorize": "0",
+          "passthru_awdl_wmi_raw": "1",
+          "passthru_awdl_target_mac": "",
+          "passthru_awdl_target_auto": "1",
+          "passthru_awdl_target_enable": "1",
+          "passthru_awdl_target_auth": "2",
+          "passthru_native_data_rx": "1",
+          "passthru_awdl_backpressure": "1",
+          "passthru_awdl_raw_rx": "1",
+          "passthru_awdl_rate_mbps": "54",
+          "passthru_awdl_host_seq": "1",
+          "passthru_awdl_rx_dedup": "1",
+          "passthru_awdl_attempts": "3",
+          "passthru_awdl_rx_auto": "1",
+          "passthru_awdl_rx_rearm": "1",
+          "passthru_sta_action_rx": "1",
+          "passthru_pas_discovery_actions": "1"
+        },
+        "dynamic_sta_profile": "Reference $STA expansion is not a popsicle setting."
+      },
+      "preferred_port_route": "PAS_HOST_NDI_FIRMWARE_WMI_RAW_TX_NATIVE_RX",
+      "popsicle_firmware_support": "NOT_RUNTIME_VERIFIED",
+      "default_app_profile": "existing BLE-only patch; native Wi-Fi policy",
+      "session_profile": "optional Xiaomi 15 Wi-Fi session compatibility; not enabled on phone",
+      "network_registration": "keep native NetworkAgent; NETWORK_FACTORY already granted on device",
+      "root_broker": "Wi-Fi hold/recovery only; native NetworkAgent retained; build payload, not started on phone",
+      "region_and_share_sheet": "keep original target behavior",
+      "popsicle_fw_type_selection": "NDI selection and matching checks not yet ported; current type-9 placeholder has never been submitted"
+    },
+    "apk_inputs": {
+      "package": "com.miui.mishare.connectivity",
+      "version_name": "5.4.2_20260923_1315",
+      "version_code": 50402,
+      "target_apk_sha256": "3ca8032f3c55d53e1912a44e42a17334ff739a064cf603e6cb9afb09d810905d",
+      "public_reference_url": "https://github.com/Leekin2/XAirDrop/releases/download/v1.0/MIShare-5.4.2.apk",
+      "public_reference_sha256": "394203fc35714c4c5d4b4e0b6d17ecaab239f5562a79bcf0a449ca36316cfa44",
+      "shared_entries": {
+        "classes.dex": "f14415326a454dff39b074ccef1d5c96b914ebc7d9c5e5d304286a898294d11e",
+        "classes2.dex": "7fc48c4357ffad5e1df0f92c48c856a8d2d9ec338cd19705a95f755f03f5efc1",
+        "AndroidManifest.xml": "09766ffb9c8caa13c1f71e8b6715c93beeabbab34ca2d7b9c470a0508ef107fd"
+      },
+      "apktool_version": "3.0.3",
+      "apktool_sha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423",
+      "reference_commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76"
+    },
+    "helper_sources": {
+      "Bridge": {
+        "upstream_sha256": "9b2c90bca1f07032a0d2c2a750abe0b7dad350f5f45dbfa6ec5c3f50979aa5f7",
+        "adapted_sha256": "c908605b6a39ed8ef18fb828335c3524ff6a39f9fb34b915b48b8120298dca7b"
+      },
+      "NetworkBroker": {
+        "upstream_sha256": "ea3adad81e5dbe3ca64572cf8cc4a23e1096eb2b7a99fcc6a2628a08db06c7ec",
+        "adapted_sha256": "65d35ca78bf112ae98bc3a9e5ca49a30c283ed6de06c2b3a81b6cef1b3e6c6ad"
+      },
+      "WifiControl": {
+        "upstream_sha256": "9804db9bcdeb79b29df527628c957708c9ee3e0bea8b9c6d1102789b128a772a",
+        "adapted_sha256": "6fdd2eab8b3b126235ca1581749c2c98aac0cfba52ede82d04fc1e2660a5a860"
+      }
+    },
+    "changed_application_classes": [
+      "smali/a/k0.smali",
+      "smali/a/u0.smali"
+    ],
+    "added_application_classes": [
+      "smali_classes3/io/github/leekin2/xairdrop/Bridge.smali"
+    ],
+    "all_other_application_classes_compared": true,
+    "wifi_comparison_scope": "Exact class/fields and per-method instructions/debug directives, independent of method ordering and class grouping comments; same static-default normalization as BLE build.",
+    "compiled_dex_sha256": {
+      "classes.dex": "637e58553dfb87a53701380c0e9c20f50ee8b4e0a2574cb670e1d5f26b20042f",
+      "classes3.dex": "34c1177ce4885e161c49992b5e4fad927e1b22a44880d5f7a2f2d0fcf4475841"
+    },
+    "wifi_broker_dex_sha256": "e812350a7ff7531ee8bb6f6e8bbd547eb35f412903f63ec9e14c5d5541020713",
+    "native_network_agent_unchanged": true,
+    "region_and_availability_unchanged": true,
+    "default_ble_workflow_unchanged": true,
+    "host_wifi_hold_fixture": "WIFI_HOLD_STATE_LOGIC_PASS_ONLY",
+    "runtime_started": false,
+    "firmware_backend_implemented_by_this_payload": false,
+    "limitations": "DEX payload only; not signed/zip-aligned APK or installable module. No helper daemon or APK mounted on phone. Wi-Fi-only root broker and IWifiManager reflection need device validation, SELinux/lifetime integration and cleanup checks before enabling. Full-band pause is an optional compatibility profile, not proven necessary on popsicle. NDI/WMI RAW parameters describe the Xiaomi 15 reference, not verified target firmware support."
+  }
+}
