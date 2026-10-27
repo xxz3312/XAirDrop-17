@@ -19,6 +19,7 @@ on:
       - tools/kernel/popsicle_*.sh
       - tools/kernel/passthru_mode_fixture.py
       - tools/kernel/mishare_create_delete_fixture.py
+      - tools/kernel/mishare_ndi_fixture.py
       - tools/kernel/mishare_runtime_fixture.py
       - tools/kernel/mishare_ops_fixture.py
       - tools/kernel/mishare_commands_fixture.py

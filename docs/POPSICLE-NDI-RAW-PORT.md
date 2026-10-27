@@ -110,3 +110,23 @@ START/host-only UP、频道响应、STOP/DELETE、失败回滚与回收。
 接着在该真实会话上接入 WMI RAW TX 和 monitor/native RX。
 构建仍使用 Actions 和工具链缓存。当前仅有应用层复用载荷构建成功；
 本分析不构成 WLAN 加载或 AirDrop 可用的结论。
+
+## 实施进展：0015 WMA 兼容接入
+
+`0015-mishare-wma-ndi-compat.patch` 已将上述 WMA 接点按目标源码迁入：
+
+- 同一 `wma_mishare_uses_self_peer()` 用于创建、删除和同步删除响应等待。
+- PAS＋NDI 创建 DEFAULT self-peer 前检查 NAN Data capability。
+- START/频道失败、MAC ID 和启动后处理识别 PAS＋NDI；普通 NDI 不进入扩展分支。
+- monitor UP 接口对准备完成的 PAS＋NDI 返回 host-only UP；验证真实 legacy
+  extension、相同 WMA vdev 指针及 NDI 类型，拒绝主机占位对象。
+- 未增加可变开关，避免创建和删除之间因切换参数而改变 self-peer 判断。
+
+这是 WMA 兼容代码，不是完整 NDI 会话。现有 host-only 构造、type=9 占位、
+专用 MLME 操作表和命令前置检查尚未改变，因此本补丁不会自动发送 CREATE/START，
+也没有提供可安装产物。下一处仍是固件会话准备与 owner 的对接。
+
+新增 Actions-only fixture 提取实际目标 WMA 的 peer create/delete/detach 和 UP
+函数，测试能力缺失、提交/删除错误、同步删除等待、原生 NDI/STA/monitor 保留、
+UP 绑定错误与主机占位拒绝。外部对象访问、传输和回调被替代；它不模拟真实固件。
+START/频道/MAC 响应目前依赖完整 WLAN 编译校验，不宣称已通过运行验证。

@@ -38,3 +38,13 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
    Callbacks remain metadata-only/unsupported, with no host handle published.
    A strong dependency on the private provider pins its module while WLAN is
    loaded; actual provider Module.symvers records are included in strict modpost.
+
+15. `0015-mishare-wma-ndi-compat.patch` adapts the existing SM8750 WMA
+    PAS-host/NDI-firmware route to the target's native functions. One predicate
+    governs self-peer creation, removal and synchronous-delete waiting. It also
+    routes START/channel responses, DP MAC ID and NDI post-start setup. A bound
+    PAS/NDI legacy context can use host-only UP; unpublished host-only components
+    are rejected. No type selection, CREATE owner, MLME activation, TX/RX, module
+    parameter, auto-start or firmware acceptance is added. Actions runs actual
+    extracted peer create/delete/detach and UP functions with mocked external
+    operations, followed by complete target WLAN compilation and strict linking.

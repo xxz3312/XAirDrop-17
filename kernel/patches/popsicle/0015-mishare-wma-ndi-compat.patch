@@ -1,0 +1,152 @@
+diff --git a/qcacld-3.0/core/wma/src/wma_dev_if.c b/qcacld-3.0/core/wma/src/wma_dev_if.c
+--- a/qcacld-3.0/core/wma/src/wma_dev_if.c
++++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
+@@ -120,6 +120,7 @@
+ #include <wlan_psoc_mlme_api.h>
+ #include "wlan_objmgr_vdev_obj.h"
+ #include "wlan_twt_cfg_ext_api.h"
++#include "wma_mishare_ndi.h"
+ 
+ /*
+  * FW only supports 8 clients in SAP/GO mode for D3 WoW feature
+@@ -682,7 +683,8 @@
+ 	uint8_t vdev_id = pdel_vdev_req_param->vdev_id;
+ 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
+ 
+-	if (mlme_vdev_uses_self_peer(iface->type, iface->sub_type)) {
++	if (wma_mishare_uses_self_peer(iface->vdev, iface->type,
++				      iface->sub_type)) {
+ 		status = wma_self_peer_remove(wma_handle, pdel_vdev_req_param);
+ 		if (QDF_IS_STATUS_ERROR(status)) {
+ 			wma_err("can't remove selfpeer, send rsp session: %d",
+@@ -739,7 +741,8 @@
+ 	if (iface->type != WMI_VDEV_TYPE_MONITOR)
+ 		iface->vdev_active = false;
+ 
+-	if (!mlme_vdev_uses_self_peer(iface->type, iface->sub_type) ||
++	if (!wma_mishare_uses_self_peer(iface->vdev, iface->type,
++				      iface->sub_type) ||
+ 	    !wmi_service_enabled(wma_handle->wmi_handle,
+ 	    wmi_service_sync_delete_cmds)) {
+ 		status = wma_handle_vdev_detach(wma_handle,
+@@ -1160,6 +1163,7 @@
+ 	/* Indicate channel switch failure to LIM */
+ 	if (QDF_IS_STATUS_ERROR(rsp->status) &&
+ 	    (iface->type == WMI_VDEV_TYPE_MONITOR ||
++	     wma_mishare_pas_ndi(iface->vdev, iface->type) ||
+ 	     wma_is_vdev_in_ap_mode(wma, rsp->vdev_id) ||
+ 	     mlme_is_chan_switch_in_progress(iface->vdev))) {
+ 		mlme_set_chan_switch_in_progress(iface->vdev, false);
+@@ -1348,7 +1352,9 @@
+ 
+ 	if (wlan_vdev_mlme_is_mlo_ap(vdev_mlme->vdev) ||
+ 	    wma->interfaces[rsp->vdev_id].type ==
+-	    WMI_VDEV_TYPE_MONITOR)
++	    WMI_VDEV_TYPE_MONITOR ||
++	    wma_mishare_pas_ndi(wma->interfaces[rsp->vdev_id].vdev,
++				wma->interfaces[rsp->vdev_id].type))
+ 		cdp_update_mac_id(dp_soc, rsp->vdev_id, mac_id);
+ 
+ 	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id)) {
+@@ -1469,6 +1475,7 @@
+ 
+ 	if (mlme_is_chan_switch_in_progress(iface->vdev) ||
+ 	    iface->type == WMI_VDEV_TYPE_MONITOR ||
++	    wma_mishare_pas_ndi(iface->vdev, iface->type) ||
+ 	    (iface->type == WMI_VDEV_TYPE_STA &&
+ 	     (assoc_type == VDEV_ASSOC || assoc_type == VDEV_REASSOC))) {
+ 		status = wma_handle_channel_switch_resp(wma,
+@@ -3040,8 +3047,12 @@
+ 	if (!wma_handle)
+ 		return QDF_STATUS_E_FAILURE;
+ 
+-	if (mlme_vdev_uses_self_peer(vdev_mlme->mgmt.generic.type,
+-				     vdev_mlme->mgmt.generic.subtype)) {
++	if (wma_mishare_uses_self_peer(vdev, vdev_mlme->mgmt.generic.type,
++				      vdev_mlme->mgmt.generic.subtype)) {
++		if (wma_mishare_pas_ndi(vdev, vdev_mlme->mgmt.generic.type) &&
++		    !wmi_service_enabled(wma_handle->wmi_handle,
++					 wmi_service_nan_data))
++			return QDF_STATUS_E_NOSUPPORT;
+ 		status = wma_create_peer(wma_handle,
+ 					 vdev->vdev_mlme.macaddr,
+ 					 NULL,
+@@ -4694,6 +4705,7 @@
+ 		return QDF_STATUS_E_FAILURE;
+ 	}
+ 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_NDI_MODE ||
++	    wma_mishare_pas_ndi(vdev, intr->type) ||
+ 	    wlan_vdev_mlme_get_opmode(vdev) == QDF_IBSS_MODE) {
+ 		/* Initialize protection mode to no protection */
+ 		wma_vdev_set_param(wma->wmi_handle, vdev_id,
+diff --git a/qcacld-3.0/core/wma/src/wma_utils.c b/qcacld-3.0/core/wma/src/wma_utils.c
+--- a/qcacld-3.0/core/wma/src/wma_utils.c
++++ b/qcacld-3.0/core/wma/src/wma_utils.c
+@@ -74,6 +74,7 @@
+ #include "wlan_dp_ucfg_api.h"
+ #include "cfg_hif.h"
+ #include "wlan_pmo_wow.h"
++#include "wma_mishare_ndi.h"
+ 
+ /* MCS Based rate table */
+ /* HT MCS parameters with Nss = 1 */
+@@ -4965,11 +4966,24 @@
+ 	QDF_STATUS status;
+ 	struct wma_txrx_node *iface;
+ 
+-	if (!wma)
++	if (!wma || !vdev_mlme || !vdev_mlme->vdev)
+ 		return QDF_STATUS_E_INVAL;
+ 
+ 	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
++	if (vdev_id >= wma->max_bssid)
++		return QDF_STATUS_E_INVAL;
+ 	iface = &wma->interfaces[vdev_id];
++	if (wma_mishare_pas_ndi(vdev_mlme->vdev,
++				vdev_mlme->mgmt.generic.type)) {
++		/* Normal NDI also omits WMI UP. Never acknowledge an unbound
++		 * host-only component or a mismatched WMA interface as UP.
++		 */
++		if (!vdev_mlme->ext_vdev_ptr ||
++		    iface->vdev != vdev_mlme->vdev ||
++		    iface->type != WMI_VDEV_TYPE_NDI)
++			return QDF_STATUS_E_INVAL;
++		return QDF_STATUS_SUCCESS;
++	}
+ 	vdev_mlme->proto.sta.assoc_id = 0;
+ 
+ 	status = vdev_mgr_up_send(vdev_mlme);
+diff --git a/qcacld-3.0/core/wma/inc/wma_mishare_ndi.h b/qcacld-3.0/core/wma/inc/wma_mishare_ndi.h
+new file mode 100644
+--- /dev/null
++++ b/qcacld-3.0/core/wma/inc/wma_mishare_ndi.h
+@@ -0,0 +1,29 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/* PAS host / NDI firmware compatibility, adapted from OPAirDrop SM8750.
++ * Xiaomi 15 selects this route; target firmware acceptance is unverified.
++ * No mode selection, CREATE, lifecycle ownership or module parameter here.
++ */
++#ifndef WMA_MISHARE_NDI_H
++#define WMA_MISHARE_NDI_H
++#include "wlan_objmgr_vdev_obj.h"
++#include "wmi_unified.h"
++#include "wlan_mlme_vdev_mgr_interface.h"
++
++static inline bool
++wma_mishare_pas_ndi(struct wlan_objmgr_vdev *vdev, uint32_t type)
++{
++	return vdev && type == WMI_VDEV_TYPE_NDI &&
++	       wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE;
++}
++
++/* Use the SAME predicate for peer create, delete and sync-delete waiting.
++ * Native NDI and every legacy self-peer decision remain unchanged.
++ */
++static inline bool
++wma_mishare_uses_self_peer(struct wlan_objmgr_vdev *vdev,
++			   uint32_t type, uint32_t subtype)
++{
++	return mlme_vdev_uses_self_peer(type, subtype) ||
++	       wma_mishare_pas_ndi(vdev, type);
++}
++#endif
