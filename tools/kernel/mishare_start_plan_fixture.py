@@ -20,8 +20,8 @@ STUBS=r'''
 #define WLAN_FEATURE_11BE_MLO 1
 #define WLAN_PEER_SELF 1
 #define WLAN_MLME_SB_ID 9
-#define WLAN_PHYMODE_11NG_HT20 7
-#define WLAN_PHYMODE_11NA_HT20 8
+#define WMI_HOST_MODE_11NG_HT20 5
+#define WMI_HOST_MODE_11NA_HT20 4
 enum QDF_OPMODE {QDF_STA_MODE=1,QDF_SAP_MODE=2,QDF_P2P_GO_MODE=3};
 struct wlan_ssid {u8 ssid[32],length;};
 struct mlme_channel_param {uint32_t mhz,cfreq1,cfreq2,chan_id,pwr,phy_mode,maxpower,minpower,maxregpower,regpower,antennamax,reg_class_id;bool dfs_set,dfs_set_cfreq2,is_stadfs_en,is_chan_passive,allow_ht,allow_vht,half_rate,quarter_rate;};
@@ -46,7 +46,6 @@ static bool utils_is_dfs_chan_for_freq(struct wlan_objmgr_pdev *p,uint32_t f) {a
 static void vdev_mgr_start_param_update_11be(struct vdev_mlme_obj *m,struct vdev_start_params *p,struct wlan_channel *d) {assert(m && d && p);}
 static void vdev_mgr_start_param_update_mlo(struct vdev_mlme_obj *m,struct vdev_start_params *p) {assert(m && p);p->mlo_flags.mlo_enabled=plan_mlo;}
 static unsigned vdev_mgr_fetch_ratecode(struct vdev_mlme_obj *m) {assert(m);return 0;}
-static void wlan_util_vdev_mgr_set_cac_timeout_for_vdev(struct wlan_objmgr_vdev *v,unsigned t) {(void)v;(void)t;assert(0);}
 static void vdev_mgr_start_param_update_cac_ms(struct wlan_objmgr_vdev *v,struct vdev_start_params *p) {(void)v;(void)p;assert(0);}
 static void wlan_vdev_mlme_get_ssid(struct wlan_objmgr_vdev *v,u8 *ssid,u8 *len) {assert(v && ssid);*len=0;plan_builds++;if(plan_bad_output)v->mlme->mgmt.generic.maxregpower++;}
 #define mlme_err(...) ((void)0)
@@ -87,11 +86,16 @@ int main(void) {
   assert(!state(o).ndi.blocked && !state(o).ndi.start_plan_completed);
   run_pe(false);struct mishare_ndi_status n=state(o).ndi;
   assert(n.start_plan_submitted && n.start_plan_completed && n.start_plan_ready && !n.blocked);
-  assert(n.start_plan.freq==freq && n.start_plan.center_freq==freq && n.start_plan.phy_mode==(unsigned)(band?8:7));
+  assert(n.start_plan.freq==freq && n.start_plan.center_freq==freq && n.start_plan.phy_mode==(unsigned)(band?4:5));
   assert(n.start_plan.tx_streams==(unsigned)(band?2:1) && n.start_plan.rx_streams==n.start_plan.tx_streams);
   assert(plan_builds==1 && !plan_pdev_refs && ctx_create_calls==peer_creates && ch_prepares==2 && last_vdev->refs==5);
   assert(mishare_runtime_ndi_start_plan(o)==-EBUSY);channel_end(&o);
  }
+ /* Host PHY enums must never be compared as firmware PHY mode values. */
+ reset_plan();o=with_channel(2437);last_vdev->mlme->mgmt.generic.phy_mode=7;
+ struct mishare_ndi_start_summary wrong_phy={0};
+ assert(mishare_ndi_start_plan_build(last_vdev->mlme,2437,&wrong_phy)==-EUCLEAN && !plan_builds && !plan_pdev_refs);
+ channel_end(&o);
  /* Posting is one-shot; queue/allocation/ref failure is proven before MC execution. */
  for(int fault=0;fault<4;fault++) {
   reset_plan();o=with_channel(2437);pe_alloc_fail=fault==0;pe_queue_fail=fault==1;
@@ -146,6 +150,10 @@ def fixture(root):
         s=re.sub(r'\n/\* MISHARE_BEGIN:start_plan_\w+ \*/\n.*?/\* MISHARE_END:start_plan_\w+ \*/\n','',s,flags=re.S)
         if hashlib.sha256(s.encode()).hexdigest()!=h:
             raise ValueError('START plan changed existing native source: '+path)
+    param=(root/'qca-wifi-host-cmn/wmi/inc/wmi_unified_param.h').read_text()
+    for name,value in [('WMI_HOST_MODE_11NG_HT20',5),('WMI_HOST_MODE_11NA_HT20',4)]:
+        if not re.search(r'\b'+name+r'\s*=\s*'+str(value)+r'\b',param):
+            raise ValueError('Review changed firmware PHY mode: '+name)
     src=channel.fixture(root)
     # Extend only platform layouts exercised by the real native builder.
     src=src.replace('struct wlan_channel {uint32_t ch_freq,ch_cfreq1,ch_cfreq2;int ch_width;};','struct wlan_channel {uint32_t ch_freq,ch_cfreq1,ch_cfreq2,ch_ieee,ch_flags,ch_flagext,ch_freq_seg1,ch_freq_seg2;int ch_width;};')
@@ -153,11 +161,11 @@ def fixture(root):
     src=src.replace('struct { struct { u8 type,subtype; } generic; } mgmt; struct {struct {u8 nss_2g,nss_5g;} generic;} proto;',
         'struct { struct { u8 type,subtype;unsigned phy_mode,maxregpower,disable_hw_ack,tx_power,maxpower,minpower,antennamax,reg_class_id; } generic;struct {unsigned num_rx_chain,num_tx_chain;} chainmask_info;struct {bool half_rate,quarter_rate;} rate_info;struct vdev_mlme_mbss_11ax mbss_11ax;struct {bool hidden_ssid;} ap; } mgmt; struct {struct {u8 nss_2g,nss_5g;unsigned beacon_interval,dtim_period,ldpc;} generic;struct {bool allow_ht;} ht_info;struct {bool allow_vht;} vht_info;struct {unsigned he_ops;} he_ops_info;} proto;')
     src=src.replace('ch_prepares++;struct wlan_channel *d=',
-        'o->proto.ht_info.allow_ht=true;o->proto.vht_info.allow_vht=false;o->mgmt.generic.maxregpower=s->maxTxPower;o->mgmt.generic.phy_mode=s->curr_op_freq<3000?7:8;o->mgmt.chainmask_info.num_rx_chain=s->nss;o->mgmt.chainmask_info.num_tx_chain=s->nss;ch_prepares++;struct wlan_channel *d=')
+        'o->proto.ht_info.allow_ht=true;o->proto.vht_info.allow_vht=false;o->mgmt.generic.maxregpower=s->maxTxPower;o->mgmt.generic.phy_mode=s->curr_op_freq<3000?5:4;o->mgmt.chainmask_info.num_rx_chain=s->nss;o->mgmt.chainmask_info.num_tx_chain=s->nss;ch_prepares++;struct wlan_channel *d=')
     start=src.index('/* START_PLAN_TRANSPORT_STUBS */');end=src.index('/* END_START_PLAN_TRANSPORT_STUBS */',start)+len('/* END_START_PLAN_TRANSPORT_STUBS */')
     src=src[:start]+src[end:]
     wma=channel.pe.ctx.block((root/WMA).read_text(),'start_plan_wma')
-    builder=channel.pe.ctx.block((root/CORE).read_text(),'start_plan_builder')
+    builder=channel.pe.ctx.block((root/CORE).read_text(),'start_plan_builder').replace('#include <wmi_unified_param.h>\n','')
     request=channel.pe.ctx.block((root/API).read_text(),'start_plan_request')
     native_update=function((root/CORE).read_text(),'vdev_mgr_start_param_update')
     code=STUBS.replace('NATIVE_WMA_CHECK',wma).replace('NATIVE_START_PARAM_UPDATE',native_update).replace('NATIVE_START_PLAN_BUILD',builder).replace('NATIVE_START_PLAN_REQUEST',request)

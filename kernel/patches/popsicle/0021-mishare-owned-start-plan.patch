@@ -1,12 +1,13 @@
 --- a/qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mgr_ops.c
 +++ b/qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mgr_ops.c
-@@ -1259,3 +1259,79 @@
+@@ -1259,3 +1259,80 @@
  	return tgt_vdev_mgr_cdp_vdev_detach(mlme_obj);
  }
  #endif
 +
 +/* MISHARE_BEGIN:start_plan_builder */
 +#include <linux/errno.h>
++#include <wmi_unified_param.h>
 +/* Read the target's own START encoder inputs. No target-if call, timer or WMI.
 + * Caller has validated the PE/owner identity on MC and holds parent exclusion.
 + * The resulting summary is evidence of preparation, never a reusable command.
@@ -40,7 +41,7 @@
 +	    mlme->proto.vht_info.allow_vht ||
 +	    mlme->mgmt.rate_info.half_rate || mlme->mgmt.rate_info.quarter_rate ||
 +	    mlme->mgmt.generic.phy_mode != (wlan_reg_is_24ghz_ch_freq(freq) ?
-+			WLAN_PHYMODE_11NG_HT20 : WLAN_PHYMODE_11NA_HT20))
++			WMI_HOST_MODE_11NG_HT20 : WMI_HOST_MODE_11NA_HT20))
 +		return -EUCLEAN;
 +	/* With MOBILE_DFS_SUPPORT the native AP-only predicate excludes PAS.
 +	 * The non-mobile fallback returns true for all modes and can mutate DFS
