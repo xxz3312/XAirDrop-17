@@ -1,6 +1,6 @@
 # 小米 17 PAS / NDI / RAW 原生驱动接入分析
 
-本文先记录源码分析起点，再记录 0015–0018 的 WMA、资源、self-peer 和 PE 会话接入。
+本文先记录源码分析起点，再记录 0015–0021 的 WMA、资源、self-peer、PE 会话与启动前准备。
 固件命令尚未在手机发送。目标源码固定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f`，
 分析起点包含 0001–0014 popsicle 补丁；其文件 SHA-256 记录在
 [源码快照](research/popsicle-xiaomi15-native-port-source-map.json)。
@@ -444,3 +444,22 @@ pending request 完成；request 自带 VDEV 引用及 scheduler flush 回调。
 子 helper 与完整 PE allocator/destructor 仍为模型边界。该实现属于完整启停接入
 的启动前子阶段；没有发送 START/STOP/DOWN、修改原生 MLME 状态或增加上机入口。
 完整 MLME/WMA 启停、PM 锁释放、SSR/remove 与 RAW 收发仍待接通。
+
+
+### 0021 构建验证结果
+
+[Actions 40575306804](https://github.com/xxz3312/XAirDrop-17/actions/runs/40575306804)
+在源提交 `d3514465a7f983170b27c09d4d3edac72603878d` 全部通过：44 项 Python
+检查、17 组原生 fixture、完整 WLAN 编译、严格链接和 7 项选定结构布局检查。
+56 个要求符号存在，WLAN 574 条版本记录无不匹配，未解决依赖为空。
+工具链/bindgen 缓存均命中，新增 fixture 通过 ASan/UBSan。
+
+紧凑报告 ZIP 已独立下载并核对大小与 SHA-256，重新生成的 fixture、三个原生
+文件及三个 owner 文件哈希均与报告一致；原生 START 参数构造函数与固定目标
+原文完全相同。完整诊断大包只记录 GitHub 提供的哈希，未独立下载，也不可安装。
+详见 [START 参数准备报告](research/popsicle-owned-start-plan-build-pass.json)。
+
+MLME 保存的是已转换的 WMI PHY mode，校验使用 WMI_HOST_MODE 的 HT20 常量，
+而非 WLAN 主机枚举。WMA 检查在读取 service bitmap 前拒绝空 WMI handle 或
+interfaces；对应失败用例会保留完整 owner。没有启用 START/STOP/DOWN 的发送、
+专用 PAS MLME 回调或上机调用方；完整启停闭环仍是下一处待实现内容。
