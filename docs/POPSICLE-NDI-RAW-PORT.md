@@ -264,3 +264,20 @@ WMA 队列/timer、原生 wma_create_peer/wma_remove_peer 与固件/DP 传输被
 新 API 尚无运行时调用方。没有 CSR/PE session、普通 post-create 参数准备、
 START/频道或 TX/RX；专用 MLME 拒绝操作仍保留。SSR/remove 与失败隔离后的恢复
 仍须在手机启用前接通。目前未在手机运行新命令。
+
+## 0017 构建验证结果
+
+[Actions 40548389136](https://github.com/xxz3312/XAirDrop-17/actions/runs/40548389136)
+在提交 `ad2e31badc3aad73611a6ae322361e580c0357d1` 全部通过：44 项 Python 检查、
+13 组原生 fixture、完整 WLAN 对象编译及严格链接。45 个要求的主机符号存在；
+WLAN 574 条版本记录无不匹配，没有未解决依赖；7 项选定结构布局 MATCH。
+工具链与 bindgen 缓存命中。
+
+下载的紧凑报告 ZIP、生成 fixture、三个原生文件与三个 owner 文件哈希已独立
+核对。WLAN SHA-256 为 `a4f3bb7b1ec8f7ef11fc1d52f3577197721b89d14f05c055b99b9313017c66d7`。
+完整记录见 [context/self-peer 构建报告](research/popsicle-owned-context-peer-build-pass.json)。
+这些结果不构成完整 ABI/KCFI、模块加载、固件接受或真实 peer 最终释放认证。
+
+本轮完成私有 owner 的 legacy/最小 WMA/self-peer 接入与对称回收，尚未增加运行时
+调用方或在手机执行。下一阶段为 PE/session 参数、START/STOP 和频道切换，随后
+接 RAW 收发；启用前仍需补齐 SSR/remove 与失败隔离后的完整恢复。

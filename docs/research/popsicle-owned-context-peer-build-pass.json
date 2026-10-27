@@ -1,0 +1,130 @@
+{
+  "status": "OWNED_LEGACY_WMA_SELF_PEER_OFFLINE_PASS_ONLY",
+  "commit": "ad2e31badc3aad73611a6ae322361e580c0357d1",
+  "run_id": 40548389136,
+  "job_id": 122345126884,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40548389136",
+  "validation_artifact": {
+    "id": 12754702204,
+    "bytes": 31769,
+    "sha256": "51696e1fd71369b1ecf3739eac68a8daedcbc1a0868d9714959b366233e0a1e2",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12753579141,
+    "bytes": 337663175,
+    "github_reported_sha256": "2732d8571fa5e523dc0eb7ec4d8caddd90cf78e739ba5a4fcd275d4a9f86555a",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "context_peer_fixture": {
+    "status": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "beeed5cc8314250482a8bca2aa8483079fbc48a7c4a05f18af435593bc21b037",
+    "native_sha256": {
+      "qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c": "c460ca02048edd00e67125984d06845940483de11fd36338f45690d5c518b15a",
+      "qcacld-3.0/core/wma/src/wma_dev_if.c": "3f197045d42f27c5c165bd2e56c2ccc122ba1bb989536d5d06bdeb108e473028",
+      "qcacld-3.0/core/wma/inc/wma.h": "baa1b0335cd2be64dddf60604c5847a8c3be3062a24c0939c07484783d2feef2"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "32ea7339287aed4ed8337d35b1e1c79b94205fadadc04d479f49fbd4e163780f",
+      "wlan_hdd_mishare_runtime.h": "b6dff60983a49ce786ff86c059c37f664aa16bce69b6f68fa680657642e2556e",
+      "wlan_hdd_mishare_ndi.h": "f5c828df7d703a6e2923a06eb2014a0da2ffbacc99ab83ace1368273681c1dd8"
+    },
+    "legacy_sources_after_removing_bounded_additions_match": {
+      "qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c": "033f335a1cb188577379367668a200c6a4ad626dd77349022ad6a2bbd6647df2",
+      "qcacld-3.0/core/wma/src/wma_dev_if.c": "504c7639fc3737b916200aabced43032128998a140830898f55476a3700a0709",
+      "qcacld-3.0/core/wma/inc/wma.h": "7b4288c535dff4fd39f100c6e969a6f3d62ec82714bb51102ae0be2104ac3d74"
+    },
+    "checks": [
+      "legacy allocation and eight setup failure stages unwind only initialized resources",
+      "occupied WMA slot, ref failure and existing peer do not overwrite or delete foreign state",
+      "owned WMA reference retained through peer/vdev DELETE and DP final-free",
+      "one peer-create attempt; native error quarantines",
+      "peer request precedes native delete; real reply published only after native request cleanup",
+      "wrong token/psoc/ID ignored; unexpected matching reply quarantines",
+      "early peer reply waits for send return before VDEV DELETE",
+      "peer queue/send/timeout failures prevent VDEV DELETE and all parent cleanup",
+      "native full legacy destruction releases owned locks/timer and extension"
+    ],
+    "limitations": "Actual owner and extracted legacy init/full destroy/WMA bind/unbind/peer helper functions, plus bounded native peer-origin insertions. Platform primitives, WMA hold queue/timer, native wma_create_peer/wma_remove_peer and firmware/DP transports are modeled. Full WMA response/timer handlers, native IRQ/list races, firmware acceptance, native peer final-free and SSR/remove are not executed or certified. Quarantine children retain resources deliberately. No CSR/session parameter setup, START/channel/TX/RX or runtime backend caller."
+  },
+  "independent_verification": {
+    "generated_fixture_sha256_matches": true,
+    "three_native_file_sha256_match": true,
+    "three_owner_file_sha256_match": true,
+    "compiled_c_or_java_locally": false
+  },
+  "python_tests_passed": 44,
+  "native_fixtures": {
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY"
+  },
+  "full_wlan_object_compile": "PASS",
+  "strict_module_linking": "PASS",
+  "required_host_symbols": 45,
+  "missing_host_symbols": [],
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "a4f3bb7b1ec8f7ef11fc1d52f3577197721b89d14f05c055b99b9313017c66d7",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache_hits": [
+    "pinned clang/rust toolchains",
+    "pinned bindgen"
+  ],
+  "scope": {
+    "checked_owned_legacy_init_and_native_destructor": true,
+    "minimal_wma_slot_and_reference_binding": true,
+    "native_default_self_peer_helper_wired": true,
+    "owned_peer_delete_hold_request_type": 18,
+    "owned_peer_reply_and_timeout_routed_after_request_cleanup": true,
+    "peer_then_vdev_then_dp_then_wma_legacy_teardown": true,
+    "existing_same_vdev_peer_quarantines": true,
+    "ordinary_full_wma_post_create_configuration": false,
+    "csr_pe_session": false,
+    "start_stop_channel_tx_rx": false,
+    "runtime_backend_caller": false,
+    "firmware_or_self_peer_create_confirmed_on_phone": false,
+    "module_loaded_on_phone": false,
+    "airdrop_operational": false
+  },
+  "limitations": "Offline production-owner and extracted helper/native destructor execution with modeled QDF/queue/WMI/peer/DP boundaries, complete compilation, strict linking and seven selected layouts only. Full native WMA response/timer handlers and actual peer final-free are not executed; event-ID bounds guard is source/compile checked. Native IRQ/list races, firmware acceptance, complete private ABI/KCFI, SSR/remove and quarantine recovery remain unverified. No ordinary CSR/PE/session parameter setup or START/channel/TX/RX. API has no runtime caller and has not run on phone."
+}
