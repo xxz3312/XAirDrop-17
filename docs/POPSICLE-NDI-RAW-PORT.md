@@ -1,8 +1,8 @@
 # 小米 17 PAS / NDI / RAW 原生驱动接入分析
 
-本轮为源码分析，没有新增驱动补丁，没有发送固件命令。
-目标源码固定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f`，
-本地包含已有 popsicle 补丁。读取文件的 SHA-256 记录在
+本文先记录源码分析起点，再记录 0015 的实际 WMA 兼容改动。
+固件命令尚未在手机发送。目标源码固定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f`，
+分析起点包含 0001–0014 popsicle 补丁；其文件 SHA-256 记录在
 [源码快照](research/popsicle-xiaomi15-native-port-source-map.json)。
 
 ## 参考来源须分清
@@ -130,3 +130,39 @@ START/host-only UP、频道响应、STOP/DELETE、失败回滚与回收。
 函数，测试能力缺失、提交/删除错误、同步删除等待、原生 NDI/STA/monitor 保留、
 UP 绑定错误与主机占位拒绝。外部对象访问、传输和回调被替代；它不模拟真实固件。
 START/频道/MAC 响应目前依赖完整 WLAN 编译校验，不宣称已通过运行验证。
+
+### 下一阶段创建顺序的进一步核对
+
+目标调用链不是一个原子操作：
+
+1. `vdev_mgr_create_send()` 准备参数和 stats ID。
+2. `tgt_vdev_mgr_create_send()` 调用 target-if 提交 CREATE。
+3. `target_if_vdev_mgr_create_send()` 先调用 WMI CREATE，再初始化响应 timer；
+   timer 初始化失败可覆盖原先的发送成功返回值。
+4. target-if 返回成功后，dispatcher 才调用 `cdp_vdev_attach()`；该步骤仍可能失败。
+5. 普通 HDD 随后调用 `sme_vdev_post_vdev_create_setup()`，其中包含 WMA、CSR、
+   dot11mode 和 self-peer 初始化。
+
+因此一个 CREATE 的通用错误返回不能直接解释为“固件未创建”，也不能据此
+释放 vdev ID。owner 需要区分未发送、发送结果不明、传输接受、DP 已挂接、
+WMA/CSR/peer 已准备等状态，依据真实 STOP/DELETE 事件及回收结果收尾。
+该 CREATE 函数没有等待固件 CREATE 确认的逻辑；不能把 `create_send` 返回成功
+写成“固件已确认创建”，也不能等待源码中没有接入的 CREATE 确认来替代 START 验证。
+本补丁未更改这些创建流程；上述是下一阶段的实现约束。
+
+## 0015 构建验证结果
+
+[Actions 40493230445](https://github.com/xxz3312/XAirDrop-17/actions/runs/40493230445)
+在提交 `894efeac80b62456bf08cc23f2954cf8a9f7e440` 全部通过：44 项 Python 检查、
+11 组原生 fixture、完整 WLAN 对象编译与严格模块链接。WLAN 574 条版本记录
+无不匹配、没有未解决依赖，28 个要求的主机符号存在，7 项选定结构布局 MATCH。
+这些记录与布局检查不等于完整私有 ABI/KCFI 或手机加载认证。
+
+下载的紧凑报告 ZIP SHA-256 已独立核对，fixture 生成源码和四个目标源码文件
+哈希也与本地补丁结果一致。结果见
+[WMA NDI 构建报告](research/popsicle-wma-ndi-compat-build-pass.json)。
+编译工具链与 bindgen 缓存均命中。软件源 403 与 fixture 宏生成错误已在本次
+成功构建前修复；依赖安装仅使用正常签名校验的 Ubuntu 源。
+
+本轮没有重新构建应用层，也没有在手机启动新的固件会话。下一阶段是实际
+创建与 owner/legacy/DP 的接通，并补齐停止、真实删除和 SSR/remove 回收。

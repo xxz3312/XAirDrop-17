@@ -1,0 +1,109 @@
+{
+  "status": "WMA_PAS_NDI_COMPATIBILITY_OFFLINE_PASS_ONLY",
+  "commit": "894efeac80b62456bf08cc23f2954cf8a9f7e440",
+  "run_id": 40493230445,
+  "job_id": 122152099052,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40493230445",
+  "validation_artifact": {
+    "id": 12730017517,
+    "bytes": 28371,
+    "sha256": "cd10e7e5d988a70b18f867bb804e632c684abb10af5d4c2bef6b9364fb2b8ac9",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12730012501,
+    "bytes": 337657418,
+    "github_reported_sha256": "dc831b890c79b1dc17c6415691e96646edce30dd4dba8663f8885556bacd07fa",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "native_ndi_fixture": {
+    "status": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "dc3b89a8c47aebe9926b72f0a1db2bb16751f2f3cccfb32528fe7de9530dac85",
+    "source_sha256": {
+      "qcacld-3.0/core/wma/src/wma_dev_if.c": "504c7639fc3737b916200aabced43032128998a140830898f55476a3700a0709",
+      "qcacld-3.0/core/wma/src/wma_utils.c": "c5ebc724acf6b39dc13ee8c55cae361b58c54e1ab0bafc83460b23a40f7623ad",
+      "qcacld-3.0/core/wma/inc/wma_mishare_ndi.h": "75b06dd46a9d45c735b3c5a51eece43adfd7e9747a145ef9e3d09ad4cb1f8036",
+      "qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c": "033f335a1cb188577379367668a200c6a4ad626dd77349022ad6a2bbd6647df2"
+    },
+    "checks": [
+      "all native opmodes/types/subtypes retain original self-peer decisions",
+      "NAN capability rejection before create",
+      "create transport error propagation",
+      "PAS NDI peer create and sync delete waiting",
+      "no-sync immediate native detach response",
+      "delete failure recovery retained",
+      "deferred delete respected",
+      "native NDI/STA/monitor unchanged",
+      "PAS NDI host-only UP requires exact bound interface and legacy extension",
+      "invalid UP inputs rejected and monitor transport errors propagated"
+    ],
+    "limitations": "Extracted actual native WMA peer create/delete/detach and UP functions with object, capability, transport and callbacks mocked. START/channel/MAC response changes receive full WLAN compile checks only. No actual peer lifecycle, firmware responses, vdev construction, scheduler, SSR or radio validation. Host-only owner still cannot activate an NDI session."
+  },
+  "independent_local_verification": {
+    "generated_fixture_sha256_matches": true,
+    "four_target_source_sha256_match": true,
+    "c_or_java_compiled_locally": false
+  },
+  "python_tests_passed": 44,
+  "native_fixtures": {
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY"
+  },
+  "full_wlan_object_compile": "PASS",
+  "strict_module_linking": "PASS",
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "4bdbf5070e3e7bc51310dff70293212b751d5b96ca7258a9bdd0bd12938124db",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "host_symbols_present": 28,
+  "missing_host_symbols": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "scope": {
+    "wma_pas_ndi_self_peer_and_response_compatibility": true,
+    "host_only_up_rejects_unprepared_pas_types": true,
+    "firmware_type_selection_changed": false,
+    "host_owner_activation_implemented": false,
+    "raw_tx_or_rx_added": false,
+    "module_loaded_on_phone": false,
+    "wireless_firmware_calls_on_phone": false,
+    "airdrop_operational": false
+  },
+  "limitations": "Compilation, extracted-function execution with external mocks, recorded module checks and seven selected layout comparisons only. START/channel/MAC response edits are compile checked, not runtime tested. No firmware type-7 acceptance, full private ABI/KCFI, real peer/event lifecycle, SSR/remove, driver load or radio certification. Existing host-only owner, type-9 placeholder and dedicated rejecting MLME operations remain; no firmware session is activated by this patch."
+}
