@@ -86,6 +86,9 @@ int mishare_ndi_native_delete(struct wlan_objmgr_vdev *v) { (void)v;assert(0);re
 int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *v,void (*cb)(void *),void *c) { (void)v;(void)cb;(void)c;assert(0);return -EIO; }
 int mishare_ndi_release_stats(struct vdev_mlme_obj *m,struct mishare_ndi_create_result *r) { (void)m;(void)r;assert(0);return -EIO; }
 /* END_NDI_TRANSPORT_STUBS */
+/* PE_TRANSPORT_STUBS */
+int mishare_ndi_pe_post(struct wlan_objmgr_vdev *v,void *o,bool c,unsigned long k) { (void)v;(void)o;(void)c;(void)k;assert(0);return -EIO; }
+/* END_PE_TRANSPORT_STUBS */
 /* CONTEXT_TRANSPORT_STUBS */
 int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }
 int mishare_ndi_legacy_release(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }

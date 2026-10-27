@@ -281,3 +281,48 @@ WLAN 574 条版本记录无不匹配，没有未解决依赖；7 项选定结构
 本轮完成私有 owner 的 legacy/最小 WMA/self-peer 接入与对称回收，尚未增加运行时
 调用方或在手机执行。下一阶段为 PE/session 参数、START/STOP 和频道切换，随后
 接 RAW 收发；启用前仍需补齐 SSR/remove 与失败隔离后的完整恢复。
+
+### Owned PE session lifecycle (0018; source stage)
+
+The Xiaomi 15/SM8750 reference adds its own `sme_create_pe_session` and PAS
+PE role; neither API nor role exists in the pinned SM8850 source. Queue
+acceptance in that reference also does not confirm actual PE creation.
+This port therefore uses an owned native MC-thread request and explicit
+completion before admitting a future START implementation.
+
+`mishare_runtime_ndi_session` requires an already prepared owned NDI context
+and self-peer. It is one-shot: the owner records pending state before posting,
+then retains actual completion separately from successful queue submission.
+Every request pins the exact VDEV with `WLAN_LEGACY_MAC_ID`; its native scheduler
+flush callback releases that reference and reports cancellation. The callback
+queue is TARGET_IF on the same native MC thread as PE, because PE's legacy
+queue does not dispatch arbitrary function pointers. No request waits while
+holding RTNL or executes native session-table work on the requesting thread.
+
+A new private host BSS/PE role is appended; existing enum values are unchanged.
+The native `pe_create_session` still owns its DPH table, index pool and MAC VDEV
+reference. Bounded owned additions initialize the role/self MAC and release the
+MAC reference on an owned post-lookup constructor failure. The PE session keeps
+a stable owner identity. Ordinary native source files match their recorded
+pre-0018 hashes after removing the additions. `struct pe_session` is rebuilt
+with a private owner field; this is not a promise of compatibility with a stock
+binary that accesses that internal structure.
+
+Destroy first waits for any pending create, then queues PE deletion and waits
+for its real MC callback. Deletion requires the same owner, exact VDEV, native
+session address, private BSS/PE roles and self MAC; an occupied foreign session
+is never adopted or deleted. Native `pe_delete_session` releases the PE-owned
+MAC reference before completion is published. Only then may existing self-peer,
+VDEV and DP teardown proceed. Failure to queue/execute/flush a delete, unexpected
+matching replies or ambiguous session identity quarantines all remaining
+resources. No fake DOWN event is used for a session that has never started.
+
+The new Actions fixture executes the production owner and actual extracted
+request/post/callback/flush helpers plus bounded native constructor insertions
+under ASan/UBSan. Scheduler primitives and the full PE allocator/destructor
+remain modeled; this does not exercise real MC queue races, firmware or radio.
+The existing fixtures retain explicit aborts for accidental PE transport calls.
+Full WLAN compilation and strict linking remain required. No runtime caller,
+channel validation/preparation, START/STOP/DOWN, TX/RX or SSR/remove recovery is
+added in this lifecycle unit; the dedicated PAS MLME table still rejects radio
+operations. No new phone installation or test package is produced.

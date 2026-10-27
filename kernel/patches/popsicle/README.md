@@ -68,3 +68,10 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
     quarantine; no CSR, generic post-create configuration, START or radio caller
     is introduced. Existing native paths match their recorded source hashes
     after removing the bounded additions (plus a pre-truncation event-ID guard).
+
+18. `0018-mishare-owned-pe-session.patch` adds a private host PE role and
+    an owned MC request with exact VDEV references, flush cleanup and actual
+    completion. Native PE creation/destruction are paired before self-peer,
+    VDEV and DP teardown. Foreign/recycled session identity is rejected; failed
+    or cancelled deletion quarantines. An owned constructor failure releases
+    its MAC VDEV reference. No radio command or runtime caller is enabled.

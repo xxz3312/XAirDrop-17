@@ -42,6 +42,13 @@ int mishare_runtime_ndi_create(struct mishare_runtime_owner *owner,
  * exact owned peer-delete request before issuing vdev DELETE.
  */
 int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *owner);
+/* One-shot asynchronous native MC-thread PE create. Poll snapshot for
+ * pe_completed/pe_ready; return 0 from post means queue acceptance only.
+ * Destroy waits for completion and confirmed PE deletion before self-peer
+ * teardown. Request flush releases its VDEV ref; delete flush quarantines.
+ * No channel parameters, START/UP, TX/RX or runtime caller yet.
+ */
+int mishare_runtime_ndi_session(struct mishare_runtime_owner *owner);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);

@@ -33,6 +33,14 @@ struct mishare_ndi_status {
     bool peer_delete_pending;
     bool peer_delete_submitted;
     bool peer_delete_replied;
+    bool pe_requested;
+    bool pe_submitted;
+    bool pe_completed;
+    bool pe_ready;
+    bool pe_delete_requested;
+    bool pe_delete_submitted;
+    bool pe_delete_completed;
+    int pe_error;
     int context_error;
     int create_error;
     struct mishare_ndi_create_result create;
@@ -53,6 +61,11 @@ int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *vdev,
                                  void (*callback)(void *), void *context);
 int mishare_ndi_release_stats(struct vdev_mlme_obj *mlme,
                               struct mishare_ndi_create_result *result);
+int mishare_ndi_pe_post(struct wlan_objmgr_vdev *vdev, void *owner,
+                         bool create, unsigned long session_cookie);
+void mishare_runtime_ndi_pe_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                   void *owner, bool create,
+                                   unsigned long session_cookie, int result);
 int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *mlme);
 int mishare_ndi_legacy_release(struct vdev_mlme_obj *mlme);
 int mishare_ndi_wma_bind(struct wlan_objmgr_vdev *vdev);

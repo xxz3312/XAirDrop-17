@@ -1,0 +1,224 @@
+--- a/qcacld-3.0/core/mac/inc/sir_api.h
++++ b/qcacld-3.0/core/mac/inc/sir_api.h
+@@ -741,6 +741,8 @@
+ 	eSIR_AUTO_MODE,
+ 	eSIR_MONITOR_MODE,
+ 	eSIR_NDI_MODE,
++	/* Private host PE role; never a firmware VDEV type. */
++	eSIR_MISHARE_PAS_MODE,
+ 	eSIR_DONOT_USE_BSS_TYPE = SIR_MAX_ENUM_SIZE
+ };
+ 
+--- a/qcacld-3.0/core/mac/src/pe/include/lim_global.h
++++ b/qcacld-3.0/core/mac/src/pe/include/lim_global.h
+@@ -62,7 +62,8 @@
+ 	eLIM_P2P_DEVICE_ROLE,
+ 	eLIM_P2P_DEVICE_GO,
+ 	eLIM_P2P_DEVICE_CLIENT,
+-	eLIM_NDI_ROLE
++	eLIM_NDI_ROLE,
++	eLIM_MISHARE_PAS_ROLE
+ } tLimSystemRole;
+ 
+ /*
+--- a/qcacld-3.0/core/mac/src/pe/include/lim_session.h
++++ b/qcacld-3.0/core/mac/src/pe/include/lim_session.h
+@@ -751,6 +751,8 @@
+  * @dfs_p2p_info: DFS P2P group operation info.
+  */
+ struct pe_session {
++	/* Owned PE identity; zero for every ordinary session. */
++	void *mishare_owner;
+ 	uint8_t available;
+ 	wlan_cm_id cm_id;
+ 	uint16_t peSessionId;
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_session.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_session.c
+@@ -563,6 +563,13 @@
+ 	sir_copy_mac_addr(session_ptr->bssId, bssid);
+ 	if (bssType == eSIR_MONITOR_MODE)
+ 		sir_copy_mac_addr(mac->lim.gpSession[i].self_mac_addr, bssid);
++
++/* MISHARE_BEGIN:pe_identity */
++	if (bssType == eSIR_MISHARE_PAS_MODE) {
++		sir_copy_mac_addr(session_ptr->self_mac_addr, bssid);
++		session_ptr->limSystemRole = eLIM_MISHARE_PAS_ROLE;
++	}
++/* MISHARE_END:pe_identity */
+ 	session_ptr->valid = true;
+ 	/* Initialize the SME and MLM states to IDLE */
+ 	session_ptr->limMlmState = eLIM_MLM_IDLE_STATE;
+@@ -679,6 +686,13 @@
+ 	return &mac->lim.gpSession[i];
+ 
+ free_session_attrs:
++
++/* MISHARE_BEGIN:pe_failed_ref */
++	if (bssType == eSIR_MISHARE_PAS_MODE && session_ptr->vdev) {
++		wlan_objmgr_vdev_release_ref(session_ptr->vdev, WLAN_LEGACY_MAC_ID);
++		session_ptr->vdev = NULL;
++	}
++/* MISHARE_END:pe_failed_ref */
+ 	lim_free_peer_idxpool(session_ptr);
+ 	qdf_mem_free(session_ptr->pSchProbeRspTemplate);
+ 	qdf_mem_free(session_ptr->pSchBeaconFrameBegin);
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -28,6 +28,9 @@
+  * --------------------------------------------------------------------
+  *
+  */
++#include "wlan_hdd_mishare_ndi.h"
++#include <linux/errno.h>
++#include "scheduler_api.h"
+ #include "cds_api.h"
+ #include "wni_cfg.h"
+ #include "wni_api.h"
+@@ -5200,3 +5203,147 @@
+ 
+ }
+ #endif
++
++/* MISHARE_BEGIN:pe_helpers */
++/* All session-table work runs on the native MC scheduler, like PE itself.
++ * TARGET_IF's callback queue is on that same MC thread; PE's legacy queue
++ * ignores arbitrary callbacks. A queued request pins the exact VDEV and owns
++ * a flush callback. No wait, WMI START/UP or MLME state-machine event here.
++ */
++struct mishare_pe_request {
++	struct wlan_objmgr_vdev *vdev;
++	void *owner;
++	unsigned long session_cookie;
++	bool create;
++};
++
++static int mishare_pe_execute(struct mishare_pe_request *req,
++			      unsigned long *cookie)
++{
++	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
++	struct wlan_objmgr_vdev *vdev = req->vdev;
++	struct vdev_mlme_obj *mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
++	struct pe_session *session;
++	uint8_t session_id;
++	uint8_t id = wlan_vdev_get_id(vdev);
++
++	*cookie = 0;
++	if (!mac || mac->psoc != wlan_vdev_get_psoc(vdev) ||
++	    ANI_DRIVER_TYPE(mac) == QDF_DRIVER_TYPE_MFG ||
++	    !mac->lim.gpSession || !mac->lim.maxBssId ||
++	    !mac->lim.max_sta_of_pe_session ||
++	    mac->lim.max_sta_of_pe_session > SIR_SAP_MAX_NUM_PEERS ||
++	    wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE ||
++	    !mlme || !mlme->ext_vdev_ptr ||
++	    mlme->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI ||
++	    mlme->mgmt.generic.subtype)
++		return -EUCLEAN;
++
++	session = pe_find_session_by_vdev_id(mac, id);
++	if (req->create) {
++		/* Never adopt/replace a session found only by a recyclable VDEV ID. */
++		if (session)
++			return -EEXIST;
++		session = pe_find_session_by_bssid(mac,
++				wlan_vdev_mlme_get_macaddr(vdev), &session_id);
++		if (session)
++			return -EEXIST;
++		session = pe_create_session(mac, wlan_vdev_mlme_get_macaddr(vdev),
++				&session_id, mac->lim.max_sta_of_pe_session,
++				eSIR_MISHARE_PAS_MODE, id);
++		if (!session)
++			return -ENOMEM; /* native owned failure releases its MAC ref */
++		if (session->vdev != vdev ||
++		    session->limSystemRole != eLIM_MISHARE_PAS_ROLE)
++			return -EUCLEAN; /* ambiguous publication: retain, never guess */
++		session->mishare_owner = req->owner;
++		*cookie = (unsigned long)session;
++		return 0;
++	}
++	if (!session || (unsigned long)session != req->session_cookie ||
++	    session->vdev != vdev || session->mishare_owner != req->owner ||
++	    session->bssType != eSIR_MISHARE_PAS_MODE ||
++	    session->limSystemRole != eLIM_MISHARE_PAS_ROLE ||
++	    qdf_mem_cmp(session->bssId, wlan_vdev_mlme_get_macaddr(vdev),
++			QDF_MAC_ADDR_SIZE))
++		return -EUCLEAN;
++	/* Only a never-started session is currently admitted by the owner API.
++	 * No fake DOWN event: future START integration must first prove STOP/DOWN.
++	 */
++	pe_delete_session(mac, session);
++	if (session->valid || session->vdev)
++		return -EUCLEAN;
++	return 0;
++}
++
++static QDF_STATUS mishare_pe_finish(struct scheduler_msg *msg, bool flushed)
++{
++	struct mishare_pe_request *req = msg->bodyptr;
++	struct wlan_objmgr_psoc *psoc;
++	unsigned long cookie = 0;
++	void *owner;
++	uint8_t id;
++	bool create;
++	int ret;
++
++	if (!req)
++		return QDF_STATUS_E_INVAL;
++	psoc = wlan_vdev_get_psoc(req->vdev);
++	id = wlan_vdev_get_id(req->vdev);
++	owner = req->owner;
++	create = req->create;
++	ret = flushed ? -ECANCELED : mishare_pe_execute(req, &cookie);
++	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_LEGACY_MAC_ID);
++	qdf_mem_free(req);
++	msg->bodyptr = NULL;
++	/* Last operation: owner may be drained after this notification. */
++	mishare_runtime_ndi_pe_event(psoc, id, owner, create, cookie, ret);
++	return QDF_STATUS_SUCCESS;
++}
++
++static QDF_STATUS mishare_pe_callback(struct scheduler_msg *msg)
++{
++	return mishare_pe_finish(msg, false);
++}
++
++static QDF_STATUS mishare_pe_flush(struct scheduler_msg *msg)
++{
++	return mishare_pe_finish(msg, true);
++}
++
++int mishare_ndi_pe_post(struct wlan_objmgr_vdev *vdev, void *owner,
++			bool create, unsigned long session_cookie)
++{
++	struct mishare_pe_request *req;
++	struct scheduler_msg msg = {0};
++	QDF_STATUS status;
++
++	if (!vdev || !owner || (create ? session_cookie != 0 : !session_cookie) ||
++	    wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++		return -EINVAL;
++	req = qdf_mem_malloc(sizeof(*req));
++	if (!req)
++		return -ENOMEM;
++	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_MAC_ID);
++	if (QDF_IS_STATUS_ERROR(status)) {
++		qdf_mem_free(req);
++		return -ENODEV;
++	}
++	req->vdev = vdev;
++	req->owner = owner;
++	req->create = create;
++	req->session_cookie = session_cookie;
++	msg.bodyptr = req;
++	msg.callback = mishare_pe_callback;
++	msg.flush_callback = mishare_pe_flush;
++	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_PE,
++					QDF_MODULE_ID_TARGET_IF, &msg);
++	if (QDF_IS_STATUS_ERROR(status)) {
++		/* Native scheduler returns failure only before queue publication. */
++		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
++		qdf_mem_free(req);
++		return qdf_status_to_os_return(status);
++	}
++	return 0;
++}
++/* MISHARE_END:pe_helpers */

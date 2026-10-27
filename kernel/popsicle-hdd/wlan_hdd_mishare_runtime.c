@@ -18,6 +18,7 @@ struct mishare_runtime_owner {
     struct wlan_objmgr_vdev *vdev;
     struct mishare_event_owner *events;
     unsigned long cookie;
+    unsigned long pe_cookie;
     u8 mac[ETH_ALEN];
     bool referenced;
     struct mishare_runtime_status state;
@@ -468,6 +469,87 @@ result:
     return ret;
 }
 
+/* MC callback matches the stable owner, exact PSOC and owned VDEV ID. */
+void mishare_runtime_ndi_pe_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                   void *owner, bool create,
+                                   unsigned long session_cookie, int result)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner || entry->psoc != psoc || !entry->vdev ||
+            wlan_vdev_get_id(entry->vdev) != id)
+            continue;
+        ndi = &entry->state.ndi;
+        if (!ndi->active || !ndi->peer_created ||
+            (create ? (!ndi->pe_requested || ndi->pe_completed ||
+                        ndi->pe_delete_requested) :
+                       (!ndi->pe_ready || !ndi->pe_delete_requested ||
+                        ndi->pe_delete_completed))) {
+            ndi->blocked = true;
+            break;
+        }
+        ndi->pe_error = result;
+        if (create) {
+            ndi->pe_completed = true;
+            if (!result && session_cookie) {
+                entry->pe_cookie = session_cookie;
+                ndi->pe_ready = true;
+            } else if (!result || result == -EUCLEAN) {
+                ndi->blocked = true;
+            }
+        } else {
+            ndi->pe_delete_completed = true;
+            if (result || session_cookie)
+                ndi->blocked = true;
+            /* pe_ready stays true until post returns and drain consumes ACK. */
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+int mishare_runtime_ndi_session(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+    int ret;
+
+    if (!entry)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi = &entry->state.ndi;
+    if (entry->state.blocked || ndi->blocked) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (!ndi->active || !ndi->legacy_ready || !ndi->wma_bound ||
+        !ndi->peer_created || ndi->pe_requested || ndi->peer_delete_pending ||
+        ndi->delete_pending || entry->state.draining) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EBUSY;
+    }
+    ndi->pe_requested = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_ndi_pe_post(entry->vdev, entry, true, 0);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (ret) {
+        /* Allocation/ref/queue failures precede native queue publication. */
+        if (ndi->pe_completed)
+            ndi->blocked = true;
+        ndi->pe_error = ret;
+        ndi->pe_completed = true;
+    } else {
+        ndi->pe_submitted = true;
+    }
+    ret = ndi->blocked ? -EUCLEAN : ret ? ret : -EINPROGRESS;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
 static void mishare_runtime_ndi_dp_freed(void *context)
 {
     struct mishare_runtime_owner *entry = context;
@@ -496,6 +578,32 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     if (entry->state.blocked || ndi->blocked) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
+    }
+    /* A pending MC request owns the VDEV and may publish a PE session. Never
+     * advance peer/VDEV/DP cleanup until that request has completed. */
+    if (ndi->pe_requested && !ndi->pe_completed) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
+    }
+    if (ndi->pe_ready && !ndi->pe_delete_requested) {
+        ndi->pe_delete_requested = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_pe_post(entry->vdev, entry, false, entry->pe_cookie);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        ndi->pe_delete_submitted = !ret;
+        if (ret)
+            ndi->blocked = true;
+        ret = ndi->blocked ? -EUCLEAN : -EINPROGRESS;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+    if (ndi->pe_ready) {
+        if (!ndi->pe_delete_submitted || !ndi->pe_delete_completed) {
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            return -EINPROGRESS;
+        }
+        ndi->pe_ready = false;
+        entry->pe_cookie = 0;
     }
     if (ndi->peer_created && !ndi->peer_delete_pending) {
         ndi->peer_delete_pending = true;
