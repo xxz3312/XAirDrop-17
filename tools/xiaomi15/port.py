@@ -4,6 +4,7 @@
 Build only in Actions. No radio startup, root helper launch or APK mounting.
 """
 import argparse
+import difflib
 import hashlib
 import json
 import os
@@ -276,7 +277,15 @@ def build(reference,apktool,sdk,work,output):
         dst.writestr('classes3.dex',payload['classes3.dex'])
     checked=work/'checked';run('java','-jar',apktool,'d','--no-res','-o',checked,candidate)
     actual=class_map(checked);extra={k:v for k,v in actual.items() if k.startswith('smali_classes3/')}
-    if {k:v for k,v in actual.items() if not k.startswith('smali_classes3/')}!=expected:raise ValueError('Compiled application class drift')
+    base={k:v for k,v in actual.items() if not k.startswith('smali_classes3/')}
+    if base!=expected:
+        changed=[k for k in sorted(set(base)|set(expected)) if base.get(k)!=expected.get(k)]
+        print('Compiled class mismatches:',changed,flush=True)
+        for name in changed[:3]:
+            if (decoded/name).exists() and (checked/name).exists():
+                diff=difflib.unified_diff((decoded/name).read_text().splitlines(),(checked/name).read_text().splitlines(),fromfile='expected/'+name,tofile='compiled/'+name)
+                print('\n'.join(list(diff)[:220]),flush=True)
+        raise ValueError('Compiled application class drift')
     if list(extra)!=['smali_classes3/'+PKG+'/Bridge.smali']:raise ValueError('Unexpected extra application classes')
     bridge=(checked/next(iter(extra))).read_text()
     if 'L'+PKG+'/NetworkBroker;' in bridge or 'Landroid/net/Network;' in bridge:raise ValueError('Bridge still requires a root NetworkAgent')
