@@ -1,5 +1,7 @@
 # 小米 17：以 MiShare 为入口的接入路线
 
+当前复用与构建状态见 [小米 15 → 17 完整链路](XIAOMI15-TO-17.md)。下文按开发顺序保留历史记录。
+
 最终入口是 `com.miui.mishare.connectivity`，参考
 [小米 15 XAirDrop 固定版本](https://github.com/Leekin2/XAirDrop/tree/eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76)。
 
@@ -7,8 +9,8 @@
 
 | 层 | 参考实现 | 小米 17 的状态 |
 | --- | --- | --- |
-| MiShare 应用 | `patches/build.py` 修改 DEX；Bridge 做网络注册回退与 Wi-Fi 会话控制，并修正 BLE 广播 | 已验证相同 DEX 并适配首段 BLE 补丁；broker 与 Wi-Fi 策略尚未接入 |
-| 系统服务 | `DomesticXOsComm`、`libxos`、VINTF 和权限，以及 root NetworkBroker | 尚未验证本机兼容性或运行 |
+| MiShare 应用 | `patches/build.py` 修改 DEX；Bridge 做网络注册回退与 Wi-Fi 会话控制，并修正 BLE 广播 | 已验证同 DEX 与 BLE；直接复用 15 的 Wi-Fi 会话代码，新增可选构建，未在手机启用 |
+| 系统服务 | `DomesticXOsComm`、`libxos`、VINTF 和权限，以及 root NetworkBroker | 加载、注册及 MiShare 元数据访问已通过；无线尚未验证 |
 | 无线驱动 | 复用并适配 OPAirDrop 的 AWDL WLAN/Wonder 模块 | 本机仅通过 Wonder 绑定生命周期，实际 WLAN 收发仍未实现 |
 
 参考项目明确没有使用 LSPosed。它对确切 APK 做 smali 修改，构建后以临时 bind mount

@@ -1,0 +1,104 @@
+name: Xiaomi 15 MiShare session port
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/xiaomi15-port.yml
+      - tools/xiaomi15/**
+      - third-party/xairdrop15/**
+      - tests/test_xiaomi15_port.py
+      - tests/fixtures/xiaomi15/**
+permissions:
+  contents: read
+concurrency:
+  group: xiaomi15-port-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Exact-input and reuse regression checks
+        run: |
+          python3 -m unittest discover -s tests -p 'test_xiaomi15_port.py'
+          python3 -m unittest discover -s tests -p 'test_mishare_patch.py'
+      - name: Restore pinned patch tool and public reference cache
+        id: patchtools
+        uses: actions/cache/restore@v4
+        with:
+          path: .mishare-cache
+          key: mishare-ble-v1-${{ runner.os }}-${{ hashFiles('tools/mishare/profile.json') }}
+      - name: Fetch and verify public inputs
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,pathlib,shutil,urllib.request
+          p=json.loads(pathlib.Path('tools/mishare/profile.json').read_text())
+          cache=pathlib.Path('.mishare-cache'); cache.mkdir(exist_ok=True)
+          for name,url,want in [
+              ('apktool.jar',f"https://github.com/iBotPeaches/Apktool/releases/download/v{p['apktool_version']}/apktool_{p['apktool_version']}.jar",p['apktool_sha256']),
+              ('reference.apk',p['public_reference_url'],p['public_reference_sha256'])]:
+              target=cache/name
+              if not target.exists():
+                  partial=cache/(name+'.partial')
+                  with urllib.request.urlopen(url,timeout=90) as src,partial.open('wb') as out:
+                      shutil.copyfileobj(src,out)
+                  partial.replace(target)
+              if hashlib.sha256(target.read_bytes()).hexdigest()!=want:
+                  raise SystemExit('Input hash mismatch: '+name)
+          PY
+      - name: Save verified inputs before DEX compilation
+        if: steps.patchtools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .mishare-cache
+          key: ${{ steps.patchtools.outputs.cache-primary-key }}
+      - uses: actions/cache/restore@v4
+        id: sdk
+        with:
+          path: .xos-sdk
+          key: xos-binder-sdk-${{ runner.os }}-api36-tools36.0.0-v1
+      - name: Prepare pinned Android platform and D8
+        run: |
+          mkdir -p .xos-sdk/platforms .xos-sdk/build-tools
+          cp -a "$ANDROID_HOME/licenses" .xos-sdk/
+          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] && [ -f "$ANDROID_HOME/platforms/android-36/android.jar" ]; then
+            cp -a "$ANDROID_HOME/platforms/android-36" .xos-sdk/platforms/
+          fi
+          if [ ! -x .xos-sdk/build-tools/36.0.0/d8 ] && [ -x "$ANDROID_HOME/build-tools/36.0.0/d8" ]; then
+            cp -a "$ANDROID_HOME/build-tools/36.0.0" .xos-sdk/build-tools/
+          fi
+          if [ ! -f .xos-sdk/platforms/android-36/android.jar ] || [ ! -x .xos-sdk/build-tools/36.0.0/d8 ]; then
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-sdk" 'platforms;android-36' 'build-tools;36.0.0'
+          fi
+          test -f .xos-sdk/platforms/android-36/android.jar
+          test -x .xos-sdk/build-tools/36.0.0/d8
+      - name: Save verified tool paths before compilation
+        if: steps.sdk.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .xos-sdk
+          key: ${{ steps.sdk.outputs.cache-primary-key }}
+      - name: Build Wi-Fi-only broker and MiShare compatibility DEX
+        run: |
+          python3 tools/xiaomi15/port.py \
+            --reference .mishare-cache/reference.apk \
+            --apktool .mishare-cache/apktool.jar \
+            --sdk "$PWD/.xos-sdk" \
+            --work "$RUNNER_TEMP/xiaomi15-port-work" \
+            --output "$RUNNER_TEMP/xiaomi15-port-output"
+      - name: Upload DEX payload and exact-input report
+        uses: actions/upload-artifact@v4
+        with:
+          name: xiaomi15-mishare-session-${{ github.run_id }}
+          path: ${{ runner.temp }}/xiaomi15-port-output/
+          if-no-files-found: error
+          retention-days: 7

@@ -1,0 +1,18 @@
+{
+  "repository": "https://github.com/Leekin2/XAirDrop",
+  "commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76",
+  "authors": [
+    "Leekin2",
+    "mertcqnkld"
+  ],
+  "license": "GPL-3.0",
+  "files": {
+    "reference/action.sh.txt": "2178ad55756d5d9e04be55f32e1fc5791f2c599f493973dcbfb555e3acd3d810",
+    "reference/build.py.txt": "791e063970e6f95563f8754d42ff08d2c5749d86979b94c7f86d73d12b93eede",
+    "src/io/github/leekin2/xairdrop/NetworkBroker.java": "ea3adad81e5dbe3ca64572cf8cc4a23e1096eb2b7a99fcc6a2628a08db06c7ec",
+    "src/io/github/leekin2/xairdrop/WifiControl.java": "9804db9bcdeb79b29df527628c957708c9ee3e0bea8b9c6d1102789b128a772a",
+    "src/io/github/leekin2/xairdrop/Bridge.java": "9b2c90bca1f07032a0d2c2a750abe0b7dad350f5f45dbfa6ec5c3f50979aa5f7"
+  },
+  "reference_files_executable": false,
+  "binary_modules_included": false
+}

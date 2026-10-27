@@ -1,0 +1,52 @@
+{
+  "reference_commit": "eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76",
+  "target": {
+    "device": "popsicle",
+    "soc": "SM8850",
+    "kernel_series": "6.12"
+  },
+  "reference_driver": {
+    "soc": "SM8750",
+    "kernel_series": "6.6",
+    "module_parameters": {
+      "passthru_awdl_addba": "1",
+      "passthru_awdl_native_rx": "1",
+      "passthru_ht": "1",
+      "passthru_fwtype": "7",
+      "passthru_mon_rings": "0",
+      "passthru_dry_run": "0",
+      "passthru_mon_chan_sync": "1",
+      "passthru_ndi_peer": "1",
+      "passthru_ndi_no_up": "1",
+      "passthru_mgmt_bridge": "1",
+      "passthru_aux_monitor": "1",
+      "passthru_tx_audit": "1",
+      "passthru_ndi_fw_authorize": "0",
+      "passthru_awdl_wmi_raw": "1",
+      "passthru_awdl_target_mac": "",
+      "passthru_awdl_target_auto": "1",
+      "passthru_awdl_target_enable": "1",
+      "passthru_awdl_target_auth": "2",
+      "passthru_native_data_rx": "1",
+      "passthru_awdl_backpressure": "1",
+      "passthru_awdl_raw_rx": "1",
+      "passthru_awdl_rate_mbps": "54",
+      "passthru_awdl_host_seq": "1",
+      "passthru_awdl_rx_dedup": "1",
+      "passthru_awdl_attempts": "3",
+      "passthru_awdl_rx_auto": "1",
+      "passthru_awdl_rx_rearm": "1",
+      "passthru_sta_action_rx": "1",
+      "passthru_pas_discovery_actions": "1"
+    },
+    "dynamic_sta_profile": "Reference $STA expansion is not a popsicle setting."
+  },
+  "preferred_port_route": "PAS_HOST_NDI_FIRMWARE_WMI_RAW_TX_NATIVE_RX",
+  "popsicle_firmware_support": "NOT_RUNTIME_VERIFIED",
+  "default_app_profile": "existing BLE-only patch; native Wi-Fi policy",
+  "session_profile": "optional Xiaomi 15 Wi-Fi session compatibility; not enabled on phone",
+  "network_registration": "keep native NetworkAgent; NETWORK_FACTORY already granted on device",
+  "root_broker": "Wi-Fi hold/recovery only; native NetworkAgent retained; build payload, not started on phone",
+  "region_and_share_sheet": "keep original target behavior",
+  "popsicle_fw_type_selection": "NDI selection and matching checks not yet ported; current type-9 placeholder has never been submitted"
+}

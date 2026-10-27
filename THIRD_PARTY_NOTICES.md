@@ -98,3 +98,13 @@ libxposed API 使用 Apache-2.0，LSPosed 使用 GPL-3.0。KernelSU 的 kernel �
 - DexKit 的传递依赖包括 FlatBuffers Java `23.5.26`（Apache-2.0）与 Rikka NDK cxx `1.2.0`（对应依赖的 LLVM / libc++ 许可适用）。具体构建依赖以 Gradle 解析结果为准。
 
 [LGPLv3 条款](LICENSES/LGPL-3.0.txt) · [Apache 2.0 条款](LICENSES/Apache-2.0.txt)。DexKit 对应版本源码与原有版权声明由上游项目提供；项目未把厂商 APK 或分析样本纳入分发。
+
+
+## 小米 15 XAirDrop 的直接源码复用
+
+- 来源：Leekin2/XAirDrop，固定提交 eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76。
+- 作者：Leekin2、mertcqnkld；协议：上游 GPL-3.0。
+- 原始文件：third-party/xairdrop15/；逐文件来源和 SHA-256 见 provenance.json。
+- 衍生构建：tools/xiaomi15/port.py。移植 MiShare BLE/Wi-Fi 会话控制；broker
+  改为 Wi-Fi-only，保留本机 NetworkAgent；增加失败恢复和 finally 清理。
+- 不包含或运行上游 SM8750 二进制内核模块、CRC/布局修改器。

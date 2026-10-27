@@ -1,10 +1,11 @@
 # XAirDrop-17
 
-小米 17 Pro Max（popsicle / SM8850）的实验性 AirDrop 移植工程，基于 [Weverses/OPAirDrop](https://github.com/Weverses/OPAirDrop)，参考 [Leekin2/XAirDrop](https://github.com/Leekin2/XAirDrop)。
+小米 17 Pro Max（popsicle / SM8850）的实验性 AirDrop 移植工程，以 [Leekin2/XAirDrop](https://github.com/Leekin2/XAirDrop) 的 MiShare 完整链路为适配主线，复用其底层来源 [Weverses/OPAirDrop](https://github.com/Weverses/OPAirDrop) 的 Wonder/WLAN 实现。
 
 **目前处于源码与 ABI 适配阶段，没有适用于小米 17 的可安装包，尚未完成实机收发验证。**
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
+- [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
 - [源码版本记录](docs/popsicle-source-lock.json)
 - [GitHub Actions 编译](docs/POPSICLE-ACTIONS.md)
 - [上游说明（其中机型、功能和安装说明适用于上游）](docs/UPSTREAM-README.md)
