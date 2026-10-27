@@ -392,14 +392,18 @@ static QDF_STATUS radio_reply(struct vdev_mlme_obj *m, bool start,
 }
 QDF_STATUS mishare_radio_start_rsp(struct vdev_mlme_obj *m, struct vdev_start_response *rsp)
 {
-    if (!rsp)
-        return QDF_STATUS_E_INVAL;
+    if (!rsp) {
+        struct mishare_radio *r = radio_get(m);
+        return r ? radio_result(r, -EINVAL) : QDF_STATUS_E_NOSUPPORT;
+    }
     return radio_reply(m, true, rsp, rsp->vdev_id);
 }
 QDF_STATUS mishare_radio_stop_rsp(struct vdev_mlme_obj *m, struct vdev_stop_response *rsp)
 {
-    if (!rsp)
-        return QDF_STATUS_E_INVAL;
+    if (!rsp) {
+        struct mishare_radio *r = radio_get(m);
+        return r ? radio_result(r, -EINVAL) : QDF_STATUS_E_NOSUPPORT;
+    }
     return radio_reply(m, false, NULL, rsp->vdev_id);
 }
 

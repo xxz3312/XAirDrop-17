@@ -18,6 +18,7 @@ SM='qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c'
 
 STUBS=r'''
 #define GFP_ATOMIC 1
+#define wma_err(...) ((void)0)
 #define QDF_STATUS_E_CANCELED 7
 #define WMA_BSS_STATUS_STARTED 3
 #define START_RESPONSE_TIMER 10
@@ -192,6 +193,8 @@ static void start_up(struct mishare_runtime_owner *o) {
 int main(void) {
  assert(mishare_runtime_ndi_start(NULL)==-EINVAL);
  assert(mishare_radio_validate(NULL,0,NULL)==QDF_STATUS_E_NOSUPPORT);
+ assert(passthru_radio_start_rsp(NULL,NULL)==QDF_STATUS_E_NOSUPPORT);
+ assert(passthru_radio_stop_rsp(NULL,NULL)==QDF_STATUS_E_NOSUPPORT);
  assert(passthru_radio_beacon(NULL,BEACON_INIT,0,NULL)==QDF_STATUS_E_NOSUPPORT);
  assert(passthru_radio_disconnect(NULL,0,NULL,false)==QDF_STATUS_E_NOSUPPORT);
  reset_radio();struct mishare_runtime_owner *o=with_channel(2437);
