@@ -172,7 +172,9 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_ndi_legacy_release', 'mishare_ndi_wma_bind',
              'mishare_ndi_wma_unbind', 'mishare_ndi_self_peer_create',
              'mishare_ndi_self_peer_delete', 'mishare_runtime_ndi_session',
-             'mishare_ndi_pe_post', 'mishare_runtime_ndi_pe_event']
+             'mishare_ndi_pe_post', 'mishare_runtime_ndi_pe_event',
+             'mishare_runtime_ndi_channel', 'mishare_ndi_channel_post',
+             'mishare_runtime_ndi_channel_event']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -223,6 +225,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/mishare_create_delete_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-create-delete-fixture.json'],
                'mishare-create-delete-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_channel_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-channel-fixture.json'],
+               'mishare-channel-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_session_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-session-fixture.json'],
                'mishare-session-fixture.log')

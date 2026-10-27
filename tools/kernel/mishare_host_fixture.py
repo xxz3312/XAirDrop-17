@@ -21,6 +21,7 @@ COMMON = r'''
 #include <stdlib.h>
 #include <string.h>
 typedef uint8_t u8;
+typedef uint32_t u32;
 typedef u8 tSirMacAddr[6];
 #define ETH_ALEN 6
 #define GFP_KERNEL 0

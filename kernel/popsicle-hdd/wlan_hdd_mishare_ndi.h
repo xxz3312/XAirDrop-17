@@ -40,6 +40,12 @@ struct mishare_ndi_status {
     bool pe_delete_requested;
     bool pe_delete_submitted;
     bool pe_delete_completed;
+    bool channel_requested;
+    bool channel_submitted;
+    bool channel_completed;
+    bool channel_prepared;
+    u32 channel_freq;
+    int channel_error;
     int pe_error;
     int context_error;
     int create_error;
@@ -61,6 +67,10 @@ int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *vdev,
                                  void (*callback)(void *), void *context);
 int mishare_ndi_release_stats(struct vdev_mlme_obj *mlme,
                               struct mishare_ndi_create_result *result);
+int mishare_ndi_channel_post(struct wlan_objmgr_vdev *vdev, void *owner,
+                              unsigned long session_cookie, u32 freq);
+void mishare_runtime_ndi_channel_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                        void *owner, u32 freq, int result);
 int mishare_ndi_pe_post(struct wlan_objmgr_vdev *vdev, void *owner,
                          bool create, unsigned long session_cookie);
 void mishare_runtime_ndi_pe_event(struct wlan_objmgr_psoc *psoc, u8 id,

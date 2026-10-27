@@ -89,6 +89,9 @@ int mishare_ndi_release_stats(struct vdev_mlme_obj *m,struct mishare_ndi_create_
 /* PE_TRANSPORT_STUBS */
 int mishare_ndi_pe_post(struct wlan_objmgr_vdev *v,void *o,bool c,unsigned long k) { (void)v;(void)o;(void)c;(void)k;assert(0);return -EIO; }
 /* END_PE_TRANSPORT_STUBS */
+/* CHANNEL_TRANSPORT_STUBS */
+int mishare_ndi_channel_post(struct wlan_objmgr_vdev *v,void *o,unsigned long k,u32 f) { (void)v;(void)o;(void)k;(void)f;assert(0);return -EIO; }
+/* END_CHANNEL_TRANSPORT_STUBS */
 /* CONTEXT_TRANSPORT_STUBS */
 int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }
 int mishare_ndi_legacy_release(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }
@@ -230,7 +233,7 @@ def audit(root):
     source=fixture(root);production=ROOT/'kernel/popsicle-hdd'
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
-        (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint64_t u64;\n')
+        (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint32_t u32;typedef uint64_t u64;\n')
         for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h','qdf_status.h']:(d/n).write_text('/* boundary declarations */\n')
         p=d/'owner.c';p.write_text(source);exe=d/'owner'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(p),'-o',str(exe)],check=True)

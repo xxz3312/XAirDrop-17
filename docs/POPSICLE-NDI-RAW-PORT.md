@@ -344,3 +344,35 @@ operations. No new phone installation or test package is produced.
 本轮没有在手机调用新 PE API，没有启用 START/STOP/频道或 TX/RX。
 下一项是频道原生参数、regulatory/concurrency 校验与专用 PAS MLME 的
 START/STOP/DOWN 及真实响应闭环，须一起更新已启动会话的停止与回收顺序。
+
+## 0019：owned MC 频道参数准备
+
+新增一次性的 `mishare_runtime_ndi_channel(owner, freq)`，前提是 owned NDI、
+legacy/WMA/self-peer 和 PE session 均已完成准备。频道请求独立持有 MAC VDEV
+引用，由与 PE 相同的 MC 调度线程执行，带 flush 回调；destroy 等待请求实际完成
+后才可以排队删除 PE。排队成功与参数准备成功分别记录。
+
+本阶段只准备 HT20 的 2.4/5 GHz 频道。先确认同一个 PE 指针、owner、VDEV、
+角色和 self MAC，要求原生 MLME 仍为 INIT。目标 regulatory API 拒绝无效、
+passive/disabled、DFS 及不匹配的 20 MHz bonding；拒绝 6 GHz。再检查没有活动
+连接、没有扫描，使用已验证的每频段 NSS 和法规功率，调用目标原生
+`lim_pre_vdev_start`，并核对最终 desired channel 的频率、20 MHz 宽度和中心频率。
+输入/法规/并发拒绝发生在参数修改之前。原生参数准备错误或输出不一致可能留下
+部分主机字段，owner 会保留资源并进入 quarantine，不会当成可重试成功。
+
+这些检查只是当时的状态，不是给后续 START 的法规或并发租约。START 必须再次
+验证并完成政策/硬件模式与 WMA 的启动前处理；本阶段没有提交 WMI、改变原生
+MLME 状态或实现频道跳转。`channel_prepared` 仅代表这次主机频道参数准备完成，
+不代表完整 START 参数、UP 或无线可用。
+
+源码核对还确认不能直接转接普通 monitor 流程：其 start_continue 会改 pdev
+全局统计，stop/down helper 的一些发送错误路径仍会发送 MLME 完成事件，
+`lim_send_switch_chnl_params` 也会改变全局 deferred-message 状态并在内部发 WMI。
+后续 PAS 启停须独立关联真实提交、响应、PM 锁与 STOP/DOWN 结果，不能直接以
+这些 helper 返回成功为固件成功。专用 PAS MLME 表与 START type=9 拒绝门仍保留。
+
+新增 Actions-only fixture 执行实际 owner 与新增 channel/post/flush helper，
+覆盖 preflight 拒绝、请求分配/引用/排队失败、早到回调、取消、按频段选 NSS、
+输出不符与部分准备失败、错误身份/重复完成以及 pending 时禁止提前 teardown。
+原生 regulatory/scan/policy 和完整 `lim_pre_vdev_start` 是明确的模型边界；
+后者会随完整 WLAN 编译，但这组 fixture 不执行其完整实现。不新增上机调用者。

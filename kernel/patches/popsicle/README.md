@@ -75,3 +75,10 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
     VDEV and DP teardown. Foreign/recycled session identity is rejected; failed
     or cancelled deletion quarantines. An owned constructor failure releases
     its MAC VDEV reference. No radio command or runtime caller is enabled.
+
+19. `0019-mishare-owned-channel-prepare.patch` adds a separately referenced
+    MC channel request for a prepared owned PE session. Native regulatory and
+    HT20 parameter helpers validate 2.4/5 GHz input; active connections/scans,
+    DFS and passive/disabled channels are rejected. Actual completion precedes
+    PE teardown; partial preparation and identity failures quarantine. No WMI,
+    MLME START/UP/STOP/DOWN, channel hopping or runtime caller is enabled.

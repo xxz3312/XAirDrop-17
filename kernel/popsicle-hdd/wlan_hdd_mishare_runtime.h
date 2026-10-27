@@ -49,6 +49,12 @@ int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *owner);
  * No channel parameters, START/UP, TX/RX or runtime caller yet.
  */
 int mishare_runtime_ndi_session(struct mishare_runtime_owner *owner);
+/* One-shot native MC HT20 parameter preparation for an owned PE session.
+ * Snapshot channel_completed/prepared after EINPROGRESS; no START or radio.
+ * Native regulatory/concurrency checks are instantaneous, not a lease for a
+ * later START. All prior lifetime and caller-serialization rules still apply.
+ */
+int mishare_runtime_ndi_channel(struct mishare_runtime_owner *owner, u32 freq);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);
