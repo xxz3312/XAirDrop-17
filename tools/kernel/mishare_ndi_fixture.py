@@ -135,6 +135,10 @@ int main(void) {
  assert(wma_mon_mlme_vdev_up_send(&m,0,NULL)==QDF_STATUS_E_INVAL && !up_calls);
  context.interfaces[3].vdev=&v;context.interfaces[3].type=WMI_VDEV_TYPE_MONITOR;
  assert(wma_mon_mlme_vdev_up_send(&m,0,NULL)==QDF_STATUS_E_INVAL && !up_calls);
+ setup(QDF_PASSTHRU_MODE,9);m.ext_vdev_ptr=NULL;
+ assert(wma_mon_mlme_vdev_up_send(&m,0,NULL)==QDF_STATUS_E_INVAL && !up_calls);
+ m.ext_vdev_ptr=&v;
+ assert(wma_mon_mlme_vdev_up_send(&m,0,NULL)==QDF_STATUS_E_INVAL && !up_calls);
  setup(QDF_MONITOR_MODE,WMI_VDEV_TYPE_MONITOR);up_status=QDF_STATUS_E_FAILURE;
  assert(wma_mon_mlme_vdev_up_send(&m,0,NULL)==up_status && up_calls==1 && !m.proto.sta.assoc_id);
  assert(wma_mon_mlme_vdev_up_send(NULL,0,NULL)==QDF_STATUS_E_INVAL);

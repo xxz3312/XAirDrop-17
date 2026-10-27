@@ -90,7 +90,7 @@ diff --git a/qcacld-3.0/core/wma/src/wma_utils.c b/qcacld-3.0/core/wma/src/wma_u
  
  /* MCS Based rate table */
  /* HT MCS parameters with Nss = 1 */
-@@ -4965,11 +4966,24 @@
+@@ -4965,11 +4966,26 @@
  	QDF_STATUS status;
  	struct wma_txrx_node *iface;
  
@@ -102,12 +102,14 @@ diff --git a/qcacld-3.0/core/wma/src/wma_utils.c b/qcacld-3.0/core/wma/src/wma_u
 +	if (vdev_id >= wma->max_bssid)
 +		return QDF_STATUS_E_INVAL;
  	iface = &wma->interfaces[vdev_id];
-+	if (wma_mishare_pas_ndi(vdev_mlme->vdev,
-+				vdev_mlme->mgmt.generic.type)) {
++	if (wlan_vdev_mlme_get_opmode(vdev_mlme->vdev) ==
++	    QDF_PASSTHRU_MODE) {
 +		/* Normal NDI also omits WMI UP. Never acknowledge an unbound
 +		 * host-only component or a mismatched WMA interface as UP.
 +		 */
-+		if (!vdev_mlme->ext_vdev_ptr ||
++		if (!wma_mishare_pas_ndi(vdev_mlme->vdev,
++					  vdev_mlme->mgmt.generic.type) ||
++		    !vdev_mlme->ext_vdev_ptr ||
 +		    iface->vdev != vdev_mlme->vdev ||
 +		    iface->type != WMI_VDEV_TYPE_NDI)
 +			return QDF_STATUS_E_INVAL;
