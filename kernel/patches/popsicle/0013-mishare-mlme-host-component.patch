@@ -1,0 +1,42 @@
+diff --git a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+--- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
++++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+@@ -1846,6 +1846,17 @@
+ 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+ 	uint8_t vdev_id;
+ 
++	if (!vdev_mlme || !vdev_mlme->vdev)
++		return QDF_STATUS_E_INVAL;
++
++	/* This PASSTHRU component never sent CREATE and owns no legacy state.
++	 * A future firmware owner must drain before invoking object destruction.
++	 * A non-NULL extension is outside this host-only destruction contract.
++	 */
++	if (wlan_vdev_mlme_get_opmode(vdev_mlme->vdev) == QDF_PASSTHRU_MODE)
++		return vdev_mlme->ext_vdev_ptr ? QDF_STATUS_E_BUSY :
++			QDF_STATUS_SUCCESS;
++
+ 	vdev_id = vdev_mlme->vdev->vdev_objmgr.vdev_id;
+ 	mlme_legacy_debug("Sending vdev delete to firmware for vdev id = %d ",
+ 			  vdev_id);
+@@ -1879,9 +1890,17 @@
+ 	if (!vdev_mlme || !vdev_mlme->vdev)
+ 		return QDF_STATUS_E_INVAL;
+ 
+-	/* No command or allocation until dedicated MLME lifecycle is ready. */
+-	if (wlan_vdev_mlme_get_opmode(vdev_mlme->vdev) == QDF_PASSTHRU_MODE)
+-		return QDF_STATUS_E_NOSUPPORT;
++	/* Publish a host-only component first. Firmware CREATE belongs to the
++	 * future referenced runtime owner, never to object-construction rollback.
++	 * No legacy extension, command timer, DP attachment or WMI is created here.
++	 */
++	if (wlan_vdev_mlme_get_opmode(vdev_mlme->vdev) == QDF_PASSTHRU_MODE) {
++		if (vdev_mlme->ext_vdev_ptr)
++			return QDF_STATUS_E_BUSY;
++		vdev_mlme->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
++		vdev_mlme->mgmt.generic.subtype = 0;
++		return QDF_STATUS_SUCCESS;
++	}
+ 
+ 	/* Reject unsupported modes before allocating partially initialized locks. */
+ 	status = mlme_get_vdev_types(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),

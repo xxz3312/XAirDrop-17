@@ -24,6 +24,12 @@ static int mishare_command_submit(struct mishare_event_owner *owner,
         return -EOPNOTSUPP;
     if (wlan_vdev_mlme_get_cmpt_obj(mlme->vdev) != mlme)
         return -EINVAL;
+    /* Newly published PASSTHRU components are host-only. A legacy context is
+     * required for this native command path; it is NOT firmware-create proof.
+     * Runtime ownership/create completion must be established by the caller.
+     */
+    if (!mlme->ext_vdev_ptr)
+        return -EOPNOTSUPP;
     ret = mishare_events_begin_vdev(owner, mlme->vdev, command, ticket);
     if (ret)
         return ret;

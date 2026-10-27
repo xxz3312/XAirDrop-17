@@ -85,8 +85,8 @@ int main(void) {
   uint8_t type=0, subtype=0xa5;
   assert(mlme_get_vdev_types(QDF_PASSTHRU_MODE,&type,&subtype)==QDF_STATUS_SUCCESS);
   assert(type==9 && subtype==0);
-  assert(vdevmgr_mlme_ext_hdl_create(&m)==QDF_STATUS_E_NOSUPPORT);
-  assert(!m.ext_vdev_ptr && m.mgmt.generic.type==0xa5 && m.mgmt.generic.subtype==0xa5);
+  assert(vdevmgr_mlme_ext_hdl_create(&m)==QDF_STATUS_SUCCESS);
+  assert(!m.ext_vdev_ptr && m.mgmt.generic.type==9 && m.mgmt.generic.subtype==0);
   assert(!allocations && !initializations && !sends && !destroys);
  }
  for(int mode=-1;mode<=18;mode++) {
@@ -135,7 +135,7 @@ def audit(root):
             'fixture_source_sha256':hashlib.sha256(source.encode()).hexdigest(),
             'mlme_source_sha256':hashlib.sha256((root/MLME).read_bytes()).hexdigest(),
             'host_translation':{'qdf_mode':17,'type':9,'subtype':0},
-            'passthru_create':'E_NOSUPPORT_BEFORE_ALLOCATION_OR_COMMAND',
+            'passthru_create':'HOST_ONLY_SUCCESS_WITHOUT_LEGACY_ALLOCATION_OR_COMMAND',
             'limitations':'Actual production create/type conversion with mocked resource and WMI boundaries. No firmware acceptance, real cleanup, event, concurrency or radio certification.'}
 
 if __name__=='__main__':

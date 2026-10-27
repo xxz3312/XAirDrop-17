@@ -16,6 +16,7 @@ TRANSPORT=r'''
 #define WLAN_VDEV_MLME_TYPE_PASSTHRU 9
 struct vdev_mlme_obj {
  struct wlan_objmgr_vdev *vdev;
+ void *ext_vdev_ptr;
  struct { struct { u8 type,subtype; } generic; } mgmt;
 };
 static struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *v) {
@@ -47,7 +48,8 @@ struct context { struct wlan_objmgr_vdev v; struct vdev_mlme_obj m;struct mishar
 static struct wlan_objmgr_psoc psoc={1};
 static void setup(struct context *c,u8 id) {
  *c=(struct context){0};c->v.psoc=&psoc;c->v.id=id;c->v.mode=17;c->v.mlme=&c->m;
- c->m.vdev=&c->v;c->m.mgmt.generic.type=9;
+ /* Model a future prepared context for existing transport-boundary tests. */
+ c->m.vdev=&c->v;c->m.mgmt.generic.type=9;c->m.ext_vdev_ptr=(void*)1;
  assert(!mishare_events_bind(&c->v,&c->owner));
  send_status=QDF_STATUS_SUCCESS;callback_mode=0;start_calls=stop_calls=0;
 }
@@ -69,6 +71,11 @@ int main(void) {
  assert(mishare_command_submit_start(a.owner,NULL,&ticket)==-EINVAL && !ticket);
  struct vdev_mlme_obj empty={0};
  assert(mishare_command_submit_start(a.owner,&empty,&ticket)==-EINVAL && !ticket);
+ a.m.ext_vdev_ptr=NULL;
+ assert(mishare_command_submit_start(a.owner,&a.m,&ticket)==-EOPNOTSUPP && !ticket);
+ assert(mishare_command_submit_stop(a.owner,&a.m,&ticket)==-EOPNOTSUPP && !ticket);
+ assert(!start_calls && !stop_calls && !snapshot(&a).serial);
+ a.m.ext_vdev_ptr=(void*)1;
  assert(mishare_command_submit_start(a.owner,&b.m,&ticket)==-EXDEV && !ticket);
  assert(snapshot(&a).state==MISHARE_TXN_COLD && snapshot(&b).state==MISHARE_TXN_COLD);
  a.m.mgmt.generic.type=2;

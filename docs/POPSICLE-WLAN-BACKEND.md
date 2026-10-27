@@ -10,7 +10,7 @@
 | 部分 | 已有代码 | 当前限制 |
 | --- | --- | --- |
 | 主机模式 | PASSTHRU=17、DP=7、主机 type=9 转换 | 固件接受情况未验证 |
-| MLME 表 | 专用 32 回调表接入注册 | 30 个状态回调仍拒绝操作，2 个通知不发布完成；硬件创建仍拒绝 |
+| MLME 表与主机组件 | 专用 32 回调表；组件可单独创建、挂接和销毁 | 30 个状态回调仍拒绝操作，2 个通知不发布完成；未接固件 CREATE |
 | 生命周期基础 | DOWN host helper、事务、原生来源通知、命令提交 API | 尚无真实 owner/命令调用生命周期 |
 | 无线与互传 | 没有成功无线 init 或 RX/TX | AirDrop 不可用，没有安装包 |
 
@@ -603,3 +603,32 @@ DELETE 必须在真实固件响应和超时的各自入口记录来源，并结�
 字节的完整诊断 ZIP 未独立下载，也不是安装包。完整结果及范围限制见
 [验证记录](research/popsicle-create-delete-preflight-build-pass.json)。
 候选驱动没有在手机加载，硬件创建仍拒绝，AirDrop 仍不可用。
+
+
+## PASSTHRU MLME 主机组件与固件 CREATE 分离
+
+补丁 0013 将 PASSTHRU 的 `vdevmgr_mlme_ext_hdl_create()` 改为纯主机设置：
+仅设置 type=9/subtype=0，不分配 legacy 扩展，不发送 WMI，不初始化固件命令
+响应定时器，也不进入 DP attach。专用 MLME 表、通用主机状态机、组件挂接
+和本地 reconfiguration timer 由原生 MLME 组件创建处理器继续完成。
+这里的本地 reconfiguration timer 与固件命令响应定时器不同。
+
+对应的 ext-destroy 在 PASSTHRU 无 legacy 扩展时直接成功，不发送 DELETE；
+如存在意外 legacy 指针则拒绝该 host-only 合约。该错误返回不是“上层一定
+保留对象”的保证，通用组件析构会继续；后续 runtime owner 必须在进入
+对象析构前排空自己的固件与 DP 生命周期。目前没有创建该扩展或提交固件
+CREATE 的 PASSTHRU runtime 调用者。
+
+START/STOP 提交接口新增 legacy 上下文前置检查，拒绝这种新发布的纯主机
+组件，且不产生事务 ticket 或原生发送。legacy 指针只是一项必要前置条件，
+不是固件创建成功的证据；未来 caller 仍须独立完成创建状态与引用管理。
+现有命令传输测试中的非空 legacy 指针是边界桩，不能证明运行时已创建。
+
+原生测试现提取完整 MLME 组件创建和销毁处理器、真实 ext-create 的 PASSTHRU
+分支、完整 ext-destroy 函数。覆盖主机创建/挂接/销毁成功，重复销毁，分配
+失败，主机 SM 创建失败，定时器 already/busy 状态，以及注入 post-create
+失败后的逆序回收。WMI DELETE 与 legacy 释放边界被设为不可达；这项测试
+不执行完整对象管理器、真实 CM/SM/定时器、其他组件或实机固件。
+
+本轮完成的是 MLME 主机组件分离。专用 HDD vdev 创建入口、runtime owner
+及其 CREATE/DELETE 结果、DP 完成与排空流程尚未接入；没有新的手机操作包。
