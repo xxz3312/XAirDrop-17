@@ -1,6 +1,6 @@
 # 小米 17 PAS / NDI / RAW 原生驱动接入分析
 
-本文先记录源码分析起点，再记录 0015 的 WMA 兼容与 0016 的资源创建/删除接入。
+本文先记录源码分析起点，再记录 0015–0018 的 WMA、资源、self-peer 和 PE 会话接入。
 固件命令尚未在手机发送。目标源码固定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f`，
 分析起点包含 0001–0014 popsicle 补丁；其文件 SHA-256 记录在
 [源码快照](research/popsicle-xiaomi15-native-port-source-map.json)。
@@ -282,7 +282,7 @@ WLAN 574 条版本记录无不匹配，没有未解决依赖；7 项选定结构
 调用方或在手机执行。下一阶段为 PE/session 参数、START/STOP 和频道切换，随后
 接 RAW 收发；启用前仍需补齐 SSR/remove 与失败隔离后的完整恢复。
 
-### Owned PE session lifecycle (0018; source stage)
+### Owned PE session lifecycle (0018)
 
 The Xiaomi 15/SM8750 reference adds its own `sme_create_pe_session` and PAS
 PE role; neither API nor role exists in the pinned SM8850 source. Queue
@@ -326,3 +326,21 @@ Full WLAN compilation and strict linking remain required. No runtime caller,
 channel validation/preparation, START/STOP/DOWN, TX/RX or SSR/remove recovery is
 added in this lifecycle unit; the dedicated PAS MLME table still rejects radio
 operations. No new phone installation or test package is produced.
+
+### 0018 构建验证结果
+
+[Actions 40560249082](https://github.com/xxz3312/XAirDrop-17/actions/runs/40560249082)
+在源提交 `1db4af3cacf615f2e1229f61b7703a814341faa1` 全部通过：44 项 Python
+检查、14 组原生 fixture、完整 WLAN 对象编译、严格模块链接和 7 项选定结构
+布局检查。48 个要求的主机符号存在，WLAN 574 条版本记录无不匹配，未解决依赖为空。
+工具链和 bindgen 缓存均命中。新增 fixture 在 Actions 中通过 ASan/UBSan；
+完整原生 PE allocator/destructor 与真实 MC 竞争仍属于其明确列出的模型边界。
+
+已独立下载紧凑报告 ZIP 并核对大小和 SHA-256，重新生成的 fixture 源码 SHA、
+五个目标原生文件及三个 owner 文件哈希全部一致。完整诊断大包仅记录 GitHub
+报告的哈希，未独立下载，也不可安装。结果见
+[PE 会话构建报告](research/popsicle-owned-pe-session-build-pass.json)。
+
+本轮没有在手机调用新 PE API，没有启用 START/STOP/频道或 TX/RX。
+下一项是频道原生参数、regulatory/concurrency 校验与专用 PAS MLME 的
+START/STOP/DOWN 及真实响应闭环，须一起更新已启动会话的停止与回收顺序。

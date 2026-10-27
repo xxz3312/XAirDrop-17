@@ -1,0 +1,139 @@
+{
+  "status": "OWNED_MC_PE_SESSION_OFFLINE_PASS_ONLY",
+  "commit": "1db4af3cacf615f2e1229f61b7703a814341faa1",
+  "run_id": 40560249082,
+  "job_id": 122387438572,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40560249082",
+  "validation_artifact": {
+    "id": 12760348981,
+    "bytes": 33552,
+    "sha256": "6a3bc21a3d376635cdf433c4b4124253c439d369faaeb162dfefc80d618c5e85",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12760104007,
+    "bytes": 337659926,
+    "github_reported_sha256": "0df327a0d44ea5a957cda83cccc6418cd2e94382a841655709683ae44620cf15",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "pe_session_fixture": {
+    "status": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "364886af0b326f2633acfe2dd75b7f898e83a5e291c924ce77a24d95242b434a",
+    "native_sha256": {
+      "qcacld-3.0/core/mac/inc/sir_api.h": "6096368a53b900af0456bde30a63687c5a492f330673f3b9cae7149e4598ba13",
+      "qcacld-3.0/core/mac/src/pe/include/lim_global.h": "2923e53373033b65fa329e06455bb16a1451cf9a20b2e53b56e2ee986730cceb",
+      "qcacld-3.0/core/mac/src/pe/include/lim_session.h": "323e5a37401d9fb1506b090140f477f9e59bd9030641dde311799f0adc191adf",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_session.c": "8d1b122748ea139a4a59e2d008aedcf120ebdbb13326d16aec2248de33202786",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "76ea35d256592c2944dab21abb85a9e03081bd6cfd2d27d1105a397c4a1015b2"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "3f5187b6ff6defe7600ad5879f40feb67432b41e8f016f5055fbceadca30a1b5",
+      "wlan_hdd_mishare_runtime.h": "ebd7ab93a8e917898d351bc566966445e7fbbd6875f97a4b70571e719e3a43a6",
+      "wlan_hdd_mishare_ndi.h": "e6dfa774b2e843ced308ef3c652b079ba123aa68451795b2fc875ecae83d341e"
+    },
+    "ordinary_native_sources_after_removing_additions_match": {
+      "qcacld-3.0/core/mac/inc/sir_api.h": "9fb44b38354e76b381684dd4c58a59b65512cba78b1b9a0e6f717cc814173534",
+      "qcacld-3.0/core/mac/src/pe/include/lim_global.h": "0bcd7f9f7c0a08ef2f882e838d0f24a05a73b222991529565e9bfebd55636256",
+      "qcacld-3.0/core/mac/src/pe/include/lim_session.h": "dca4ab4eb5403f4e1c92e899eb05ffd26f283a799f99c8025414075b8a99765c",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_session.c": "c9f55bb5ffd34a6d1259c2a920efab9c2c2ee10bd7b7d005e58b5eda8bd958be",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "a197a9fa7b615060d16a1c89319c0f023cef6adb8504e0533ff4449589310fb9"
+    },
+    "checks": [
+      "queued MC request owns a distinct MAC VDEV ref and a flush callback",
+      "allocation/ref/queue rejection is before publication and releases local resources",
+      "owner waits for actual create/delete callback, not queue acceptance",
+      "owned constructor failure insertion releases MAC ref on idxpool failure",
+      "foreign PE session is not adopted/deleted",
+      "stable owner, PSOC, VDEV ID, session pointer, role and MAC identity checked",
+      "early callback is retained; teardown advances only after serialized post returns",
+      "PE deletion precedes peer/VDEV/DP teardown",
+      "delete queue/flush/context/identity failures and duplicate matching replies quarantine"
+    ],
+    "limitations": "Actual production owner plus extracted native request/MC/flush/identity/failure-ref helpers execute under ASan/UBSan. Scheduler queue/primitives and full native pe_create_session/pe_delete_session are modeled boundaries; only their bounded owned insertions execute. Ordinary native source hashes are compared after removing those additions. No real MC scheduling/races, native PE allocator/destructor execution, firmware, START/STOP/channel, TX/RX, SSR/remove or runtime backend caller is certified."
+  },
+  "independent_verification": {
+    "generated_fixture_sha256_matches": true,
+    "five_native_file_sha256_match": true,
+    "three_owner_file_sha256_match": true,
+    "new_native_fixture_compilation_and_execution": "GitHub Actions"
+  },
+  "python_tests_passed": 44,
+  "native_fixtures": {
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY"
+  },
+  "full_wlan_object_compile": "PASS",
+  "strict_module_linking": "PASS",
+  "required_host_symbols": 48,
+  "missing_host_symbols": [],
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "fc74dd8f04264c8fc8245b9e6fa0338c3717f94c72b25596ad0e295138673036",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "selected_layouts": {
+    "status": "SELECTED_LAYOUTS_MATCH_ONLY",
+    "types": {
+      "module": "MATCH",
+      "net_device": "MATCH",
+      "wiphy": "MATCH",
+      "wireless_dev": "MATCH",
+      "sk_buff": "MATCH",
+      "cfg80211_chan_def": "MATCH",
+      "ieee80211_channel": "MATCH"
+    },
+    "limitations": "Selected direct members and value sizes only. Anonymous nested types and pointer targets are not expanded. No function prototype, KCFI, runtime, firmware or AirDrop compatibility validation."
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT",
+    "source_lock_hash": "542f26bb86b7fd8dbcc7697ebaf758e1f91a2d0c063403eb19dd3cbdad1d641b"
+  },
+  "runtime_status": {
+    "phone_driver_loaded": false,
+    "new_pe_api_called_on_phone": false,
+    "radio_commands_enabled": false,
+    "runtime_backend_caller": false,
+    "airdrop_connected": false
+  },
+  "remaining": [
+    "native channel/regulatory/concurrency parameter preparation",
+    "dedicated PAS MLME START/STOP/DOWN and real response/state integration",
+    "host-only UP and WMA post-start sequencing",
+    "WMI RAW TX and monitor/native RX with ownership",
+    "SSR/remove/quarantine recovery",
+    "target firmware acceptance and phone validation"
+  ],
+  "limitations": "Offline source/fixture/build/link/selected-layout results only. Full native PE allocator/destructor execution and real MC races are not exercised by the new fixture; its modeled boundaries are documented. A private owner field changes the rebuilt internal pe_session layout. Import version records and selected direct-member layouts do not certify complete private ABI/KCFI, firmware, module loading or AirDrop. No installable package or live radio caller is introduced."
+}
