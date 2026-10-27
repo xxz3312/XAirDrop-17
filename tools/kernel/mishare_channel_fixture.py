@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import re
 import subprocess
@@ -121,6 +122,7 @@ int main(void) {
 
 def fixture(root):
     api=(root/API).read_text();native=pe.ctx.block(api,'channel_helpers')
+    api=re.sub(r'\n/\* MISHARE_BEGIN:start_plan_request \*/\n.*?/\* MISHARE_END:start_plan_request \*/\n', '', api, flags=re.S)
     stripped=api.replace('\n/* MISHARE_BEGIN:channel_helpers */\n'+native+'/* MISHARE_END:channel_helpers */\n','')
     if hashlib.sha256(stripped.encode()).hexdigest()!=BEFORE:raise ValueError('Channel patch changed existing PE API source')
     src=pe.fixture(root)

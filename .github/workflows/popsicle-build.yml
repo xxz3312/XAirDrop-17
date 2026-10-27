@@ -20,6 +20,7 @@ on:
       - tools/kernel/passthru_mode_fixture.py
       - tools/kernel/mishare_create_delete_fixture.py
       - tools/kernel/mishare_channel_fixture.py
+      - tools/kernel/mishare_start_plan_fixture.py
       - tools/kernel/mishare_session_fixture.py
       - tools/kernel/mishare_context_fixture.py
       - tools/kernel/mishare_firmware_fixture.py

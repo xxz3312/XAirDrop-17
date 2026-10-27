@@ -55,6 +55,11 @@ int mishare_runtime_ndi_session(struct mishare_runtime_owner *owner);
  * later START. All prior lifetime and caller-serialization rules still apply.
  */
 int mishare_runtime_ndi_channel(struct mishare_runtime_owner *owner, u32 freq);
+/* One-shot MC START parameter construction after channel preparation. No WMI,
+ * native state transition, new peer, runtime caller or readiness guarantee.
+ * Poll start_plan_completed/ready. Later START must revalidate and rebuild.
+ */
+int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *owner);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);

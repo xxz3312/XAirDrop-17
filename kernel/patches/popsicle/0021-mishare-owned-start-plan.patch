@@ -1,0 +1,227 @@
+--- a/qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mgr_ops.c
++++ b/qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mgr_ops.c
+@@ -1259,3 +1259,79 @@
+ 	return tgt_vdev_mgr_cdp_vdev_detach(mlme_obj);
+ }
+ #endif
++
++/* MISHARE_BEGIN:start_plan_builder */
++#include <linux/errno.h>
++/* Read the target's own START encoder inputs. No target-if call, timer or WMI.
++ * Caller has validated the PE/owner identity on MC and holds parent exclusion.
++ * The resulting summary is evidence of preparation, never a reusable command.
++ */
++int mishare_ndi_start_plan_build(struct vdev_mlme_obj *mlme, uint32_t freq,
++                               struct mishare_ndi_start_summary *summary)
++{
++#ifdef MOBILE_DFS_SUPPORT
++	struct vdev_start_params params = {0};
++	struct wlan_objmgr_vdev *vdev;
++	struct wlan_channel *des;
++	uint8_t nss;
++	QDF_STATUS status;
++
++	if (!mlme || !summary || !mlme->vdev || !mlme->ext_vdev_ptr)
++		return -EINVAL;
++	vdev = mlme->vdev;
++	des = wlan_vdev_mlme_get_des_chan(vdev);
++	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE ||
++	    mlme->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI ||
++	    mlme->mgmt.generic.subtype ||
++	    wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT || !des ||
++	    des->ch_width != CH_WIDTH_20MHZ || des->ch_freq != freq ||
++	    des->ch_cfreq1 != freq || des->ch_cfreq2)
++		return -EUCLEAN;
++	if (!wlan_reg_is_24ghz_ch_freq(freq) && !wlan_reg_is_5ghz_ch_freq(freq))
++		return -EINVAL;
++	nss = wlan_reg_is_24ghz_ch_freq(freq) ? mlme->proto.generic.nss_2g :
++						 mlme->proto.generic.nss_5g;
++	if (!nss || nss > 2 || !mlme->proto.ht_info.allow_ht ||
++	    mlme->proto.vht_info.allow_vht ||
++	    mlme->mgmt.rate_info.half_rate || mlme->mgmt.rate_info.quarter_rate ||
++	    mlme->mgmt.generic.phy_mode != (wlan_reg_is_24ghz_ch_freq(freq) ?
++			WLAN_PHYMODE_11NG_HT20 : WLAN_PHYMODE_11NA_HT20))
++		return -EUCLEAN;
++	/* With MOBILE_DFS_SUPPORT the native AP-only predicate excludes PAS.
++	 * The non-mobile fallback returns true for all modes and can mutate DFS
++	 * state. Do not silently reuse that variant as a host-only preparation.
++	 */
++	status = vdev_mgr_start_param_update(mlme, &params);
++	if (QDF_IS_STATUS_ERROR(status))
++		return -EUCLEAN;
++	if (params.vdev_id != wlan_vdev_get_id(vdev) || params.is_restart ||
++	    params.channel.mhz != freq || params.channel.cfreq1 != freq ||
++	    params.channel.cfreq2 || params.channel.dfs_set ||
++	    params.channel.is_chan_passive || !params.channel.allow_ht ||
++	    params.channel.allow_vht || params.channel.half_rate ||
++	    params.channel.quarter_rate || params.channel.phy_mode !=
++						 mlme->mgmt.generic.phy_mode ||
++	    params.preferred_tx_streams != nss || params.preferred_rx_streams != nss ||
++	    params.ssid.length ||
++	    params.channel.regpower != mlme->mgmt.generic.maxregpower)
++		return -EUCLEAN;
++#ifdef WLAN_FEATURE_11BE_MLO
++	if (params.mlo_flags.mlo_enabled)
++		return -EUCLEAN;
++#endif
++	summary->freq = params.channel.mhz;
++	summary->center_freq = params.channel.cfreq1;
++	summary->phy_mode = params.channel.phy_mode;
++	summary->tx_streams = params.preferred_tx_streams;
++	summary->rx_streams = params.preferred_rx_streams;
++	summary->beacon_interval = params.beacon_interval;
++	summary->dtim_period = params.dtim_period;
++	return 0;
++#else
++	(void)mlme;
++	(void)freq;
++	(void)summary;
++	return -EOPNOTSUPP;
++#endif
++}
++/* MISHARE_END:start_plan_builder */
+--- a/qcacld-3.0/core/wma/src/wma_dev_if.c
++++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
+@@ -7705,3 +7705,40 @@
+ 	return qdf_status_to_os_return(wma_remove_peer(wma, mac, id, false));
+ }
+ /* MISHARE_END:wma_helpers */
++
++/* MISHARE_BEGIN:start_plan_wma */
++/* Validate the already owned DEFAULT self-peer. Ordinary pre-start setup
++ * creates another peer; never call it for this PAS resource owner.
++ */
++int mishare_ndi_start_plan_wma_check(struct wlan_objmgr_vdev *vdev)
++{
++	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++	struct wma_txrx_node *iface;
++	struct wlan_objmgr_peer *peer;
++	uint8_t id;
++	bool same;
++
++	if (!wma || !vdev || wma->psoc != wlan_vdev_get_psoc(vdev))
++		return -EUCLEAN;
++	id = wlan_vdev_get_id(vdev);
++	if (id >= wma->max_bssid)
++		return -EUCLEAN;
++	iface = &wma->interfaces[id];
++	if (iface->vdev != vdev || !wma_mishare_pas_ndi(vdev, iface->type) ||
++	    iface->sub_type || !iface->vdev_active || iface->peer_count != 1 ||
++	    iface->del_staself_req || iface->is_del_sta_deferred ||
++	    qdf_atomic_read(&iface->bss_status) != WMA_BSS_STATUS_STOPPED)
++		return -EUCLEAN;
++	if (!wmi_service_enabled(wma->wmi_handle, wmi_service_nan_data) ||
++	    !wmi_service_enabled(wma->wmi_handle, wmi_service_sync_delete_cmds))
++		return -EOPNOTSUPP;
++	peer = wlan_objmgr_get_peer_by_mac(wma->psoc,
++			 wlan_vdev_mlme_get_macaddr(vdev), WLAN_LEGACY_WMA_ID);
++	if (!peer)
++		return -EUCLEAN;
++	same = wlan_peer_get_vdev(peer) == vdev &&
++	       wlan_peer_get_peer_type(peer) == WLAN_PEER_SELF;
++	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
++	return same ? 0 : -EUCLEAN;
++}
++/* MISHARE_END:start_plan_wma */
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -5520,3 +5520,99 @@
+ 	return 0;
+ }
+ /* MISHARE_END:channel_helpers */
++
++/* MISHARE_BEGIN:start_plan_request */
++struct mishare_start_plan_request {
++	struct mishare_channel_request channel;
++};
++
++static int mishare_start_plan_execute(struct mishare_start_plan_request *req,
++				     struct mishare_ndi_start_summary *summary)
++{
++	int ret;
++
++	ret = mishare_ndi_start_plan_wma_check(req->channel.vdev);
++	if (ret)
++		return ret;
++	/* Re-run exact PE identity, INIT, regulatory and concurrency checks on
++	 * the actual MC thread. This re-prepares host fields; it acquires no
++	 * regulatory lease and never calls the monitor switch/WMI path.
++	 */
++	ret = mishare_channel_execute(&req->channel);
++	if (ret)
++		return ret;
++	return mishare_ndi_start_plan_build(
++		wlan_vdev_mlme_get_cmpt_obj(req->channel.vdev), req->channel.freq,
++		summary);
++}
++
++static QDF_STATUS mishare_start_plan_finish(struct scheduler_msg *msg, bool flushed)
++{
++	struct mishare_start_plan_request *req = msg->bodyptr;
++	struct mishare_ndi_start_summary summary = {0};
++	struct wlan_objmgr_psoc *psoc;
++	void *owner;
++	uint32_t freq;
++	uint8_t id;
++	int ret;
++
++	if (!req)
++		return QDF_STATUS_E_INVAL;
++	psoc = wlan_vdev_get_psoc(req->channel.vdev);
++	id = wlan_vdev_get_id(req->channel.vdev);
++	owner = req->channel.owner;
++	freq = req->channel.freq;
++	ret = flushed ? -ECANCELED : mishare_start_plan_execute(req, &summary);
++	wlan_objmgr_vdev_release_ref(req->channel.vdev, WLAN_LEGACY_MAC_ID);
++	qdf_mem_free(req);
++	msg->bodyptr = NULL;
++	mishare_runtime_ndi_start_plan_event(psoc, id, owner, freq, ret,
++					    ret ? NULL : &summary);
++	return QDF_STATUS_SUCCESS;
++}
++
++static QDF_STATUS mishare_start_plan_callback(struct scheduler_msg *msg)
++{
++	return mishare_start_plan_finish(msg, false);
++}
++
++static QDF_STATUS mishare_start_plan_flush(struct scheduler_msg *msg)
++{
++	return mishare_start_plan_finish(msg, true);
++}
++
++int mishare_ndi_start_plan_post(struct wlan_objmgr_vdev *vdev, void *owner,
++			      unsigned long cookie, uint32_t freq)
++{
++	struct mishare_start_plan_request *req;
++	struct scheduler_msg msg = {0};
++	QDF_STATUS status;
++
++	if (!vdev || !owner || !cookie || !freq ||
++	    wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++		return -EINVAL;
++	req = qdf_mem_malloc(sizeof(*req));
++	if (!req)
++		return -ENOMEM;
++	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_LEGACY_MAC_ID);
++	if (QDF_IS_STATUS_ERROR(status)) {
++		qdf_mem_free(req);
++		return -ENODEV;
++	}
++	req->channel.vdev = vdev;
++	req->channel.owner = owner;
++	req->channel.session_cookie = cookie;
++	req->channel.freq = freq;
++	msg.bodyptr = req;
++	msg.callback = mishare_start_plan_callback;
++	msg.flush_callback = mishare_start_plan_flush;
++	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_PE,
++					QDF_MODULE_ID_TARGET_IF, &msg);
++	if (QDF_IS_STATUS_ERROR(status)) {
++		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
++		qdf_mem_free(req);
++		return qdf_status_to_os_return(status);
++	}
++	return 0;
++}
++/* MISHARE_END:start_plan_request */

@@ -92,6 +92,9 @@ int mishare_ndi_pe_post(struct wlan_objmgr_vdev *v,void *o,bool c,unsigned long 
 /* CHANNEL_TRANSPORT_STUBS */
 int mishare_ndi_channel_post(struct wlan_objmgr_vdev *v,void *o,unsigned long k,u32 f) { (void)v;(void)o;(void)k;(void)f;assert(0);return -EIO; }
 /* END_CHANNEL_TRANSPORT_STUBS */
+/* START_PLAN_TRANSPORT_STUBS */
+int mishare_ndi_start_plan_post(struct wlan_objmgr_vdev *v,void *o,unsigned long k,u32 f) { (void)v;(void)o;(void)k;(void)f;assert(0);return -EIO; }
+/* END_START_PLAN_TRANSPORT_STUBS */
 /* CONTEXT_TRANSPORT_STUBS */
 int mishare_ndi_legacy_prepare(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }
 int mishare_ndi_legacy_release(struct vdev_mlme_obj *m) { (void)m;assert(0);return -EIO; }

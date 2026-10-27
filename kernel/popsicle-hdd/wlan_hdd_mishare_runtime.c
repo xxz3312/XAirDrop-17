@@ -619,6 +619,85 @@ int mishare_runtime_ndi_channel(struct mishare_runtime_owner *entry, u32 freq)
     return ret;
 }
 
+void mishare_runtime_ndi_start_plan_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                           void *owner, u32 freq, int result,
+                                           const struct mishare_ndi_start_summary *summary)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner || entry->psoc != psoc || !entry->vdev ||
+            wlan_vdev_get_id(entry->vdev) != id)
+            continue;
+        ndi = &entry->state.ndi;
+        if (!ndi->active || !ndi->pe_ready || !ndi->channel_prepared ||
+            !ndi->start_plan_requested || ndi->start_plan_completed ||
+            ndi->channel_freq != freq || ndi->pe_delete_requested ||
+            (!result && (!summary || summary->freq != freq ||
+                         summary->center_freq != freq ||
+                         !summary->tx_streams || summary->tx_streams > 2 ||
+                         summary->rx_streams != summary->tx_streams))) {
+            ndi->blocked = true;
+            break;
+        }
+        ndi->start_plan_error = result;
+        ndi->start_plan_completed = true;
+        ndi->start_plan_ready = !result;
+        if (!result)
+            ndi->start_plan = *summary;
+        else if (result != -EINVAL && result != -EACCES && result != -EBUSY &&
+                 result != -ECANCELED && result != -EOPNOTSUPP)
+            ndi->blocked = true;
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+    int ret;
+
+    if (!entry)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi = &entry->state.ndi;
+    if (entry->state.blocked || ndi->blocked) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (!entry->vdev || !entry->referenced || !entry->events ||
+        !ndi->active || !ndi->legacy_ready || !ndi->wma_bound ||
+        !ndi->peer_created || !ndi->pe_ready || !ndi->pe_submitted ||
+        !ndi->pe_completed || !ndi->channel_submitted ||
+        !ndi->channel_completed || !ndi->channel_prepared ||
+        ndi->start_plan_requested || ndi->pe_delete_requested ||
+        ndi->peer_delete_pending || ndi->delete_pending || entry->state.draining) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EBUSY;
+    }
+    ndi->start_plan_requested = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_ndi_start_plan_post(entry->vdev, entry, entry->pe_cookie,
+                                       ndi->channel_freq);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (ret) {
+        if (ndi->start_plan_completed)
+            ndi->blocked = true;
+        ndi->start_plan_completed = true;
+        ndi->start_plan_error = ret;
+    } else {
+        ndi->start_plan_submitted = true;
+    }
+    ret = ndi->blocked ? -EUCLEAN : ret ? ret : -EINPROGRESS;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
 static void mishare_runtime_ndi_dp_freed(void *context)
 {
     struct mishare_runtime_owner *entry = context;
@@ -655,6 +734,10 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
         return -EINPROGRESS;
     }
     if (ndi->channel_requested && !ndi->channel_completed) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
+    }
+    if (ndi->start_plan_requested && !ndi->start_plan_completed) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EINPROGRESS;
     }

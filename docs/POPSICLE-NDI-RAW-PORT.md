@@ -419,3 +419,28 @@ TLV envelope / wire 字段、对象管理器、timer、PM 与 RX ops 使用主�
 而非旧的“仅 origin 插入”；生成的 C 和被编译的原生代码未变化。
 本轮未在手机发送新命令。START/STOP 的完整 owner/MLME/WMA 调用闭环仍未实现；
 尤其 STOP 回应不代表 DOWN 与 PM/runtime lock 已清理，不可据此直接释放会话。
+
+## 0021：owned START 原生参数准备
+
+启动前的源码核对确认，普通 `wma_pre_vdev_start_setup()` 会再次创建 DEFAULT
+peer，不能直接用于已有 owned self-peer 的 PAS 会话。新增私有
+`mishare_runtime_ndi_start_plan(owner)`，在已完成 channel 准备后，由一次性的
+MC request 重新检查 PE/owner 身份、INIT、法规、扫描、活动连接及 WMA slot。
+WMA 检查要求已存在的 self-peer 属于同一个 VDEV 且类型为 SELF；不创建第二个 peer。
+
+随后调用目标完整原生 `vdev_mgr_start_param_update()`，核对 HT20、频率/中心频率、
+每频段 NSS、phy mode、法规功率和非 MLO 参数，仅复制不含指针的参数摘要。
+不保存可直接发送的 WMI 参数。后续 START 必须在实际提交前重新检查并重建。
+原生构造函数在非 MOBILE_DFS_SUPPORT 配置下，AP 模式判断会退化为 true，可能
+改全局 DFS 状态；本 helper 对该配置明确返回不支持，不把它当成主机参数准备。
+
+owner 分开记录 request/submitted/completed/ready 和实际错误，destroy 必须先等
+pending request 完成；request 自带 VDEV 引用及 scheduler flush 回调。异常身份、
+部分参数准备失败或原生输出不一致保留资源并 quarantine。队列失败或 flush 不会
+被当成参数准备成功。原有类型 9 命令门、专用 PAS MLME 拒绝表及所有无线门保持关闭。
+
+新增 Actions-only fixture 执行真实 owner、owned WMA checker、MC/flush helpers 和
+完整原生 START 参数构造函数。外部对象/法规/调度、lim_pre_vdev_start、MLO/11be
+子 helper 与完整 PE allocator/destructor 仍为模型边界。该实现属于完整启停接入
+的启动前子阶段；没有发送 START/STOP/DOWN、修改原生 MLME 状态或增加上机入口。
+完整 MLME/WMA 启停、PM 锁释放、SSR/remove 与 RAW 收发仍待接通。

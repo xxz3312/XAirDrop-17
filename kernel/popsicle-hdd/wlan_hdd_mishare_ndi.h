@@ -18,6 +18,17 @@ struct mishare_ndi_create_result {
     bool stats_owned;
     u8 stats_id;
 };
+/* Scalars copied from the native target START parameter builder. No cached
+ * transport buffer, pointer or future authorization to send a command. */
+struct mishare_ndi_start_summary {
+    u32 freq;
+    u32 center_freq;
+    u32 phy_mode;
+    u32 tx_streams;
+    u32 rx_streams;
+    u32 beacon_interval;
+    u32 dtim_period;
+};
 struct mishare_ndi_status {
     bool active;
     bool blocked;
@@ -44,6 +55,12 @@ struct mishare_ndi_status {
     bool channel_submitted;
     bool channel_completed;
     bool channel_prepared;
+    bool start_plan_requested;
+    bool start_plan_submitted;
+    bool start_plan_completed;
+    bool start_plan_ready;
+    int start_plan_error;
+    struct mishare_ndi_start_summary start_plan;
     u32 channel_freq;
     int channel_error;
     int pe_error;
@@ -67,6 +84,14 @@ int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *vdev,
                                  void (*callback)(void *), void *context);
 int mishare_ndi_release_stats(struct vdev_mlme_obj *mlme,
                               struct mishare_ndi_create_result *result);
+int mishare_ndi_start_plan_build(struct vdev_mlme_obj *mlme, u32 freq,
+                                  struct mishare_ndi_start_summary *summary);
+int mishare_ndi_start_plan_wma_check(struct wlan_objmgr_vdev *vdev);
+int mishare_ndi_start_plan_post(struct wlan_objmgr_vdev *vdev, void *owner,
+                                 unsigned long cookie, u32 freq);
+void mishare_runtime_ndi_start_plan_event(struct wlan_objmgr_psoc *psoc, u8 id,
+                                           void *owner, u32 freq, int result,
+                                           const struct mishare_ndi_start_summary *summary);
 int mishare_ndi_channel_post(struct wlan_objmgr_vdev *vdev, void *owner,
                               unsigned long session_cookie, u32 freq);
 void mishare_runtime_ndi_channel_event(struct wlan_objmgr_psoc *psoc, u8 id,
