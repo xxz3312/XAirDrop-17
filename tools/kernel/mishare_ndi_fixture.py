@@ -153,7 +153,8 @@ def fixture(root):
     status=re.search(r'typedef enum\s*\{[^}]+\}\s*QDF_STATUS;',read('qca-wifi-host-cmn/qdf/inc/qdf_status.h'),re.S)[0]
     fw=read('fw-api/fw/wmi_unified.h')
     macros='\n'.join(re.findall(r'^#define (?:WMI_VDEV_TYPE_\w+|WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)\s+0x[0-9a-fA-F]+',fw,re.M))
-    macros='\n'.join('#define '+x for x in macros.splitlines())
+    if not macros or any(not re.fullmatch(r'#define\s+[A-Za-z_]\w*\s+0x[0-9a-fA-F]+', line) for line in macros.splitlines()):
+        raise ValueError('Malformed extracted WMI constants')
     code='#include <stdbool.h>\n#include <stdint.h>\n'+status+'\n'+enum(read('qca-wifi-host-cmn/qdf/inc/qdf_types.h'),'QDF_OPMODE')+'\n'+macros+'\n'+STUBS
     code+='\n'+function(read(MLME),'mlme_vdev_uses_self_peer')+'\n'
     code+='\n'.join(l for l in read(HEADER).splitlines() if not l.startswith('#include'))+'\n'
