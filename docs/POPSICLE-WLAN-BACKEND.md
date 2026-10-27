@@ -632,3 +632,11 @@ START/STOP 提交接口新增 legacy 上下文前置检查，拒绝这种新发�
 
 本轮完成的是 MLME 主机组件分离。专用 HDD vdev 创建入口、runtime owner
 及其 CREATE/DELETE 结果、DP 完成与排空流程尚未接入；没有新的手机操作包。
+
+
+通用 `sme_vdev_create()` 另设 PASSTHRU 拒绝分支，位于调用对象管理器之前。
+它阻止普通 HDD→SME→post-setup 流程把纯主机组件当作已创建的固件对象使用。
+这不影响对 MLME 单组件创建/销毁的原生测试。专用完整 vdev 创建入口尚未
+实现，未来也必须覆盖其他组件和 SME/WMA 引用、自 peer 回收假设。
+原生测试提取完整 SME 创建函数，验证 PASSTHRU/空参数无对象创建动作，
+以及原有 17 个模式在引用成功/失败时保留原路径。

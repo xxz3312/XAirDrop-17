@@ -13,6 +13,7 @@ from popsicle_backend_audit import PIN
 HEADER='qca-wifi-host-cmn/umac/mlme/include/wlan_vdev_mlme.h'
 OBJ='qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/src/wlan_vdev_mlme_main.c'
 CM='qca-wifi-host-cmn/umac/mlme/connection_mgr/core/src/wlan_cm_main.c'
+SME='qcacld-3.0/core/sme/src/common/sme_api.c'
 COMMON=r'''
 struct wlan_objmgr_psoc { int id; };
 struct wlan_objmgr_pdev { struct wlan_objmgr_psoc *psoc; };
@@ -26,6 +27,7 @@ struct vdev_ratemask_params { int dummy; };
 static int wlan_psoc_get_id(struct wlan_objmgr_psoc *p) { return p->id; }
 #define mlme_err(...) ((void)wlan_psoc_get_id)
 #define mlme_debug(...) ((void)0)
+#define mlme_legacy_debug(...) ((void)0)
 static enum QDF_OPMODE wlan_vdev_mlme_get_opmode(struct wlan_objmgr_vdev *v) { return v->vdev_mlme.vdev_opmode; }
 static uint8_t wlan_vdev_get_id(struct wlan_objmgr_vdev *v) { return v->vdev_objmgr.vdev_id; }
 '''
@@ -72,6 +74,22 @@ DESTROY_FUNCTION
 static QDF_STATUS mlme_vdev_ops_ext_hdl_destroy(struct vdev_mlme_obj *m) { mark('D');return vdevmgr_mlme_ext_hdl_destroy(m); }
 static void qdf_mem_set(void *p,size_t n,int byte) { assert(p && n && byte==0xff);mark('Z');memset(p,byte,n); }
 '''
+SME_SUPPORT=r'''
+struct wlan_vdev_create_params { enum QDF_OPMODE opmode; uint8_t macaddr[6]; };
+struct mac_context { struct wlan_objmgr_pdev *pdev; };
+typedef void *mac_handle_t;
+#define MAC_CONTEXT(p) ((struct mac_context*)(p))
+#define sme_debug(...) ((void)0)
+#define sme_err(...) ((void)0)
+#define MTRACE(...) ((void)0)
+#define WLAN_LEGACY_SME_ID 1
+static struct wlan_objmgr_vdev sme_vdev;
+static int obj_calls,ref_calls,delete_calls,utf_calls,ref_fail;
+static struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(struct wlan_objmgr_pdev *p,struct wlan_vdev_create_params *v) { assert(p && v && v->opmode!=QDF_PASSTHRU_MODE);obj_calls++;return &sme_vdev; }
+static QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *v,int id) { assert(v==&sme_vdev && id==1);ref_calls++;return ref_fail?QDF_STATUS_E_FAILURE:QDF_STATUS_SUCCESS; }
+static void wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *v) { assert(v==&sme_vdev);delete_calls++; }
+static void cm_utf_attach(struct wlan_objmgr_vdev *v) { assert(v==&sme_vdev);utf_calls++; }
+'''
 HARNESS=r'''
 static void reset(int f,QDF_STATUS status) { assert(!live && !sm_live && !timer_live);fault=f;timer_status=status;trace[0]=0; }
 static void host_cycle(struct wlan_objmgr_vdev *v,QDF_STATUS status) {
@@ -86,6 +104,14 @@ static void host_cycle(struct wlan_objmgr_vdev *v,QDF_STATUS status) {
  assert(mlme_vdev_obj_destroy_handler(v,NULL)==QDF_STATUS_SUCCESS);
 }
 int main(void) {
+ struct mac_context mac={.pdev=&pdev};struct wlan_vdev_create_params params={.opmode=QDF_PASSTHRU_MODE};
+ assert(!sme_vdev_create(&mac,NULL) && !sme_vdev_create(&mac,&params));
+ assert(!obj_calls && !ref_calls && !delete_calls && !utf_calls);
+ for(int mode=0;mode<17;mode++)for(ref_fail=0;ref_fail<2;ref_fail++) {
+  params.opmode=mode;obj_calls=ref_calls=delete_calls=utf_calls=0;
+  assert(sme_vdev_create(&mac,&params)==(ref_fail?NULL:&sme_vdev));
+  assert(obj_calls==1 && ref_calls==1 && delete_calls==ref_fail && utf_calls==!ref_fail);
+ }
  struct wlan_objmgr_vdev v={.vdev_mlme={.vdev_opmode=QDF_PASSTHRU_MODE},.vdev_objmgr={.vdev_id=7}};
  struct vdev_mlme_obj m={.vdev=&v,.ops=&sta_mlme_ops,.sm_hdl=(void*)1};
  assert(mlme_register_vdev_mgr_ops(&m)==QDF_STATUS_SUCCESS && m.ops==&passthru_mlme_ops);
@@ -139,6 +165,8 @@ def fixture(root):
     code+=function(read(MLME),'mlme_is_vdev_in_beaconning_mode')+'\n'+function(read(MLME),'mlme_register_vdev_mgr_ops')+'\n'
     code+='static QDF_STATUS cm_gate(enum QDF_OPMODE op_mode) {\n'+cm_guard+'\nreturn QDF_STATUS_E_FAILURE;\n}\n'
     code+=SUPPORT.replace('CREATE_GATE',gate).replace('DESTROY_FUNCTION',function(read(MLME),'vdevmgr_mlme_ext_hdl_destroy'))+'\n'+function(read(OBJ),'mlme_vdev_obj_create_handler')+'\n'+function(read(OBJ),'mlme_vdev_obj_destroy_handler')+'\n'
+    sme=re.search(r'struct wlan_objmgr_vdev\n\*sme_vdev_create\([^;{]+\)\s*\{.*?^\}',read(SME),re.S|re.M)[0]
+    code+=SME_SUPPORT+'\n'+sme+'\n'
     tests=[]
     for ret,name,args in fields:
         values=[]
@@ -163,10 +191,10 @@ def audit(root):
     _,fields,_,_,_=inputs(root)
     return {'status':'MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY','source_commit':PIN,
       'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),
-      'source_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in [MLME,HEADER,OBJ,CM]},
+      'source_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in [MLME,HEADER,OBJ,CM,SME]},
       'callback_count':len(fields),'status_callbacks_explicitly_unsupported':sum(ret=='QDF_STATUS' for ret,_,_ in fields),'void_callbacks_no_completion':sum(ret=='void' for ret,_,_ in fields),
       'callbacks':[name for _,name,_ in fields],
-      'checks':['dedicated table selected','every callback nonnull and typed','all status callbacks NOSUPPORT','void notifications do not mutate model','native CM init/deinit guards skip PASSTHRU','actual object-create/destroy handlers attach and reclaim host-only MLME without commands','context allocation failure','SM allocation failure','timer already/busy paths','post-create failure reverses reconfig timer/extension/component/SM/context','host-only destroy never sends firmware DELETE'],
+      'checks':['dedicated table selected','every callback nonnull and typed','all status callbacks NOSUPPORT','void notifications do not mutate model','native CM init/deinit guards skip PASSTHRU','actual object-create/destroy handlers attach and reclaim host-only MLME without commands','context allocation failure','SM allocation failure','timer already/busy paths','post-create failure reverses reconfig timer/extension/component/SM/context','host-only destroy never sends firmware DELETE','generic SME route rejects PASSTHRU before object-manager create','17 legacy SME modes retain object/ref/UTF behavior including ref failure'],
       'limitations':'Actual typed production table/registration and full object-create handler with SM/allocation/component stubs, actual CM mode guards and actual ext-create host branch and full ext-destroy function. Not full CM/SM/timer execution, native locking/IRQ, full object-manager vdev construction, command binding, WMI or AirDrop certification.'}
 
 if __name__=='__main__':

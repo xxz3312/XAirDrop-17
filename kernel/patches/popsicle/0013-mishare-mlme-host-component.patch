@@ -40,3 +40,19 @@ diff --git a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c 
  
  	/* Reject unsupported modes before allocating partially initialized locks. */
  	status = mlme_get_vdev_types(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
+diff --git a/qcacld-3.0/core/sme/src/common/sme_api.c b/qcacld-3.0/core/sme/src/common/sme_api.c
+--- a/qcacld-3.0/core/sme/src/common/sme_api.c
++++ b/qcacld-3.0/core/sme/src/common/sme_api.c
+@@ -5295,6 +5295,12 @@
+ 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+ 	struct wlan_objmgr_vdev *vdev;
+ 
++	/* Host-only PASSTHRU components need a dedicated referenced owner path.
++	 * The generic SME post-create/self-peer/delete flow assumes firmware state.
++	 */
++	if (!vdev_params || vdev_params->opmode == QDF_PASSTHRU_MODE)
++		return NULL;
++
+ 	sme_debug("addr:"QDF_MAC_ADDR_FMT" opmode:%d",
+ 		  QDF_MAC_ADDR_REF(vdev_params->macaddr),
+ 		  vdev_params->opmode);
