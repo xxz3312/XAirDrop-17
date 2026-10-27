@@ -161,6 +161,19 @@ def fixture(root):
     for name in ['vdev_mlme_obj','wlan_objmgr_vdev','vdev_stop_response','vdev_start_response','peer_delete_all_response','ml_rv_info']:code+='struct '+name+';\n'
     code+=struct+'\n'+COMMON
     code+='struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;struct vdev_mlme_ops *ops;void *sm_hdl;void *ext_vdev_ptr;int ml_reconfig_timer;struct { struct { uint8_t type,subtype; } generic;struct { struct vdev_ratemask_params ratemask_params[1]; } rate_info; } mgmt; };\n'
+    # This older factory fixture models the newly bound radio callbacks as
+    # unbound NOSUPPORT; the radio lifecycle fixture executes their real C.
+    radio_names={}
+    for _,field,args in fields:
+        match=re.search(r'\.'+field+r' = (mishare_radio_\w+)',table)
+        if match:radio_names[match[1]]=args
+    for field,name in [('mlme_vdev_update_beacon','mishare_radio_beacon'),
+                       ('mlme_vdev_disconnect_peers','mishare_radio_disconnect'),
+                       ('mlme_vdev_ext_start_rsp','mishare_radio_start_rsp'),
+                       ('mlme_vdev_ext_stop_rsp','mishare_radio_stop_rsp')]:
+        radio_names[name]=next(args for _,f,args in fields if f==field)
+    for name,args in radio_names.items():
+        code+='static QDF_STATUS '+name+'('+args+') { return QDF_STATUS_E_NOSUPPORT; }\n'
     code+='static struct vdev_mlme_ops sta_mlme_ops,ap_mlme_ops,mon_mlme_ops;\n'+table+'\n'
     code+=function(read(MLME),'mlme_is_vdev_in_beaconning_mode')+'\n'+function(read(MLME),'mlme_register_vdev_mgr_ops')+'\n'
     code+='static QDF_STATUS cm_gate(enum QDF_OPMODE op_mode) {\n'+cm_guard+'\nreturn QDF_STATUS_E_FAILURE;\n}\n'
@@ -195,7 +208,7 @@ def audit(root):
       'callback_count':len(fields),'status_callbacks_explicitly_unsupported':sum(ret=='QDF_STATUS' for ret,_,_ in fields),'void_callbacks_no_completion':sum(ret=='void' for ret,_,_ in fields),
       'callbacks':[name for _,name,_ in fields],
       'checks':['dedicated table selected','every callback nonnull and typed','all status callbacks NOSUPPORT','void notifications do not mutate model','native CM init/deinit guards skip PASSTHRU','actual object-create/destroy handlers attach and reclaim host-only MLME without commands','context allocation failure','SM allocation failure','timer already/busy paths','post-create failure reverses reconfig timer/extension/component/SM/context','host-only destroy never sends firmware DELETE','generic SME route rejects PASSTHRU before object-manager create','17 legacy SME modes retain object/ref/UTF behavior including ref failure'],
-      'limitations':'Actual typed production table/registration and full object-create handler with SM/allocation/component stubs, actual CM mode guards and actual ext-create host branch and full ext-destroy function. Not full CM/SM/timer execution, native locking/IRQ, full object-manager vdev construction, command binding, WMI or AirDrop certification.'}
+      'limitations':'Actual typed production table/registration (bound radio callbacks modeled as unbound NOSUPPORT here) and full object-create handler with SM/allocation/component stubs, actual CM mode guards and actual ext-create host branch and full ext-destroy function. Not full CM/SM/timer execution, native locking/IRQ, full object-manager vdev construction, command binding, WMI or AirDrop certification.'}
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--wlan',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();r=audit(a.wlan)

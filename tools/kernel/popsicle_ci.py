@@ -88,7 +88,9 @@ def setup(work):
         ('wlan_hdd_mishare_events.c', 'src'), ('wlan_hdd_mishare_events.h', 'inc'),
         ('wlan_hdd_mishare_commands.c', 'src'), ('wlan_hdd_mishare_commands.h', 'inc'),
         ('wlan_hdd_mishare_runtime.c', 'src'), ('wlan_hdd_mishare_runtime.h', 'inc'),
-        ('wlan_hdd_mishare_ndi.h', 'inc')]:
+        ('wlan_hdd_mishare_ndi.h', 'inc'),
+        ('wlan_hdd_mishare_radio.c', 'src'), ('wlan_hdd_mishare_radio.h', 'inc'),
+        ('wlan_hdd_mishare_radio_mlme.h', 'inc')]:
         shutil.copy2(REPO / 'kernel/popsicle-hdd' / source,
                      work / 'wlan/qcacld-3.0/core/hdd' / destination / source)
 
@@ -176,7 +178,11 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_runtime_ndi_channel', 'mishare_ndi_channel_post',
              'mishare_runtime_ndi_channel_event', 'mishare_runtime_ndi_start_plan',
              'mishare_ndi_start_plan_build', 'mishare_ndi_start_plan_wma_check',
-             'mishare_ndi_start_plan_post', 'mishare_runtime_ndi_start_plan_event']
+             'mishare_ndi_start_plan_post', 'mishare_runtime_ndi_start_plan_event', 'mishare_runtime_ndi_start',
+             'mishare_radio_open', 'mishare_radio_snapshot', 'mishare_radio_drain',
+             'mishare_ndi_radio_prepare', 'mishare_ndi_radio_start_response',
+             'mishare_ndi_radio_host_up', 'mishare_ndi_radio_mark_down',
+             'mishare_ndi_radio_start_pm_release']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -227,6 +233,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/mishare_create_delete_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-create-delete-fixture.json'],
                'mishare-create-delete-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_radio_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-radio-fixture.json'],
+               'mishare-radio-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_start_plan_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-start-plan-fixture.json'],
                'mishare-start-plan-fixture.log')

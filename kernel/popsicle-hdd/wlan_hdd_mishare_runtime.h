@@ -3,6 +3,7 @@
 #define WLAN_HDD_MISHARE_RUNTIME_H
 #include <linux/types.h>
 #include "wlan_hdd_mishare_ndi.h"
+#include "wlan_hdd_mishare_radio.h"
 struct wlan_objmgr_pdev;
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -15,6 +16,7 @@ struct mishare_runtime_status {
     bool blocked;
     int create_error;
     struct mishare_ndi_status ndi;
+    struct mishare_radio_status radio;
 };
 /* Host-only raw object-manager factory. No SME self-peer/post-setup or WMI.
  * Caller owns RTNL, an exclusive parent psoc transition, and a live netdev/DP
@@ -60,6 +62,11 @@ int mishare_runtime_ndi_channel(struct mishare_runtime_owner *owner, u32 freq);
  * Poll start_plan_completed/ready. Later START must revalidate and rebuild.
  */
 int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *owner);
+/* Explicit one-shot radio START; queue acceptance is not firmware/host UP.
+ * No default backend caller. Destruction first drives real STOP/accepted DOWN.
+ * All exclusive parent and serialized handle contracts above remain required.
+ */
+int mishare_runtime_ndi_start(struct mishare_runtime_owner *owner);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);

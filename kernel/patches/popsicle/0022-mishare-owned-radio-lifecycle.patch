@@ -1,0 +1,200 @@
+--- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
++++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+@@ -23,6 +23,7 @@
+ #include "wlan_mlme_main.h"
+ #include "wlan_mlme_vdev_mgr_interface.h"
+ #include "wlan_hdd_mishare_ndi.h"
++#include "wlan_hdd_mishare_radio_mlme.h"
+ #include "lim_utils.h"
+ #include "wma_api.h"
+ #include "wma.h"
+@@ -185,27 +186,55 @@
+ 	return QDF_STATUS_E_NOSUPPORT;
+ }
+ 
++/* MISHARE_BEGIN:radio_wrappers */
++static QDF_STATUS passthru_radio_beacon(struct vdev_mlme_obj *m,
++ enum beacon_update_op op, uint16_t len, void *data)
++{
++ QDF_STATUS s = mishare_radio_beacon(m, op, len, data);
++ return s == QDF_STATUS_E_NOSUPPORT ? passthru_mlme_reject_2(m, op, len, data) : s;
++}
++static QDF_STATUS passthru_radio_disconnect(struct vdev_mlme_obj *m,
++ uint16_t len, void *data, bool legacy)
++{
++ QDF_STATUS s = mishare_radio_disconnect(m, len, data, legacy);
++ return s == QDF_STATUS_E_NOSUPPORT ? passthru_mlme_reject_3(m, len, data, legacy) : s;
++}
++static QDF_STATUS passthru_radio_start_rsp(struct vdev_mlme_obj *m,
++ struct vdev_start_response *rsp)
++{
++ QDF_STATUS s = mishare_radio_start_rsp(m, rsp);
++ return s == QDF_STATUS_E_NOSUPPORT ? passthru_mlme_reject_5(m, rsp) : s;
++}
++static QDF_STATUS passthru_radio_stop_rsp(struct vdev_mlme_obj *m,
++ struct vdev_stop_response *rsp)
++{
++ QDF_STATUS s = mishare_radio_stop_rsp(m, rsp);
++ return s == QDF_STATUS_E_NOSUPPORT ? passthru_mlme_reject_4(m, rsp) : s;
++}
++/* MISHARE_END:radio_wrappers */
++
++/* MISHARE_BEGIN:radio_table */
+ static struct vdev_mlme_ops passthru_mlme_ops = {
+-	.mlme_vdev_validate_basic_params = passthru_mlme_reject_0,
++	.mlme_vdev_validate_basic_params = mishare_radio_validate,
+ 	.mlme_vdev_reset_proto_params = passthru_mlme_reject_0,
+-	.mlme_vdev_start_send = passthru_mlme_reject_0,
++	.mlme_vdev_start_send = mishare_radio_start_send,
+ 	.mlme_vdev_restart_send = passthru_mlme_reject_0,
+ 	.mlme_vdev_stop_start_send = passthru_mlme_reject_1,
+-	.mlme_vdev_start_continue = passthru_mlme_reject_0,
++	.mlme_vdev_start_continue = mishare_radio_start_continue,
+ 	.mlme_vdev_sta_conn_start = passthru_mlme_reject_0,
+ 	.mlme_vdev_start_req_failed = passthru_mlme_reject_0,
+-	.mlme_vdev_up_send = passthru_mlme_reject_0,
+-	.mlme_vdev_notify_up_complete = passthru_mlme_reject_0,
++	.mlme_vdev_up_send = mishare_radio_up_send,
++	.mlme_vdev_notify_up_complete = mishare_radio_up_complete,
+ 	.mlme_vdev_notify_roam_start = passthru_mlme_reject_0,
+-	.mlme_vdev_update_beacon = passthru_mlme_reject_2,
+-	.mlme_vdev_disconnect_peers = passthru_mlme_reject_3,
++	.mlme_vdev_update_beacon = passthru_radio_beacon,
++	.mlme_vdev_disconnect_peers = passthru_radio_disconnect,
+ 	.mlme_vdev_dfs_cac_timer_stop = passthru_mlme_reject_0,
+-	.mlme_vdev_stop_send = passthru_mlme_reject_0,
+-	.mlme_vdev_stop_continue = passthru_mlme_reject_0,
+-	.mlme_vdev_down_send = passthru_mlme_reject_0,
+-	.mlme_vdev_notify_down_complete = passthru_mlme_reject_0,
+-	.mlme_vdev_ext_stop_rsp = passthru_mlme_reject_4,
+-	.mlme_vdev_ext_start_rsp = passthru_mlme_reject_5,
++	.mlme_vdev_stop_send = mishare_radio_stop_send,
++	.mlme_vdev_stop_continue = mishare_radio_stop_continue,
++	.mlme_vdev_down_send = mishare_radio_down_send,
++	.mlme_vdev_notify_down_complete = mishare_radio_down_complete,
++	.mlme_vdev_ext_stop_rsp = passthru_radio_stop_rsp,
++	.mlme_vdev_ext_start_rsp = passthru_radio_start_rsp,
+ 	.mlme_vdev_notify_start_state_exit = passthru_mlme_reject_6,
+ 	.mlme_vdev_is_newchan_no_cac = passthru_mlme_reject_6,
+ 	.mlme_vdev_ext_peer_delete_all_rsp = passthru_mlme_reject_7,
+@@ -219,6 +248,7 @@
+ 	.mlme_vdev_notify_link_update_event = passthru_mlme_reject_11,
+ 	.mlme_vdev_init_down = passthru_mlme_noop_9,
+ };
++/* MISHARE_END:radio_table */
+ static struct mlme_ext_ops ext_ops;
+ #ifdef WLAN_FEATURE_11BE_MLO
+ static struct mlo_mlme_ext_ops mlo_ext_ops;
+--- a/qcacld-3.0/core/wma/src/wma_dev_if.c
++++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
+@@ -7743,3 +7743,62 @@
+ 	return same ? 0 : -EUCLEAN;
+ }
+ /* MISHARE_END:start_plan_wma */
++
++/* MISHARE_BEGIN:radio_wma */
++int mishare_ndi_radio_start_response(struct vdev_mlme_obj *m,
++                                    struct vdev_start_response *rsp)
++{
++ tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++ uint8_t id;
++ QDF_STATUS status;
++ if (!m || !m->vdev || !rsp || !wma || !wma->interfaces || !wma->wmi_handle ||
++     wma->psoc != wlan_vdev_get_psoc(m->vdev) || !m->ext_vdev_ptr)
++  return -EUCLEAN;
++ id = wlan_vdev_get_id(m->vdev);
++ if (id >= wma->max_bssid || rsp->vdev_id != id || rsp->status ||
++     rsp->resp_type != WMI_HOST_VDEV_START_RESP_EVENT ||
++     wma->interfaces[id].vdev != m->vdev ||
++     !wma_mishare_pas_ndi(m->vdev, m->mgmt.generic.type) ||
++     m->mgmt.generic.subtype || wlan_vdev_mlme_get_state(m->vdev) != WLAN_VDEV_S_START)
++  return -EUCLEAN;
++ status = wma_vdev_start_resp_handler(m, rsp);
++ return QDF_IS_STATUS_ERROR(status) ? -EUCLEAN : 0;
++}
++int mishare_ndi_radio_host_up(struct wlan_objmgr_vdev *vdev)
++{
++ tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++ struct vdev_mlme_obj *m;
++ int ret = mishare_ndi_start_plan_wma_check(vdev);
++ QDF_STATUS status;
++ if (ret)
++  return ret;
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ if (!m || m->vdev != vdev || !m->ext_vdev_ptr ||
++     wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_UP)
++  return -EUCLEAN;
++ status = wma_mon_mlme_vdev_up_send(m, 0, NULL); /* NDI: no firmware UP */
++ if (QDF_IS_STATUS_ERROR(status))
++  return -EUCLEAN;
++ ret = mishare_ndi_radio_start_pm_release(vdev);
++ if (ret)
++  return ret;
++ qdf_atomic_set(&wma->interfaces[wlan_vdev_get_id(vdev)].bss_status,
++                WMA_BSS_STATUS_STARTED);
++ return 0;
++}
++int mishare_ndi_radio_mark_down(struct wlan_objmgr_vdev *vdev)
++{
++ tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++ uint8_t id;
++ if (!vdev || !wma || !wma->wmi_handle || !wma->interfaces ||
++     wma->psoc != wlan_vdev_get_psoc(vdev))
++  return -EUCLEAN;
++ id = wlan_vdev_get_id(vdev);
++ if (id >= wma->max_bssid || wma->interfaces[id].vdev != vdev ||
++     !wma_mishare_pas_ndi(vdev, wma->interfaces[id].type) ||
++     qdf_atomic_read(&wma->interfaces[id].bss_status) != WMA_BSS_STATUS_STARTED)
++  return -EUCLEAN;
++ qdf_atomic_set(&wma->interfaces[id].bss_status, WMA_BSS_STATUS_STOPPED);
++ return 0;
++}
++/* MISHARE_END:radio_wma */
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -5616,3 +5616,17 @@
+ 	return 0;
+ }
+ /* MISHARE_END:start_plan_request */
++
++/* MISHARE_BEGIN:radio_prepare */
++int mishare_ndi_radio_prepare(struct wlan_objmgr_vdev *vdev, void *owner,
++                            unsigned long cookie, uint32_t freq)
++{
++ struct mishare_start_plan_request req = {0};
++ struct mishare_ndi_start_summary summary = {0};
++ req.channel.vdev = vdev;
++ req.channel.owner = owner;
++ req.channel.session_cookie = cookie;
++ req.channel.freq = freq;
++ return mishare_start_plan_execute(&req, &summary);
++}
++/* MISHARE_END:radio_prepare */
+--- a/qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_tx_ops.c
++++ b/qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_tx_ops.c
+@@ -1702,3 +1702,25 @@
+ 			target_if_sap_is_suspend_support_enabled;
+ 	return QDF_STATUS_SUCCESS;
+ }
++
++/* MISHARE_BEGIN:radio_pm */
++#include "wlan_hdd_mishare_ndi.h"
++#include <linux/errno.h>
++#include <wlan_vdev_mlme_api.h>
++int mishare_ndi_radio_start_pm_release(struct wlan_objmgr_vdev *vdev)
++{
++ struct vdev_mlme_obj *m;
++ struct wlan_objmgr_psoc *psoc;
++ if (!vdev || wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++  return -EUCLEAN;
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ psoc = wlan_vdev_get_psoc(vdev);
++ if (!m || m->vdev != vdev || !m->ext_vdev_ptr || !psoc ||
++     m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI ||
++     m->mgmt.generic.subtype || wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_UP)
++  return -EUCLEAN;
++ target_if_wake_lock_timeout_release(psoc, START_WAKELOCK);
++ target_if_release_vdev_cmd_rt_lock(psoc, wlan_vdev_get_id(vdev));
++ return 0;
++}
++/* MISHARE_END:radio_pm */

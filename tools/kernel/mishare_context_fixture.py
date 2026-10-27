@@ -23,7 +23,8 @@ def block(s,name):
 
 def source_guard(root):
     for path,h in BASE.items():
-        s=(root/path).read_text()
+        from mishare_radio_origins import remove_radio_additions
+        s=remove_radio_additions((root/path).read_text())
         s=re.sub(r'\n/\* MISHARE_BEGIN:\w+ \*/\n.*?/\* MISHARE_END:\w+ \*/\n','',s,flags=re.S)
         s=s.replace('#include "wlan_hdd_mishare_ndi.h"\n','')
         if hashlib.sha256(s.encode()).hexdigest()!=h:raise ValueError('Changed legacy source outside bounded context additions: '+path)

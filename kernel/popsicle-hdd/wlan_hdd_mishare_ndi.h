@@ -6,6 +6,7 @@ struct wlan_objmgr_vdev;
 struct wlan_objmgr_psoc;
 struct vdev_mlme_obj;
 struct vdev_create_params;
+struct vdev_start_response;
 /* Transport acceptance is not firmware CREATE confirmation. A failed DP attach
  * may have published resources: do not infer absence from its return status.
  */
@@ -55,6 +56,7 @@ struct mishare_ndi_status {
     bool channel_submitted;
     bool channel_completed;
     bool channel_prepared;
+    bool radio_requested;
     bool start_plan_requested;
     bool start_plan_submitted;
     bool start_plan_completed;
@@ -84,6 +86,13 @@ int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *vdev,
                                  void (*callback)(void *), void *context);
 int mishare_ndi_release_stats(struct vdev_mlme_obj *mlme,
                               struct mishare_ndi_create_result *result);
+int mishare_ndi_radio_prepare(struct wlan_objmgr_vdev *vdev, void *owner,
+                               unsigned long cookie, u32 freq);
+int mishare_ndi_radio_start_response(struct vdev_mlme_obj *mlme,
+                                      struct vdev_start_response *rsp);
+int mishare_ndi_radio_host_up(struct wlan_objmgr_vdev *vdev);
+int mishare_ndi_radio_mark_down(struct wlan_objmgr_vdev *vdev);
+int mishare_ndi_radio_start_pm_release(struct wlan_objmgr_vdev *vdev);
 int mishare_ndi_start_plan_build(struct vdev_mlme_obj *mlme, u32 freq,
                                   struct mishare_ndi_start_summary *summary);
 int mishare_ndi_start_plan_wma_check(struct wlan_objmgr_vdev *vdev);

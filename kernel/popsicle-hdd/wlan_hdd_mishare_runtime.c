@@ -17,6 +17,7 @@ struct mishare_runtime_owner {
     struct wlan_objmgr_psoc *psoc;
     struct wlan_objmgr_vdev *vdev;
     struct mishare_event_owner *events;
+    struct mishare_radio *radio;
     unsigned long cookie;
     unsigned long pe_cookie;
     u8 mac[ETH_ALEN];
@@ -114,6 +115,8 @@ int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     *status = owner->state;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (owner->radio)
+        return mishare_radio_snapshot(owner->radio, &status->radio);
     return 0;
 }
 
@@ -698,6 +701,42 @@ int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *entry)
     return ret;
 }
 
+int mishare_runtime_ndi_start(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *ndi;
+    unsigned long flags;
+    int ret;
+    if (!entry)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi = &entry->state.ndi;
+    if (entry->state.blocked || ndi->blocked) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
+    if (!entry->vdev || !entry->referenced || !entry->events ||
+        !ndi->active || !ndi->legacy_ready || !ndi->wma_bound ||
+        !ndi->peer_created || !ndi->pe_ready || !ndi->channel_prepared ||
+        !ndi->start_plan_submitted || !ndi->start_plan_completed ||
+        !ndi->start_plan_ready || ndi->radio_requested || entry->radio ||
+        ndi->pe_delete_requested || ndi->peer_delete_pending ||
+        ndi->delete_pending || entry->state.draining) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EBUSY;
+    }
+    ndi->radio_requested = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_radio_open(entry->vdev, entry->events, entry, entry->pe_cookie,
+                              ndi->channel_freq, &entry->radio);
+    if (ret != -EINPROGRESS && !entry->radio) {
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.radio.phase = MISHARE_RADIO_CANCELLED;
+        entry->state.radio.error = ret;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    }
+    return ret;
+}
+
 static void mishare_runtime_ndi_dp_freed(void *context)
 {
     struct mishare_runtime_owner *entry = context;
@@ -718,6 +757,23 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     unsigned long flags;
     int ret;
 
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = entry->state.blocked || ndi->blocked;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret)
+        return -EUCLEAN;
+    {
+        struct mishare_radio_status last = {0};
+        bool had_radio = entry->radio != NULL;
+        ret = mishare_radio_drain(&entry->radio, &last);
+        if (had_radio) {
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.radio = last;
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        }
+        if (ret)
+            return ret;
+    }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     if (!ndi->active) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);

@@ -149,7 +149,8 @@ int main(void) {
 
 def fixture(root):
     for path,h in BASE.items():
-        s=(root/path).read_text()
+        from mishare_radio_origins import remove_radio_additions
+        s=remove_radio_additions((root/path).read_text())
         s=re.sub(r'\n/\* MISHARE_BEGIN:start_plan_\w+ \*/\n.*?/\* MISHARE_END:start_plan_\w+ \*/\n','',s,flags=re.S)
         if hashlib.sha256(s.encode()).hexdigest()!=h:
             raise ValueError('START plan changed existing native source: '+path)

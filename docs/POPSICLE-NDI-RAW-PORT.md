@@ -463,3 +463,32 @@ MLME 保存的是已转换的 WMI PHY mode，校验使用 WMI_HOST_MODE 的 HT20
 而非 WLAN 主机枚举。WMA 检查在读取 service bitmap 前拒绝空 WMI handle 或
 interfaces；对应失败用例会保留完整 owner。没有启用 START/STOP/DOWN 的发送、
 专用 PAS MLME 回调或上机调用方；完整启停闭环仍是下一处待实现内容。
+
+## 0022：owned NDI 原生 MLME 启停控制
+
+新增显式 `mishare_runtime_ndi_start(owner)`，只接受已完成资源、上下文、PE、
+频道与 START plan 的 owner。没有新增默认 HDD/Wonder 调用方。radio controller
+单独持有 VDEV 引用；其 MC 请求及正在执行的回调全部退出后，才允许移除 registry
+和释放引用。runtime destroy 在原有 PE/peer/VDEV/DP 删除之前先驱动 radio drain。
+
+专用 PAS 表的启停回调仅在匹配的 radio controller 存在时工作；未绑定时仍拒绝。
+原有 STA/AP/monitor 表不变。调用原生 START 前，在 MC 上重新验证并构造参数，
+随后从原生 MLME START 事件进入 `vdev_mgr_start_send`。真实 target-if START/STOP
+来源继续由原有 transaction registry 区分固件响应和超时；通用发送错误进入隔离。
+完整 START 响应复制到 MC 请求，避免保留原生事件缓冲指针。NDI host-only UP 验证
+相同 WMA/legacy/self-peer，复用原生兼容判断，不发送 WMI UP，随后清理 START PM 锁。
+
+关闭时由原生 MLME DOWN 路线进入 STOP。PAS 不在 disconnect callback 删除
+self-peer，而是在真实 STOP 响应之后执行 DOWN。DOWN 没有固件 ACK：状态中的
+`down_accepted` 只表示原生提交成功并执行 PM 清理。只有此后真正返回 native INIT，
+才能继续旧的 PE、自有 peer、VDEV DELETE 和 DP 最终释放。DOWN 错误不发布
+DOWN_COMPLETE；START/STOP 超时、未知发送结果、响应队列失败/flush 及上下文
+异常保留全部父资源。嵌套 MLME 回调使用不重新加锁的 `_sync` 事件接口；入口请求
+使用带锁接口。普通 monitor 的全局统计、SME stop 通知和无条件完成路径不复用。
+
+新增 Actions-only fixture 执行生产 owner/radio/registry、完整原生 target-if
+START/STOP/DOWN 发送、START/STOP 响应处理、owned WMA wrapper、NDI UP 兼容函数
+和 PM helper。完整 native SM、WMA START 后处理、core send wrapper、调度/IRQ、
+对象/法规/DP 和二进制 TLV 提取仍为明确的模型边界；完整 native SM 随 WLAN 编译。
+尚未进行手机加载、固件接受、硬件模式/并发租约、TX 队列、SSR/remove 或收发验证。
+默认可用性和 Wonder init 门保持关闭，不制作安装包。
