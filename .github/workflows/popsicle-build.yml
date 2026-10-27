@@ -66,8 +66,16 @@ jobs:
           bash -n tools/kernel/popsicle_trial_build.sh
       - name: Install host build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          # Only Ubuntu packages are needed. Unrelated runner repositories can
+          # fail independently (e.g. Microsoft 403) and block apt-get update.
+          apt_sources="$RUNNER_TEMP/popsicle-ubuntu-sources"
+          mkdir -p "$apt_sources"
+          cp /etc/apt/sources.list.d/ubuntu.sources "$apt_sources/ubuntu.sources"
+          apt_options=(-o Dir::Etc::sourcelist=/dev/null
+                       -o "Dir::Etc::sourceparts=$apt_sources"
+                       -o Acquire::Retries=3)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y --no-install-recommends \
             build-essential flex bison m4 bc pahole libelf-dev libdw-dev \
             libssl-dev pkg-config zlib1g-dev libzstd-dev curl git python3
       - name: Restore pinned toolchains
