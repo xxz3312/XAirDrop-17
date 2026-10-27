@@ -481,3 +481,35 @@ commands/events/txn 六份生产文件与 QDF 错误码映射源码摘要，均�
 本段实现并验证了命令提交端，尚无运行时调用者。专用 MLME ops、真实 vdev 创建、
 信道/并发配置、UP/DOWN/DELETE、恢复和事件排空仍待接通；没有向手机提交命令。
 下一段应完成这些调用端的状态与资源归属，不能把本段返回 0 直接当作 Wonder init 成功。
+
+## 专用 MLME host 表与受保护创建回收（构建待验证）
+
+0011 将 PASSTHRU 的注册从 NULL ops/拒绝注册改为专用 `passthru_mlme_ops`。
+这次确实接到现有 `mlme_register_vdev_mgr_ops` 的 PASSTHRU 分支，返回 SUCCESS
+只代表主机操作表注册成功，不代表 vdev 或无线创建成功。
+
+表覆盖锁定上游的全部 32 个回调，按原始强类型签名填写，没有借用 STA/MONITOR 表。
+30 个 QDF_STATUS 操作一律返回 E_NOSUPPORT，避免原框架对缺失回调的默认 SUCCESS；
+两个 void 通知不修改状态、不发布完成、不触发资源释放。当前没有把 START/STOP 提交
+入口接到这些回调，因为完整运行生命周期仍未就绪。
+
+`vdevmgr_mlme_ext_hdl_create` 的 PASSTHRU 前置拒绝保持：仍在 legacy allocation/WMI
+之前返回 E_NOSUPPORT。注册后框架可以进入主机 SM 创建；CM init/deinit 的原始模式
+条件只为 STA/P2P_CLIENT 处理连接管理器，PASSTHRU 直接跳过，不进入 STA CM。
+MLME component create handler 随后在 ext-create 保护处失败，反向执行 CM skip、
+SM destroy、minidump remove、context free，不执行 component attach、reconfig timer
+初始化或 ext handler destroy。整体 handler 仍按原始逻辑返回通用 E_FAILURE。
+这没有改变其他 17 个模式的注册/类型/DP 转换行为。
+
+新增 Actions C 夹具提取实际完整 `struct vdev_mlme_ops`、专用表及回调、注册函数、
+整个 MLME component create handler，并执行原始 CM 模式条件和 ext-create 拒绝片段。
+它逐个检查 32 个回调非空/强类型/拒绝语义，使用 ASan/UBSan 检查正常受保护拒绝、
+context/SM 分配失败、timer already/busy 的释放顺序。SM、分配器、组件操作由模型提供；
+CM 只执行原始模式 guard，没有把完整 SM/CM 或内核 IRQ 行为称为已实测。
+已有实际完整 ext-create C 夹具仍执行，确认 PASSTHRU 在任何 legacy allocation/command
+之前拒绝；原来 17 个模式的差分 C 检查保留。
+
+完整 WLAN 对象和最终 .ko 现在也必须实际包含专用表符号。
+缓存、严格链接和选定布局检查保留，所有原生编译仍只在 Actions。
+目前是 host 表注册和拒绝创建时的回收接线，硬件回调仍拒绝，真实 vdev/owner 绑定、
+UP/DOWN/DELETE、恢复及命令调用端还未接通，没有手机安装包或启用步骤。

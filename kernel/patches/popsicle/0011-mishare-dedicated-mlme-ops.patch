@@ -1,0 +1,181 @@
+--- a/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
++++ b/qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c
+@@ -60,6 +60,164 @@
+ static struct vdev_mlme_ops sta_mlme_ops;
+ static struct vdev_mlme_ops ap_mlme_ops;
+ static struct vdev_mlme_ops mon_mlme_ops;
++
++/* Dedicated host-only PASSTHRU table. Status operations fail explicitly.
++ * Void notifications publish no completion or resource-release indication.
++ * The ext-create gate below still rejects PASSTHRU before allocation/WMI.
++ */
++static QDF_STATUS passthru_mlme_reject_0(
++	struct vdev_mlme_obj *vdev_mlme,
++	uint16_t event_data_len,
++	void *event_data)
++{
++	(void)vdev_mlme;
++	(void)event_data_len;
++	(void)event_data;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_1(
++	struct vdev_mlme_obj *vdev_mlme,
++	enum vdev_cmd_type type,
++	uint16_t event_data_len,
++	void *event_data)
++{
++	(void)vdev_mlme;
++	(void)type;
++	(void)event_data_len;
++	(void)event_data;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_2(
++	struct vdev_mlme_obj *vdev_mlme,
++	enum beacon_update_op op,
++	uint16_t event_data_len,
++	void *event_data)
++{
++	(void)vdev_mlme;
++	(void)op;
++	(void)event_data_len;
++	(void)event_data;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_3(
++	struct vdev_mlme_obj *vdev_mlme,
++	uint16_t event_data_len,
++	void *event_data,
++	bool discon_legacy_only)
++{
++	(void)vdev_mlme;
++	(void)event_data_len;
++	(void)event_data;
++	(void)discon_legacy_only;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_4(
++	struct vdev_mlme_obj *vdev_mlme,
++	struct vdev_stop_response *rsp)
++{
++	(void)vdev_mlme;
++	(void)rsp;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_5(
++	struct vdev_mlme_obj *vdev_mlme,
++	struct vdev_start_response *rsp)
++{
++	(void)vdev_mlme;
++	(void)rsp;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_6(
++	struct vdev_mlme_obj *vdev_mlme)
++{
++	(void)vdev_mlme;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_7(
++	struct vdev_mlme_obj *vdev_mlme,
++	struct peer_delete_all_response *rsp)
++{
++	(void)vdev_mlme;
++	(void)rsp;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_8(
++	struct vdev_mlme_obj *vdev_mlme,
++	uint16_t *tbtt_count,
++	uint16_t bcn_int)
++{
++	(void)vdev_mlme;
++	(void)tbtt_count;
++	(void)bcn_int;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static void passthru_mlme_noop_9(
++	struct vdev_mlme_obj *vdev_mlme)
++{
++	(void)vdev_mlme;
++}
++
++static QDF_STATUS passthru_mlme_reject_10(
++	struct vdev_mlme_obj *vdev_mlme,
++	struct ml_rv_info *reconfig_info)
++{
++	(void)vdev_mlme;
++	(void)reconfig_info;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static QDF_STATUS passthru_mlme_reject_11(
++	struct wlan_objmgr_vdev *vdev,
++	void *t2lm)
++{
++	(void)vdev;
++	(void)t2lm;
++	return QDF_STATUS_E_NOSUPPORT;
++}
++
++static struct vdev_mlme_ops passthru_mlme_ops = {
++	.mlme_vdev_validate_basic_params = passthru_mlme_reject_0,
++	.mlme_vdev_reset_proto_params = passthru_mlme_reject_0,
++	.mlme_vdev_start_send = passthru_mlme_reject_0,
++	.mlme_vdev_restart_send = passthru_mlme_reject_0,
++	.mlme_vdev_stop_start_send = passthru_mlme_reject_1,
++	.mlme_vdev_start_continue = passthru_mlme_reject_0,
++	.mlme_vdev_sta_conn_start = passthru_mlme_reject_0,
++	.mlme_vdev_start_req_failed = passthru_mlme_reject_0,
++	.mlme_vdev_up_send = passthru_mlme_reject_0,
++	.mlme_vdev_notify_up_complete = passthru_mlme_reject_0,
++	.mlme_vdev_notify_roam_start = passthru_mlme_reject_0,
++	.mlme_vdev_update_beacon = passthru_mlme_reject_2,
++	.mlme_vdev_disconnect_peers = passthru_mlme_reject_3,
++	.mlme_vdev_dfs_cac_timer_stop = passthru_mlme_reject_0,
++	.mlme_vdev_stop_send = passthru_mlme_reject_0,
++	.mlme_vdev_stop_continue = passthru_mlme_reject_0,
++	.mlme_vdev_down_send = passthru_mlme_reject_0,
++	.mlme_vdev_notify_down_complete = passthru_mlme_reject_0,
++	.mlme_vdev_ext_stop_rsp = passthru_mlme_reject_4,
++	.mlme_vdev_ext_start_rsp = passthru_mlme_reject_5,
++	.mlme_vdev_notify_start_state_exit = passthru_mlme_reject_6,
++	.mlme_vdev_is_newchan_no_cac = passthru_mlme_reject_6,
++	.mlme_vdev_ext_peer_delete_all_rsp = passthru_mlme_reject_7,
++	.mlme_vdev_dfs_cac_wait_notify = passthru_mlme_reject_6,
++	.mlme_vdev_csa_complete = passthru_mlme_reject_6,
++	.mlme_vdev_sta_disconn_start = passthru_mlme_reject_0,
++	.mlme_vdev_reconfig_notify = passthru_mlme_reject_8,
++	.mlme_vdev_reconfig_timer_complete = passthru_mlme_noop_9,
++	.mlme_vdev_reconfig_notify_standby = passthru_mlme_reject_10,
++	.mlme_vdev_notify_mlo_sync_wait_entry = passthru_mlme_reject_6,
++	.mlme_vdev_notify_link_update_event = passthru_mlme_reject_11,
++	.mlme_vdev_init_down = passthru_mlme_noop_9,
++};
+ static struct mlme_ext_ops ext_ops;
+ #ifdef WLAN_FEATURE_11BE_MLO
+ static struct mlo_mlme_ext_ops mlo_ext_ops;
+@@ -154,10 +312,10 @@
+ 
+ 	vdev = vdev_mlme->vdev;
+ 
+-	/* No STA fallback until the dedicated backend is implemented. */
++	/* Dedicated table; ext-create still blocks hardware construction. */
+ 	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE) {
+-		vdev_mlme->ops = NULL;
+-		return QDF_STATUS_E_NOSUPPORT;
++		vdev_mlme->ops = &passthru_mlme_ops;
++		return QDF_STATUS_SUCCESS;
+ 	}
+ 
+ 	if (mlme_is_vdev_in_beaconning_mode(vdev->vdev_mlme.vdev_opmode))
