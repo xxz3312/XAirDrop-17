@@ -14,7 +14,7 @@
 | 生命周期基础 | DOWN host helper、事务、原生来源通知、命令提交 API | 尚无真实 owner/命令调用生命周期 |
 | 无线与互传 | 没有成功无线 init 或 RX/TX | AirDrop 不可用，没有安装包 |
 
-最新离线检查见 [创建/删除前置检查验证记录](research/popsicle-create-delete-preflight-build-pass.json)。
+最新离线检查见 [MLME 主机组件生命周期验证记录](research/popsicle-mlme-host-component-build-pass.json)。
 下面的源码缺口表是最初未打补丁的基线；后续小节记录各次变更和各自限制。
 
 ## 已核对的未打补丁源码基线
@@ -640,3 +640,21 @@ START/STOP 提交接口新增 legacy 上下文前置检查，拒绝这种新发�
 实现，未来也必须覆盖其他组件和 SME/WMA 引用、自 peer 回收假设。
 原生测试提取完整 SME 创建函数，验证 PASSTHRU/空参数无对象创建动作，
 以及原有 17 个模式在引用成功/失败时保留原路径。
+
+
+### 主机组件分离的 Actions 结果
+
+提交 `dec7515cbdb2da9f84ae846e168f858a72d5ddb0` 的
+[Actions 40463147468](https://github.com/xxz3312/XAirDrop-17/actions/runs/40463147468)
+全部通过：44 项 Python 检查、9 组原生测试、完整 WLAN 编译和严格链接。
+原有 574 条 WLAN 导入版本记录无不匹配，7 项已选结构布局匹配；工具链和
+bindgen 缓存命中。它们仍只是已记录的有限离线检查。
+
+已下载并核对 25,777 字节验证 ZIP 的 SHA-256，独立重新生成主机组件、
+MLME 初始化、命令提交三组测试源码，哈希均与 Actions 报告一致；另核对
+5 个真实源码文件和 6 个 helper 文件哈希。337,118,004 字节完整诊断 ZIP
+未独立下载，也不是安装包。范围和限制见
+[验证记录](research/popsicle-mlme-host-component-build-pass.json)。
+
+本轮实现 MLME 主机组件分离。专用完整 vdev 创建入口、运行时 owner 和
+固件 CREATE/DELETE 尚未接通，AirDrop 仍不可用，候选驱动未在手机加载。

@@ -1,0 +1,238 @@
+{
+  "status": "PASSTHRU_MLME_HOST_COMPONENT_LIFECYCLE_OFFLINE_PASS_ONLY",
+  "commit": "dec7515cbdb2da9f84ae846e168f858a72d5ddb0",
+  "run_id": 40463147468,
+  "job_id": 122052203898,
+  "validation_artifact": {
+    "id": 12715576689,
+    "bytes": 25777,
+    "sha256": "7d9b90de0ff10143868099b93e86a4e2a3b6c7b9d48def98e8a1ce2960dae2d7",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12716255602,
+    "bytes": 337118004,
+    "github_reported_sha256": "da454bbacb01cdfc810f75629e098e1c013bcc03fbbc1be0809332bb5880c5af",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "host_component_fixture": {
+    "status": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "4bc55a9071c2254d9648ad7e6673a5483cd1d62f931e4055c9db6cc519c2687c",
+    "source_sha256": {
+      "qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c": "033f335a1cb188577379367668a200c6a4ad626dd77349022ad6a2bbd6647df2",
+      "qca-wifi-host-cmn/umac/mlme/include/wlan_vdev_mlme.h": "9395884ab0481e3039ff65dbf307b3d2c04256fda6c70c654d9f1c3ab3d05ef4",
+      "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/src/wlan_vdev_mlme_main.c": "309a915aa2d2399551ccc989cb99f009b1e0c47d90d1fd63cef5adad46495388",
+      "qca-wifi-host-cmn/umac/mlme/connection_mgr/core/src/wlan_cm_main.c": "24c13edb2831866c00b34657f116437b2c0415d4ad7a5c2bf9ebb1e3e816d483",
+      "qcacld-3.0/core/sme/src/common/sme_api.c": "ed104fbf9446c4864d2333b288c7613cda22c43b3feb7a6ea668f5c22af535de"
+    },
+    "callback_count": 32,
+    "status_callbacks_explicitly_unsupported": 30,
+    "void_callbacks_no_completion": 2,
+    "callbacks": [
+      "mlme_vdev_validate_basic_params",
+      "mlme_vdev_reset_proto_params",
+      "mlme_vdev_start_send",
+      "mlme_vdev_restart_send",
+      "mlme_vdev_stop_start_send",
+      "mlme_vdev_start_continue",
+      "mlme_vdev_sta_conn_start",
+      "mlme_vdev_start_req_failed",
+      "mlme_vdev_up_send",
+      "mlme_vdev_notify_up_complete",
+      "mlme_vdev_notify_roam_start",
+      "mlme_vdev_update_beacon",
+      "mlme_vdev_disconnect_peers",
+      "mlme_vdev_dfs_cac_timer_stop",
+      "mlme_vdev_stop_send",
+      "mlme_vdev_stop_continue",
+      "mlme_vdev_down_send",
+      "mlme_vdev_notify_down_complete",
+      "mlme_vdev_ext_stop_rsp",
+      "mlme_vdev_ext_start_rsp",
+      "mlme_vdev_notify_start_state_exit",
+      "mlme_vdev_is_newchan_no_cac",
+      "mlme_vdev_ext_peer_delete_all_rsp",
+      "mlme_vdev_dfs_cac_wait_notify",
+      "mlme_vdev_csa_complete",
+      "mlme_vdev_sta_disconn_start",
+      "mlme_vdev_reconfig_notify",
+      "mlme_vdev_reconfig_timer_complete",
+      "mlme_vdev_reconfig_notify_standby",
+      "mlme_vdev_notify_mlo_sync_wait_entry",
+      "mlme_vdev_notify_link_update_event",
+      "mlme_vdev_init_down"
+    ],
+    "checks": [
+      "dedicated table selected",
+      "every callback nonnull and typed",
+      "all status callbacks NOSUPPORT",
+      "void notifications do not mutate model",
+      "native CM init/deinit guards skip PASSTHRU",
+      "actual object-create/destroy handlers attach and reclaim host-only MLME without commands",
+      "context allocation failure",
+      "SM allocation failure",
+      "timer already/busy paths",
+      "post-create failure reverses reconfig timer/extension/component/SM/context",
+      "host-only destroy never sends firmware DELETE",
+      "generic SME route rejects PASSTHRU before object-manager create",
+      "17 legacy SME modes retain object/ref/UTF behavior including ref failure"
+    ],
+    "limitations": "Actual typed production table/registration and full object-create handler with SM/allocation/component stubs, actual CM mode guards and actual ext-create host branch and full ext-destroy function. Not full CM/SM/timer execution, native locking/IRQ, full object-manager vdev construction, command binding, WMI or AirDrop certification."
+  },
+  "mlme_init_fixture": {
+    "status": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_source_sha256": "ebc80cf67dd279994fa57e8aa6202032783e355451c66a0ce4d38e56f15a3de8",
+    "mlme_source_sha256": "033f335a1cb188577379367668a200c6a4ad626dd77349022ad6a2bbd6647df2",
+    "host_translation": {
+      "qdf_mode": 17,
+      "type": 9,
+      "subtype": 0
+    },
+    "passthru_create": "HOST_ONLY_SUCCESS_WITHOUT_LEGACY_ALLOCATION_OR_COMMAND",
+    "limitations": "Actual production create/type conversion with mocked resource and WMI boundaries. No firmware acceptance, real cleanup, event, concurrency or radio certification."
+  },
+  "command_fixture": {
+    "status": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "782df9b7ff7d0bac83fa7a58e33ea32e244a6d47a2fb052b23820565688e2339",
+    "production_sha256": {
+      "wlan_hdd_mishare_commands.c": "adc1b5eb12937bde9d3beae7d6ac37c44fe0d8d235edd7726252dca034a5972c",
+      "wlan_hdd_mishare_commands.h": "c692a595444c79be0b9ba4835311563c513c47d0ecf1a84f5b7efe8c416a5fe8",
+      "wlan_hdd_mishare_events.c": "efe2f13b636e2a643a19c305e6e0886e3649d754a75044ce4c06f69ec40ec114",
+      "wlan_hdd_mishare_events.h": "1eea0cc60479860c05b3be8e32938e754306b62db0e8f7d3fae24b77dc1cfe39",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8"
+    },
+    "qdf_status_mapping_sha256": "bd037f03b0841127bf981766346da6a95dccab2fd60a6892f0f0e5f1351fcf39",
+    "checks": [
+      "null and unpublished/foreign MLME rejection",
+      "mode/type/subtype preflight",
+      "exact bound vdev check",
+      "no send on preflight/state rejection",
+      "queued submission remains pending",
+      "one native call per accepted transaction",
+      "START never uses RESTART",
+      "early success/failure/timeout without registry lock",
+      "unrelated vdev exclusion",
+      "generic native errors quarantine",
+      "native error mapping retained",
+      "no free/ref release on submission failure",
+      "STOP submission and terminal reuse rejection"
+    ],
+    "limitations": "Production command/registry/transaction C with native vdev-manager sends, component lookup and object manager mocked. Not actual native parameter packing, channel/concurrency/DFS setup, WMI transmission, dedicated MLME ops, teardown or radio certification. No runtime command caller yet."
+  },
+  "independently_regenerated_fixture_hashes_match": [
+    "host component / SME gate",
+    "MLME extension create",
+    "commands / events / transaction"
+  ],
+  "independently_verified_source_hashes": {
+    "native_source_files": 5,
+    "production_helper_files": 6
+  },
+  "new_checks": [
+    "host MLME component create/attach/destroy without firmware commands",
+    "local reconfiguration timer freed on destroy and injected post-create failure",
+    "allocation and SM creation failure cleanup",
+    "repeat host destroy",
+    "unexpected legacy extension refused by host-only ext-destroy contract",
+    "PASSTHRU generic SME rejection before object-manager create",
+    "17 previous SME modes preserve reference success/failure behavior",
+    "host-only START and STOP rejected before ticket mutation or native send"
+  ],
+  "fixture_statuses": {
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY"
+  },
+  "host_regression_tests": 44,
+  "toolchain_cache_hit": true,
+  "bindgen_cache_hit": true,
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "be1b286c214477a84d50fa7735d93acdafea432a91f5021a25eaeb7a44a033e5",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "linked_required_symbols": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "be1b286c214477a84d50fa7735d93acdafea432a91f5021a25eaeb7a44a033e5",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout",
+      "mishare_events_bind",
+      "mishare_events_unbind",
+      "mishare_events_begin",
+      "mishare_events_submitted",
+      "mishare_events_snapshot",
+      "mishare_events_notify",
+      "mishare_events_begin_vdev",
+      "mishare_command_submit_start",
+      "mishare_command_submit_stop",
+      "passthru_mlme_ops"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,cnss_utils,cnss_nl,ipam,opairshare_wonder_provider,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "object_required_symbols_status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+  "selected_layouts": {
+    "status": "SELECTED_LAYOUTS_MATCH_ONLY",
+    "types": {
+      "module": "MATCH",
+      "net_device": "MATCH",
+      "wiphy": "MATCH",
+      "wireless_dev": "MATCH",
+      "sk_buff": "MATCH",
+      "cfg80211_chan_def": "MATCH",
+      "ieee80211_channel": "MATCH"
+    }
+  },
+  "runtime": {
+    "mlme_extension_create": "HOST_ONLY_SUCCESS_WITHOUT_LEGACY_EXTENSION_OR_WMI",
+    "generic_sme_create": "PASSTHRU_REJECTED_BEFORE_OBJMGR_CREATE",
+    "host_only_start_stop": "EOPNOTSUPP_BEFORE_NATIVE_SEND",
+    "dedicated_full_vdev_factory_present": false,
+    "runtime_owner_binding_present": false,
+    "candidate_loaded_on_phone": false,
+    "airdrop_usable": false,
+    "firmware_create_attempted_on_phone": false,
+    "firmware_create_acceptance_verified": false
+  },
+  "limitations": "Actual MLME component create/destroy handlers, real host-only create branch and full extension destroy, plus complete SME create function with boundary stubs. SM/CM/timers, object-manager construction/ref lifecycle, post-create dispatch and other components are not fully executed; injected post-create failure is a model. A legacy pointer is not firmware-create proof. Error from extension destroy does not prevent generic object destruction: a future owner must drain before destroying. No full private ABI/KCFI, firmware CREATE/DELETE, DP completion/drain, load or AirDrop certification. No CRC/vermagic rewrites or relaxed modpost."
+}
