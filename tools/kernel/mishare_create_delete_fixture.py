@@ -152,6 +152,14 @@ def fixture(root):
     # the tests from overlooking any unrelated transport edits.
     guard=re.compile(r'\n\t/\* PASSTHRU teardown must not rely.*?\n\t\treturn QDF_STATUS_E_NOSUPPORT;\n',re.S)
     stripped,count=guard.subn('',after)
+    # 0016 adds separate owned helpers. Remove only those complete additions;
+    # the remaining legacy file must still match the pinned source byte-for-byte.
+    stripped=stripped.replace('#include "wlan_hdd_mishare_ndi.h"\n','')
+    for prefix,name in [('Dedicated owned route:', 'mishare_ndi_wire_create'),
+                        ('No generic dispatcher:', 'mishare_ndi_native_delete')]:
+        pattern=r'\n/\* '+re.escape(prefix)+r'.*?\*/\nint '+name+r'\([^;{]+\)\s*\{.*?^\}\n'
+        stripped,n=re.subn(pattern,'',stripped,flags=re.S|re.M)
+        if n!=1:raise ValueError('Unexpected owned TX addition: '+name)
     if count!=2 or stripped!=before:raise ValueError('Unexpected TX changes outside the two guards')
     status=re.search(r'typedef enum\s*\{[^}]+\}\s*QDF_STATUS;',read('qca-wifi-host-cmn/qdf/inc/qdf_status.h'),re.S)[0]
     code='#include <assert.h>\n#include <stdint.h>\n#include <stdbool.h>\n#include <stdio.h>\n#include <string.h>\n'

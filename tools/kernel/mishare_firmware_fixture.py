@@ -202,7 +202,7 @@ int main(void) {
     if(fault==3)delete_timeout=true;
     if(fault==4)dp_detach_status=QDF_STATUS_E_FAILURE;
     if(fault==5){mishare_runtime_ndi_delete_event(&psoc,7,true);}
-    if(fault==6){assert(!mishare_runtime_prepare_free(last_vdev,&(unsigned long){0}));}
+    if(fault==6){memset(last_vdev->vdev_comp_priv_obj,0,sizeof(last_vdev->vdev_comp_priv_obj));assert(!mishare_runtime_prepare_free(last_vdev,&(unsigned long){0}));}
     if(fault==2 || fault==3)assert(mishare_runtime_destroy(&o)==-EUCLEAN);
     if(fault==4){assert(mishare_runtime_destroy(&o)==-EINPROGRESS);reply();assert(mishare_runtime_destroy(&o)==-EUCLEAN);}
    }

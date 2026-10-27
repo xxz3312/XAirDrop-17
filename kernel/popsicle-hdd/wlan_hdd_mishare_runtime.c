@@ -438,6 +438,8 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         if (ret)
             ndi->blocked = true;
+        else
+            ndi->create.stats_owned = false; /* native DP detach reset it */
         ret = ndi->blocked ? -EUCLEAN : -EINPROGRESS;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return ret;
