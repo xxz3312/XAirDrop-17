@@ -11,7 +11,7 @@
 | --- | --- | --- |
 | 主机模式 | PASSTHRU=17、DP=7、主机 type=9 转换 | 固件接受情况未验证 |
 | MLME 表与主机组件 | 专用 32 回调表；组件可单独创建、挂接和销毁 | 30 个状态回调仍拒绝操作，2 个通知不发布完成；未接固件 CREATE |
-| 生命周期基础 | DOWN host helper、事务、原生来源通知、命令提交 API | 尚无真实 owner/命令调用生命周期 |
+| 生命周期基础 | DOWN host 可显式挂接 raw objmgr 主机 vdev；owner 持有自身与事件观察引用 | 没有自动/实机调用；固件 CREATE/DELETE 与收发未接通 |
 | 无线与互传 | 没有成功无线 init 或 RX/TX | AirDrop 不可用，没有安装包 |
 
 最新离线检查见 [MLME 主机组件生命周期验证记录](research/popsicle-mlme-host-component-build-pass.json)。
@@ -658,3 +658,45 @@ MLME 初始化、命令提交三组测试源码，哈希均与 Actions 报告一
 
 本轮实现 MLME 主机组件分离。专用完整 vdev 创建入口、运行时 owner 和
 固件 CREATE/DELETE 尚未接通，AirDrop 仍不可用，候选驱动未在手机加载。
+
+
+## 专用主机 vdev factory 与引用 owner
+
+补丁 0014 和 `wlan_hdd_mishare_runtime.c/.h` 增加主机对象的专用入口：
+`mishare_wonder_host_vdev_create_locked()` 在现有 DOWN adapter/DP interface
+仍有效时直接调用原生 `wlan_objmgr_vdev_obj_create()`，使用 PASSTHRU、零
+MLD/MAT/flags 和真实 osif 私有区大小，不经过已拒绝 PASSTHRU 的通用 SME
+路径，不设置 SME_SESSION_OPENED，不调用 SME post-setup、自 peer 或固件
+CREATE/START/STOP/DELETE。它不是新的自动启动或实机安装入口。
+
+raw objmgr 构造可能调用其他已注册组件。owner 在构造之前登记 psoc+MAC，
+在组件分发之前记录对象地址 token；成功发布后取得独立 HDD 引用，再绑定
+事件注册表取得第二个引用。组件状态必须都是 SUCCESS/COMP_DISABLED，且
+必须找到 type=9/subtype=0、无 legacy 扩展的 MLME 主机组件。其他失败状态
+不能因原生聚合函数未将其判为 E_FAILURE 就被接受。
+
+销毁先逻辑删除，再撤销事件观察并释放 owner 引用；这些操作均在 registry
+锁之外。最后一个引用可能稍后才释放，因此 `EINPROGRESS` 时保留 owner、
+adapter、netdev、DP interface 和 sync；重复 destroy 只检查进度，不再逻辑
+删除、不重置引用计数，也不阻塞等待。对象最终释放函数在清理所有组件、
+父列表、锁和存储之后以地址 token 通知 owner，随后才能关闭 adapter。
+即便构造返回 NULL，中途创建的对象仍可能被异步引用，故失败也可能返回
+非空 owner 与 EINPROGRESS，不能立即释放父资源。
+
+原生最终释放之前另检查所有 component private slot。若有残留，保留对象和
+ID/父列表并返回 EUCLEAN；未知逻辑删除错误同样保留引用。仅真实最终释放
+通知才能清除此类保留状态；没有提供强制引用清零或重置 API。需要外部合法
+组件排空/恢复的情形仍未有完整生产恢复流程。所有 owner API 均要求调用者
+串行持有 RTNL、独占父 psoc transition，并在 HDD/pdev teardown 前完成回收。
+
+新增 Actions 测试执行真实 runtime/events/transaction C 与完整原生 final-free
+函数，模拟构造、组件、对象引用、父列表和同步边界。覆盖同步/延迟最终释放、
+构造前/中途失败、引用与事件绑定失败、错误组件聚合、残留组件阻止释放、
+父 detach 失败，以及未知 delete 错误保留引用。后者在子进程验证保留后退出，
+不伪造恢复；模拟的组件/父清理重试不等于生产恢复认证。HDD host 原生测试
+同时验证 runtime 未排空时不能注销 sync 或关闭 netdev。
+
+这一轮没有在手机执行 raw objmgr 创建，也没有完整执行所有组件处理器或
+证明所有传递调用均无副作用。Wonder init 仍拒绝，caps 仍为 0；新入口只供
+后续受控测试/固件 owner 接线使用。下一步还需完成专用入口的完整组件/teardown
+验证，再接固件创建结果与真实 DELETE 来源、DP 完成和排空；AirDrop 不可用。

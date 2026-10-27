@@ -8,11 +8,13 @@
 #include "osif_psoc_sync.h"
 #include "osif_vdev_sync.h"
 #include "wlan_hdd_mishare_host.h"
+#include "wlan_hdd_mishare_runtime.h"
 
 struct mishare_wonder_host {
     struct hdd_context *hdd;
     struct hdd_adapter *adapter;
     struct osif_vdev_sync *sync;
+    struct mishare_runtime_owner *runtime;
 };
 
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
@@ -57,11 +59,47 @@ free_host:
     return ret;
 }
 
+int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host)
+{
+    struct hdd_adapter *adapter;
+    int ret;
+
+    if (!host)
+        return -EINVAL;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    adapter = host->adapter;
+    if (netif_running(adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, adapter->deflink->link_flags))
+        return -EBUSY;
+    return mishare_runtime_create(host->hdd->pdev, adapter->mac_addr.bytes,
+                                   adapter->deflink, adapter->dev->ieee80211_ptr,
+                                   &host->runtime);
+}
+
+int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host)
+{
+    if (!host)
+        return -EINVAL;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    return mishare_runtime_destroy(&host->runtime);
+}
+
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
 {
     struct mishare_wonder_host *host;
     struct osif_vdev_sync *sync;
     struct hdd_adapter *adapter;
+    int ret;
 
     if (!owner)
         return -EINVAL;
@@ -76,6 +114,9 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
         test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
         test_bit(SME_SESSION_OPENED, adapter->deflink->link_flags))
         return -EBUSY;
+    ret = mishare_runtime_destroy(&host->runtime);
+    if (ret)
+        return ret;
     sync = osif_vdev_sync_unregister(adapter->dev);
     if (WARN_ON(sync != host->sync)) {
         /* Restore the registry we observed; retain the owner for diagnosis. */

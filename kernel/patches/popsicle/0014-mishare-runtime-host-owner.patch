@@ -1,0 +1,66 @@
+diff --git a/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_obj.c b/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_obj.c
+--- a/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_obj.c
++++ b/qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_obj.c
+@@ -17,6 +17,7 @@
+ /**
+  * DOC: Public APIs to perform operations on Global objects
+  */
++#include "wlan_hdd_mishare_runtime.h"
+ #include <wlan_objmgr_cmn.h>
+ #include <wlan_objmgr_global_obj.h>
+ #include <wlan_objmgr_psoc_obj.h>
+@@ -79,6 +80,8 @@
+ {
+ 	struct wlan_objmgr_pdev *pdev;
+ 	struct wlan_objmgr_psoc *psoc;
++	unsigned long mishare_cookie;
++	bool mishare_passthru;
+ 
+ 	if (!vdev) {
+ 		obj_mgr_err("vdev is NULL");
+@@ -97,6 +100,11 @@
+ 		return QDF_STATUS_E_FAILURE;
+ 	}
+ 
++	mishare_cookie = (unsigned long)vdev;
++	mishare_passthru = wlan_vdev_mlme_get_opmode(vdev) == QDF_PASSTHRU_MODE;
++	if (mishare_passthru && !mishare_runtime_prepare_free(vdev))
++		return QDF_STATUS_E_BUSY;
++
+ 	/* Detach VDEV from PDEV VDEV's list */
+ 	if (wlan_objmgr_pdev_vdev_detach(pdev, vdev) ==
+ 					QDF_STATUS_E_FAILURE)
+@@ -116,6 +124,10 @@
+ 	qdf_mem_free(vdev->vdev_mlme.bss_chan);
+ 	qdf_mem_free(vdev->vdev_mlme.des_chan);
+ 	qdf_mem_free(vdev);
++	/* Signal only after components, parent lists, locks and storage are gone. */
++	if (mishare_passthru)
++		mishare_runtime_freed(psoc, mishare_cookie);
++
+ 
+ 	return QDF_STATUS_SUCCESS;
+ 
+@@ -305,6 +317,9 @@
+ 			vdev->vdev_objmgr.max_peer_count +
+ 			WLAN_MAX_PDEV_TEMP_PEERS);
+ 	/* TODO init other parameters */
++
++	/* Capture failed/partial construction before any component can attach. */
++	mishare_runtime_allocated(vdev);
+ 
+ 	/* Invoke registered create handlers */
+ 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
+diff --git a/qcacld-3.0/Kbuild b/qcacld-3.0/Kbuild
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -267,7 +267,8 @@
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_backend.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_txn.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_events.o
+-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_commands.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_commands.o \
++	$(HDD_SRC_DIR)/wlan_hdd_mishare_runtime.o
+ 
+ ifeq ($(CONFIG_WLAN_NUD_TRACKING), y)
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nud_tracking.o

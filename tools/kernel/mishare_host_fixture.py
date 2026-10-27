@@ -32,10 +32,12 @@ typedef u8 tSirMacAddr[6];
 #define WARN_ON(x) (x)
 #define hdd_err(...) ((void)0)
 struct device { int dummy; };
-struct net_device { bool running; };
+struct wireless_dev { int dummy; };
+struct net_device { bool running; struct wireless_dev *ieee80211_ptr; };
 struct link_info { unsigned long link_flags[1]; };
 struct qdf_mac_addr { u8 bytes[6]; };
-struct hdd_context { struct device *parent_dev; void *psoc; };
+struct wlan_objmgr_pdev { int dummy; };
+struct hdd_context { struct device *parent_dev; void *psoc; struct wlan_objmgr_pdev *pdev; };
 struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; };
 struct hdd_adapter_create_param { int num_sessions; };
 struct osif_vdev_sync { int id; };
@@ -65,6 +67,11 @@ static void hdd_close_adapter(struct hdd_context *h,struct hdd_adapter *a,bool l
 static void hdd_cleanup_adapter(struct hdd_context *h,struct hdd_adapter *a,bool locked) { hdd_close_adapter(h,a,locked); }
 static void qdf_copy_macaddr(struct qdf_mac_addr *d,const struct qdf_mac_addr *s) { memcpy(d,s,sizeof(*d)); }
 static void ucfg_dp_destroy_intf(void *p,struct qdf_mac_addr *a) { assert(p && !memcmp(a->bytes,mac,6));event('X');dp_destroyed++; }
+#include "wlan_hdd_mishare_runtime.h"
+struct mishare_runtime_owner { int dummy; };
+static int runtime_busy,runtime_closed;
+int mishare_runtime_create(struct wlan_objmgr_pdev *pdev,const u8 *address,void *osif,struct wireless_dev *wdev,struct mishare_runtime_owner **owner) { assert(pdev && address && osif && wdev);if(*owner)return -EBUSY;*owner=calloc(1,sizeof(**owner));return 0; }
+int mishare_runtime_destroy(struct mishare_runtime_owner **owner) { if(!*owner)return 0;if(runtime_busy)return -EINPROGRESS;free(*owner);*owner=NULL;runtime_closed++;return 0; }
 static struct hdd_adapter *__hdd_open_adapter(struct hdd_context *,uint8_t,const char *,tSirMacAddr,unsigned char,bool,struct hdd_adapter_create_param *,bool);
 #endif
 '''
@@ -85,7 +92,7 @@ static struct hdd_adapter *factory_rollback(struct hdd_context *hdd_ctx,struct h
 }
 int main(void)
 {
- struct device dev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&dev};struct mishare_wonder_host *owner=NULL;
+ struct device dev={0};struct wlan_objmgr_pdev pdev={0};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&dev,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;
  assert(mishare_wonder_host_create_locked(&h,mac,NULL)==-EINVAL);
  u8 invalid[6]={1,2,3,4,5,6};assert(mishare_wonder_host_create_locked(&h,invalid,&owner)==-EINVAL);
  assert(mishare_wonder_host_destroy_locked(NULL)==-EINVAL);
@@ -102,8 +109,15 @@ int main(void)
  active->deflink->link_flags[0]=1UL<<SME_SESSION_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->deflink->link_flags[0]=0;
  struct osif_vdev_sync *original=registered, foreign={0};registered=&foreign;
  assert(mishare_wonder_host_destroy_locked(&owner)==-EIO && owner && active && registered==&foreign);registered=original;
+ active->dev->ieee80211_ptr=&wdev;
+ assert(!mishare_wonder_host_vdev_create_locked(owner));
+ assert(mishare_wonder_host_vdev_create_locked(owner)==-EBUSY);
+ runtime_busy=1;
+ assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS && owner && active && registered);
+ assert(mishare_wonder_host_vdev_destroy_locked(owner)==-EINPROGRESS);
+ runtime_busy=0;
  trace[0]=0;assert(mishare_wonder_host_destroy_locked(&owner)==0 && !owner && !active && !registered);assert(!strcmp(trace,"PUWCDF"));
- assert(mishare_wonder_host_destroy_locked(&owner)==0);
+ assert(mishare_wonder_host_destroy_locked(&owner)==0 && runtime_closed==1);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
