@@ -153,7 +153,7 @@ int main(void) {
     unsigned deletes=delete_calls,detaches=dp_detaches;
     assert(mishare_runtime_reclaim_batch(&psoc,items,2)==-EUCLEAN);
     assert(!memcmp(before,items,sizeof(items)) && delete_calls==(int)deletes && dp_detaches==(int)detaches);
-    assert(!state(healthy).draining && !state(final).freed && objects_live==2);_Exit(0);
+    assert(!state(healthy).draining && !final->state.freed && objects_live==2);_Exit(0);
    }
    assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
   }
