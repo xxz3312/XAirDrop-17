@@ -8,6 +8,8 @@
 #include "wonder_log.h"
 #include "include/wonder/wonder_ven_cmd.h"
 #include "nl80211_ven_cmd.h"
+#include "feedback.h"
+#include "feedback_protocol.h"
 
 /* @brief Internal helpers to map raw byte sizes to NLA types */
 #define _WONDER_TYPE_MAP_1  NLA_U8
@@ -330,6 +332,21 @@ static int wonder_vendor_cmd_get_if_mac_addr(struct wiphy *wiphy,
 }
 
 static const struct wiphy_vendor_command wonder_vendor_cmds[] = {
+	{
+		.info = { .vendor_id = WONDER_FB_VENDOR, .subcmd = WONDER_FB_PULL },
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV,
+		.doit = wonder_feedback_pull, .policy = VENDOR_CMD_RAW_DATA,
+	},
+	{
+		.info = { .vendor_id = WONDER_FB_VENDOR, .subcmd = WONDER_FB_COMPLETE },
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV,
+		.doit = wonder_feedback_complete, .policy = VENDOR_CMD_RAW_DATA,
+	},
+	{
+		.info = { .vendor_id = WONDER_FB_VENDOR, .subcmd = WONDER_FB_RELEASE },
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV,
+		.doit = wonder_feedback_release, .policy = VENDOR_CMD_RAW_DATA,
+	},
 	{
 		.info = {
 			.vendor_id = WONDER_VENDOR_ID,

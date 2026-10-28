@@ -33,7 +33,7 @@ MODULE_PARM_DESC(physical_name, "Interface name to use (e.g., wlan0, radiotap0, 
 bool wonder_external_monitor;
 module_param_named(external_monitor, wonder_external_monitor, bool, 0444);
 MODULE_PARM_DESC(external_monitor,
-                "RX-only bridge from an existing UP radiotap monitor; no vendor init or TX");
+                "Bridge from an existing UP radiotap monitor; RX-only unless external_tx=1");
 
 #define WONDER_MAX_COMPAT_VERSIONS 4
 static int wonder_ver_match_table[WONDER_VERSION_MAX][WONDER_MAX_COMPAT_VERSIONS] = {

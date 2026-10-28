@@ -81,6 +81,21 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
 }
 int main(void) {
     channel_tests();
+    unsigned char payload[WONDER_FB_HEADER+25]={0},copy[WONDER_FB_MAX];
+    uint64_t owner=0x1122334455667788ULL,token=0;size_t frame_length=0;
+    wonder_fb_put(payload,WONDER_FB_VERSION);wonder_fb_put(payload+4,25);
+    fbput64(payload+8,owner);fbput64(payload+16,9);action(payload+WONDER_FB_HEADER);
+    assert(!feedback_packet((struct bytes){payload,sizeof(payload)},owner,&token,copy,&frame_length));
+    assert(token==9 && frame_length==25 && !memcmp(copy,payload+WONDER_FB_HEADER,25));
+    assert(feedback_packet((struct bytes){payload,sizeof(payload)},owner+1,&token,copy,&frame_length)==-EBADMSG);
+    payload[28]=1;assert(feedback_packet((struct bytes){payload,sizeof(payload)},owner,&token,copy,&frame_length)==-EBADMSG);payload[28]=0;
+    assert(feedback_packet((struct bytes){payload,sizeof(payload)-1},owner,&token,copy,&frame_length)==-EBADMSG);
+    fbput64(payload+16,0);assert(feedback_packet((struct bytes){payload,sizeof(payload)},owner,&token,copy,&frame_length)==-EBADMSG);
+    struct client queue_client={.family=25,.ifindex=7};struct message request_message;struct bytes field;
+    assert(!feedback_message(&queue_client,&request_message,WONDER_FB_COMPLETE,owner,9,WONDER_FB_ACKED));
+    struct bytes attrs={request_message.data+NLMSG_HDRLEN+GENL_HDRLEN,request_message.n-NLMSG_HDRLEN-GENL_HDRLEN};
+    assert(attr(attrs,NL80211_ATTR_VENDOR_DATA,&field)==1 && field.n==WONDER_FB_HEADER);
+    assert(fb64(field.p+8)==owner && fb64(field.p+16)==9 && wonder_fb_word(field.p+24)==WONDER_FB_ACKED);
     unsigned char f[128];action(f);
     assert(!prepare_frame(f,25,mac,false));
     assert(prepare_frame(f,24,mac,false)==-EMSGSIZE);

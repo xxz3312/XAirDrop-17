@@ -32,6 +32,7 @@ struct wonder_data {
 	struct net_device *pdev; /* Physical network device */
 	struct net_device *cdev; /* Control network device */
 	struct net_device *vdev; /* Virtual network device */
+	struct wonder_feedback *feedback;
 	/* Vendor Abstraction */
 	void *vendor_handle; /* Opaque pointer to vendor's private data */
 	u8 data_version;

@@ -12,6 +12,7 @@ raw=0
 rewrite=0
 configure_monitor=0
 follow_channel=0
+tx_feedback=0
 seconds=300
 frames=10000
 lock=/data/local/tmp/xairdrop-session.lock
@@ -23,6 +24,7 @@ while [ "$#" != 0 ]; do
         --rewrite-source) rewrite=1; shift ;;
         --configure-monitor) configure_monitor=1; shift ;;
         --follow-channel) follow_channel=1; shift ;;
+        --tx-feedback) tx_feedback=1; shift ;;
         --bundle|--monitor|--tx|--freq|--seconds|--max-frames|--lock|--wlan-module|--log)
             key=$1; [ "$#" -ge 2 ] || fail "Missing value for $key"
             case "$key" in
@@ -42,7 +44,7 @@ case "$action" in
         [ ! -f "$log" ] || tail -n 20 "$log"
         exit 0 ;;
     run) ;;
-    *) echo 'Usage: sh popsicle-session.sh run --bundle DIR --tx wlan0 --freq MHz [--monitor misharemon0] [--raw] [--follow-channel] [--rewrite-source] [--seconds 300] [--max-frames 10000]'; exit 2 ;;
+    *) echo 'Usage: sh popsicle-session.sh run --bundle DIR --tx wlan0 --freq MHz [--monitor misharemon0] [--raw] [--tx-feedback] [--follow-channel] [--rewrite-source] [--seconds 300] [--max-frames 10000]'; exit 2 ;;
 esac
 [ "$(id -u)" = 0 ] || fail 'Run with su.'
 for name in "$monitor" "$tx" "$wlan_module"; do
@@ -121,13 +123,18 @@ if [ -n "$monitor_freq" ]; then
     [ "$monitor_freq" = "$freq" ] || fail 'Native monitor reports a different channel.'
     monitor_evidence=readback
 fi
-sh "$bundle/popsicle-rx-start.sh" start "$bundle/wonder.ko" "$monitor"
+if [ "$tx_feedback" = 1 ]; then
+    sh "$bundle/popsicle-rx-start.sh" start "$bundle/wonder.ko" "$monitor" tx-feedback
+else
+    sh "$bundle/popsicle-rx-start.sh" start "$bundle/wonder.ko" "$monitor"
+fi
 own_rx=1
 mode=relay
 [ "$raw" = 0 ] || mode=relay-all
 set -- "$mode" --listen wonder0 --dev "$tx" --freq "$freq" --seconds "$seconds" --max-frames "$frames"
 [ "$rewrite" = 0 ] || set -- "$@" --rewrite-source
 [ "$follow_channel" = 0 ] || set -- "$@" --follow-channel --monitor "$monitor"
+[ "$tx_feedback" = 0 ] || set -- "$@" --feedback
 printf 'SESSION_START monitor=%s tx=%s freq=%s raw=%s rx_channel_evidence=%s\n' "$monitor" "$tx" "$freq" "$raw" "$monitor_evidence" >>"$log"
 "$bundle/action-tx" "$@" >>"$log" 2>&1 &
 child=$!

@@ -23,10 +23,12 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/random.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "../../kernel/popsicle-hdd/mishare_raw_protocol.h"
+#include "../../kernel/wonder/feedback_protocol.h"
 
 #define FRAME_MAX 2304
 #define MESSAGE_MAX 65536
@@ -45,6 +47,7 @@ struct client {
     unsigned status_count;
     uint64_t cookie;
     bool have_cookie;
+    unsigned completion_outcome;
 };
 static volatile sig_atomic_t interrupted;
 static void on_signal(int signal_number) { (void)signal_number; interrupted = 1; }
@@ -336,7 +339,7 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
     unsigned char buffer[MESSAGE_MAX],payload[MISHARE_RAW_HEADER+FRAME_MAX]={0};
     struct bytes reply,result;struct message m;
     unsigned id=MISHARE_RAW_VENDOR_ID,subcmd=MISHARE_RAW_SUBCMD;
-    c->frame=NULL;c->status_count=0;c->have_cookie=false;
+    c->frame=NULL;c->status_count=0;c->have_cookie=false;c->completion_outcome=WONDER_FB_FAILED;
     mishare_raw_set_word(payload,MISHARE_RAW_VERSION);
     mishare_raw_set_word(payload+4,freq);mishare_raw_set_word(payload+8,(unsigned)len);
     memcpy(payload+MISHARE_RAW_HEADER,frame,len);
@@ -352,6 +355,7 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
         mishare_raw_word(result.p+8)!=len || mishare_raw_word(result.p+12)!=1)
         return -EBADMSG;
     unsigned status=mishare_raw_word(result.p+4);
+    if (!status) c->completion_outcome=WONDER_FB_NOACK;
     printf("{\"event\":\"raw_tx_status\",\"native_status\":%u,\"bytes\":%zu,\"freq\":%u}\n",status,len,freq);fflush(stdout);
     return status?-ENOMSG:0;
 }
@@ -384,7 +388,7 @@ static int native_interface(const char *name,unsigned *index,unsigned char mac[6
 }
 static int action_tx(struct client *c,unsigned freq,const unsigned char *frame,size_t len,int timeout_ms) {
     unsigned char buffer[MESSAGE_MAX];struct bytes reply,cookie;struct message m;
-    c->frame=frame;c->frame_len=len;c->status_count=0;c->have_cookie=false;
+    c->frame=frame;c->frame_len=len;c->status_count=0;c->have_cookie=false;c->completion_outcome=WONDER_FB_FAILED;
     begin(&m,c->family,NL80211_CMD_FRAME,++c->seq);
     int ret=add_attr(&m,NL80211_ATTR_IFINDEX,&c->ifindex,4);
     if (!ret) ret=add_attr(&m,NL80211_ATTR_WIPHY_FREQ,&freq,4);
@@ -400,9 +404,123 @@ static int action_tx(struct client *c,unsigned freq,const unsigned char *frame,s
         ret=consume(c,buffer,(size_t)ret,NL80211_CMD_FRAME,&reply);if (ret<0) return ret;
     }
     bool group=(frame[4]&1)!=0;
+    c->completion_outcome=acked?WONDER_FB_ACKED:group?WONDER_FB_NOACK:WONDER_FB_FAILED;
     printf("{\"event\":\"tx_status\",\"cookie\":\"%" PRIu64 "\",\"acked\":%s,\"group_destination\":%s}\n",c->cookie,acked?"true":"false",group?"true":"false");fflush(stdout);
     c->frame=NULL;
     return acked||group?0:-ENOMSG;
+}
+static uint64_t fb64(const unsigned char *p) {
+    return (uint64_t)wonder_fb_word(p) | (uint64_t)wonder_fb_word(p+4)<<32;
+}
+static void fbput64(unsigned char *p,uint64_t n) {
+    wonder_fb_put(p,(unsigned)n);wonder_fb_put(p+4,(unsigned)(n>>32));
+}
+static int feedback_message(struct client *q,struct message *m,unsigned command,
+                            uint64_t owner,uint64_t token,unsigned outcome) {
+    unsigned char data[WONDER_FB_HEADER]={0};unsigned vendor=WONDER_FB_VENDOR;
+    wonder_fb_put(data,WONDER_FB_VERSION);fbput64(data+8,owner);fbput64(data+16,token);
+    wonder_fb_put(data+24,outcome);
+    begin(m,q->family,NL80211_CMD_VENDOR,++q->seq);
+    int ret=add_attr(m,NL80211_ATTR_IFINDEX,&q->ifindex,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_ID,&vendor,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_SUBCMD,&command,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_DATA,data,sizeof(data));
+    return ret;
+}
+static int feedback_ack(struct client *q,unsigned command,uint64_t owner,uint64_t token,unsigned outcome) {
+    struct message m;unsigned char buffer[MESSAGE_MAX];
+    int ret=feedback_message(q,&m,command,owner,token,outcome);if (ret) return ret;
+    ret=transmit(q,&m);if (ret) return ret;
+    int64_t deadline=now_ms()+1000;
+    for (;;) {
+        ret=receive(q,buffer,sizeof(buffer),deadline);if (ret<0) return ret;
+        ret=channel_ack(buffer,(size_t)ret,q->seq);if (ret) return ret==1?0:ret;
+    }
+}
+static int feedback_packet(struct bytes payload,uint64_t owner,uint64_t *token,
+                           unsigned char *frame,size_t *length) {
+    if (payload.n<WONDER_FB_HEADER || wonder_fb_word(payload.p)!=WONDER_FB_VERSION ||
+        fb64(payload.p+8)!=owner || !fb64(payload.p+16) ||
+        wonder_fb_word(payload.p+24) || wonder_fb_word(payload.p+28)) return -EBADMSG;
+    unsigned n=wonder_fb_word(payload.p+4);
+    if (n<24 || n>WONDER_FB_MAX || payload.n!=WONDER_FB_HEADER+n) return -EBADMSG;
+    *token=fb64(payload.p+16);*length=n;memcpy(frame,payload.p+WONDER_FB_HEADER,n);return 0;
+}
+static int feedback_pull(struct client *q,uint64_t owner,uint64_t *token,unsigned char *frame,size_t *length) {
+    struct message m;unsigned char buffer[MESSAGE_MAX];struct bytes reply,payload;
+    int ret=feedback_message(q,&m,WONDER_FB_PULL,owner,0,0);if (ret) return ret;
+    ret=request(q,&m,NL80211_CMD_VENDOR,buffer,&reply,1000);if (ret) return ret;
+    if (attr(reply,NL80211_ATTR_VENDOR_DATA,&payload)!=1) return -EBADMSG;
+    return feedback_packet(payload,owner,token,frame,length);
+}
+static int feedback_relay(struct client *c,const char *listen,const unsigned char *mac,unsigned freq,
+                          unsigned timeout,unsigned limit,unsigned seconds,bool raw,bool combined,
+                          bool rewrite,bool follow,const char *monitor) {
+    struct client q={.fd=-1};uint64_t owner=0;unsigned sent=0,failed=0,rejected=0,resets=0;
+    unsigned reported=0;bool claimed=false;
+    if (getrandom(&owner,sizeof(owner),0)!=(ssize_t)sizeof(owner) || !owner) return -EIO;
+    int ret=connect_nl(&q);if (ret) goto done;
+    q.ifindex=if_nametoindex(listen);if (!q.ifindex) {ret=-ENODEV;goto done;}
+    struct channel_follow channel={.tx=c->ifindex};
+    if (follow) {
+        channel.monitor=if_nametoindex(monitor);if (!channel.monitor) {ret=-ENODEV;goto done;}
+    }
+    int64_t deadline=now_ms()+(int64_t)seconds*1000;
+    /* Claim before advertising readiness, even when the queue is empty. */
+    bool ready=false;
+    while (!interrupted && now_ms()<deadline && sent+failed+rejected<limit) {
+        if (follow) {
+            ret=follow_channel(&channel,c,query_channel,set_monitor_channel);if (ret<0) break;
+            freq=channel.freq;
+            if (ret==1 && claimed) {
+                ret=feedback_ack(&q,WONDER_FB_RELEASE,owner,0,0);if (ret) break;
+                claimed=false;resets++;
+            }
+        }
+        unsigned char frame[WONDER_FB_MAX];size_t length=0;uint64_t token=0;
+        ret=feedback_pull(&q,owner,&token,frame,&length);
+        if (!ret || ret==-ENODATA) {
+            claimed=true;
+            if (!ready) {puts("{\"event\":\"relay_ready\",\"mode\":\"token_feedback\"}");fflush(stdout);ready=true;}
+        }
+        if (ret==-ENODATA) {poll(NULL,0,100);continue;}
+        if (ret) break;
+        bool use_raw=false;
+        int validation=prepare_relay_frame(raw,combined,frame,length,mac,rewrite,&use_raw);
+        bool changed=false;
+        if (!validation && follow) {
+            ret=follow_channel(&channel,c,query_channel,set_monitor_channel);
+            if (ret<0) break;
+            if (ret==1) {freq=channel.freq;changed=true;}
+        }
+        unsigned outcome=WONDER_FB_FAILED;
+        if (validation || changed) rejected++;
+        else {
+            ret=use_raw?raw_tx(c,freq,frame,length,(int)timeout):action_tx(c,freq,frame,length,(int)timeout);
+            c->frame=NULL;
+            outcome=ret?WONDER_FB_FAILED:c->completion_outcome;
+            if (ret) failed++;else sent++;
+        }
+        ret=feedback_ack(&q,WONDER_FB_COMPLETE,owner,token,outcome);if (ret) break;
+        reported++;
+        if (changed) {
+            ret=feedback_ack(&q,WONDER_FB_RELEASE,owner,0,0);if (ret) break;
+            claimed=false;resets++;
+        }
+    }
+    if (ret==-ENODATA) ret=0;
+    if (!ret && failed) ret=-EIO;
+    if (!ret && !sent && !interrupted) ret=-ENODATA;
+done:
+    if (claimed) {
+        /* Finish cleanup even after SIGINT; no radio resend is performed. */
+        sig_atomic_t saved=interrupted;interrupted=0;
+        int release=feedback_ack(&q,WONDER_FB_RELEASE,owner,0,0);
+        interrupted=saved;if (!ret && release) ret=release;
+    }
+    if (q.fd>=0) close(q.fd);
+    printf("{\"event\":\"feedback_summary\",\"completed\":%u,\"failed\":%u,\"rejected\":%u,\"reported\":%u,\"channel_queue_resets\":%u}\n",sent,failed,rejected,reported,resets);
+    return ret;
 }
 static int number(const char *s,unsigned min,unsigned max,unsigned *out) {
     char *end;errno=0;unsigned long value=strtoul(s,&end,10);
@@ -417,13 +535,14 @@ static void usage(void) {
          "action-tx relay --listen wonder0 --dev wlan0 --freq MHz [--rewrite-source] [--max-frames 1] [--seconds 30]\n"
          "action-tx relay-all --listen wonder0 --dev wlan0 --freq MHz [--max-frames 1000] [--seconds 300]\n"
          "Relay modes: --follow-channel --monitor misharemon0 follows the STA home channel (HT20).\n"
+         "Relay modes: --feedback consumes original Wonder SKBs and returns actual completion by token; requires external_tx=1.\n"
          "Root required. Explicit Action or RAW DATA transport, on-channel only. No automatic retries.\n"
          "A submitted cookie is not a TX status; group frames have no peer ACK guarantee.");
 }
 #ifndef ACTION_TX_TEST
 int main(int argc,char **argv) {
     const char *mode=argc>1?argv[1]:"",*dev=NULL,*listen_dev=NULL,*file=NULL,*monitor=NULL;
-    bool radiotap=false,rewrite=false,follow=false;unsigned freq=0,timeout=3000,limit=1,seconds=30;
+    bool radiotap=false,rewrite=false,follow=false,feedback=false;unsigned freq=0,timeout=3000,limit=1,seconds=30;
     if (!strcmp(mode,"--help") || !strcmp(mode,"help")) {usage();return 0;}
     bool raw=!strcmp(mode,"raw-send") || !strcmp(mode,"raw-relay");
     bool combined=!strcmp(mode,"relay-all");
@@ -434,6 +553,7 @@ int main(int argc,char **argv) {
         if (!strcmp(arg,"--radiotap")) radiotap=true;
         else if (!strcmp(arg,"--rewrite-source")) rewrite=true;
         else if (!strcmp(arg,"--follow-channel")) follow=true;
+        else if (!strcmp(arg,"--feedback")) feedback=true;
         else {
             if (++i>=argc) {usage();return 2;}
             if (!strcmp(arg,"--dev")) dev=argv[i];
@@ -449,6 +569,7 @@ int main(int argc,char **argv) {
     }
     if (!dev || !freq || (relay?(!listen_dev || file || radiotap || !strcmp(dev,listen_dev)):(!file || listen_dev))) {usage();return 2;}
     if (follow?(!relay || !monitor || !strcmp(monitor,listen_dev) || !strcmp(monitor,dev)):monitor!=NULL) {usage();return 2;}
+    if (feedback && !relay) {usage();return 2;}
     signal(SIGINT,on_signal);signal(SIGTERM,on_signal);
     struct client c={.fd=-1};unsigned ifindex;unsigned char mac[6];
     int ret=native_interface(dev,&ifindex,mac);if (ret) goto done;
@@ -461,6 +582,8 @@ int main(int argc,char **argv) {
         if (radiotap) {ret=strip_radiotap(frame,&n);if (ret) goto done;}
         ret=raw?prepare_raw_frame(frame,n,mac,rewrite):prepare_frame(frame,n,mac,rewrite);if (ret) goto done;
         ret=raw?raw_tx(&c,freq,frame,n,(int)timeout):action_tx(&c,freq,frame,n,(int)timeout);
+    } else if (feedback) {
+        ret=feedback_relay(&c,listen_dev,mac,freq,timeout,limit,seconds,raw,combined,rewrite,follow,monitor);
     } else {
         unsigned index=if_nametoindex(listen_dev);if (!index) {ret=-ENODEV;goto done;}
         struct channel_follow channel={.tx=ifindex};

@@ -22,6 +22,7 @@
 #include "core.h"
 #include "mac80211.h"
 #include "mac80211_txs.h"
+#include "feedback.h"
 #include "wonder_log.h"
 #include "wondertap_internal.h"
 #include "reg.h"
@@ -594,6 +595,7 @@ static void wonder_rx_reset(struct wonder_data *wonder)
 /* Called under RTNL before a borrowed native interface can disappear. */
 void wonder_external_monitor_detach(struct wonder_data *wonder)
 {
+	wonder_feedback_stop(wonder);
 	wonder_rx_reset(wonder);
 	wonder_pdev_put(wonder);
 	mutex_lock(&wonder->wondertap_data.lock);
@@ -614,9 +616,15 @@ static void wonder_tx(struct ieee80211_hw *hw,
 	struct wonder_txd *txd;
 	unsigned int room = skb_headroom(skb);
 
-	/* Native monitor is borrowed for RX only; never report synthetic TX success. */
-	if (wonder_external_monitor)
+	/* Optional token bridge owns the original skb until a real completion or
+	 * failure. The default external monitor mode remains RX-only. */
+	if (wonder_external_monitor) {
+		if (wonder_external_tx) {
+			wonder_feedback_tx(wonder, skb);
+			return;
+		}
 		goto drop;
+	}
 
 	if (unlikely(!pdev) || unlikely(!vdev)) {
 		wonder_error("Physical device is not exist, dropping packet.\n");
@@ -711,6 +719,7 @@ static int wonder_start(struct ieee80211_hw *hw)
 		ether_addr_copy(wonder->wondertap_data.mac_addr, wonder->pdev->dev_addr);
 		wonder->wondertap_data.state = WONDERTAP_STATE_UP;
 		mutex_unlock(&wonder->wondertap_data.lock);
+		wonder_feedback_start(wonder);
 		wonder_info("External monitor %s RX bridge started; native driver owns channel\n", pdev_name);
 		return 0;
 	}
@@ -765,6 +774,7 @@ static void wonder_stop(struct ieee80211_hw *hw)
 	struct wonder_data *wonder = hw->priv;
 	/* This should turn off the hardware. */
 	wonder_info("HW stopped.\n");
+	wonder_feedback_stop(wonder);
 	wonder_rx_reset(wonder);
 	wonder_pdev_put(wonder);
 	if (wonder_external_monitor) {
@@ -1133,7 +1143,9 @@ int wonder_features_init(struct wonder_data *wonder)
 
 void wonder_features_exit(struct wonder_data *wonder)
 {
+	wonder_feedback_shutdown(wonder);
 	ieee80211_unregister_hw(wonder->hw);
+	wonder_feedback_free(wonder);
 	wonder_txs_queue_exit();
 	wonder_info("Wonder Virtual Soft-MAC Driver unloaded successfully.\n");
 }
@@ -1207,10 +1219,18 @@ void *wonder_mac80211_init(void)
 	hw->wiphy->nan_supported_bands |= BIT(NL80211_BAND_2GHZ);
 	/* Support BW80 for IBSS Mode */
 	wiphy_ext_feature_set(hw->wiphy, NL80211_EXT_FEATURE_VHT_IBSS);
+	ret = wonder_feedback_init(wonder);
+	if (ret) {
+		ieee80211_free_hw(hw);
+		wonder = NULL;
+		goto end;
+	}
 	/* Initial wonder feature includes ieee80211_register_hw */
 	ret = wonder_features_init(wonder);
 	if (unlikely(ret)) {
 		wonder_error("Failed to register mac80211 hardware. Ret: %d\n", ret);
+		wonder_feedback_shutdown(wonder);
+		wonder_feedback_free(wonder);
 		ieee80211_free_hw(hw);
 		wonder = NULL;
 		goto end;

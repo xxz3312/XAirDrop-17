@@ -128,6 +128,14 @@ class SessionTests(unittest.TestCase):
         self.assertIn('--follow-channel',tx)
         self.assertEqual(tx[tx.index('--monitor')+1],'mon0')
 
+    def test_feedback_starts_opt_in_queue_and_uses_token_transport(self):
+        r=self.run_session('--tx-feedback','--raw',env={'RAW_CAP':'Y'})
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn(['rx','start',str(self.bundle/'wonder.ko'),'mon0','tx-feedback'],self.calls())
+        tx=next(c for c in self.calls() if c[0]=='tx')
+        self.assertEqual(tx[1],'relay-all')
+        self.assertIn('--feedback',tx)
+
     def test_borrowed_monitor_requires_explicit_follow_consent(self):
         (self.root/'monitor').touch()
         r=self.run_session('--follow-channel')

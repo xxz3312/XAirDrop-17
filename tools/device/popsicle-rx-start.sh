@@ -6,7 +6,7 @@ fail() { echo "ERROR: $*" >&2; exit 1; }
 action=${1:-status}
 case "$action" in
 status)
-    for n in external_monitor physical_name opairshare_wonder_rx opairshare_wonder_rx_invalid; do
+    for n in external_monitor external_tx physical_name opairshare_wonder_rx opairshare_wonder_rx_invalid; do
         f=/sys/module/wonder/parameters/$n
         [ ! -r "$f" ] || { printf '%s=' "$n"; cat "$f"; }
     done
@@ -27,9 +27,11 @@ stop)
 start) ;;
 *) fail 'Usage: sh popsicle-rx-start.sh start /path/wonder.ko mon0 | status | stop' ;;
 esac
-[ "$#" = 3 ] || fail 'start requires a Wonder .ko and an existing native monitor name.'
+[ "$#" = 3 ] || [ "$#" = 4 ] || fail 'start requires a Wonder .ko and an existing native monitor name; optional tx-feedback.'
 ko=$2
 monitor=$3
+feedback=${4:-}
+case "$feedback" in ''|tx-feedback) ;; *) fail 'Unknown start mode.' ;; esac
 case "$monitor" in ''|*[!a-zA-Z0-9_.-]*) fail 'Invalid monitor name.' ;; esac
 for tool in ip iw insmod rmmod readlink; do command -v "$tool" >/dev/null || fail "Missing $tool"; done
 [ -f "$ko" ] || fail 'Wonder .ko not found.'
@@ -52,7 +54,11 @@ cleanup() {
     exit "$rc"
 }
 trap cleanup 0
-insmod "$ko" external_monitor=1 physical_name="$monitor" virtual_name=wonder0
+if [ "$feedback" = tx-feedback ]; then
+    insmod "$ko" external_monitor=1 external_tx=1 physical_name="$monitor" virtual_name=wonder0
+else
+    insmod "$ko" external_monitor=1 physical_name="$monitor" virtual_name=wonder0
+fi
 own_module=1
 [ -d /sys/class/ieee80211/wonder ] || fail 'Wonder PHY did not register; inspect dmesg.'
 iw phy wonder interface add wonder0 type monitor
