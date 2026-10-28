@@ -1,0 +1,76 @@
+{
+  "status": "UNIFIED_TX_SESSION_BUILD_PASS_ONLY",
+  "commit": "8f4a8afa609a687f48c79746329507afe094fbe3",
+  "run_id": 40757236509,
+  "job_id": 123059300820,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40757236509",
+  "artifact": {
+    "id": 12845494435,
+    "bytes": 13811,
+    "sha256": "0f0280601f30ddcd99069a7960b9106089ef7607bc351a7ef0144ebf47279609",
+    "downloaded_and_checksum_verified": true
+  },
+  "android_build": {
+    "status": "ACTION_TX_ANDROID_BUILD_PASS_ONLY",
+    "commit": "8f4a8afa609a687f48c79746329507afe094fbe3",
+    "ndk": "27.2.12479018",
+    "android_api": 31,
+    "binary_sha256": "cda5224a18eee02415a4763da4647759c80e939319650d274b1a842a935a9887",
+    "binary_bytes": 17760,
+    "host_protocol_test": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "native_raw_model_test": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+    "session_command_model_tests": 13,
+    "combined_action_raw_relay": true,
+    "phone_executed": false,
+    "radio_tx_verified": false
+  },
+  "source_sha256": {
+    "native/wireless/action_tx.c": "eda43b0d6ddc16f120c4c8b13d051b074dbcf5916b27a8d0407786d9dcac838e",
+    "tests/test_action_tx.c": "906196dbb0ce982d8ade6f45c582c82ebe9266a284c3c6a9b8af5196953ad09f",
+    "tests/test_popsicle_session.py": "4c80e6ac88cd955dafe6e1de7a7edab5aa18c8070273a3eb95c7cd77625ff46e",
+    "tools/device/popsicle-session.sh": "b2ed50cf89e6ff3afcfea80cac53c54f84795735444535ec84c82464cfe60e18",
+    ".github/workflows/popsicle-action-tx.yml": "5f900151a98d1479213e25753f29a4688c2bab522b1bf8e4a969aae5b8312bde"
+  },
+  "independent_verification": {
+    "source_bytes_match_ci_head_git_snapshot": true,
+    "binary_digest_size_and_arm64_elf_verified": true,
+    "artifact_session_and_rx_scripts_match_source": true
+  },
+  "session_model_tests": 13,
+  "session_model_checks": [
+    "temporary monitor created/configured and released",
+    "borrowed monitor kept unchanged",
+    "raw disabled rejected before mutation",
+    "raw mode selects combined relay",
+    "tool failure releases owned RX and monitor",
+    "RX start failure removes only owned monitor",
+    "RX stop failure retains monitor",
+    "wrong TX channel rejected before mutation",
+    "monitor without get_channel uses explicit set command evidence",
+    "unknown borrowed monitor channel requires explicit configuration",
+    "explicit borrowed configuration keeps interface",
+    "TERM stops owned child before RX cleanup",
+    "foreign lock preserved"
+  ],
+  "protocol_checks": [
+    "one outgoing Action frame chooses native management transport",
+    "one outgoing Data/QoS Data chooses RAW vendor transport",
+    "old Action-only and RAW-only modes remain restricted",
+    "other frame types and source mismatch rejected",
+    "per-transport completion/failure counters added"
+  ],
+  "kernel_sources_modified": false,
+  "kernel_build_reference": {
+    "commit": "57184ea2203dfa05ab33c3c7171a2ade31675e2d",
+    "run_id": 40752944098,
+    "not_rebuilt_this_stage": true
+  },
+  "ndk_cache": "HIT",
+  "independent_ndi_backend_initialization_implemented": false,
+  "automatic_sta_channel_change": false,
+  "owned_monitor_channel_set_is_physical_rf_proof": false,
+  "phone_executed": false,
+  "radio_tx_verified": false,
+  "airdrop_connected": false,
+  "limitations": "Session tests execute real shell orchestration with modeled iw/ip/module/child commands; they do not exercise Android netdev/module loading or firmware. Existing pure protocol and WMA submission model tests run under ASan/UBSan. New relay dispatch and scripts have host/model and Android build validation only. Requires existing UP native TX interface on requested channel, matching mac80211/Wonder, native monitor support and patched opt-in WLAN for RAW. Monitor set acceptance is recorded separately from optional readback and does not certify RF frequency. Sequential TX relay is not AWDL timing, independent NDI/backend init, dynamic channel/DBS, mac80211 TX-status feedback or phone interoperability."
+}
