@@ -192,6 +192,7 @@ def check_mishare_host_symbols(work, module, report_name):
     names += ['mishare_runtime_recovery_candidates', 'mishare_runtime_recovery_open',
               'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
               'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
+    names += ['mishare_runtime_reclaim_batch']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -233,6 +234,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/mishare_batch_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-batch-fixture.json'],
+               'mishare-batch-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_parent_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-parent-fixture.json'],
                'mishare-parent-fixture.log')

@@ -80,6 +80,28 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * Partial attach, peer/PE/radio/DELETE history and unknown commands stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
+/* Bounded caller-owned handle table, not the native psoc vdev limit. */
+#define MISHARE_RUNTIME_RECLAIM_BATCH_MAX 64U
+struct mishare_runtime_reclaim_item {
+    struct mishare_runtime_owner *owner;
+    int result;
+};
+/* Explicit SSR batch step; no automatic caller or parent lifetime lease.
+ * Items are the authoritative owner handles: successful reclaim clears them.
+ * Caller retains exact parents and serializes create/destroy/reclaim/teardown
+ * for this psoc throughout the batch and every asynchronous poll. No aliases.
+ * Before any mutation, every non-NULL token must match this registry/psoc,
+ * occur once, and cover ALL owners of that psoc (including final-free waits).
+ * All must carry the original SSR fence and drained owned-MC evidence.
+ * Preflight errors leave every item unchanged. After admission, item results
+ * describe a possibly partial step; unsupported owners remain retained.
+ * EINPROGRESS waits for real callbacks; other errors require diagnosis with
+ * parents retained. Zero means all items AND the exact psoc registry are empty
+ * at this serialized instant, never permission to unload module text or FW ACK.
+ */
+int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
+                                  struct mishare_runtime_reclaim_item *items,
+                                  unsigned int count);
 /* Host-only raw object-manager factory. No SME self-peer/post-setup or WMI.
  * Caller owns RTNL, an exclusive parent psoc transition, and a live netdev/DP
  * interface matching mac throughout creation AND until destroy returns 0.
