@@ -838,7 +838,8 @@ STARTed 会话恢复及实机验证尚未完成，默认无线入口关闭。
 
 ### 0030 普通 DELETE/DP 已完成后的 NDI host 收尾
 
-显式 `mishare_runtime_reclaim_ndi()` 新增已完成传输资源的窄分支：普通 DELETE
+显式 `mishare_runtime_reclaim_ndi()` 新增普通 host 逻辑删除尚未开始、传输资源
+已完成的窄分支：普通 DELETE
 已提交且真实回执已记录，普通 DP detach 已成功提交且真实 final-free 已记录，
 timer_ready/stats_owned 已由普通流程清除；同时必须从未准备 WMA/legacy/self-peer/
 PE/频道/START 参数或 radio，且无 completion/work/reclaim/recovery 永久错误。
@@ -867,3 +868,26 @@ PE/频道/START 参数或 radio，且无 completion/work/reclaim/recovery 永久
 它与 dp_detaching 尝试标记、dp_freed 回调事实分别记录；即使 inline 回调先到，
 也不能把随后失败的提交返回当作成功。新增回归包含“inline free 后返回失败”，
 该 owner 保持隔离，不进入已完成收尾分支。
+
+
+### 0030 构建验证结果
+
+[Actions 40708768545](https://github.com/xxz3312/XAirDrop-17/actions/runs/40708768545)
+在源提交 `34ab0f87546255bbcf67ecdf34026f72d5d8cce6` 全部通过：44 项 Python
+检查、25 组原生 fixture、完整 WLAN 编译及严格链接。83 个要求符号存在，
+574 条版本记录无不匹配、未解决依赖为空，7 项选定结构布局 MATCH。
+工具链与 bindgen 缓存命中，新增收尾回归在 ASan/UBSan 下通过。
+
+紧凑 ZIP 已独立下载并核对大小与 SHA-256；重新生成的 completed fixture、
+三个选定原生文件与三个生产文件哈希匹配 CI。选定原生源码保持原样，历史
+批量函数负对照仍被既有顺序断言拒绝。完整诊断大包仅记录 GitHub 哈希，未
+独立下载且不可安装。详见 [普通资源已完成 NDI 收尾报告](research/popsicle-completed-ndi-host-reclaim-build-pass.json)。
+
+新增回归验证 qualified 窗口内的单 owner/批量收尾、真实 final-free 等待、普通
+完成历史保留、无新增 DELETE/DP/timer 操作；inline free 后提交失败、缺失/晚到
+完成、已准备上下文、窗口关闭和状态漂移继续隔离。host 删除中出现错误时保留
+诊断 owner，即便 native VDEV 已经实际释放也不报告成功或撤销 free。
+
+原普通 host 删除已经开始的隔离对象仍未由此分支接管。完整父资源协调、自动
+资格重查/恢复、准备态与 STARTed 会话、地址复用、模块回调文本寿命和手机验证
+仍待完成，默认无线入口关闭。

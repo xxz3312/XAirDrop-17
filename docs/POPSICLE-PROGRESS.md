@@ -1,6 +1,6 @@
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-28）
 
-当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收（含准入错误优先级修正）的离线验证，并补齐普通 DP/DELETE 完成事件校验。
+当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收（含准入错误优先级修正）的离线验证，并补齐普通 DP/DELETE 完成事件校验及普通资源已完成后的 NDI host 收尾。
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
@@ -24,14 +24,15 @@
 | Monitor/native RAW RX | 待实现 | 接收桥接、过滤、peer/BA 等目标适配 |
 | 纯 host 隔离回收 | 离线验证通过 | 限从未发送固件命令的 PAS/INIT 对象；记录被跟踪 MC 排空，等实际 final-free 再释放 owner；NDI/未知发送资源拒绝回收 |
 | 早期 NDI 隔离回收 | 离线验证通过 | 限 CREATE/完整 DP attach、尚无 WMA/self-peer/PE/START；资格化 SSR 窗口内释放 timer，等 DP final-free 后删 host；会话中与部分 attach 拒绝回收 |
+| 普通 DELETE/DP 完成后收尾 | 离线验证通过 | 限未准备/未 START、普通 host 删除尚未开始的 NDI；合格 SSR 窗口内只删 host 并等最终释放，保留普通完成历史 |
 | 父资源拆除前窗口撤销 | 离线验证通过 | CDS DP / HDD pdev / dispatcher pdev 关闭前永久撤销回收窗口；仍非父资源 lease 或在途调用屏障 |
 | 显式 SSR 批量回收 | 离线验证通过 | 校验完整句柄表；漏列和已记录永久错误优先于等待；逐项保留结果，全部清空才成功；父资源仍由调用方保留 |
-| SSR/卸载/异常恢复 | 部分完成 | 已实现准入栅栏、被跟踪 MC 排空、早期 NDI 回收、拆除前窗口撤销及显式批量步骤；会话内 WMA/peer/PE/PM、父资源协调与安全卸载仍待实现 |
+| SSR/卸载/异常恢复 | 部分完成 | 已实现准入栅栏、被跟踪 MC 排空、早期及普通资源已完成的 NDI 收尾、拆除前窗口撤销及显式批量步骤；会话内 WMA/peer/PE/PM、父资源协调与安全卸载仍待实现 |
 | 固件能力与端到端实测 | 待验证 | 驱动加载、NDI/RAW 实际支持、Apple 发现与双向传输、稳定性和安装包 |
 
-最新源提交：`0629027538c5303945a47483ec9338e6b8d88207`。
-[Actions 40691954631](https://github.com/xxz3312/XAirDrop-17/actions/runs/40691954631)
-已通过 44 项 Python 检查、24 组原生 fixture、完整 WLAN 编译与严格链接；
+最新源提交：`34ab0f87546255bbcf67ecdf34026f72d5d8cce6`。
+[Actions 40708768545](https://github.com/xxz3312/XAirDrop-17/actions/runs/40708768545)
+已通过 44 项 Python 检查、25 组原生 fixture、完整 WLAN 编译与严格链接；
 83 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
 以上不构成完整私有 ABI/KCFI、手机加载或 AirDrop 可用认证。
 
@@ -42,6 +43,7 @@
 父资源撤销回归还执行完整原生 CDS DP / HDD / dispatcher pdev close；其调用的 DP、IRQ、timer 和组件拆除为模型，完整 HDD 停机/回退仅做源码审计。
 批量回归使用不同 MAC/VDEV ID 的多对象模型；准入检查不修改表，准入后的步骤可部分完成，错误项仍保留。批量接口没有持有父引用或自动接入 HDD。批量优先级回归覆盖十组双 owner 顺序/错误组合；历史批量函数负对照被既有断言拒绝。
 普通完成事件回归覆盖有效 inline/延迟/栅栏后 DP 完成、未知及释放后 token、过早/重复/错误路由和 DELETE 异常；完整 DP/QDF/组件拆除仍为模型，地址复用与模块回调文本寿命未认证。
+新收尾分支要求普通 DELETE 回执、DP detach 成功返回和 DP final-free 都已观察；inline free 后提交返回失败仍拒绝。它保留普通历史，不写 SSR timer/DP 执行标记。已有普通 host 逻辑删除与窗口后的晚到完成不在本阶段自动接管范围。
 窗口撤销不能中止已进入的 reclaim；父资源仍须由调用方保留并串行化。CDS 返回错误也不会让现有 HDD 调用点统一停止拆除。
 DOWN 没有固件 ACK，accepted DOWN 只表示原生提交成功及 PM 清理，不能称为固件确认。
 详细证据见 [频道准备报告](research/popsicle-owned-channel-build-pass.json) 和
@@ -54,4 +56,5 @@ DOWN 没有固件 ACK，accepted DOWN 只表示原生提交成功及 PM 清理�
 [父资源拆除窗口报告](research/popsicle-parent-teardown-window-build-pass.json) 和
 [显式 SSR 批量回收报告](research/popsicle-ssr-batch-reclaim-build-pass.json) 和
 [批量准入错误优先级报告](research/popsicle-batch-preflight-priority-build-pass.json) 和
-[普通 NDI 完成事件报告](research/popsicle-ndi-completion-integrity-build-pass.json)。
+[普通 NDI 完成事件报告](research/popsicle-ndi-completion-integrity-build-pass.json) 和
+[普通资源已完成 NDI 收尾报告](research/popsicle-completed-ndi-host-reclaim-build-pass.json)。
