@@ -394,6 +394,7 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner)
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ndi = &entry->state.ndi;
     if (!entry->state.quiesced || entry->state.work_error || entry->state.reclaim_error ||
+        entry->state.recovery_error ||
         ndi->completion_error ||
         entry->state.ndi_reclaim_started)
         ret = -EUCLEAN;
@@ -535,12 +536,25 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc)
 static void mishare_runtime_recovery_dp_freed(void *context)
 {
     struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *n;
     unsigned long flags;
+
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next) {
-        if (entry != context || !entry->state.ndi_reclaim_started)
+        if (entry != context)
             continue;
-        if (!entry->state.recovery_dp_attempted || entry->state.recovery_dp_freed) {
+        n = &entry->state.ndi;
+        /* A known token on the wrong route is an error, not an absent owner.
+         * Inline native completion is allowed before detach returns. Neither
+         * a closed window nor a sticky error erases a valid physical fact.
+         */
+        if (!entry->state.ndi_reclaim_started ||
+            !entry->state.recovery_dp_attempted || entry->state.recovery_dp_freed ||
+            entry->state.ndi_completed_reclaim || !n->active ||
+            !n->create.dp_attached || n->dp_detaching || n->dp_detach_submitted ||
+            n->dp_freed || n->delete_pending || n->delete_submitted || n->delete_replied) {
+            entry->state.blocked = true;
+            n->blocked = true;
             if (!entry->state.recovery_error)
                 entry->state.recovery_error = -EUCLEAN;
         } else {

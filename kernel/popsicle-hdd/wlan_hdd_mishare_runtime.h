@@ -39,7 +39,7 @@ struct mishare_runtime_status {
     bool recovery_dp_freed;
     bool ndi_reclaim_ready;
     bool ndi_completed_reclaim; /* Ordinary DELETE + DP free already observed. */
-    int recovery_error;
+    int recovery_error; /* Sticky reset-cleanup or recovery DP origin error. */
     int create_error;
     struct mishare_ndi_status ndi;
     struct mishare_radio_status radio;
