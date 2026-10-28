@@ -656,6 +656,13 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
             ret = -EBUSY;
             goto unlock;
         }
+    }
+    /* Validate complete coverage before policy/accounting. A waiting owner
+     * must not hide an omitted owner or a fatal error later in this list.
+     */
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc != psoc)
+            continue;
         if (entry->state.quiesced != MISHARE_QUIESCE_SSR) {
             ret = -ESHUTDOWN;
             goto unlock;
@@ -666,10 +673,8 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
             goto unlock;
         }
         if (!entry->state.mc_drained || entry->state.work_pending ||
-            entry->state.work_users) {
+            entry->state.work_users)
             ret = -EINPROGRESS;
-            goto unlock;
-        }
     }
 unlock:
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);

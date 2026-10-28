@@ -93,6 +93,8 @@ struct mishare_runtime_reclaim_item {
  * Before any mutation, every non-NULL token must match this registry/psoc,
  * occur once, and cover ALL owners of that psoc (including final-free waits).
  * All must carry the original SSR fence and drained owned-MC evidence.
+ * Full coverage is checked before owner policy; fatal policy/accounting errors
+ * take precedence over waiting owners regardless of registry list order.
  * Preflight errors leave every item unchanged. After admission, item results
  * describe a possibly partial step; unsupported owners remain retained.
  * EINPROGRESS waits for real callbacks; other errors require diagnosis with

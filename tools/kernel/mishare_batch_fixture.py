@@ -84,6 +84,30 @@ int main(void) {
   }
   assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
+ /* Waiting must not conceal fatal errors or missing owners, in either order. */
+ for(int order=0;order<2;order++) {
+  for(int fault=0;fault<5;fault++) {
+   reset_recovery();child=fork();assert(child>=0);
+   if(!child) {
+    a=batch_host(7);b=batch_host(8);
+    struct mishare_runtime_owner *waiting=order?a:b,*fatal=order?b:a;
+    assert(!mishare_runtime_work_get(waiting->vdev,waiting));batch_fence(2);
+    assert(!state(waiting).mc_drained && state(waiting).work_pending==1);
+    if(fault==0)mishare_runtime_work_put(fatal->vdev,fatal); /* real underflow */
+    if(fault==1)fatal->state.reclaim_error=-EIO;
+    if(fault==2)fatal->state.recovery_error=-EIO;
+    if(fault==3)fatal->state.quiesced=MISHARE_QUIESCE_REMOVE;
+    items[0]=(struct mishare_runtime_reclaim_item){waiting,77};
+    items[1]=(struct mishare_runtime_reclaim_item){fatal,88};
+    memcpy(before,items,sizeof(items));
+    int expected=fault==4?-EBUSY:fault==3?-ESHUTDOWN:-EUCLEAN;
+    assert(mishare_runtime_reclaim_batch(&psoc,items,fault==4?1:2)==expected);
+    assert(!memcmp(before,items,sizeof(items)) && !delete_calls && !dp_detaches && !recovery_timer_cancels);
+    assert(objects_live==2 && state(waiting).work_pending==1);_Exit(0);
+   }
+   assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+  }
+ }
  /* Closing a native parent window between polls cannot be bypassed by batch. */
  reset_recovery();child=fork();assert(child>=0);
  if(!child) {
@@ -124,13 +148,45 @@ def audit(root):
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint32_t u32;typedef uint64_t u64;\n')
         for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_vdev_mlme_api.h','wlan_vdev_mgr_tgt_if_rx_defs.h','wlan_osif_priv.h','qdf_status.h','scheduler_api.h','wmi_unified_param.h','core/src/vdev_mgr_ops.h']:(d/n).write_text('/* platform model declarations */\n')
         (d/'batch.c').write_text(source);exe=d/'batch'
-        subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unused-function','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),'-I'+str(d/'dispatcher/inc'),str(d/'batch.c'),'-o',str(exe)],check=True)
-        out=subprocess.check_output([exe],text=True,timeout=45,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})
+        command=['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unused-function','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),'-I'+str(d/'dispatcher/inc'),str(d/'batch.c'),'-o',str(exe)]
+        run_env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'}
+        subprocess.run(command,check=True)
+        out=subprocess.check_output([exe],text=True,timeout=45,env=run_env)
+        # Exact preceding implementation is a negative control: the new
+        # regression must fail on its expected-result assertion, not sanitizer
+        # errors or a compiler failure. Compilation/execution stays Actions-only.
+        runtime=(production/'wlan_hdd_mishare_runtime.c').read_text()
+        separator='''    }
+    /* Validate complete coverage before policy/accounting. A waiting owner
+     * must not hide an omitted owner or a fatal error later in this list.
+     */
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc != psoc)
+            continue;
+'''
+        waiting='''        if (!entry->state.mc_drained || entry->state.work_pending ||
+            entry->state.work_users)
+            ret = -EINPROGRESS;
+'''
+        assert runtime.count(separator)==runtime.count(waiting)==1
+        previous=runtime.replace(separator,'',1).replace(waiting,'''        if (!entry->state.mc_drained || entry->state.work_pending ||
+            entry->state.work_users) {
+            ret = -EINPROGRESS;
+            goto unlock;
+        }
+''',1)
+        previous_hash=hashlib.sha256(previous.encode()).hexdigest()
+        assert previous_hash=='1c8a52cbc9b8743300cd180ff6dea08500019850d8b86381eafb5b59dcdbce47'
+        (d/'wlan_hdd_mishare_runtime.c').write_text(previous)
+        subprocess.run(command,check=True)
+        rejected=subprocess.run([exe],text=True,timeout=45,env=run_env,capture_output=True)
+        assert rejected.returncode==-6 and 'mishare_runtime_reclaim_batch(&psoc,items,fault==4?1:2)==expected' in rejected.stderr
     if out.strip()!='MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY':raise ValueError('Unexpected fixture output')
     return {'status':out.strip(),'source_commit':pin,'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),
+            'negative_control':{'previous_runtime_sha256':previous_hash,'exact_previous_runtime_rejected_by_new_assertion':True},
             'native_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in parent.BASE},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h']},
-            'checks':['bounded opaque-token and exact-psoc validation before dereference','complete table coverage including pending physical final-free; duplicate/stale/foreign/missing entries do not mutate','SSR-first fence, sticky errors and owned MC reservations checked before every batch step','multiple distinct modeled VDEVs preserve their own object/event final-free identities','mixed host and early NDI release with reordered slots and inline/delayed DP callbacks','successful slots clear; pending/unsupported slots retain authoritative handles and individual results','earlier error is not hidden by later success; no fabricated native DELETE acknowledgment','parent-window revocation between polls remains effective; zero only after exact psoc registry empties'],
+            'checks':['bounded opaque-token and exact-psoc validation before dereference','complete table coverage including pending physical final-free; duplicate/stale/foreign/missing entries do not mutate','SSR-first fence, sticky errors and owned MC reservations checked before every batch step','full coverage and fatal preflight errors take precedence over MC waiting in either registry order; rejected slots and native resources remain unchanged','multiple distinct modeled VDEVs preserve their own object/event final-free identities','mixed host and early NDI release with reordered slots and inline/delayed DP callbacks','successful slots clear; pending/unsupported slots retain authoritative handles and individual results','earlier error is not hidden by later success; no fabricated native DELETE acknowledgment','parent-window revocation between polls remains effective; zero only after exact psoc registry empties'],
             'limitations':'Runs production batch/controller, existing native timer/DP wrapper and object-manager final-free under ASan/UBSan. Multi-vdev allocation/IDs, component/DP storage free, QDF scheduling and parent lifetimes are models. No automatic caller or outer HDD async pause is implemented. The caller must own all authoritative slots, retain exact parents and serialize every create/destroy/reclaim/teardown throughout polling. Preflight validates identity/coverage/accounting, not all native per-owner states; admitted steps may partially succeed and retain errors. Empty registry is an instant observation, not a lifetime lease, safe module unload or firmware proof. Prepared/STARTed recovery, psoc address reuse and phone operation remain unverified; backend stays disabled.'}
 
 
