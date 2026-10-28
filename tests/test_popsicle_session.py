@@ -121,6 +121,24 @@ class SessionTests(unittest.TestCase):
         self.assertEqual(tx[1],'relay-all')
         self.assertIn('--rewrite-source',tx)
 
+    def test_owned_monitor_can_follow_channel(self):
+        r=self.run_session('--follow-channel')
+        self.assertEqual(r.returncode,0,r.stderr)
+        tx=next(c for c in self.calls() if c[0]=='tx')
+        self.assertIn('--follow-channel',tx)
+        self.assertEqual(tx[tx.index('--monitor')+1],'mon0')
+
+    def test_borrowed_monitor_requires_explicit_follow_consent(self):
+        (self.root/'monitor').touch()
+        r=self.run_session('--follow-channel')
+        self.assertNotEqual(r.returncode,0)
+        self.assertIn('requires --configure-monitor',r.stderr)
+        self.assertNotIn(['rx','start'],self.calls())
+        self.assertTrue((self.root/'monitor').exists())
+        r=self.run_session('--follow-channel','--configure-monitor')
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertTrue((self.root/'monitor').exists())
+
     def test_failed_tool_cleans_up_its_rx_and_monitor(self):
         r=self.run_session(env={'FAIL_TX':'1'})
         self.assertEqual(r.returncode,9,r.stderr)

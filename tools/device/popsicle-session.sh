@@ -11,6 +11,7 @@ freq=
 raw=0
 rewrite=0
 configure_monitor=0
+follow_channel=0
 seconds=300
 frames=10000
 lock=/data/local/tmp/xairdrop-session.lock
@@ -21,6 +22,7 @@ while [ "$#" != 0 ]; do
         --raw) raw=1; shift ;;
         --rewrite-source) rewrite=1; shift ;;
         --configure-monitor) configure_monitor=1; shift ;;
+        --follow-channel) follow_channel=1; shift ;;
         --bundle|--monitor|--tx|--freq|--seconds|--max-frames|--lock|--wlan-module|--log)
             key=$1; [ "$#" -ge 2 ] || fail "Missing value for $key"
             case "$key" in
@@ -40,7 +42,7 @@ case "$action" in
         [ ! -f "$log" ] || tail -n 20 "$log"
         exit 0 ;;
     run) ;;
-    *) echo 'Usage: sh popsicle-session.sh run --bundle DIR --tx wlan0 --freq MHz [--monitor misharemon0] [--raw] [--rewrite-source] [--seconds 300] [--max-frames 10000]'; exit 2 ;;
+    *) echo 'Usage: sh popsicle-session.sh run --bundle DIR --tx wlan0 --freq MHz [--monitor misharemon0] [--raw] [--follow-channel] [--rewrite-source] [--seconds 300] [--max-frames 10000]'; exit 2 ;;
 esac
 [ "$(id -u)" = 0 ] || fail 'Run with su.'
 for name in "$monitor" "$tx" "$wlan_module"; do
@@ -103,6 +105,7 @@ if iw dev "$monitor" info >/dev/null 2>&1; then
         iw dev "$monitor" set freq "$freq" HT20
         monitor_evidence=command_accepted
     else
+        [ "$follow_channel" = 0 ] || fail 'Following a borrowed monitor requires --configure-monitor.'
         [ "$(channel "$monitor")" = "$freq" ] || fail 'Borrowed monitor channel is unknown/different; use --configure-monitor to set it explicitly.'
     fi
 else
@@ -124,6 +127,7 @@ mode=relay
 [ "$raw" = 0 ] || mode=relay-all
 set -- "$mode" --listen wonder0 --dev "$tx" --freq "$freq" --seconds "$seconds" --max-frames "$frames"
 [ "$rewrite" = 0 ] || set -- "$@" --rewrite-source
+[ "$follow_channel" = 0 ] || set -- "$@" --follow-channel --monitor "$monitor"
 printf 'SESSION_START monitor=%s tx=%s freq=%s raw=%s rx_channel_evidence=%s\n' "$monitor" "$tx" "$freq" "$raw" "$monitor_evidence" >>"$log"
 "$bundle/action-tx" "$@" >>"$log" 2>&1 &
 child=$!

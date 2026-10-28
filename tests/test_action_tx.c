@@ -4,6 +4,66 @@
 #include <assert.h>
 
 static unsigned char mac[6]={2,1,2,3,4,5};
+struct radio_model {
+    struct channel_interface tx,mon;
+    unsigned queries,sets,last_freq;
+    int set_error,query_error;
+    bool roam_after_set;
+};
+static int model_query(void *context,unsigned index,struct channel_interface *out) {
+    struct radio_model *r=context;r->queries++;
+    if (r->query_error) return r->query_error;
+    *out=index==r->tx.index?r->tx:r->mon;
+    if (r->roam_after_set && r->sets && index==r->tx.index) out->freq=5200;
+    return 0;
+}
+static int model_set(void *context,unsigned index,unsigned freq) {
+    struct radio_model *r=context;assert(index==r->mon.index);
+    r->sets++;r->last_freq=freq;return r->set_error;
+}
+static void channel_tests(void) {
+    struct radio_model r={.tx={4,2,NL80211_IFTYPE_STATION,5180},.mon={6,2,NL80211_IFTYPE_MONITOR,0}};
+    struct channel_follow f={.tx=4,.monitor=6};
+    assert(follow_channel(&f,&r,model_query,model_set)==1 && f.freq==5180 && r.sets==1 && !f.changes);
+    assert(!follow_channel(&f,&r,model_query,model_set) && r.sets==1);
+    r.mon.freq=5200;
+    assert(follow_channel(&f,&r,model_query,model_set)==1 && r.sets==2 && r.last_freq==5180);
+    r.mon.freq=0;r.sets=1;f.changes=0;
+    r.tx.freq=2412;
+    assert(follow_channel(&f,&r,model_query,model_set)==1 && f.freq==2412 && f.changes==1 && r.last_freq==2412);
+    r.tx.freq=0;assert(follow_channel(&f,&r,model_query,model_set)==-ENOLINK && r.sets==2 && f.freq==2412);
+    r.tx.freq=5955;assert(follow_channel(&f,&r,model_query,model_set)==-ENOLINK);
+    r.tx.freq=5180;r.mon.phy=3;assert(follow_channel(&f,&r,model_query,model_set)==-EXDEV && r.sets==2);
+    r.mon.phy=2;r.mon.type=NL80211_IFTYPE_STATION;assert(follow_channel(&f,&r,model_query,model_set)==-EXDEV);
+    r.mon.type=NL80211_IFTYPE_MONITOR;r.tx.type=NL80211_IFTYPE_AP;assert(follow_channel(&f,&r,model_query,model_set)==-EXDEV);
+    r.tx.type=NL80211_IFTYPE_P2P_CLIENT;r.set_error=-EBUSY;
+    assert(follow_channel(&f,&r,model_query,model_set)==-EBUSY && f.freq==2412 && f.changes==1);
+    r.set_error=0;r.roam_after_set=true;
+    assert(follow_channel(&f,&r,model_query,model_set)==-EAGAIN && f.freq==2412 && f.changes==1);
+    r.roam_after_set=false;r.query_error=-ENODEV;unsigned sets=r.sets;
+    assert(follow_channel(&f,&r,model_query,model_set)==-ENODEV && r.sets==sets);
+    r.query_error=0;r.tx.phy=r.mon.phy=7;
+    assert(follow_channel(&f,&r,model_query,model_set)==-EXDEV && r.sets==sets);
+    struct message m={0};unsigned index=4,phy=0,type=NL80211_IFTYPE_STATION,freq=5180;
+    assert(!add_attr(&m,NL80211_ATTR_IFINDEX,&index,4));assert(!add_attr(&m,NL80211_ATTR_WIPHY,&phy,4));
+    assert(!add_attr(&m,NL80211_ATTR_IFTYPE,&type,4));struct channel_interface info;
+    assert(!parse_interface((struct bytes){m.data,m.n},4,&info) && !info.freq && info.phy==0);
+    assert(parse_interface((struct bytes){m.data,m.n},5,&info)==-EBADMSG);
+    assert(!add_attr(&m,NL80211_ATTR_WIPHY_FREQ,&freq,4));
+    assert(!parse_interface((struct bytes){m.data,m.n},4,&info) && info.freq==5180);
+    assert(!add_attr(&m,NL80211_ATTR_WIPHY_FREQ,&freq,4));
+    assert(parse_interface((struct bytes){m.data,m.n},4,&info)==-EBADMSG);
+    struct { struct nlmsghdr h;struct nlmsgerr error; } ack={.h={.nlmsg_len=sizeof(ack),.nlmsg_type=NLMSG_ERROR,.nlmsg_seq=9}};
+    assert(!channel_ack((void *)&ack,sizeof(ack),8));assert(channel_ack((void *)&ack,sizeof(ack),9)==1);
+    ack.error.error=-EPERM;assert(channel_ack((void *)&ack,sizeof(ack),9)==-EPERM);
+    ack.error.error=1;assert(channel_ack((void *)&ack,sizeof(ack),9)==-EBADMSG);
+    assert(channel_ack((void *)&ack,sizeof(ack)-1,9)==-EBADMSG);
+    int sockets[2];assert(!socketpair(AF_UNIX,SOCK_DGRAM,0,sockets));
+    assert(send(sockets[0],"old",3,0)==3 && send(sockets[0],"old",3,0)==3);
+    unsigned dropped=0;assert(!drain_capture(sockets[1],&dropped) && dropped==2);
+    close(sockets[0]);close(sockets[1]);
+    puts("CHANNEL_FOLLOW_MODEL_PASS_ONLY");
+}
 static void action(unsigned char *frame) {
     memset(frame,0,25);frame[0]=0xd0;memset(frame+4,0xff,6);
     memcpy(frame+10,mac,6);memset(frame+16,0xff,6);frame[24]=127;
@@ -18,6 +78,7 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
     ((struct nlmsghdr *)(void *)m->data)->nlmsg_len=(uint32_t)m->n;
 }
 int main(void) {
+    channel_tests();
     unsigned char f[128];action(f);
     assert(!prepare_frame(f,25,mac,false));
     assert(prepare_frame(f,24,mac,false)==-EMSGSIZE);

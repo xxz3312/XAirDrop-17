@@ -175,6 +175,94 @@ static int request(struct client *c,struct message *m,unsigned command,
         if (ret==1) return 0;
     }
 }
+struct channel_interface { unsigned index,phy,type,freq; };
+struct channel_follow {
+    unsigned tx,monitor,phy,freq,changes;
+    bool applied;
+};
+static int parse_interface(struct bytes reply,unsigned index,struct channel_interface *out) {
+    struct bytes id,phy,type,freq;
+    if (attr(reply,NL80211_ATTR_IFINDEX,&id)!=1 || id.n!=4 || u32(id.p)!=index ||
+        attr(reply,NL80211_ATTR_WIPHY,&phy)!=1 || phy.n!=4 ||
+        attr(reply,NL80211_ATTR_IFTYPE,&type)!=1 || type.n!=4) return -EBADMSG;
+    int present=attr(reply,NL80211_ATTR_WIPHY_FREQ,&freq);
+    if (present<0 || (present && freq.n!=4)) return -EBADMSG;
+    *out=(struct channel_interface){index,u32(phy.p),u32(type.p),present?u32(freq.p):0};
+    return 0;
+}
+static int query_channel(void *context,unsigned index,struct channel_interface *out) {
+    struct client *c=context;struct message m;unsigned char buffer[MESSAGE_MAX];struct bytes reply;
+    begin(&m,c->family,NL80211_CMD_GET_INTERFACE,++c->seq);
+    int ret=add_attr(&m,NL80211_ATTR_IFINDEX,&index,4);if (ret) return ret;
+    ret=request(c,&m,NL80211_CMD_NEW_INTERFACE,buffer,&reply,1000);
+    return ret?ret:parse_interface(reply,index,out);
+}
+/* SET_WIPHY returns an ACK rather than a generic reply. Only this request's
+ * ACK is command acceptance; it makes no claim about firmware or reception. */
+static int channel_ack(const unsigned char *data,size_t len,uint32_t seq) {
+    int result=0;
+    while (len) {
+        if (len<NLMSG_HDRLEN) return -EBADMSG;
+        struct nlmsghdr h;memcpy(&h,data,sizeof(h));
+        if (h.nlmsg_len<NLMSG_HDRLEN || h.nlmsg_len>len || align4(h.nlmsg_len)>len) return -EBADMSG;
+        if (h.nlmsg_type==NLMSG_ERROR && h.nlmsg_seq==seq) {
+            if (h.nlmsg_len<NLMSG_HDRLEN+sizeof(struct nlmsgerr)) return -EBADMSG;
+            int error;memcpy(&error,data+NLMSG_HDRLEN,4);
+            if (error) return error<0?error:-EBADMSG;
+            result=1;
+        }
+        data+=align4(h.nlmsg_len);len-=align4(h.nlmsg_len);
+    }
+    return result;
+}
+static int set_monitor_channel(void *context,unsigned index,unsigned freq) {
+    struct client *c=context;struct message m;unsigned char buffer[MESSAGE_MAX];
+    unsigned type=NL80211_CHAN_HT20;
+    begin(&m,c->family,NL80211_CMD_SET_WIPHY,++c->seq);
+    int ret=add_attr(&m,NL80211_ATTR_IFINDEX,&index,4);
+    if (!ret) ret=add_attr(&m,NL80211_ATTR_WIPHY_FREQ,&freq,4);
+    if (!ret) ret=add_attr(&m,NL80211_ATTR_WIPHY_CHANNEL_TYPE,&type,4);
+    if (!ret) ret=transmit(c,&m);
+    if (ret) return ret;
+    int64_t deadline=now_ms()+1000;
+    for (;;) {
+        ret=receive(c,buffer,sizeof(buffer),deadline);if (ret<0) return ret;
+        ret=channel_ack(buffer,(size_t)ret,c->seq);
+        if (ret) return ret==1?0:ret;
+    }
+}
+typedef int (*channel_query_fn)(void *,unsigned,struct channel_interface *);
+typedef int (*channel_set_fn)(void *,unsigned,unsigned);
+/* Single threaded: no TX request can overlap channel mutation. Publish the
+ * new frequency only after acceptance AND a second matching STA observation. */
+static int follow_channel(struct channel_follow *f,void *context,
+                          channel_query_fn query,channel_set_fn set) {
+    struct channel_interface tx,mon,after;
+    int ret=query(context,f->tx,&tx);if (ret) return ret;
+    ret=query(context,f->monitor,&mon);if (ret) return ret;
+    if (f->tx==f->monitor || tx.index!=f->tx || mon.index!=f->monitor ||
+        (tx.type!=NL80211_IFTYPE_STATION && tx.type!=NL80211_IFTYPE_P2P_CLIENT) ||
+        mon.type!=NL80211_IFTYPE_MONITOR || tx.phy!=mon.phy ||
+        (f->applied && tx.phy!=f->phy)) return -EXDEV;
+    if (tx.freq<2400 || tx.freq>5900) return -ENOLINK;
+    if (f->applied && f->freq==tx.freq && (!mon.freq || mon.freq==tx.freq)) return 0;
+    ret=set(context,f->monitor,tx.freq);if (ret) return ret;
+    ret=query(context,f->tx,&after);if (ret) return ret;
+    if (after.index!=tx.index || after.phy!=tx.phy || after.type!=tx.type || after.freq!=tx.freq) return -EAGAIN;
+    bool changed=f->applied;
+    f->phy=tx.phy;f->freq=tx.freq;f->applied=true;
+    if (changed) f->changes++;
+    return 1;
+}
+static int drain_capture(int fd,unsigned *dropped) {
+    unsigned char buffer[8192];
+    for (unsigned i=0;i<1024;i++) {
+        ssize_t n=recv(fd,buffer,sizeof(buffer),MSG_DONTWAIT|MSG_TRUNC);
+        if (n<0) return errno==EAGAIN || errno==EWOULDBLOCK?0:-errno;
+        (*dropped)++;
+    }
+    return -ENOBUFS;
+}
 static int connect_nl(struct client *c) {
     unsigned char buffer[MESSAGE_MAX];struct bytes reply,id,groups;
     memset(c,0,sizeof(*c));c->fd=-1;c->family=GENL_ID_CTRL;
@@ -328,13 +416,14 @@ static void usage(void) {
          "action-tx send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] [--timeout-ms 3000]\n"
          "action-tx relay --listen wonder0 --dev wlan0 --freq MHz [--rewrite-source] [--max-frames 1] [--seconds 30]\n"
          "action-tx relay-all --listen wonder0 --dev wlan0 --freq MHz [--max-frames 1000] [--seconds 300]\n"
+         "Relay modes: --follow-channel --monitor misharemon0 follows the STA home channel (HT20).\n"
          "Root required. Explicit Action or RAW DATA transport, on-channel only. No automatic retries.\n"
          "A submitted cookie is not a TX status; group frames have no peer ACK guarantee.");
 }
 #ifndef ACTION_TX_TEST
 int main(int argc,char **argv) {
-    const char *mode=argc>1?argv[1]:"",*dev=NULL,*listen_dev=NULL,*file=NULL;
-    bool radiotap=false,rewrite=false;unsigned freq=0,timeout=3000,limit=1,seconds=30;
+    const char *mode=argc>1?argv[1]:"",*dev=NULL,*listen_dev=NULL,*file=NULL,*monitor=NULL;
+    bool radiotap=false,rewrite=false,follow=false;unsigned freq=0,timeout=3000,limit=1,seconds=30;
     if (!strcmp(mode,"--help") || !strcmp(mode,"help")) {usage();return 0;}
     bool raw=!strcmp(mode,"raw-send") || !strcmp(mode,"raw-relay");
     bool combined=!strcmp(mode,"relay-all");
@@ -344,11 +433,13 @@ int main(int argc,char **argv) {
         const char *arg=argv[i];
         if (!strcmp(arg,"--radiotap")) radiotap=true;
         else if (!strcmp(arg,"--rewrite-source")) rewrite=true;
+        else if (!strcmp(arg,"--follow-channel")) follow=true;
         else {
             if (++i>=argc) {usage();return 2;}
             if (!strcmp(arg,"--dev")) dev=argv[i];
             else if (!strcmp(arg,"--listen")) listen_dev=argv[i];
             else if (!strcmp(arg,"--frame")) file=argv[i];
+            else if (!strcmp(arg,"--monitor")) monitor=argv[i];
             else if (!strcmp(arg,"--freq")) {if (number(argv[i],2300,5900,&freq)) return 2;}
             else if (!strcmp(arg,"--timeout-ms")) {if (number(argv[i],100,10000,&timeout)) return 2;}
             else if (!strcmp(arg,"--max-frames")) {if (number(argv[i],1,100000,&limit)) return 2;}
@@ -357,6 +448,7 @@ int main(int argc,char **argv) {
         }
     }
     if (!dev || !freq || (relay?(!listen_dev || file || radiotap || !strcmp(dev,listen_dev)):(!file || listen_dev))) {usage();return 2;}
+    if (follow?(!relay || !monitor || !strcmp(monitor,listen_dev) || !strcmp(monitor,dev)):monitor!=NULL) {usage();return 2;}
     signal(SIGINT,on_signal);signal(SIGTERM,on_signal);
     struct client c={.fd=-1};unsigned ifindex;unsigned char mac[6];
     int ret=native_interface(dev,&ifindex,mac);if (ret) goto done;
@@ -371,15 +463,35 @@ int main(int argc,char **argv) {
         ret=raw?raw_tx(&c,freq,frame,n,(int)timeout):action_tx(&c,freq,frame,n,(int)timeout);
     } else {
         unsigned index=if_nametoindex(listen_dev);if (!index) {ret=-ENODEV;goto done;}
+        struct channel_follow channel={.tx=ifindex};
+        if (follow) {
+            channel.monitor=if_nametoindex(monitor);if (!channel.monitor) {ret=-ENODEV;goto done;}
+            ret=follow_channel(&channel,&c,query_channel,set_monitor_channel);if (ret<0) goto done;
+            freq=channel.freq;
+            printf("{\"event\":\"channel_synced\",\"freq\":%u,\"evidence\":\"command_accepted_sta_readback\"}\n",freq);fflush(stdout);
+        }
         int capture=socket(AF_PACKET,SOCK_RAW|SOCK_CLOEXEC,htons(ETH_P_ALL));
         if (capture<0) {ret=-errno;goto done;}
         struct sockaddr_ll addr={.sll_family=AF_PACKET,.sll_protocol=htons(ETH_P_ALL),.sll_ifindex=(int)index};
         if (bind(capture,(void *)&addr,sizeof(addr))) {ret=-errno;close(capture);goto done;}
         unsigned sent=0,failed=0,ignored=0,source_mismatch=0;
         unsigned action_completed=0,raw_completed=0,action_failed=0,raw_failed=0;int64_t deadline=now_ms()+(int64_t)seconds*1000;
+        unsigned channel_dropped=0;bool channel_error=false;
         printf("{\"event\":\"relay_ready\",\"mode\":\"%s\"}\n",combined?"action_and_raw_data":raw?"raw_data_frames_only":"action_frames_only");fflush(stdout);
         while (sent+failed<limit && !interrupted) {
-            ret=wait_read(capture,deadline);if (ret) break;
+            if (follow) {
+                ret=follow_channel(&channel,&c,query_channel,set_monitor_channel);
+                if (ret<0) {channel_error=true;break;}
+                if (ret==1) {
+                    freq=channel.freq;
+                    ret=drain_capture(capture,&channel_dropped);if (ret) {channel_error=true;break;}
+                    printf("{\"event\":\"channel_synced\",\"freq\":%u,\"changes\":%u,\"evidence\":\"command_accepted_sta_readback\"}\n",freq,channel.changes);fflush(stdout);
+                }
+            }
+            int64_t tick=now_ms()+1000;
+            ret=wait_read(capture,follow && tick<deadline?tick:deadline);
+            if (follow && ret==-ETIMEDOUT && now_ms()<deadline) continue;
+            if (ret) break;
             unsigned char frame[8192];struct sockaddr_ll from={0};socklen_t size=sizeof(from);
             ssize_t n=recvfrom(capture,frame,sizeof(frame),MSG_TRUNC,(void *)&from,&size);
             if (n<0) {ret=-errno;break;}
@@ -393,14 +505,26 @@ int main(int argc,char **argv) {
                     fprintf(stderr,"relay: source MAC differs from native interface; --rewrite-source is explicit and changes protocol identity\n");
                 ignored++;continue;
             }
+            if (follow) {
+                ret=follow_channel(&channel,&c,query_channel,set_monitor_channel);
+                if (ret<0) {channel_error=true;break;}
+                if (ret==1) {
+                    freq=channel.freq;channel_dropped++;
+                    ret=drain_capture(capture,&channel_dropped);if (ret) {channel_error=true;break;}
+                    printf("{\"event\":\"channel_synced\",\"freq\":%u,\"changes\":%u,\"evidence\":\"command_accepted_sta_readback\"}\n",freq,channel.changes);fflush(stdout);
+                    continue;
+                }
+            }
             ret=use_raw?raw_tx(&c,freq,frame,length,(int)timeout):action_tx(&c,freq,frame,length,(int)timeout);
+            c.frame=NULL;
             if (ret) {if (use_raw) raw_failed++;else action_failed++;}
             else {if (use_raw) raw_completed++;else action_completed++;}
             if (ret) {failed++;fprintf(stderr,"{\"event\":\"tx_error\",\"errno\":%d}\n",-ret);} else sent++;
         }
         close(capture);
         printf("{\"event\":\"relay_summary\",\"completed\":%u,\"failed\":%u,\"ignored\":%u,\"source_mismatch\":%u,\"action_completed\":%u,\"raw_completed\":%u,\"action_failed\":%u,\"raw_failed\":%u}\n",sent,failed,ignored,source_mismatch,action_completed,raw_completed,action_failed,raw_failed);
-        ret=failed?-EIO:sent?0:ret?ret:-ENODATA;
+        if (follow) printf("{\"event\":\"channel_summary\",\"freq\":%u,\"changes\":%u,\"queued_dropped\":%u,\"failed\":%s}\n",freq,channel.changes,channel_dropped,channel_error?"true":"false");
+        if (!channel_error) ret=failed?-EIO:sent?0:ret?ret:-ENODATA;
     }
 done:
     if (c.fd>=0) close(c.fd);
