@@ -154,7 +154,12 @@ static rx_handler_result_t wonder_rx_80211_frame(struct wonder_data *wonder, str
 	/* mac80211 now handles de-AMSDU, 802.11 -> 802.3 conversion, and netif_rx(). */
 	switch (wonder->data_version) {
 	case WONDER_DATA_80211:
-		ieee80211_rx_ni(wonder->hw, skb);
+		/* Token TX completion uses mac80211's IRQ-safe tasklet. Route RX
+		 * through the same serialization domain for this immutable mode. */
+		if (wonder_external_monitor && wonder_external_tx)
+			ieee80211_rx_irqsafe(wonder->hw, skb);
+		else
+			ieee80211_rx_ni(wonder->hw, skb);
 		break;
 	case WONDER_DATA_80211_RADIOTAP:
 		netif_receive_skb(skb);
@@ -502,7 +507,10 @@ static rx_handler_result_t wonder_rx_adhoc_handler(struct wonder_data *wonder,
 		hexdump("wonder_rx_header: ", (u8 *)hdr, sizeof(struct ieee80211_hdr_3addr));
 		hexdump("wonder_rx_frame: ", skb->data, skb->len);
 	}
-	ieee80211_rx_ni(wonder->hw, skb);
+	if (wonder_external_monitor && wonder_external_tx)
+		ieee80211_rx_irqsafe(wonder->hw, skb);
+	else
+		ieee80211_rx_ni(wonder->hw, skb);
 	return RX_HANDLER_CONSUMED;
 drop:
 	/* Drop Frames */
