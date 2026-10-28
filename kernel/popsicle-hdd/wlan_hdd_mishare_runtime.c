@@ -28,6 +28,57 @@ static DEFINE_SPINLOCK(mishare_runtime_lock);
 static struct mishare_runtime_owner *mishare_runtime_owners;
 static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
 
+unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
+                                          enum mishare_quiesce_reason reason)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    unsigned int count = 0;
+    if (!psoc || reason <= MISHARE_QUIESCE_NONE ||
+        reason > MISHARE_QUIESCE_UNAVAILABLE)
+        return 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc != psoc)
+            continue;
+        count++;
+        if (!entry->state.quiesced)
+            entry->state.quiesced = reason;
+        entry->state.blocked = true;
+        entry->state.ndi.blocked = true;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    /* Separate locks, no nested registry lock or retained owner pointer. */
+    mishare_events_quiesce_psoc(psoc);
+    mishare_radio_quiesce_psoc(psoc);
+    return count;
+}
+
+bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner)
+{
+    struct mishare_runtime_owner *entry;
+    struct wlan_objmgr_psoc *psoc;
+    unsigned long flags;
+    bool allowed = false;
+    if (!vdev || !owner)
+        return false;
+    psoc = wlan_vdev_get_psoc(vdev);
+    if (!mishare_runtime_platform_available(psoc)) {
+        mishare_runtime_quiesce_psoc(psoc, MISHARE_QUIESCE_UNAVAILABLE);
+        return false;
+    }
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner || entry->psoc != psoc || entry->vdev != vdev)
+            continue;
+        allowed = !entry->state.blocked && !entry->state.ndi.blocked &&
+                  !entry->state.quiesced && !entry->state.draining;
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return allowed;
+}
+
 void mishare_runtime_allocated(struct wlan_objmgr_vdev *vdev)
 {
     struct mishare_runtime_owner *entry;
@@ -98,7 +149,8 @@ void mishare_runtime_freed(struct wlan_objmgr_psoc *psoc, unsigned long owner_to
         if (entry->psoc == psoc && (unsigned long)entry == owner_token &&
             entry->state.allocated && !entry->state.freed) {
             entry->state.freed = true;
-            entry->state.blocked = false;
+            if (!entry->state.quiesced)
+                entry->state.blocked = false;
             break;
         }
     }
@@ -213,6 +265,8 @@ int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
     psoc = wlan_pdev_get_psoc(pdev);
     if (!psoc)
         return -ENODEV;
+    if (!mishare_runtime_platform_available(psoc))
+        return -ESHUTDOWN;
     entry = kzalloc(sizeof(*entry), GFP_KERNEL);
     if (!entry)
         return -ENOMEM;
@@ -220,6 +274,11 @@ int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
     ether_addr_copy(entry->mac, mac);
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (other = mishare_runtime_owners; other; other = other->next) {
+        if (other->psoc == psoc && other->state.quiesced) {
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            kfree(entry);
+            return -EUCLEAN;
+        }
         if (other->psoc == psoc && ether_addr_equal(other->mac, mac)) {
             spin_unlock_irqrestore(&mishare_runtime_lock, flags);
             kfree(entry);

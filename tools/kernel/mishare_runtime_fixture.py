@@ -93,6 +93,7 @@ int mishare_ndi_pe_post(struct wlan_objmgr_vdev *v,void *o,bool c,unsigned long 
 int mishare_ndi_channel_post(struct wlan_objmgr_vdev *v,void *o,unsigned long k,u32 f) { (void)v;(void)o;(void)k;(void)f;assert(0);return -EIO; }
 /* END_CHANNEL_TRANSPORT_STUBS */
 /* RADIO_TRANSPORT_STUBS */
+void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *p) { (void)p; }
 int mishare_radio_open(struct wlan_objmgr_vdev *v,struct mishare_event_owner *e,void *o,unsigned long k,u32 f,struct mishare_radio **r) { (void)v;(void)e;(void)o;(void)k;(void)f;(void)r;assert(0);return -EIO; }
 int mishare_radio_snapshot(struct mishare_radio *r,struct mishare_radio_status *s) { (void)r;(void)s;assert(0);return -EIO; }
 int mishare_radio_drain(struct mishare_radio **r,struct mishare_radio_status *s) { (void)s;assert(r && !*r);return 0; }
@@ -108,6 +109,10 @@ int mishare_ndi_wma_unbind(struct wlan_objmgr_vdev *v) { (void)v;assert(0);retur
 int mishare_ndi_self_peer_create(struct wlan_objmgr_vdev *v,bool *a) { (void)v;(void)a;assert(0);return -EIO; }
 int mishare_ndi_self_peer_delete(struct wlan_objmgr_vdev *v,void *c) { (void)v;(void)c;assert(0);return -EIO; }
 /* END_CONTEXT_TRANSPORT_STUBS */
+/* PLATFORM_AVAILABLE_STUB */
+static bool platform_up = true;
+bool mishare_runtime_platform_available(struct wlan_objmgr_psoc *p) { return p && platform_up; }
+/* END_PLATFORM_AVAILABLE_STUB */
 #include "wlan_hdd_mishare_runtime.c"
 /* Native final free is executed below; component teardown / parent list / lock
  * primitives are models. No component handler, native lock or scheduler runs. */

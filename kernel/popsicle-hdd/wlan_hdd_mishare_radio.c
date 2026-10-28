@@ -37,6 +37,24 @@ struct radio_request {
 static DEFINE_SPINLOCK(mishare_radio_lock);
 static struct mishare_radio *mishare_radios;
 
+void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_radio *r;
+    unsigned long flags;
+    if (!psoc)
+        return;
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    for (r = mishare_radios; r; r = r->next) {
+        if (wlan_vdev_get_psoc(r->vdev) != psoc)
+            continue;
+        r->state.closing = true;
+        r->state.phase = MISHARE_RADIO_BLOCKED;
+        if (!r->state.error)
+            r->state.error = -ESHUTDOWN;
+    }
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+}
+
 static void radio_block(struct mishare_radio *r, int error)
 {
     unsigned long flags;
@@ -69,6 +87,8 @@ static struct mishare_radio *radio_get(struct vdev_mlme_obj *mlme)
         }
     }
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    if (r && !mishare_runtime_work_allowed(r->vdev, r->owner))
+        radio_block(r, -ESHUTDOWN);
     return r;
 }
 static void radio_put(struct mishare_radio *r)
@@ -411,10 +431,13 @@ static int radio_execute(struct radio_request *req)
 {
     struct mishare_radio *r = req->radio;
     struct mishare_vdev_txn txn;
-    struct vdev_mlme_obj *m = wlan_vdev_mlme_get_cmpt_obj(r->vdev);
+    struct vdev_mlme_obj *m;
     struct mishare_radio_status s;
     unsigned long flags;
     int ret;
+    if (!mishare_runtime_work_allowed(r->vdev, r->owner))
+        return -ESHUTDOWN;
+    m = wlan_vdev_mlme_get_cmpt_obj(r->vdev);
     mishare_radio_snapshot(r, &s);
     if (!m || s.phase == MISHARE_RADIO_BLOCKED)
         return -EUCLEAN;

@@ -9,15 +9,33 @@ struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
 struct wireless_dev;
 struct mishare_runtime_owner;
+enum mishare_quiesce_reason {
+    MISHARE_QUIESCE_NONE,
+    MISHARE_QUIESCE_SSR,
+    MISHARE_QUIESCE_REMOVE,
+    MISHARE_QUIESCE_MODULE_STOP,
+    MISHARE_QUIESCE_UNAVAILABLE,
+};
 struct mishare_runtime_status {
     bool allocated;
     bool freed;
     bool draining;
     bool blocked;
+    enum mishare_quiesce_reason quiesced;
     int create_error;
     struct mishare_ndi_status ndi;
     struct mishare_radio_status radio;
 };
+/* Close admission permanently for existing owners of this exact psoc.
+ * Nonblocking and allocation-free; native shutdown must still drain scheduler,
+ * IRQ, timers and in-flight work. This is NOT a quiescence or firmware barrier.
+ * Never synthesizes DOWN/delete/free or clears quarantine after reinit.
+ * Returns affected owners (including already fenced ones). No reset API.
+ */
+unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
+                                          enum mishare_quiesce_reason reason);
+/* Native HDD health check; not a reference, exclusive transition or lease. */
+bool mishare_runtime_platform_available(struct wlan_objmgr_psoc *psoc);
 /* Host-only raw object-manager factory. No SME self-peer/post-setup or WMI.
  * Caller owns RTNL, an exclusive parent psoc transition, and a live netdev/DP
  * interface matching mac throughout creation AND until destroy returns 0.

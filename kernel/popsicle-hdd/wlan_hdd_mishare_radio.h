@@ -3,6 +3,9 @@
 #define WLAN_HDD_MISHARE_RADIO_H
 #include <linux/types.h>
 struct wlan_objmgr_vdev;
+struct wlan_objmgr_psoc;
+/* Close matching controllers; no PM cleanup, free or synthetic completion. */
+void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc);
 struct mishare_event_owner;
 struct mishare_radio;
 enum mishare_radio_phase {

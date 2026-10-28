@@ -17,6 +17,8 @@ TABLE_CALLBACKS = {
 }
 
 def remove_radio_additions(text):
+    from mishare_shutdown_origins import remove_shutdown_additions
+    text = remove_shutdown_additions(text)
     begin='/* MISHARE_BEGIN:radio_table */\n'
     end='\n/* MISHARE_END:radio_table */'
     if begin in text:

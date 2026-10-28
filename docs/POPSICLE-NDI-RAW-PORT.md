@@ -514,3 +514,26 @@ WLAN 574 条版本记录无不匹配、未解决依赖为空，7 项选定结构
 SM/WMA 已运行、固件接受 START 或无线可用。默认调用门仍关闭，手机未加载。
 启用前优先补 SSR/remove/隔离恢复与并发/硬件模式资源预留；RAW TX/RX、Wonder
 回调和 Apple 端到端传输仍待实现与实测。
+
+## 0023：SSR/remove/module-stop 的旧 owner 准入栅栏
+
+HDD 原生 SSR notifier、remove 和实际模块停止前分别标记匹配 psoc 的全部 owned
+owner。首次原因保留，重复通知不会重置它；runtime/NDI 标记 blocked，radio 标记
+BLOCKED/closing，事务标记 QUARANTINED 并保留 pending、serial、submitted/replied
+证据。不发送 STOP/DOWN/DELETE，不清 PM 锁，也不释放引用或发布完成事件。
+
+显式创建先验证实际 HDD 上下文、psoc 身份、ENABLED 状态与 recovery/unload/bad/
+module-stop 标记。PE、频道、START 参数准备和 radio MC 请求在执行前再次验证
+引用中的 VDEV 与不透明 owner token；被栅栏阻止的请求只退还自身队列资源及
+引用，不能访问 PE/WMA 准备上下文或提交新启停命令。回调和事件 registry 同样
+保持隔离；重初始化、迟到 free 通知和相同 psoc 的另一个 MAC 都不能复活旧 owner。
+
+这是非阻塞的“关闭准入”，不是已执行任务、IRQ、timer、native scheduler 或固件
+的静止屏障。读检查与实际执行之间仍需原生停机同步；完整在途工作屏障、父资源
+最终回收、替换 psoc/地址重用、活动 owner 下安全卸载与模块文本寿命仍未完成。
+因此默认 HDD/Wonder 调用门继续关闭，也不以此声明 SSR 恢复完成。
+
+新增 Actions-only 回归将执行生产 owner/radio/event registry、原生健康判断和精确
+停机调用插入，覆盖 28 组阶段/flush 组合、同 psoc 新 MAC 拒绝、错误 psoc/owner、
+重复停机/重初始化、迟到响应与线程锁竞争。完整 HDD shutdown、native SM/WMA
+后处理、scheduler/IRQ/对象/DP 同步仍是模型边界。编译与实机验证结果另行记录。

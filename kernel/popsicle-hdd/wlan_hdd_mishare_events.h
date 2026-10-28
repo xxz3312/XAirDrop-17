@@ -5,6 +5,8 @@
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
 struct mishare_event_owner;
+/* Poison all matching transactions without clearing pending/reply evidence. */
+void mishare_events_quiesce_psoc(struct wlan_objmgr_psoc *psoc);
 
 enum mishare_event_origin {
     MISHARE_EVENT_FIRMWARE,

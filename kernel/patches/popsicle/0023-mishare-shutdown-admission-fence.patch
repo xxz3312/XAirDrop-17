@@ -1,0 +1,108 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -30,6 +30,18 @@
+ #include "osif_sync.h"
+ #include "wlan_hdd_main.h"
+ #include "wlan_hdd_mishare_backend.h"
++
++/* MISHARE_SHUTDOWN_BEGIN:platform */
++#include "wlan_hdd_mishare_runtime.h"
++bool mishare_runtime_platform_available(struct wlan_objmgr_psoc *psoc)
++{
++ struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
++ return psoc && hdd_ctx && hdd_ctx->psoc == psoc &&
++        hdd_ctx->driver_status == DRIVER_MODULES_ENABLED &&
++        !cds_is_driver_recovering() && !cds_is_driver_unloading() &&
++        !cds_is_driver_in_bad_state() && !cds_is_driver_state_module_stop();
++}
++/* MISHARE_SHUTDOWN_END:platform */
+ #include "wlan_hdd_power.h"
+ #include "wlan_logging_sock_svc.h"
+ #include "wma_api.h"
+@@ -310,6 +322,10 @@
+ {
+ 	hdd_enter();
+
++
++/* MISHARE_SHUTDOWN_BEGIN:ssr */
++	mishare_runtime_quiesce_psoc(hdd_ctx->psoc, MISHARE_QUIESCE_SSR);
++/* MISHARE_SHUTDOWN_END:ssr */
+ 	cds_shutdown_notifier_call();
+ 	cds_shutdown_notifier_purge();
+
+@@ -1029,6 +1045,10 @@
+ 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
+ 		QWLAN_VERSIONSTR);
+
++
++/* MISHARE_SHUTDOWN_BEGIN:remove */
++	mishare_runtime_quiesce_psoc(hdd_ctx->psoc, MISHARE_QUIESCE_REMOVE);
++/* MISHARE_SHUTDOWN_END:remove */
+ 	/* Synchronous component unbind before any HDD context teardown. */
+ 	mishare_wonder_backend_unregister(hdd_ctx);
+ 	qdf_rtpm_sync_resume();
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -29,6 +29,10 @@
+ #include "cfg_ucfg_api.h"
+ #include <wlan_hdd_includes.h>
+ #include "wlan_hdd_mishare_host.h"
++
++/* MISHARE_SHUTDOWN_BEGIN:main_include */
++#include "wlan_hdd_mishare_runtime.h"
++/* MISHARE_SHUTDOWN_END:main_include */
+ #include <cds_api.h>
+ #include <cds_sched.h>
+ #include <linux/cpu.h>
+@@ -18445,6 +18449,10 @@
+ 		}
+ 	}
+
++/* MISHARE_SHUTDOWN_BEGIN:module_stop */
++	mishare_runtime_quiesce_psoc(hdd_ctx->psoc, MISHARE_QUIESCE_MODULE_STOP);
++/* MISHARE_SHUTDOWN_END:module_stop */
++
+ 	ucfg_dp_bus_bw_compute_timer_stop(hdd_ctx->psoc);
+ 	hdd_deregister_policy_manager_callback(hdd_ctx->psoc);
+
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -5292,6 +5292,12 @@
+ 	id = wlan_vdev_get_id(req->vdev);
+ 	owner = req->owner;
+ 	create = req->create;
++
++/* MISHARE_SHUTDOWN_BEGIN:pe */
++	if (!flushed && !mishare_runtime_work_allowed(req->vdev, req->owner))
++		ret = -ESHUTDOWN;
++	else
++/* MISHARE_SHUTDOWN_END:pe */
+ 	ret = flushed ? -ECANCELED : mishare_pe_execute(req, &cookie);
+ 	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_LEGACY_MAC_ID);
+ 	qdf_mem_free(req);
+@@ -5467,6 +5473,12 @@
+ 	id = wlan_vdev_get_id(req->vdev);
+ 	owner = req->owner;
+ 	freq = req->freq;
++
++/* MISHARE_SHUTDOWN_BEGIN:channel */
++	if (!flushed && !mishare_runtime_work_allowed(req->vdev, req->owner))
++		ret = -ESHUTDOWN;
++	else
++/* MISHARE_SHUTDOWN_END:channel */
+ 	ret = flushed ? -ECANCELED : mishare_channel_execute(req);
+ 	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_LEGACY_MAC_ID);
+ 	qdf_mem_free(req);
+@@ -5562,6 +5574,12 @@
+ 	id = wlan_vdev_get_id(req->channel.vdev);
+ 	owner = req->channel.owner;
+ 	freq = req->channel.freq;
++
++/* MISHARE_SHUTDOWN_BEGIN:start_plan */
++	if (!flushed && !mishare_runtime_work_allowed(req->channel.vdev, req->channel.owner))
++		ret = -ESHUTDOWN;
++	else
++/* MISHARE_SHUTDOWN_END:start_plan */
+ 	ret = flushed ? -ECANCELED : mishare_start_plan_execute(req, &summary);
+ 	wlan_objmgr_vdev_release_ref(req->channel.vdev, WLAN_LEGACY_MAC_ID);
+ 	qdf_mem_free(req);

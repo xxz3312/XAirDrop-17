@@ -1,8 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef WLAN_HDD_MISHARE_NDI_H
 #define WLAN_HDD_MISHARE_NDI_H
+/* Admission check for referenced MC work. Identity is matched in the registry;
+ * owner is an opaque token, never dereferenced. Not an in-flight work barrier.
+ */
 #include <linux/types.h>
 struct wlan_objmgr_vdev;
+bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner);
 struct wlan_objmgr_psoc;
 struct vdev_mlme_obj;
 struct vdev_create_params;

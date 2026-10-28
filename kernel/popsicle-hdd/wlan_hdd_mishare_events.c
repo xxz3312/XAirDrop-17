@@ -17,6 +17,19 @@ struct mishare_event_owner {
 static DEFINE_SPINLOCK(mishare_events_lock);
 static struct mishare_event_owner *mishare_event_owners;
 
+void mishare_events_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_event_owner *entry;
+    unsigned long flags;
+    if (!psoc)
+        return;
+    spin_lock_irqsave(&mishare_events_lock, flags);
+    for (entry = mishare_event_owners; entry; entry = entry->next)
+        if (entry->psoc == psoc)
+            entry->txn.state = MISHARE_TXN_QUARANTINED;
+    spin_unlock_irqrestore(&mishare_events_lock, flags);
+}
+
 int mishare_events_bind(struct wlan_objmgr_vdev *vdev,
                         struct mishare_event_owner **owner)
 {
