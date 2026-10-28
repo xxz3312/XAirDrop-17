@@ -1,0 +1,31 @@
+--- a/qcacld-3.0/core/wma/src/wma_data.c
++++ b/qcacld-3.0/core/wma/src/wma_data.c
+@@ -2256,6 +2256,8 @@
+ 	return mlo_link_agnostic;
+ }
+ 
++#include "wma_mishare_raw_tx.h"
++
+ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
+ 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
+ 			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c
+@@ -24610,7 +24610,17 @@
+ 	[QCA_WLAN_VENDOR_ATTR_FEATURE_CONFIG_DATA_OP] = {.type = NLA_U8},
+ };
+ 
++#include "wlan_hdd_mishare_raw_tx.h"
++
+ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
++	{
++		.info.vendor_id = MISHARE_RAW_VENDOR_ID,
++		.info.subcmd = MISHARE_RAW_SUBCMD,
++		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
++			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
++		.doit = mishare_raw_vendor_tx,
++		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
++	},
+ 	{
+ 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+ 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DFS_CAPABILITY,

@@ -73,6 +73,14 @@ int main(void) {
     assert(consume(&c,both,cookie.n+m.n,NL80211_CMD_FRAME,&reply)==1);
     assert(attr(reply,NL80211_ATTR_COOKIE,&a)==1);c.cookie=u64(a.p);c.have_cookie=true;
     assert(matching_status(&c,&ack) && ack);
+    unsigned char raw[34]={0x88};memset(raw+4,0xff,6);memcpy(raw+10,mac,6);raw[26]=0xaa;
+    assert(!prepare_raw_frame(raw,sizeof(raw),mac,false));
+    raw[10]++;assert(prepare_raw_frame(raw,sizeof(raw),mac,false)==-EADDRNOTAVAIL);
+    assert(!prepare_raw_frame(raw,sizeof(raw),mac,true));
+    raw[1]=0x40;assert(prepare_raw_frame(raw,sizeof(raw),mac,false)==-EOPNOTSUPP);raw[1]=0;
+    raw[24]=0x80;assert(prepare_raw_frame(raw,sizeof(raw),mac,false)==-EOPNOTSUPP);raw[24]=0;
+    unsigned char wire[MISHARE_RAW_HEADER]={0};mishare_raw_set_word(wire,1);mishare_raw_set_word(wire+8,sizeof(raw));
+    assert(mishare_raw_word(wire)==1 && mishare_raw_word(wire+8)==sizeof(raw));
     unsigned parsed;assert(!number("5180",2300,5900,&parsed) && parsed==5180);
     assert(number("5180x",2300,5900,&parsed)==-EINVAL);
     puts("ACTION_TX_PROTOCOL_TEST_PASS_ONLY");return 0;

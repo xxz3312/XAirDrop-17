@@ -80,10 +80,16 @@ def setup(work):
             run(check + ['--check', patch])
             run(check + [patch])
 
+    for header in ['mishare_raw_protocol.h', 'wma_mishare_raw_tx.h']:
+        shutil.copy2(REPO / 'kernel/popsicle-hdd' / header,
+                     work / 'wlan/qcacld-3.0/core/wma/inc' / header)
+
     # Dormant host helper is compiled into the real target WLAN, not a new module.
     for source, destination in [
         ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc'),
         ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc'),
+        ('mishare_raw_protocol.h', 'inc'),
+        ('wlan_hdd_mishare_raw_tx.h', 'inc'),
         ('wlan_hdd_mishare_txn.c', 'src'), ('wlan_hdd_mishare_txn.h', 'inc'),
         ('wlan_hdd_mishare_events.c', 'src'), ('wlan_hdd_mishare_events.h', 'inc'),
         ('wlan_hdd_mishare_commands.c', 'src'), ('wlan_hdd_mishare_commands.h', 'inc'),
@@ -193,7 +199,7 @@ def check_mishare_host_symbols(work, module, report_name):
               'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
               'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
     names += ['mishare_runtime_reclaim_batch']
-    names += ['mishare_runtime_reclaim_final']
+    names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
