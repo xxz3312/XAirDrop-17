@@ -461,6 +461,19 @@ static int feedback_relay(struct client *c,const char *listen,const unsigned cha
     if (getrandom(&owner,sizeof(owner),0)!=(ssize_t)sizeof(owner) || !owner) return -EIO;
     int ret=connect_nl(&q);if (ret) goto done;
     q.ifindex=if_nametoindex(listen);if (!q.ifindex) {ret=-ENODEV;goto done;}
+    /* Validate the Wonder endpoint/claim before any SET_WIPHY, so a mistaken
+     * --listen cannot configure an unrelated native interface. */
+    unsigned char initial_frame[WONDER_FB_MAX];size_t initial_length=0;uint64_t initial_token=0;
+    ret=feedback_pull(&q,owner,&initial_token,initial_frame,&initial_length);
+    if (ret && ret!=-ENODATA) goto done;
+    claimed=true;
+    if (!ret) {
+        ret=feedback_ack(&q,WONDER_FB_COMPLETE,owner,initial_token,WONDER_FB_FAILED);
+        if (ret) goto done;
+        rejected++;
+    }
+    ret=set_monitor_channel(&q,q.ifindex,freq);if (ret) goto done;
+    unsigned software_freq=freq;
     struct channel_follow channel={.tx=c->ifindex};
     if (follow) {
         channel.monitor=if_nametoindex(monitor);if (!channel.monitor) {ret=-ENODEV;goto done;}
@@ -481,6 +494,20 @@ static int feedback_relay(struct client *c,const char *listen,const unsigned cha
         ret=feedback_pull(&q,owner,&token,frame,&length);
         if (!ret || ret==-ENODATA) {
             claimed=true;
+            if (software_freq!=freq) {
+                /* This PULL has revalidated the endpoint. Drop any frame
+                 * taken under the previous software channel before tuning. */
+                if (!ret) {
+                    ret=feedback_ack(&q,WONDER_FB_COMPLETE,owner,token,WONDER_FB_FAILED);
+                    if (ret) break;
+                    rejected++;reported++;
+                }
+                ret=feedback_ack(&q,WONDER_FB_RELEASE,owner,0,0);if (ret) break;
+                claimed=false;resets++;
+                ret=set_monitor_channel(&q,q.ifindex,freq);if (ret) break;
+                software_freq=freq;
+                continue;
+            }
             if (!ready) {puts("{\"event\":\"relay_ready\",\"mode\":\"token_feedback\"}");fflush(stdout);ready=true;}
         }
         if (ret==-ENODATA) {poll(NULL,0,100);continue;}
