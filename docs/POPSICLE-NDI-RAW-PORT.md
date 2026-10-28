@@ -916,3 +916,24 @@ WMI 或 timer，也不重开窗口。批量回收优先分派到这个纯记账�
 QDF/DP/timer、组件析构及父引用寿命仍为模型，完整父资源协调与实机仍未验证。
 历史批量函数负对照改为不可变源码常量（同一已核对 SHA），便于独立扩展分派，
 仍要求旧优先级实现在既有期望结果断言失败。
+
+
+### 0031 构建验证结果
+
+[Actions 40724040219](https://github.com/xxz3312/XAirDrop-17/actions/runs/40724040219)
+在源提交 `f2be7bdf6bf2c444c8eac7896521b134d0a056d3` 全部通过：44 项 Python
+检查、26 组原生 fixture、完整 WLAN 编译及严格链接。84 个要求符号存在，
+574 条版本记录无不匹配、未解决依赖为空，7 项选定结构布局 MATCH。
+工具链与 bindgen 缓存命中，新增最终记账回归在 ASan/UBSan 下通过。
+
+紧凑 ZIP 已独立下载并核对大小与 SHA-256；重新生成的 final fixture、三个选定
+原生文件与三个生产文件哈希匹配 CI。选定原生源码保持原样，历史批量函数的
+不可变源码常量哈希一致，负对照仍被既有期望结果断言拒绝。完整诊断大包仅
+记录 GitHub 哈希，未独立下载且不可安装。
+详见 [host 最终记账报告](research/popsicle-host-final-bookkeeping-build-pass.json)。
+
+正常 host、普通 NDI 与已正常清理 prepared 上下文，均在真实 final-free 后才
+释放 owner；直接和批量分派没有再次触发 native 删除/DP/WMI/timer。组件 veto、
+缺失接受来源、当前持有关系、错误原因和永久错误保留。它不执行 prepared/
+STARTed 恢复，也未实现父资源协调、自动恢复、安全活动卸载、地址复用或手机
+验证；默认无线入口保持关闭。

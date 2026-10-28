@@ -1,0 +1,149 @@
+{
+  "status": "ORDINARY_HOST_FINAL_BOOKKEEPING_OFFLINE_PASS_ONLY",
+  "commit": "f2be7bdf6bf2c444c8eac7896521b134d0a056d3",
+  "run_id": 40724040219,
+  "job_id": 122942361825,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40724040219",
+  "validation_artifact": {
+    "id": 12833925193,
+    "bytes": 52942,
+    "sha256": "92aef7dce7f803bb253e7268f42e64c5bb06e219bed31e7a07dbd15ea48376a3",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12833107358,
+    "bytes": 337865961,
+    "github_reported_sha256": "4b1649933fe304508d592fba65e9be4cb46c59283b5931822168a5fb8e663006",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "final_fixture": {
+    "status": "MISHARE_HOST_FINAL_BOOKKEEPING_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "8d22b6b7f2cb261795abf5505fb569781228ddcffe86fea1cd1b2ff6fb79339b",
+    "native_sha256": {
+      "qcacld-3.0/core/cds/src/cds_api.c": "6142525bddf87f304431883bdad6e003acc14e9f5d188cec8bcb1937c411f155",
+      "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "28ada746849b99e8543b7f7f061da6faf099b43a8cf30b771c919108a7571a93",
+      "qca-wifi-host-cmn/init_deinit/dispatcher/src/dispatcher_init_deinit.c": "f4474da31e77310e12a7d27ac1ef534ee063d0d9979dd82655996066f951fc12"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "8576fdef3eba46312388d0d68ef83e350a53bc15814b4174da66bf0b3ed28b4c",
+      "wlan_hdd_mishare_runtime.h": "52715116bb2b5b2d43542576666918cb0c8231eddddfe18148ad2ad871552597",
+      "wlan_hdd_mishare_ndi.h": "19380b8ef59b481699880cc04ad3f0be76340cb01df18b1450773c5b8152226b"
+    },
+    "checks": [
+      "accepted host delete recorded only after logical delete and event/reference surrender",
+      "pure host, never-prepared NDI and already normally cleaned prepared context wait for actual final-free",
+      "direct and batch retirement after window closure perform no native cleanup or handle getters",
+      "unknown and freed opaque tokens compared before dereference",
+      "missing acceptance, active handles, constructor NULL provenance and component veto retain diagnosis",
+      "SSR first reason, MC drain and sticky completion/accounting/recovery errors required"
+    ],
+    "limitations": "Executes production final-bookkeeping API/controller and native object-manager final-free under ASan/UBSan. VDEV/component allocation/destruction, QDF/DP/timer and parent lifetimes remain models. Prepared history is allowed only after ordinary WMA/peer/legacy cleanup already finished; this is not prepared/STARTed recovery. Caller must retain exact parents until actual VDEV final-free and serialize all owner/teardown calls. No native deletion or firmware operation is performed by the new API. Address reuse/ABA, module-text lifetime, automatic parent coordinator, safe active-owner unload and phone operation remain unverified; backend stays disabled."
+  },
+  "batch_negative_control": {
+    "previous_batch_function_sha256": "b9994529bd2d39c6498a5f6ab078085f1401971b25ce6fa846c5d4702214f878",
+    "exact_historical_batch_function_rejected_by_new_assertion": true
+  },
+  "native_fixtures": {
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-batch-fixture.json": "MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-completed-fixture.json": "MISHARE_COMPLETED_NDI_HOST_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-completion-fixture.json": "MISHARE_NDI_COMPLETION_INTEGRITY_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-final-fixture.json": "MISHARE_HOST_FINAL_BOOKKEEPING_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-parent-fixture.json": "MISHARE_PARENT_TEARDOWN_REVOKE_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-recovery-fixture.json": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-work-fixture.json": "MISHARE_OWNED_MC_DRAIN_RECLAIM_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY"
+  },
+  "independent_verification": {
+    "generated_final_fixture_hash_matches": true,
+    "three_selected_native_and_three_production_file_hashes_match": true,
+    "three_selected_native_sources_unchanged_from_stage_0030": true,
+    "immutable_historical_batch_function_hash_matches": true
+  },
+  "python_tests": 44,
+  "required_host_symbols": 84,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "0c83c6f87b5588e3bab5dd9d69cc6b0794c8ab247f6232f0ea634954c30dfe3c",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "accepted_host_delete_provenance_recorded": true,
+  "opaque_owner_token_matched_before_dereference": true,
+  "actual_vdev_final_free_required_before_owner_retirement": true,
+  "new_api_calls_native_delete_dp_timer_wmi_or_handle_getters": false,
+  "closed_window_blocks_metadata_only_retirement": false,
+  "caller_must_retain_parents_until_actual_free": true,
+  "normal_cleaned_prepared_history_bookkeeping_supported": true,
+  "component_veto_after_accepted_delete_records_sticky_error": true,
+  "batch_routes_accepted_host_delete_to_final_bookkeeping": true,
+  "prepared_or_started_recovery_implemented": false,
+  "recovery_parent_lifetime_coordinator_implemented": false,
+  "automatic_recovery_caller": false,
+  "full_native_dp_detach_executed_in_fixture": false,
+  "full_hdd_shutdown_executed_in_fixture": false,
+  "safe_active_owner_unload_certified": false,
+  "owner_address_reuse_aba_certified": false,
+  "runtime_backend_caller": false,
+  "phone_driver_loaded": false,
+  "airdrop_connected": false,
+  "remaining": [
+    "outer HDD parent-lifetime coordination and explicit async pause across reclaim polls",
+    "prepared/STARTed NDI WMA/peer/PE/PM and unknown/partial resource recovery",
+    "host drains without accepted-delete provenance or with sticky veto/errors",
+    "late ordinary DP completion requiring fresh qualified window; no automatic requalification",
+    "safe active-owner unload and callback/module-text lifetime",
+    "replacement psoc/owner address reuse and ABA handling",
+    "concurrency/hardware-mode reservation and channel switching",
+    "RAW TX/native RX/Wonder callbacks",
+    "phone firmware acceptance and Apple bidirectional transfers"
+  ]
+}
