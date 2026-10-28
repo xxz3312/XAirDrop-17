@@ -1,0 +1,132 @@
+{
+  "status": "OWNED_RADIO_LIFECYCLE_OFFLINE_PASS_ONLY",
+  "commit": "fa02b5dfb7d4e394b48b22e389b0c6fbcd206b70",
+  "run_id": 40582653523,
+  "job_id": 122465853546,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40582653523",
+  "validation_artifact": {
+    "id": 12769424704,
+    "bytes": 39851,
+    "sha256": "457a61d42017fe24bd9e533fc03916742c6d865579e9fba41b542c2f9e60d8a3",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12770971027,
+    "bytes": 337825244,
+    "github_reported_sha256": "8680a6bc439f3000b778ef265db6e61eb185889b96e0c8b9f6ef248a289e2e5b",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "radio_fixture": {
+    "status": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "99426e5142baba67c3330fff6dde14eeaaae389f1baace4f376f0f1e6d44b9af",
+    "native_sha256": {
+      "qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_tx_ops.c": "cbe9695fb2b557cd67a0d4bbd25300c9a85a874507d9534ee3086aa57709ad83",
+      "qca-wifi-host-cmn/target_if/mlme/vdev_mgr/src/target_if_vdev_mgr_rx_ops.c": "e76f95e9af575b48ea3d6191f9107894b9dafbc86e8e170660565d15e73588b5",
+      "qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c": "ebce6e38ddcc3d3730115b570fcd6e524a56141ffcb5ef7bd415d19c012c2fdf",
+      "qcacld-3.0/core/wma/src/wma_dev_if.c": "4ff3c3c0f6e10d777b138c88fca81a210a29b5688b2b467882f34789e792c6f6",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "925f135ec416f293363bd0d0e7d3f39991e15849617926f150507b2d4d6609bc",
+      "qcacld-3.0/core/wma/src/wma_utils.c": "c5ebc724acf6b39dc13ee8c55cae361b58c54e1ab0bafc83460b23a40f7623ad"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "f23f910c65308b1e56e22d05368705c4be95b36cd3466c912d08cce40fbc35a0",
+      "wlan_hdd_mishare_runtime.h": "8787e5d8333b458aaa87e97a9429957dbaa0786ef067de8416ee2fea38d7daab",
+      "wlan_hdd_mishare_ndi.h": "f252747454907406276e9e033327843b63245e09b964efe2a09d533b35f54081",
+      "wlan_hdd_mishare_radio.c": "aae14ab8b16755922bd9733de2e87011a93fdc8f6ff8f665463649ff52921cfc",
+      "wlan_hdd_mishare_radio.h": "a902d725c531a080814254023e7c2acbb2ebe6fb9313ca5dfca85009f3836a85",
+      "wlan_hdd_mishare_radio_mlme.h": "10423cc042ae3d061efe316733d1d582ddc4b287f692beca42757d9962ad33c3",
+      "wlan_hdd_mishare_events.c": "efe2f13b636e2a643a19c305e6e0886e3649d754a75044ce4c06f69ec40ec114",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3"
+    },
+    "native_sm_source_sha256": "81ed7e217c9e8ba849c2cd13b6f95f708acd0b8e1abc1dc52454a6959f504649",
+    "checks": [
+      "runtime START requires completed owned plan and binds an extra VDEV reference",
+      "complete native target-if START/STOP/DOWN TX and START/STOP response handlers execute",
+      "real registry handles early replies before submission returns",
+      "native NDI host-only UP validates exact context and releases START PM without WMI UP",
+      "STOP response alone never permits PE/peer/VDEV/DP deletion",
+      "accepted DOWN and native PM release precede final INIT and teardown",
+      "MC request flush/cancel/queue/allocation/reference failures",
+      "START/STOP timeout and generic native send error quarantine",
+      "DOWN send failure publishes no DOWN_COMPLETE",
+      "response copy/queue/worker references prevent early parent release",
+      "native nested callbacks use the non-locking SM API only while model SM lock is held",
+      "unbound dedicated callbacks remain unsupported"
+    ],
+    "limitations": "Production runtime/radio/registry/transaction, complete native target-if TX/RX functions, owned WMA wrappers, native monitor NDI UP helper and native PM helper execute under ASan/UBSan. Native vdev core send wrappers, scheduler/SM/IRQ primitives, full WMA START postprocessing, TLV extraction, policy/regulatory, object manager and DP are models. The full native SM is compiled in WLAN, not executed here. Real radio, concurrency reservation, firmware acceptance, data queues, SSR/remove recovery and phone loading are unverified. No default HDD/Wonder runtime caller is enabled."
+  },
+  "native_fixtures": {
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY"
+  },
+  "independent_verification": {
+    "generated_fixture_hash_matches": true,
+    "six_native_and_eight_production_file_hashes_match": true,
+    "native_sm_unchanged_from_locked_target": true,
+    "native_sm_source_sha256": "81ed7e217c9e8ba849c2cd13b6f95f708acd0b8e1abc1dc52454a6959f504649"
+  },
+  "python_tests": 44,
+  "required_host_symbols": 65,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "d82962904bccd3156698a1c1d98f3a53eb7f678f6a30a6fefb55360ccf2d0e1b",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "runtime_backend_caller": false,
+  "firmware_start_submitted_on_phone": false,
+  "phone_driver_loaded": false,
+  "airdrop_connected": false,
+  "remaining": [
+    "SSR/remove and quarantine recovery before enabling a caller",
+    "concurrency/hardware mode reservation and channel switching",
+    "RAW TX/monitor/native RX and Wonder callbacks",
+    "native complete SM/WMA runtime, firmware acceptance and Apple bidirectional transfers"
+  ]
+}

@@ -492,3 +492,25 @@ START/STOP/DOWN 发送、START/STOP 响应处理、owned WMA wrapper、NDI UP �
 对象/法规/DP 和二进制 TLV 提取仍为明确的模型边界；完整 native SM 随 WLAN 编译。
 尚未进行手机加载、固件接受、硬件模式/并发租约、TX 队列、SSR/remove 或收发验证。
 默认可用性和 Wonder init 门保持关闭，不制作安装包。
+
+
+### 0022 构建验证结果
+
+[Actions 40582653523](https://github.com/xxz3312/XAirDrop-17/actions/runs/40582653523)
+在源提交 `fa02b5dfb7d4e394b48b22e389b0c6fbcd206b70` 全部通过：44 项 Python
+检查、18 组原生 fixture、完整 WLAN 编译与严格链接。65 个要求符号存在，
+WLAN 574 条版本记录无不匹配、未解决依赖为空，7 项选定结构布局 MATCH。
+工具链/bindgen 缓存命中；新增 radio 回归在 ASan/UBSan 下通过。Kbuild 已明确
+编入 `wlan_hdd_mishare_radio.o`，生产对象及最终模块均通过符号存在性检查。
+
+紧凑报告 ZIP 已独立下载并核对大小与 SHA-256；本地重新生成的 fixture、六个
+原生文件和八个生产文件哈希均与报告一致。完整原生 SM 源文件与固定目标版本
+逐字节相同，其 SHA-256 为
+`81ed7e217c9e8ba849c2cd13b6f95f708acd0b8e1abc1dc52454a6959f504649`。
+完整诊断大包只记录 GitHub 提供的哈希，未独立下载，也不可安装。
+详见 [启停生命周期报告](research/popsicle-owned-radio-lifecycle-build-pass.json)。
+
+这些证据证明 owned 启停代码和真实原生传输函数的离线接入；不证明完整原生
+SM/WMA 已运行、固件接受 START 或无线可用。默认调用门仍关闭，手机未加载。
+启用前优先补 SSR/remove/隔离恢复与并发/硬件模式资源预留；RAW TX/RX、Wonder
+回调和 Apple 端到端传输仍待实现与实测。
