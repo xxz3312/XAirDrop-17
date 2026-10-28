@@ -1,6 +1,6 @@
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-28）
 
-当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销的离线验证。
+当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收的离线验证。
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
@@ -25,20 +25,22 @@
 | 纯 host 隔离回收 | 离线验证通过 | 限从未发送固件命令的 PAS/INIT 对象；记录被跟踪 MC 排空，等实际 final-free 再释放 owner；NDI/未知发送资源拒绝回收 |
 | 早期 NDI 隔离回收 | 离线验证通过 | 限 CREATE/完整 DP attach、尚无 WMA/self-peer/PE/START；资格化 SSR 窗口内释放 timer，等 DP final-free 后删 host；会话中与部分 attach 拒绝回收 |
 | 父资源拆除前窗口撤销 | 离线验证通过 | CDS DP / HDD pdev / dispatcher pdev 关闭前永久撤销回收窗口；仍非父资源 lease 或在途调用屏障 |
-| SSR/卸载/异常恢复 | 部分完成 | 已实现准入栅栏、被跟踪 MC 排空、早期 NDI 回收及拆除前窗口撤销；会话内 WMA/peer/PE/PM、父资源协调与安全卸载仍待实现 |
+| 显式 SSR 批量回收 | 离线验证通过 | 校验准确 psoc 的完整句柄表、排空与错误；逐项保留结果，全部清空才成功；仍须调用方保留父资源 |
+| SSR/卸载/异常恢复 | 部分完成 | 已实现准入栅栏、被跟踪 MC 排空、早期 NDI 回收、拆除前窗口撤销及显式批量步骤；会话内 WMA/peer/PE/PM、父资源协调与安全卸载仍待实现 |
 | 固件能力与端到端实测 | 待验证 | 驱动加载、NDI/RAW 实际支持、Apple 发现与双向传输、稳定性和安装包 |
 
-最新源提交：`04b809efed826c69dc4914a4c296b18e41beecc4`。
-[Actions 40675754483](https://github.com/xxz3312/XAirDrop-17/actions/runs/40675754483)
-已通过 44 项 Python 检查、22 组原生 fixture、完整 WLAN 编译与严格链接；
-82 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
+最新源提交：`ceef28434d341d3ea088d349b5942fd1b72ebae8`。
+[Actions 40679560456](https://github.com/xxz3312/XAirDrop-17/actions/runs/40679560456)
+已通过 44 项 Python 检查、23 组原生 fixture、完整 WLAN 编译与严格链接；
+83 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
 以上不构成完整私有 ABI/KCFI、手机加载或 AirDrop 可用认证。
 
-已补齐纯 host 与早期 NDI 的显式回收，并前移父资源拆除前的窗口撤销。启用调用方前，仍需已准备/STARTed 会话的 WMA/peer/PE/PM 恢复、跨轮询父资源协调、活动 owner 卸载、psoc 复用和并发/硬件模式资源预留；随后接通换频、收发与 Wonder 后端，再做固件与整机联调。
+已补齐纯 host 与早期 NDI 的显式回收、拆除前窗口撤销和批量步骤。启用调用方前，仍需已准备/STARTed 会话的 WMA/peer/PE/PM 恢复、跨轮询父资源协调、活动 owner 卸载、psoc 复用和并发/硬件模式资源预留；随后接通换频、收发与 Wonder 后端，再做固件与整机联调。
 新增回归执行原生 target-if 启停发送/响应、owned WMA wrapper 和 PM helper；完整原生 SM 与 WMA START 后处理在回归中仍为模型。
 新增 MC 回归执行原生 scheduler_disable/queue flush 和 owned PE callback；QDF 线程/事件/队列原语、完整 native MC 线程及组件析构仍为模型。
 早期 NDI 回归还执行 CDS post-disable、WMI 工作清理和原生 timer deinit；HIF/HTC/QDF 与完整 DP detach/free 仍为模型，真实内核与固件未验证。
 父资源撤销回归还执行完整原生 CDS DP / HDD / dispatcher pdev close；其调用的 DP、IRQ、timer 和组件拆除为模型，完整 HDD 停机/回退仅做源码审计。
+批量回归使用不同 MAC/VDEV ID 的多对象模型；准入检查不修改表，准入后的步骤可部分完成，错误项仍保留。批量接口没有持有父引用或自动接入 HDD。
 窗口撤销不能中止已进入的 reclaim；父资源仍须由调用方保留并串行化。CDS 返回错误也不会让现有 HDD 调用点统一停止拆除。
 DOWN 没有固件 ACK，accepted DOWN 只表示原生提交成功及 PM 清理，不能称为固件确认。
 详细证据见 [频道准备报告](research/popsicle-owned-channel-build-pass.json) 和
@@ -48,4 +50,5 @@ DOWN 没有固件 ACK，accepted DOWN 只表示原生提交成功及 PM 清理�
 [停机准入栅栏报告](research/popsicle-shutdown-admission-build-pass.json) 和
 [MC 排空与纯 host 回收报告](research/popsicle-owned-mc-drain-reclaim-build-pass.json) 和
 [早期 NDI SSR 回收报告](research/popsicle-early-ndi-reset-reclaim-build-pass.json) 和
-[父资源拆除窗口报告](research/popsicle-parent-teardown-window-build-pass.json)。
+[父资源拆除窗口报告](research/popsicle-parent-teardown-window-build-pass.json) 和
+[显式 SSR 批量回收报告](research/popsicle-ssr-batch-reclaim-build-pass.json)。

@@ -729,3 +729,22 @@ MC reservation、延迟 host final-free、host+早期 NDI 混合表及顺序变�
 延迟 DP 回调、已准备会话保留、错误后成功不得掩盖、父窗口关闭后拒绝推进。
 对象分配/ID、QDF、DP storage free 与组件析构仍为模型，完整 HDD 异步暂停、
 父实例寿命协调、已准备/STARTed 恢复与实机行为尚未实现或验证。默认入口关闭。
+
+
+### 0027 构建验证结果
+
+[Actions 40679560456](https://github.com/xxz3312/XAirDrop-17/actions/runs/40679560456)
+在源提交 `ceef28434d341d3ea088d349b5942fd1b72ebae8` 全部通过：44 项 Python
+检查、23 组原生 fixture、完整 WLAN 编译及严格链接。83 个要求符号存在，
+574 条版本记录无不匹配、未解决依赖为空，7 项选定结构布局 MATCH。
+工具链与 bindgen 缓存命中；新增多 owner 回归在 ASan/UBSan 下通过。
+
+紧凑 ZIP 已独立下载并核对大小与 SHA-256；重新生成的 batch fixture、三个原生
+文件和两个生产文件哈希匹配 CI。三个选定原生文件与上一阶段完全一致；移除
+新增批量函数后，原 runtime C 与 0026 逐字节一致。完整诊断大包仅记录 GitHub
+哈希，未独立下载且不可安装。详见 [显式 SSR 批量回收报告](research/popsicle-ssr-batch-reclaim-build-pass.json)。
+
+回归执行生产批量步骤与现有单 owner 控制器，验证多对象身份、全表覆盖、MC
+准入、混合异步推进、延迟 final-free、逐项错误与部分完成；不会把未支持会话
+当作已恢复。完整外层父资源协调和自动调用方尚未接入，默认无线入口关闭，
+手机加载、固件接受和 Apple 传输仍未验证。
