@@ -22,6 +22,7 @@ MODELS=r'''
 #define cds_debug(...) ((void)0)
 #define cds_err(...) ((void)0)
 #define mlme_err(...) ((void)0)
+typedef struct wmi_unified *wmi_unified_t;
 struct hif_opaque_softc {int status;};
 struct cds_context {void *htc_ctx;};
 static struct cds_context recovery_cds;
@@ -137,8 +138,10 @@ int main(void) {
   reset_recovery();pid_t child=fork();assert(child>=0);
   if(!child) {
    o=early_ndi();stop_recovery(o);
-   if(fault==0)response_timer.psoc=NULL;if(fault==1)response_timer.vdev_id=8;
-   if(fault==2)response_timer.rsp_timer_inuse=0;if(fault==3)response_timer.rsp_status=1;
+   if(fault==0) {response_timer.psoc=NULL;}
+   if(fault==1) {response_timer.vdev_id=8;}
+   if(fault==2) {response_timer.rsp_timer_inuse=0;}
+   if(fault==3) {response_timer.rsp_status=1;}
    if(fault==4)response_timer.rt_lock.is_lock_acquired=true;
    recovery_missing_timer=fault==5;recovery_cancel_drift=fault==6;
    if(fault==7)o->state.ndi.create.dp_cookie++;
