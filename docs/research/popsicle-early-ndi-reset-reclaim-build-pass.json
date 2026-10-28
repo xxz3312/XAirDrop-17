@@ -1,0 +1,142 @@
+{
+  "status": "EARLY_NDI_SSR_RECLAIM_OFFLINE_PASS_ONLY",
+  "commit": "b896edfb376938c5c27be5d801c193cb0e95a896",
+  "run_id": 40667786202,
+  "job_id": 122746596774,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40667786202",
+  "validation_artifact": {
+    "id": 12806773227,
+    "bytes": 45458,
+    "sha256": "47f99c477773213a22d39c47276329878dff7f61b3de18401bccbdf3fadabef9",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12806958534,
+    "bytes": 337848133,
+    "github_reported_sha256": "91cde39d9cfa5b35e373af82f1399383905e1ba022a67a808e0bd81a1373554b",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "recovery_fixture": {
+    "status": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "740b9347c95c2d75892f4efae22409a11ed8d802d08d46b0af12c73a851bf83f",
+    "native_sha256": {
+      "qcacld-3.0/core/cds/src/cds_api.c": "075238d340c3d3935ac702423d4418d86db428f03fc35278131c4ad980f83147",
+      "qca-wifi-host-cmn/target_if/mlme/psoc/src/target_if_psoc_timer_tx_ops.c": "2f1ccd151033a6ea5261834c7d176d50f3ca01cd7da4287e655cc5c6793527fd",
+      "qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_tgt_if_tx_api.c": "d5697a9f2777a3c15d7eae3d530ac5c6fedc8d86d8d5252cca0bbcb99097c965",
+      "qca-wifi-host-cmn/wmi/src/wmi_unified.c": "cf2169bc7feb1a267e291d71fe1ea778a886b9466125c3fb3a90250e537b3398",
+      "qcacld-3.0/core/wma/src/wma_main.c": "7d3304ab7e1e771792e0c9412f892bf9ceabd0db7021afdbf10f2d8690c9b977",
+      "qca-wifi-host-cmn/dp/wifi3.0/dp_main.c": "c74c828306c6b14d534d9908fe80ffe6a61ff5c74ce520710dd1937bdbd4bff2"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "9f1fcd8534149ef973a225ffc8a05a55a30423704810b1ac37e0be2c53e4a25a",
+      "wlan_hdd_mishare_runtime.h": "8739a37f3a0a525467ac2102c5dbaaab3a38d0fdfea0fe18434c8a501743e201",
+      "wlan_hdd_mishare_ndi.h": "c32603ed3decb16a9b9c2d36cdacff373a778138723293831d9c43892c6bae7d"
+    },
+    "ordinary_before_recovery_sha256": {
+      "qcacld-3.0/core/cds/src/cds_api.c": "6d3d5066c16ad68f23a80247ada0aca2149c83b7b0cdc30810bb83f2a3584d84",
+      "qca-wifi-host-cmn/target_if/mlme/psoc/src/target_if_psoc_timer_tx_ops.c": "de9ae1bee934653e908c504b57b9e5a94da37e0b1b6f5fbee03b92c1834b86a0",
+      "qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_tgt_if_tx_api.c": "5eb7b61812b8f4f4a4977691b6b433ff953cb47fba74291498d3848d52b10079"
+    },
+    "checks": [
+      "complete native cds_post_disable orders MC/ISR/HIF/HTC/RX before qualified window",
+      "native WMI stop/blocked/work_close/remove_work flush both independent event queues before window open",
+      "native timer sync cancellation plus complete deinit validates exact owner and inactive response/PM state",
+      "attach-time DP soc cookie must match exact live parent before native detach wrapper",
+      "actual DP final-free callback required; no DELETE submission/reply flags fabricated",
+      "inline and delayed DP callbacks require submit return before native host deletion",
+      "deferred object final-free keeps original wire history, quarantine and owner until real notification",
+      "CDS close irrevocably closes window; late DP callback cannot reopen or delete native host",
+      "context/peer/PE/plan/history/partial attach and failure cases remain isolated"
+    ],
+    "limitations": "Executes production recovery controller, full native CDS post-disable and WMI stop/work-flush functions, full native timer deinit, owned DP wrapper and object-manager final-free under ASan/UBSan. HIF/HTC reset/stop, QDF scheduler/thread/IRQ/timer/workqueue primitives, DP detach/storage free and component destructors remain models. Real DP callback source ordering is audited, not the full DP detach executed. Target reset status is a native-driver qualification, not physical firmware acceptance. No automatic recovery caller is enabled; caller must retain exact parents and prevent CDS destruction across polls. Prepared/STARTed NDI, WMA/peer/PE/PM recovery, active-owner unload, psoc reuse and phone operation remain unverified."
+  },
+  "native_fixtures": {
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-recovery-fixture.json": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-work-fixture.json": "MISHARE_OWNED_MC_DRAIN_RECLAIM_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY"
+  },
+  "independent_verification": {
+    "generated_fixture_hash_matches": true,
+    "six_native_and_three_production_file_hashes_match": true,
+    "three_pre_recovery_source_hashes_match_after_exact_removal": true,
+    "native_wmi_wma_main_dp_unchanged_from_locked_target": true,
+    "native_sm_unchanged_from_locked_target": true,
+    "native_sm_source_sha256": "81ed7e217c9e8ba849c2cd13b6f95f708acd0b8e1abc1dc52454a6959f504649"
+  },
+  "python_tests": 44,
+  "required_host_symbols": 82,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "975a0d146815c2a8f9a0312037cc59bf4335dcc3879ae40ab5372252e49bcae1",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "early_pre_context_ndi_ssr_reclaim_implemented": true,
+  "prepared_or_started_ndi_reclaim_implemented": false,
+  "automatic_recovery_caller": false,
+  "recovery_parent_lifetime_coordinator_implemented": false,
+  "full_native_dp_detach_executed_in_fixture": false,
+  "physical_firmware_reset_certified": false,
+  "runtime_backend_caller": false,
+  "phone_driver_loaded": false,
+  "firmware_start_submitted_on_phone": false,
+  "airdrop_connected": false,
+  "remaining": [
+    "prepared/STARTed NDI WMA/peer/PE/PM and unknown/partial resources recovery",
+    "parent lifetime coordination across async reclaim polls before CDS destruction",
+    "safe active-owner unload and module-text lifetime",
+    "replacement psoc/address-reuse handling",
+    "concurrency/hardware-mode reservation and channel switching",
+    "RAW TX/native RX/Wonder callbacks",
+    "phone firmware acceptance and Apple bidirectional transfers"
+  ]
+}

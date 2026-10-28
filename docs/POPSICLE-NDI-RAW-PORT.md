@@ -637,3 +637,24 @@ remove-work、timer deinit、owned DP wrapper 和真实 object-manager final-fre
 HIF/HTC、QDF scheduler/IRQ/timer/workqueue、完整 DP detach/storage free 和组件
 析构仍是模型；DP callback 在 native storage free 之后的来源顺序另行源码审计。
 完整 WMA/self-peer/PE/STARTed NDI/PM 恢复回收及手机固件行为仍未完成验证。
+
+
+### 0025 构建验证结果
+
+[Actions 40667786202](https://github.com/xxz3312/XAirDrop-17/actions/runs/40667786202)
+在源提交 `b896edfb376938c5c27be5d801c193cb0e95a896` 全部通过：44 项 Python
+检查、21 组原生 fixture、完整 WLAN 编译与严格链接。82 个要求符号存在，
+WLAN 574 条版本记录无不匹配，未解决依赖为空，7 项选定结构布局 MATCH。
+工具链/bindgen 缓存命中，新增早期 NDI 回归在 ASan/UBSan 下通过。
+
+紧凑 ZIP 已独立下载并核对大小与 SHA-256；重新生成 fixture、六个原生文件
+与三个生产文件哈希均匹配。三个修改的原生文件移除新增块后与上一阶段原文
+逐字节一致；WMI、WMA main、DP 和完整 native SM 与固定目标版本一致。
+完整诊断大包仅记录 GitHub 哈希，未独立下载，也不可安装。
+详见 [早期 NDI SSR 回收报告](research/popsicle-early-ndi-reset-reclaim-build-pass.json)。
+
+回归覆盖 native WMI 两条独立事件队列在 window 打开前排空、timer 身份/状态/
+取消后漂移、DP cookie/缺失实例/提交失败、inline/延迟/重复 DP 回调、延迟 host
+final-free、window 关闭后不得重开及会话/部分 attach 拒绝。原始 CREATE 历史和
+quarantine 保留，普通 DELETE ACK 标记不变。父资源协调与自动恢复调用方尚未
+接入，已准备或 STARTed 会话仍保留；默认无线入口关闭，没有上机加载或传输验证。
