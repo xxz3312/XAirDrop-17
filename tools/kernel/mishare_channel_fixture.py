@@ -122,9 +122,10 @@ int main(void) {
 
 def fixture(root):
     from mishare_radio_origins import remove_radio_additions
-    api=remove_radio_additions((root/API).read_text());native=pe.ctx.block(api,'channel_helpers')
+    native=pe.ctx.block((root/API).read_text(),'channel_helpers')
+    api=remove_radio_additions((root/API).read_text())
     api=re.sub(r'\n/\* MISHARE_BEGIN:start_plan_request \*/\n.*?/\* MISHARE_END:start_plan_request \*/\n', '', api, flags=re.S)
-    stripped=api.replace('\n/* MISHARE_BEGIN:channel_helpers */\n'+native+'/* MISHARE_END:channel_helpers */\n','')
+    stripped=api.replace('\n/* MISHARE_BEGIN:channel_helpers */\n'+pe.ctx.block(api,'channel_helpers')+'/* MISHARE_END:channel_helpers */\n','')
     if hashlib.sha256(stripped.encode()).hexdigest()!=BEFORE:raise ValueError('Channel patch changed existing PE API source')
     src=pe.fixture(root)
     src=src.replace('struct wlan_objmgr_vdev {','struct wlan_channel {uint32_t ch_freq,ch_cfreq1,ch_cfreq2;int ch_width;};\nstruct wlan_objmgr_vdev {',1)
