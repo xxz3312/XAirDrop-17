@@ -977,3 +977,45 @@ bindgen 缓存命中。批量回归及两个负对照均在 Actions 内执行。
 直接读取模型状态字段后，重新执行本轮完整验证通过，生产实现未因此修改。
 离线验证不代表完整私有 ABI/KCFI、实机加载或固件接受；父资源协调、准备态
 恢复、安全卸载、地址复用和无线收发仍待完成，默认无线入口关闭。
+
+
+### 0033 SSR DP 完成事件来源校验
+
+恢复 DP final-free 以前会静默忽略尚未 ndi_reclaim_started 的已知 owner，
+且只检查 attempt/重复通知；普通 DELETE/DP 与 SSR 路径混用缺少完整诊断。
+现在先以不透明 token 匹配 registry，再校验恢复已开始、确实尝试 detach、尚无
+恢复 free、不是普通完成收尾分支、NDI 仍 active/attached，以及没有普通
+DP detach/free 或 DELETE 历史。字段只在 registry 锁内读取，不访问 native 指针。
+
+未知/已释放 token 仍直接忽略；已知 owner 的过早、重复或错误路由通知记录
+永久 recovery_error 并关闭普通/NDI 准入，拒绝发布新的 recovery_dp_freed。
+重复通知保留先前真实 free 的历史。纯 host 直接回收也检查 recovery_error，
+与 NDI、最终记账和批量入口一致。错误不会因重试而清除。
+
+有效 inline/延迟 final-free 仍允许发布实际物理事实；窗口关闭或先前存在其他
+错误不会抹除合法通知，但既有错误与关闭状态均保留，不授权继续 native 清理。
+只有 detach 尝试不等于提交成功；原有错误返回仍被永久保留，不能据此删 host。
+
+普通完成回归扩展 15 种 SSR 完成异常、所有回收入口保留错误、未知/释放后
+恢复 token，以及带已有错误且窗口关闭后的合法晚到释放。冻结 0032 的精确
+旧回调作为负对照，必须在新的 recovery_error 断言失败。完整 DP/QDF/组件及
+父引用仍为模型；不解决 callback 文本寿命、ABA、父资源协调或实机固件验证。
+
+
+### 0033 构建验证结果
+
+[Actions 40736547322](https://github.com/xxz3312/XAirDrop-17/actions/runs/40736547322)
+在源提交 `8f1ce0c95cadcf4f0fec2701800f7ce5d2c7d99d` 全部通过：44 项 Python
+检查、26 组原生 fixture、完整 WLAN 编译、CNSS 接口及严格链接。84 个要求符号
+存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定结构布局 MATCH。
+工具链与 bindgen 缓存命中，15 种 SSR 完成异常和旧回调负对照在 Actions 内通过。
+
+紧凑 ZIP 已独立下载并核对大小及 SHA-256；本地生成的 completion/recovery/
+batch/final fixture 哈希与报告一致，三个选定原生文件及三个生产文件匹配。
+选定原生源码相对 0032 未变，旧回调源码与 0032 对照一致。完整诊断大包仅记录
+GitHub 哈希，未独立下载且不可安装。
+详见 [SSR 完成事件校验报告](research/popsicle-recovery-completion-integrity-build-pass.json)。
+
+父资源协调、准备态恢复、活动 owner 安全卸载、地址复用及无线收发仍待完成。
+离线验证不代表完整私有 ABI/KCFI、手机加载、固件接受或 AirDrop 可用；默认
+无线入口保持关闭。
