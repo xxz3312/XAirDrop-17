@@ -62,6 +62,7 @@ static QDF_STATUS stop_mc(void) {
  if(QDF_IS_STATUS_SUCCESS(status))native_stop_observer();
  return status;
 }
+static void close_during_health(void) {mishare_runtime_quiesce_psoc(&psoc,MISHARE_QUIESCE_SSR);}
 static void pause_native_pe(void) {
  assert(!pthread_mutex_lock(&pause_lock));pause_entered=true;assert(!pthread_cond_broadcast(&pause_cond));
  while(!pause_resume)assert(!pthread_cond_wait(&pause_cond,&pause_lock));
@@ -74,7 +75,7 @@ static void reset_work(void) {
  reset_shutdown();assert(!worker_active);memset(&native_sched,0,sizeof(native_sched));native_sched.sch_thread=(void*)1;
  native_sched.queue_ctx.sch_msg_q[0].id=0;native_sched.queue_ctx.sch_msg_q[1].id=1;
  native_sched_missing=false;native_phase=native_msg_frees=native_waits=0;
- pause_entered=pause_resume=false;work_pause_hook=NULL;
+ pause_entered=pause_resume=false;work_pause_hook=NULL;work_health_fence=NULL;work_close_at=0;
 }
 static void assert_counts(struct mishare_runtime_owner *o,unsigned pending,unsigned users) {
  struct mishare_runtime_status s=state(o);assert(s.work_pending==pending && s.work_users==users && !s.work_error);
@@ -132,6 +133,15 @@ int main(void) {
  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  /* Execute a real owned MC callback in another pthread, paused inside its PE
   * allocator boundary. Native scheduler_disable must join it before flushing. */
+ reset_work();child=fork();assert(child>=0);
+ if(!child) {
+  o=with_plan();work_health_fence=close_during_health;work_close_at=health_queries+2;
+  assert(mishare_runtime_ndi_start(o)==-ESHUTDOWN && o->radio);
+  assert(state(o).quiesced && state(o).radio.phase==MISHARE_RADIO_BLOCKED && state(o).radio.closing);
+  assert_counts(o,0,0);assert(!stop_mc() && state(o).mc_drained);
+  assert(mishare_runtime_reclaim_host(&o)==-EUCLEAN && !radio_starts && !delete_calls);_Exit(0);
+ }
+ assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  reset_work();child=fork();assert(child>=0);
  if(!child) {
   o=prepared();assert(mishare_runtime_ndi_session(o)==-EINPROGRESS);work_pause_hook=pause_native_pe;worker_active=true;
@@ -204,7 +214,13 @@ def fixture(root):
     cds=(root/CDS).read_text();post=function(cds,'cds_post_disable')
     if not post.index('scheduler_disable()')<post.index('mishare_runtime_mc_stopped')<post.index('hif_disable_isr'):raise ValueError('Incorrect MC observation origin')
     observer=re.search(r'/\* MISHARE_WORK_BEGIN:cds_mc_stopped \*/\n(.*?)/\* MISHARE_WORK_END:cds_mc_stopped \*/',cds,re.S)[1]
-    src=shutdown.fixture(root);needle='static struct pe_session *pe_create_session('
+    src=shutdown.fixture(root)
+    src=src.replace('static unsigned health_queries;',
+                    'static unsigned health_queries,work_close_at;\nstatic void (*work_health_fence)(void);',1)
+    needle='health_queries++;return health_missing?NULL:&health;'
+    if src.count(needle)!=1:raise ValueError('Native health model boundary changed')
+    src=src.replace(needle,'health_queries++;if(work_health_fence && health_queries==work_close_at)work_health_fence();return health_missing?NULL:&health;',1)
+    needle='static struct pe_session *pe_create_session('
     assert src.count(needle)==1
     src=src.replace(needle,'static void (*work_pause_hook)(void);\n'+needle,1)
     pos=src.index(' {\n',src.index(needle))+len(' {\n');src=src[:pos]+' if(work_pause_hook)work_pause_hook();\n'+src[pos:]

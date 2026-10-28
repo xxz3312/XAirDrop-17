@@ -454,9 +454,11 @@ static int radio_execute(struct radio_request *req)
             return -EUCLEAN;
         if (s.closing) {
             spin_lock_irqsave(&mishare_radio_lock, flags);
-            r->state.phase = MISHARE_RADIO_CANCELLED;
+            ret = r->state.phase == MISHARE_RADIO_NEW ? 0 : -ESHUTDOWN;
+            if (!ret)
+                r->state.phase = MISHARE_RADIO_CANCELLED;
             spin_unlock_irqrestore(&mishare_radio_lock, flags);
-            return 0;
+            return ret;
         }
         ret = mishare_ndi_radio_prepare(r->vdev, r->owner, r->session_cookie, r->freq);
         if (ret) {
@@ -508,10 +510,12 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
     r = req->radio;
     if (flushed && req->work == RADIO_START && radio_phase(r, MISHARE_RADIO_NEW)) {
         spin_lock_irqsave(&mishare_radio_lock, flags);
-        r->state.phase = MISHARE_RADIO_CANCELLED;
-        r->state.error = -ECANCELED;
+        ret = r->state.phase == MISHARE_RADIO_NEW ? 0 : -ESHUTDOWN;
+        if (!ret) {
+            r->state.phase = MISHARE_RADIO_CANCELLED;
+            r->state.error = -ECANCELED;
+        }
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
-        ret = 0;
     } else {
         ret = flushed ? -ECANCELED : mishare_runtime_work_enter(r->vdev, r->owner);
         if (!ret) {
@@ -541,6 +545,8 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
     int ret;
     if (!vdev || !events || !owner || !cookie || !freq || !out || *out)
         return -EINVAL;
+    if (!mishare_runtime_work_allowed(vdev, owner))
+        return -ESHUTDOWN;
     m = wlan_vdev_mlme_get_cmpt_obj(vdev);
     if (!m || m->vdev != vdev || !m->ext_vdev_ptr ||
         wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE ||
@@ -575,8 +581,13 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
     ret = radio_post(r, RADIO_START, NULL);
     if (ret) {
         spin_lock_irqsave(&mishare_radio_lock, flags);
-        r->state.phase = MISHARE_RADIO_CANCELLED;
-        r->state.error = ret;
+        if (r->state.phase == MISHARE_RADIO_NEW) {
+            r->state.phase = ret == -ESHUTDOWN || ret == -EOVERFLOW ?
+                             MISHARE_RADIO_BLOCKED : MISHARE_RADIO_CANCELLED;
+            r->state.closing = r->state.phase == MISHARE_RADIO_BLOCKED;
+        }
+        if (!r->state.error)
+            r->state.error = ret;
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
     }
     return ret ? ret : -EINPROGRESS;
