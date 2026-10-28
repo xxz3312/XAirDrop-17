@@ -28,6 +28,7 @@ struct mishare_runtime_status {
     bool mc_stop_seen;
     bool mc_drained; /* Owned MC work only; NOT IRQ/timer/firmware proof. */
     bool host_reclaim;
+    bool host_delete_accepted; /* Logical delete + event unbind accepted. */
     int reclaim_error;
     bool recovery_window;
     bool recovery_window_closed;
@@ -85,6 +86,17 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * Partial attach, peer/PE/radio and incomplete DELETE history stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
+/* SSR-only owner bookkeeping after host deletion already succeeded and all
+ * owner-held native handles/bindings/references were surrendered. No native
+ * delete, component getter, DP/timer/WMI access or window reopening occurs.
+ * Requires owned-MC drain, no sticky errors and the exact actual final-free
+ * notification before clearing the handle. Caller retains parents until that
+ * notification; window closure does not authorize early parent destruction.
+ * Prepared/radio history may remain only after ordinary cleanup already
+ * completed; this never performs prepared/STARTed recovery. Serialize owner
+ * calls and teardown throughout. Unknown opaque tokens return ENOENT.
+ */
+int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner);
 /* Bounded caller-owned handle table, not the native psoc vdev limit. */
 #define MISHARE_RUNTIME_RECLAIM_BATCH_MAX 64U
 struct mishare_runtime_reclaim_item {

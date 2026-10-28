@@ -891,3 +891,28 @@ PE/频道/START 参数或 radio，且无 completion/work/reclaim/recovery 永久
 原普通 host 删除已经开始的隔离对象仍未由此分支接管。完整父资源协调、自动
 资格重查/恢复、准备态与 STARTed 会话、地址复用、模块回调文本寿命和手机验证
 仍待完成，默认无线入口关闭。
+
+### 0031 普通 host 删除已接受后的最终记账
+
+新增 host_delete_accepted 来源标记：仅在原生逻辑删除成功、事件解绑完成、自持
+VDEV 引用及句柄已交出后记录，在最后的自持引用释放前发布。组件最终释放拒绝
+也会记录永久 reclaim_error，不能让 SSR 将它当作仅需等待的正常状态。
+
+显式 mishare_runtime_reclaim_final() 先在 registry 匹配不透明 owner token，再核对
+第一停机原因为 SSR、被跟踪 MC 已排空、没有永久错误、host 删除接受标记存在，
+且 vdev/ref/events/radio/PE cookie、NDI active/legacy/WMA/timer/stats 所有当前持有
+关系均已解除。未收到真实 final-free 时返回 EINPROGRESS；只有准确的 free 通知
+到达才解除 registry 并释放 owner。函数不调用任何原生删除、组件 getter、DP、
+WMI 或 timer，也不重开窗口。批量回收优先分派到这个纯记账分支。
+
+这可以完成普通 host 删除先开始、随后 SSR 保留的 owner，也允许正常清理完成
+后的 prepared 历史；它不执行 prepared/STARTed 恢复。窗口关闭之后仍须由调用方
+保留父实例直到真实物理释放，不能把窗口关闭或仅有逻辑删除当作父资源可销毁。
+构造 NULL 路径缺少接受来源、仍有 native handle、组件 veto、完成/计数/恢复错误
+及非 SSR 首停原因均拒绝。未知/已释放 token 不解引用；地址复用/ABA 未认证。
+
+新增 Actions-only 回归覆盖纯 host、普通 NDI 与已正常清理 prepared 上下文，
+直接/批量等待、窗口关闭后记账、未知/释放后 token 与永久错误拒绝。对象分配、
+QDF/DP/timer、组件析构及父引用寿命仍为模型，完整父资源协调与实机仍未验证。
+历史批量函数负对照改为不可变源码常量（同一已核对 SHA），便于独立扩展分派，
+仍要求旧优先级实现在既有期望结果断言失败。

@@ -156,27 +156,8 @@ def audit(root):
         # regression must fail on its expected-result assertion, not sanitizer
         # errors or a compiler failure. Compilation/execution stays Actions-only.
         runtime=(production/'wlan_hdd_mishare_runtime.c').read_text()
-        separator='''    }
-    /* Validate complete coverage before policy/accounting. A waiting owner
-     * must not hide an omitted owner or a fatal error later in this list.
-     */
-    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
-        if (entry->psoc != psoc)
-            continue;
-'''
-        waiting='''        if (!entry->state.mc_drained || entry->state.work_pending ||
-            entry->state.work_users)
-            ret = -EINPROGRESS;
-'''
-        assert runtime.count(separator)==runtime.count(waiting)==1
-        previous=runtime.replace(separator,'',1).replace(waiting,'''        if (!entry->state.mc_drained || entry->state.work_pending ||
-            entry->state.work_users) {
-            ret = -EINPROGRESS;
-            goto unlock;
-        }
-''',1)
-        previous_batch=parent.recovery.function(previous,'mishare_runtime_reclaim_batch')
-        previous_batch=previous_batch.replace('            entry->state.ndi.completion_error ||\n','',1)
+        from mishare_batch_previous import PREVIOUS_BATCH_FUNCTION
+        previous_batch=PREVIOUS_BATCH_FUNCTION
         previous_hash=hashlib.sha256(previous_batch.encode()).hexdigest()
         assert previous_hash=='b9994529bd2d39c6498a5f6ab078085f1401971b25ce6fa846c5d4702214f878'
         current_batch=parent.recovery.function(runtime,'mishare_runtime_reclaim_batch')
