@@ -1,0 +1,159 @@
+{
+  "status": "BATCH_FINAL_METADATA_PREFLIGHT_OFFLINE_PASS_ONLY",
+  "commit": "29253f6c843be60305bcb003fecfaa734ec0eebf",
+  "implementation_commit": "cbdef99c4e0158cbb48950374e58bc06225f3157",
+  "run_id": 40730487714,
+  "job_id": 122965154700,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40730487714",
+  "validation_artifact": {
+    "id": 12833864790,
+    "bytes": 53028,
+    "sha256": "27812e84cc33a38f608e52842092eafc93eacc59db2133cfb51074741ca0f1aa",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12835282171,
+    "bytes": 337853601,
+    "github_reported_sha256": "3c08b86cf7fdff1ae7e6f4065a0873e2809eca259652d4aefcee624bc0f9d331",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "batch_fixture": {
+    "status": "MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "305278c7e0cdfcc6ced79c5e4a0418389b14166ec478d2fbf7165ec6e71a15be",
+    "negative_control": {
+      "previous_batch_function_sha256": "b9994529bd2d39c6498a5f6ab078085f1401971b25ce6fa846c5d4702214f878",
+      "exact_historical_batch_function_rejected_by_new_assertion": true,
+      "removed_final_shape_guard_rejected_by_unchanged_table_assertion": true
+    },
+    "native_sha256": {
+      "qcacld-3.0/core/cds/src/cds_api.c": "6142525bddf87f304431883bdad6e003acc14e9f5d188cec8bcb1937c411f155",
+      "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "28ada746849b99e8543b7f7f061da6faf099b43a8cf30b771c919108a7571a93",
+      "qca-wifi-host-cmn/init_deinit/dispatcher/src/dispatcher_init_deinit.c": "f4474da31e77310e12a7d27ac1ef534ee063d0d9979dd82655996066f951fc12"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "ca4c9bb821af0fa7a69b2cd93fd81c8982725330a96403bc5976f815d4080f89",
+      "wlan_hdd_mishare_runtime.h": "ec01a2beec4ba18450013b6c92eb78c26f31d8c252a1e6e879bb4b24c5dd9a59"
+    },
+    "checks": [
+      "bounded opaque-token and exact-psoc validation before dereference",
+      "complete table coverage including pending physical final-free; duplicate/stale/foreign/missing entries do not mutate",
+      "SSR-first fence, sticky errors and owned MC reservations checked before every batch step",
+      "full coverage and fatal preflight errors take precedence over MC waiting in either registry order; rejected slots and native resources remain unchanged",
+      "52 final-shape/order/MC-wait cases include 48 invalid states and 4 valid deferred-free controls; guard-removal negative control fails unchanged-table assertion",
+      "multiple distinct modeled VDEVs preserve their own object/event final-free identities",
+      "mixed host and early NDI release with reordered slots and inline/delayed DP callbacks",
+      "successful slots clear; pending/unsupported slots retain authoritative handles and individual results",
+      "earlier error is not hidden by later success; no fabricated native DELETE acknowledgment",
+      "parent-window revocation between polls remains effective; zero only after exact psoc registry empties"
+    ],
+    "limitations": "Runs production batch/controller, existing native timer/DP wrapper and object-manager final-free under ASan/UBSan. Multi-vdev allocation/IDs, component/DP storage free, QDF scheduling and parent lifetimes are models. No automatic caller or outer HDD async pause is implemented. The caller must own all authoritative slots, retain exact parents and serialize every create/destroy/reclaim/teardown throughout polling. Preflight validates identity/coverage/accounting, not all native per-owner states; admitted steps may partially succeed and retain errors. Empty registry is an instant observation, not a lifetime lease, safe module unload or firmware proof. Prepared/STARTed recovery, psoc address reuse and phone operation remain unverified; backend stays disabled."
+  },
+  "native_fixtures": {
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-batch-fixture.json": "MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-completed-fixture.json": "MISHARE_COMPLETED_NDI_HOST_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-completion-fixture.json": "MISHARE_NDI_COMPLETION_INTEGRITY_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-final-fixture.json": "MISHARE_HOST_FINAL_BOOKKEEPING_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-parent-fixture.json": "MISHARE_PARENT_TEARDOWN_REVOKE_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-recovery-fixture.json": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-work-fixture.json": "MISHARE_OWNED_MC_DRAIN_RECLAIM_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY"
+  },
+  "independent_verification": {
+    "generated_batch_and_final_fixture_hashes_match": true,
+    "three_selected_native_and_three_production_file_hashes_match": true,
+    "selected_native_sources_unchanged_from_stage_0031": true
+  },
+  "python_tests": 44,
+  "required_host_symbols": 84,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "2fd5d37a486d53715b6294b0dcffb2fc90545a73fe66a117b1912371b9cd630e",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "accepted_delete_shape_checked_before_any_batch_mutation": true,
+  "direct_and_batch_share_metadata_shape_validation": true,
+  "malformed_final_metadata_precedes_mc_waiting": true,
+  "normal_final_free_wait_remains_per_item": true,
+  "new_preflight_dereferences_native_fields": false,
+  "new_cases": {
+    "invalid_shape_fields": 12,
+    "registry_orders": 2,
+    "mc_wait_states": 2,
+    "rejected_combinations": 48,
+    "valid_deferred_free_controls": 4
+  },
+  "initial_validation_failure": {
+    "run_id": 40730045874,
+    "cause": "Test called runtime_snapshot on injected radio=(void*)1 and UBSan rejected the test-side native snapshot. Corrected assertion to read modeled final->state.freed directly; production code unchanged.",
+    "corrected_by_commit": "29253f6c843be60305bcb003fecfaa734ec0eebf"
+  },
+  "recovery_parent_lifetime_coordinator_implemented": false,
+  "automatic_recovery_caller": false,
+  "prepared_or_started_recovery_implemented": false,
+  "safe_active_owner_unload_certified": false,
+  "owner_address_reuse_aba_certified": false,
+  "runtime_backend_caller": false,
+  "phone_driver_loaded": false,
+  "airdrop_connected": false,
+  "remaining": [
+    "outer HDD parent-lifetime coordination and explicit async pause across reclaim polls",
+    "prepared/STARTed NDI WMA/peer/PE/PM and unknown/partial resource recovery",
+    "host drains without accepted-delete provenance or with sticky veto/errors",
+    "late ordinary DP completion requiring fresh qualified window; no automatic requalification",
+    "safe active-owner unload and callback/module-text lifetime",
+    "replacement psoc/owner address reuse and ABA handling",
+    "concurrency/hardware-mode reservation and channel switching",
+    "RAW TX/native RX/Wonder callbacks",
+    "phone firmware acceptance and Apple bidirectional transfers"
+  ]
+}

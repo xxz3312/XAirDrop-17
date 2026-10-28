@@ -937,3 +937,43 @@ QDF/DP/timer、组件析构及父引用寿命仍为模型，完整父资源协�
 缺失接受来源、当前持有关系、错误原因和永久错误保留。它不执行 prepared/
 STARTed 恢复，也未实现父资源协调、自动恢复、安全活动卸载、地址复用或手机
 验证；默认无线入口保持关闭。
+
+### 0032 批量最终记账状态预检
+
+0031 的批量分派在逐项操作时才核对 accepted host-delete 的最终记账状态。
+因此某项虽记录删除接受，但仍带 native handle 或其他矛盾字段时，健康项可能
+先执行清理，随后才报告该项 EUCLEAN；等待中的 MC 项也可能先遮住这个错误。
+
+提取 registry 锁内的纯元数据校验函数，由直接 final 入口与批量整表预检共用。
+accepted host-delete 项必须已 draining/allocated，且 vdev/ref/events/radio/PE
+cookie 与 NDI active/legacy/WMA/timer/stats 当前持有关系为空。完整覆盖与首停
+原因、永久错误检查仍先执行；形状错误优先于 MC 等待，拒绝时所有 item/result
+及 native 资源不变。预检不解引用这些 native 字段、不访问父组件或执行清理。
+
+正常但仍等实际 VDEV final-free 的项保持逐项 EINPROGRESS，其他健康项仍可在
+准入后完成。缺少 accepted 标记的 owner 仍按既有 host/NDI 路由判断，不能据此
+推断已接受删除。预检不保证所有 native 状态都可回收，也不创建父引用或屏障。
+
+扩展原批量 Actions-only 回归：12 种矛盾字段 × 两种 registry 顺序 × 两种 MC
+等待状态，共 48 个拒绝组合；另有 4 个有效 deferred-free 对照。所有拒绝均核对
+句柄表和结果不变、健康 owner 未开始删除，native delete/DP 次数不变。新增仅
+移除本阶段整表校验的负对照，必须在表未改变断言失败；历史优先级负对照保留。
+
+
+### 0032 构建验证结果
+
+[Actions 40730487714](https://github.com/xxz3312/XAirDrop-17/actions/runs/40730487714)
+在源提交 `29253f6c843be60305bcb003fecfaa734ec0eebf` 全部通过：44 项 Python
+检查、26 组原生 fixture、完整 WLAN 编译、CNSS 接口及严格链接。84 个要求符号
+存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH；工具链与
+bindgen 缓存命中。批量回归及两个负对照均在 Actions 内执行。
+
+紧凑 ZIP 已独立下载并核对大小和 SHA-256；本地生成的 batch/final fixture、
+三个选定原生文件及三个生产文件哈希与报告一致。选定原生文件相对 0031 未变。
+完整诊断大包仅记录 GitHub 哈希，未独立下载且不可安装。
+详见 [批量最终记账预检报告](research/popsicle-batch-final-preflight-build-pass.json)。
+
+首轮测试错误地在注入伪造 radio 句柄后调用快照，UBSan 将其拒绝；测试改为
+直接读取模型状态字段后，重新执行本轮完整验证通过，生产实现未因此修改。
+离线验证不代表完整私有 ABI/KCFI、实机加载或固件接受；父资源协调、准备态
+恢复、安全卸载、地址复用和无线收发仍待完成，默认无线入口关闭。

@@ -1,6 +1,6 @@
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-29）
 
-当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收（含准入错误优先级修正）的离线验证，并补齐普通 DP/DELETE 完成事件校验及普通资源已完成后的 NDI host 收尾和普通 host 删除后的最终记账。
+当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收（含准入错误优先级及最终记账状态预检）的离线验证，并补齐普通 DP/DELETE 完成事件校验及普通资源已完成后的 NDI host 收尾和普通 host 删除后的最终记账。
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
@@ -27,12 +27,12 @@
 | 普通 DELETE/DP 完成后收尾 | 离线验证通过 | 限未准备/未 START、普通 host 删除尚未开始的 NDI；合格 SSR 窗口内只删 host 并等最终释放，保留普通完成历史 |
 | 普通 host 删除后最终记账 | 离线验证通过 | 删除接受、持有关系解除、MC 排空且无永久错误；等真实 VDEV final-free 后释放 owner，不再调用原生清理 |
 | 父资源拆除前窗口撤销 | 离线验证通过 | CDS DP / HDD pdev / dispatcher pdev 关闭前永久撤销回收窗口；仍非父资源 lease 或在途调用屏障 |
-| 显式 SSR 批量回收 | 离线验证通过 | 校验完整句柄表；漏列和已记录永久错误优先于等待；逐项保留结果，全部清空才成功；父资源仍由调用方保留 |
+| 显式 SSR 批量回收 | 离线验证通过 | 校验完整句柄表；漏列、已记录永久错误及 accepted-delete 记账状态矛盾优先于等待；逐项保留结果，全部清空才成功；父资源仍由调用方保留 |
 | SSR/卸载/异常恢复 | 部分完成 | 已实现准入栅栏、被跟踪 MC 排空、早期及普通资源已完成的 NDI 收尾、拆除前窗口撤销及显式批量步骤；会话内 WMA/peer/PE/PM、父资源协调与安全卸载仍待实现 |
 | 固件能力与端到端实测 | 待验证 | 驱动加载、NDI/RAW 实际支持、Apple 发现与双向传输、稳定性和安装包 |
 
-最新源提交：`f2be7bdf6bf2c444c8eac7896521b134d0a056d3`。
-[Actions 40724040219](https://github.com/xxz3312/XAirDrop-17/actions/runs/40724040219)
+最新源提交：`29253f6c843be60305bcb003fecfaa734ec0eebf`。
+[Actions 40730487714](https://github.com/xxz3312/XAirDrop-17/actions/runs/40730487714)
 已通过 44 项 Python 检查、26 组原生 fixture、完整 WLAN 编译与严格链接；
 84 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
 以上不构成完整私有 ABI/KCFI、手机加载或 AirDrop 可用认证。
@@ -61,3 +61,5 @@ DOWN 没有固件 ACK，accepted DOWN 只表示原生提交成功及 PM 清理�
 [普通 NDI 完成事件报告](research/popsicle-ndi-completion-integrity-build-pass.json) 和
 [普通资源已完成 NDI 收尾报告](research/popsicle-completed-ndi-host-reclaim-build-pass.json) 和
 [host 最终记账报告](research/popsicle-host-final-bookkeeping-build-pass.json)。
+
+最新批量回归新增 48 个最终记账异常组合与 4 个有效等待对照；直接 final 与批量预检共用纯元数据校验。矛盾状态在任何逐项操作前拒绝，正常 final-free 等待仍保留逐项语义。移除新校验的负对照被表未改变断言拒绝。证据见 [批量最终记账预检报告](research/popsicle-batch-final-preflight-build-pass.json)。
