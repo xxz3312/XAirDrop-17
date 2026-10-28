@@ -1,0 +1,142 @@
+{
+  "status": "EXTERNAL_NATIVE_MONITOR_RX_BUILD_PASS_ONLY",
+  "commit": "dd85ef8fa566aea4998c57f01f7f80e20e8047ba",
+  "implementation_commit": "472ca7b1c7b33ce534484d96d0e655ada7eaa7a2",
+  "run_id": 40743774260,
+  "job_id": 123012023748,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40743774260",
+  "validation_artifact": {
+    "id": 12841501963,
+    "bytes": 53218,
+    "sha256": "80144b88e101f88917b1e158ce5791ac38ff8dda7c69f081c2d8df0efc78d9ab",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12840669570,
+    "bytes": 337862795,
+    "sha256": "c2d5f615d407f0858d0c7ba03ec762744bdfbb6080de04936609827fcf78578f",
+    "downloaded_and_checksum_verified": true
+  },
+  "trial_package": {
+    "filename": "XAirDrop-17-RX-only-0034.zip",
+    "bytes": 761793,
+    "sha256": "dd577f28b05ad8e708bb4148effc16f1a64ae5deacbf8fa561b956299f9ce29b"
+  },
+  "source_sha256": {
+    "kernel/wonder/core.h": "52fe8f35b5e83ca30037b6db803b6682b509bc472f2466bfafe106312f4fd5fc",
+    "kernel/wonder/mac80211.c": "4786980403b0a4b4a46c0be1c44428f91105c40c395e81ed22c7e26d089e3e5e",
+    "kernel/wonder/mac80211.h": "a0e0647b05a083a987e2b876fcac38cdcb077c895452b2ef6a2d1daaa5255254",
+    "kernel/wonder/main.c": "e569510d2b15f43bfa4e5b56d22ef4b605c378762a4c4378e795ce7e9e48e79f",
+    "kernel/wonder/ssr.c": "c2d686a0c52111bb2f35e69e733a67c23238b76564fa1cf30ec80d429d312c1c",
+    "kernel/wonder/wondertap.c": "2b74db55604f515a1dd90a495ac3dec0d618cbb56d5fcda3e6b01f8fa8e7254c",
+    "kernel/wonder/wondertap_internal.h": "16c30c46e16882d96e22b88b03a2e32f9bf02a82d438b1279fb4e78fe2dfc9bb",
+    "tools/device/popsicle-rx-start.sh": "918e31fe62233685ab5a9d997573c9782df44d38d9d3e7b11cbc640af1a1a200"
+  },
+  "wonder_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "8cd248a74c707fbca8a36bbb714bb9404654710056475073040392ce7bb9866b",
+    "version_records": 88,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "f4a993daf6de39265a0d0daf157e0092297f2d521913b2d0bb0cf3a77b44f380",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "wlan_unresolved": [],
+  "required_host_symbols": 84,
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "python_tests": 44,
+  "existing_native_fixtures": {
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-recovery-fixture.json": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-completed-fixture.json": "MISHARE_COMPLETED_NDI_HOST_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-parent-fixture.json": "MISHARE_PARENT_TEARDOWN_REVOKE_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-work-fixture.json": "MISHARE_OWNED_MC_DRAIN_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-batch-fixture.json": "MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-final-fixture.json": "MISHARE_HOST_FINAL_BOOKKEEPING_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-completion-fixture.json": "MISHARE_NDI_COMPLETION_INTEGRITY_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY"
+  },
+  "shell_syntax_checked": true,
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "implementation": [
+    "explicit external_monitor parameter skips vendor component dependency",
+    "requires existing UP native radiotap monitor on a different wiphy",
+    "registers real physical RX handler and exposes existing counters",
+    "monitor-only interface types and explicit TX drops without fake TX status",
+    "software exact frame type/subtype filtering",
+    "native DOWN/UNREGISTER unbinds RX and releases borrowed netdev",
+    "native driver owns frequency; virtual frequency/rate operations remain unsupported",
+    "start/status/stop script and manual capture guide"
+  ],
+  "new_external_monitor_mode_executed_in_native_fixture": false,
+  "phone_driver_loaded": false,
+  "phone_rx_verified": false,
+  "raw_tx_implemented": false,
+  "airdrop_connected": false,
+  "initial_build_failure": {
+    "run_id": 40742197195,
+    "cause": "Incorrect IEEE80211_FTYPE_CTRL identifier; corrected to Linux IEEE80211_FTYPE_CTL."
+  },
+  "limitations": "Existing 26 fixtures cover prior HDD/controller paths, not the new live external-monitor lifecycle. New mode has compile/link validation only. Requires a native driver/firmware that already supports monitor RX. Manual phone load/start/real radiotap reception and stability remain unverified. Package contains only diagnostic Wonder module, no WLAN replacement or automatic installer. RAW TX, NDI backend init, dynamic channel/DBS, full AWDL and parent recovery coordination remain pending."
+}
