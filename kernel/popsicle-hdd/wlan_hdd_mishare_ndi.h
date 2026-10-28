@@ -7,6 +7,14 @@
 #include <linux/types.h>
 struct wlan_objmgr_vdev;
 bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner);
+/* Each owned MC message gets one reservation before posting. Enter/exit spans
+ * native execution; put follows its completion publication. Caller holds a
+ * VDEV reference until after put. None is a wait or an object reference itself.
+ */
+int mishare_runtime_work_get(struct wlan_objmgr_vdev *vdev, void *owner);
+int mishare_runtime_work_enter(struct wlan_objmgr_vdev *vdev, void *owner);
+void mishare_runtime_work_exit(struct wlan_objmgr_vdev *vdev, void *owner);
+void mishare_runtime_work_put(struct wlan_objmgr_vdev *vdev, void *owner);
 struct wlan_objmgr_psoc;
 struct vdev_mlme_obj;
 struct vdev_create_params;

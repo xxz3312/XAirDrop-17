@@ -35,6 +35,7 @@ COMMON=r'''
 #define WLAN_UMAC_MAX_COMPONENTS 4
 #define WLAN_VDEV_MLME_TYPE_PASSTHRU 9
 #define WLAN_VDEV_MLME_TYPE_NDI 7
+#define WLAN_VDEV_S_INIT 0
 #define GFP_KERNEL 0
 #define ETH_ALEN 6
 #define WARN_ON(x) (x)
@@ -72,6 +73,8 @@ static int wlan_vdev_mlme_get_opmode(struct wlan_objmgr_vdev *v) { return v->mod
 static u8 wlan_vdev_get_id(struct wlan_objmgr_vdev *v) { (void)v;return 7; }
 static u8 *wlan_vdev_mlme_get_macaddr(struct wlan_objmgr_vdev *v) { return v->mac; }
 static struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *v) { return v->mlme; }
+static unsigned ch_state;
+static unsigned wlan_vdev_mlme_get_state(struct wlan_objmgr_vdev *v) {assert(v);return ch_state;}
 static struct vdev_osif_priv *wlan_vdev_get_ospriv(struct wlan_objmgr_vdev *v) { return &v->osif; }
 static void simulated_component_destroy(struct wlan_objmgr_vdev *v);
 static int wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *v,int id) { assert(!lock_depth && (id==1 || id==3));ref_calls++;if(v->dead || ref_calls==fail_ref_at)return -1;v->refs++;return 0; }

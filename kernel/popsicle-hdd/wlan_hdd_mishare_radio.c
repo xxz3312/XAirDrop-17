@@ -167,6 +167,7 @@ static int radio_post(struct mishare_radio *r, enum radio_work work,
     struct scheduler_msg msg = {0};
     QDF_STATUS status;
     unsigned long flags;
+    int ret;
     req = kzalloc(sizeof(*req), GFP_ATOMIC);
     if (!req)
         return -ENOMEM;
@@ -177,6 +178,11 @@ static int radio_post(struct mishare_radio *r, enum radio_work work,
     msg.bodyptr = req;
     msg.callback = radio_callback;
     msg.flush_callback = radio_flush;
+    ret = mishare_runtime_work_get(r->vdev, r->owner);
+    if (ret) {
+        kfree(req);
+        return ret;
+    }
     spin_lock_irqsave(&mishare_radio_lock, flags);
     r->state.pending++;
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
@@ -186,6 +192,7 @@ static int radio_post(struct mishare_radio *r, enum radio_work work,
         spin_lock_irqsave(&mishare_radio_lock, flags);
         r->state.pending--;
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        mishare_runtime_work_put(r->vdev, r->owner);
         kfree(req);
         return qdf_status_to_os_return(status);
     }
@@ -506,12 +513,17 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
         ret = 0;
     } else {
-        ret = flushed ? -ECANCELED : radio_execute(req);
+        ret = flushed ? -ECANCELED : mishare_runtime_work_enter(r->vdev, r->owner);
+        if (!ret) {
+            ret = radio_execute(req);
+            mishare_runtime_work_exit(r->vdev, r->owner);
+        }
     }
     if (ret)
         radio_block(r, ret);
     kfree(req);
     msg->bodyptr = NULL;
+    mishare_runtime_work_put(r->vdev, r->owner);
     spin_lock_irqsave(&mishare_radio_lock, flags);
     r->state.pending--;
     spin_unlock_irqrestore(&mishare_radio_lock, flags);

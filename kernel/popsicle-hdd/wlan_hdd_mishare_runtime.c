@@ -90,6 +90,108 @@ bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner)
     return mishare_runtime_work_identity(vdev, owner, psoc);
 }
 
+static void mishare_runtime_work_update(struct mishare_runtime_owner *entry)
+{
+    entry->state.mc_drained = entry->state.quiesced && entry->state.mc_stop_seen &&
+                              !entry->state.work_pending && !entry->state.work_users &&
+                              !entry->state.work_error;
+}
+
+enum mishare_work_action { MISHARE_WORK_GET, MISHARE_WORK_ENTER,
+                          MISHARE_WORK_EXIT, MISHARE_WORK_PUT };
+static int mishare_runtime_work_change(struct wlan_objmgr_vdev *vdev, void *owner,
+                                        enum mishare_work_action action)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    int ret = -ENOENT;
+    if (!vdev || !owner)
+        return -EINVAL;
+    if ((action == MISHARE_WORK_GET || action == MISHARE_WORK_ENTER) &&
+        !mishare_runtime_work_allowed(vdev, owner))
+        return -ESHUTDOWN;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner || entry->vdev != vdev ||
+            entry->psoc != wlan_vdev_get_psoc(vdev))
+            continue;
+        ret = 0;
+        if ((action == MISHARE_WORK_GET || action == MISHARE_WORK_ENTER) &&
+            (entry->state.blocked || entry->state.ndi.blocked ||
+             entry->state.quiesced || entry->state.draining)) {
+            ret = -ESHUTDOWN;
+            break;
+        }
+        switch (action) {
+        case MISHARE_WORK_GET:
+            if (entry->state.work_pending == ~0U)
+                ret = -EOVERFLOW;
+            else
+                entry->state.work_pending++;
+            break;
+        case MISHARE_WORK_ENTER:
+            if (entry->state.work_users >= entry->state.work_pending)
+                ret = -EUCLEAN;
+            else
+                entry->state.work_users++;
+            break;
+        case MISHARE_WORK_EXIT:
+            if (!entry->state.work_users)
+                ret = -EUCLEAN;
+            else
+                entry->state.work_users--;
+            break;
+        case MISHARE_WORK_PUT:
+            if (entry->state.work_pending <= entry->state.work_users)
+                ret = -EUCLEAN;
+            else
+                entry->state.work_pending--;
+            break;
+        }
+        if (ret) {
+            entry->state.blocked = true;
+            entry->state.ndi.blocked = true;
+            if (!entry->state.work_error)
+                entry->state.work_error = ret;
+        }
+        mishare_runtime_work_update(entry);
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+int mishare_runtime_work_get(struct wlan_objmgr_vdev *vdev, void *owner)
+{
+    return mishare_runtime_work_change(vdev, owner, MISHARE_WORK_GET);
+}
+int mishare_runtime_work_enter(struct wlan_objmgr_vdev *vdev, void *owner)
+{
+    return mishare_runtime_work_change(vdev, owner, MISHARE_WORK_ENTER);
+}
+void mishare_runtime_work_exit(struct wlan_objmgr_vdev *vdev, void *owner)
+{
+    mishare_runtime_work_change(vdev, owner, MISHARE_WORK_EXIT);
+}
+void mishare_runtime_work_put(struct wlan_objmgr_vdev *vdev, void *owner)
+{
+    mishare_runtime_work_change(vdev, owner, MISHARE_WORK_PUT);
+}
+void mishare_runtime_mc_stopped(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    if (!psoc)
+        return;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc != psoc || !entry->state.quiesced)
+            continue;
+        entry->state.mc_stop_seen = true;
+        mishare_runtime_work_update(entry);
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
 void mishare_runtime_allocated(struct wlan_objmgr_vdev *vdev)
 {
     struct mishare_runtime_owner *entry;
@@ -138,6 +240,8 @@ bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev,
         for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
             if (vdev->vdev_comp_priv_obj[id]) {
                 entry->state.blocked = true;
+                if (entry->state.host_reclaim)
+                    entry->state.reclaim_error = -EUCLEAN;
                 allowed = false;
                 break;
             }
@@ -183,7 +287,7 @@ int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
     return 0;
 }
 
-int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
+static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bool reclaim)
 {
     struct mishare_runtime_owner *entry, **link;
     struct wlan_objmgr_vdev *vdev;
@@ -197,13 +301,19 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
     entry = *owner;
     if (!entry)
         return 0;
-    ret = mishare_runtime_ndi_drain(entry);
-    if (ret)
-        return ret;
+    if (!reclaim) {
+        ret = mishare_runtime_ndi_drain(entry);
+        if (ret)
+            return ret;
+    }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    if (entry->state.blocked) {
+    if (entry->state.blocked && !reclaim) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
+    }
+    if (entry->state.work_pending || entry->state.work_users) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
     }
     if (!entry->state.draining && entry->vdev) {
         entry->state.draining = true;
@@ -213,6 +323,8 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
         if (status != QDF_STATUS_SUCCESS) {
             spin_lock_irqsave(&mishare_runtime_lock, flags);
             entry->state.blocked = true;
+            if (reclaim)
+                entry->state.reclaim_error = -EUCLEAN;
             spin_unlock_irqrestore(&mishare_runtime_lock, flags);
             return -EUCLEAN;
         }
@@ -223,6 +335,8 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
         if (entry->events) {
             spin_lock_irqsave(&mishare_runtime_lock, flags);
             entry->state.blocked = true;
+            if (reclaim)
+                entry->state.reclaim_error = -EUCLEAN;
             spin_unlock_irqrestore(&mishare_runtime_lock, flags);
             return -EUCLEAN;
         }
@@ -233,7 +347,7 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
             wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
     }
-    if (entry->state.blocked) {
+    if (entry->state.blocked && !reclaim) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
     }
@@ -253,6 +367,66 @@ int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     kfree(entry);
     return 0;
+}
+
+int mishare_runtime_destroy(struct mishare_runtime_owner **owner)
+{
+    return mishare_runtime_host_destroy(owner, false);
+}
+
+int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *ndi;
+    struct vdev_mlme_obj *mlme;
+    struct mishare_vdev_txn txn;
+    unsigned long flags;
+    int ret = 0;
+    if (!owner)
+        return -EINVAL;
+    entry = *owner;
+    if (!entry)
+        return 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ndi = &entry->state.ndi;
+    if (!entry->state.quiesced || entry->state.work_error || entry->state.reclaim_error)
+        ret = -EUCLEAN;
+    else if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
+        ret = -EINPROGRESS;
+    else if (!entry->state.host_reclaim) {
+        /* These are host-only admission facts, never a firmware-reset claim. */
+        if (!entry->vdev || !entry->referenced || !entry->events || entry->radio ||
+            !entry->state.allocated || entry->state.freed || entry->state.draining ||
+            entry->cookie != (unsigned long)entry->vdev || entry->pe_cookie ||
+            ndi->active || ndi->create.timer_ready || ndi->create.wire_attempted ||
+            ndi->create.wire_accepted || ndi->create.dp_attempted || ndi->create.dp_attached ||
+            ndi->create.stats_owned || ndi->legacy_ready || ndi->wma_bound ||
+            ndi->delete_pending || ndi->delete_submitted || ndi->delete_replied ||
+            ndi->dp_detaching || ndi->dp_freed || ndi->peer_delete_pending ||
+            ndi->peer_create_attempted || ndi->peer_created || ndi->pe_requested ||
+            ndi->channel_requested || ndi->start_plan_requested || ndi->radio_requested)
+            ret = -EUCLEAN;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret)
+        return ret;
+    if (!entry->state.host_reclaim) {
+        if (mishare_events_snapshot(entry->events, &txn) ||
+            txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
+            txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+            return -EUCLEAN;
+        mlme = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+        if (!mlme || mlme->vdev != entry->vdev || mlme->ext_vdev_ptr ||
+            wlan_vdev_mlme_get_opmode(entry->vdev) != QDF_PASSTHRU_MODE ||
+            mlme->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_PASSTHRU ||
+            mlme->mgmt.generic.subtype ||
+            wlan_vdev_mlme_get_state(entry->vdev) != WLAN_VDEV_S_INIT)
+            return -EUCLEAN;
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.host_reclaim = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    }
+    return mishare_runtime_host_destroy(owner, true);
 }
 
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,

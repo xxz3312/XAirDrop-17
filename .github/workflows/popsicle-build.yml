@@ -25,6 +25,8 @@ on:
       - tools/kernel/mishare_radio_origins.py
       - tools/kernel/mishare_shutdown_fixture.py
       - tools/kernel/mishare_shutdown_origins.py
+      - tools/kernel/mishare_work_fixture.py
+      - tools/kernel/mishare_work_origins.py
       - tools/kernel/mishare_session_fixture.py
       - tools/kernel/mishare_context_fixture.py
       - tools/kernel/mishare_firmware_fixture.py

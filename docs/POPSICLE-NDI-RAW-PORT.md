@@ -557,3 +557,29 @@ GitHub 提供的哈希，未独立下载，也不可安装。
 这些检查没有执行完整 HDD 原生 shutdown 或证明在途任务/IRQ/timer 已排空，
 没有释放隔离 owner，也没有验证活动 owner 下卸载、模块文本寿命或 psoc 地址
 重用。默认调用门继续关闭；安全回收、并发预留、RAW/Wonder 和实机联调仍待补齐。
+
+## 0024：owned MC 任务排空证据与 never-wired host 回收
+
+PE、频道、START plan 和 radio 消息在发布前持有 owner 任务 reservation；worker
+在进入原生执行前另记 active，完成发布之后才归还 reservation 与请求的 VDEV 引用。
+停机准入与 get/enter 使用同一 registry 锁：停机后不能获得新 reservation 或进入
+新的执行。已进入的任务允许退回 active/reservation，不清计数、不假造回调。
+计数下溢、溢出或 active/reservation 不一致会留下永久 work_error。
+
+在固定目标 `cds_post_disable()` 的原生 `scheduler_disable()` 成功返回后记录
+`mc_stop_seen`。只有已隔离 owner 的 active 和 reservation 均为零、且没有计数
+错误，才记录 `mc_drained`。原生 already-disabled 返回而仍有排队任务时不满足
+这个条件。这只是已跟踪 owned MC 工作的证据，不是 IRQ/timer/固件排空证明。
+
+新增显式 `mishare_runtime_reclaim_host()`，仅在上述 MC 证据成立后，允许回收
+从未接触过固件命令、DP、WMA、legacy extension、peer、PE 或 radio 的纯 host
+对象。还需核对 PAS/INIT、对象 cookie、事务 serial=0 和没有扩展对象，复用真实
+object-manager 删除、event unbind 与最终 free 通知。存在额外对象引用时保留
+owner 并返回 EINPROGRESS；只有实际 final-free 才允许释放 owner。删除失败或
+残留组件留下终止错误，不重复删除或清除 quarantine。原停机原因始终保留。
+
+该回收不覆盖已创建 NDI、未知固件发送结果、PM/timer、PE/peer/DP 和 radio
+隔离资源；也不授权活动 owner 下卸载、父 psoc 地址复用或模块文本释放。默认
+无线调用门保持关闭。native scheduler_disable、单队列与全队列 flush 函数由
+新增 Actions-only 回归完整执行；QDF wait/thread/queue 原语和完整 native MC
+线程仍为模型，另用 pthread 暂停真实 owned PE callback 验证等待与完成顺序。

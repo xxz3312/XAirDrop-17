@@ -1,0 +1,290 @@
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -5276,36 +5276,40 @@
+ 	return 0;
+ }
+
++
++/* MISHARE_WORK_BEGIN:pe_finish */
+ static QDF_STATUS mishare_pe_finish(struct scheduler_msg *msg, bool flushed)
+ {
+ 	struct mishare_pe_request *req = msg->bodyptr;
++	struct wlan_objmgr_vdev *vdev;
+ 	struct wlan_objmgr_psoc *psoc;
+-	unsigned long cookie = 0;
+ 	void *owner;
+ 	uint8_t id;
++	unsigned long cookie = 0;
+ 	bool create;
+ 	int ret;
+
+ 	if (!req)
+ 		return QDF_STATUS_E_INVAL;
+-	psoc = wlan_vdev_get_psoc(req->vdev);
+-	id = wlan_vdev_get_id(req->vdev);
++	vdev = req->vdev;
++	psoc = wlan_vdev_get_psoc(vdev);
++	id = wlan_vdev_get_id(vdev);
+ 	owner = req->owner;
+ 	create = req->create;
+-
+-/* MISHARE_SHUTDOWN_BEGIN:pe */
+-	if (!flushed && !mishare_runtime_work_allowed(req->vdev, req->owner))
+-		ret = -ESHUTDOWN;
+-	else
+-/* MISHARE_SHUTDOWN_END:pe */
+-	ret = flushed ? -ECANCELED : mishare_pe_execute(req, &cookie);
+-	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_LEGACY_MAC_ID);
++	ret = flushed ? -ECANCELED : mishare_runtime_work_enter(vdev, owner);
++	if (!ret) {
++		ret = mishare_pe_execute(req, &cookie);
++		mishare_runtime_work_exit(vdev, owner);
++	}
+ 	qdf_mem_free(req);
+ 	msg->bodyptr = NULL;
+-	/* Last operation: owner may be drained after this notification. */
+ 	mishare_runtime_ndi_pe_event(psoc, id, owner, create, cookie, ret);
++	/* Keep both reservation and VDEV ref through owner publication. */
++	mishare_runtime_work_put(vdev, owner);
++	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+ 	return QDF_STATUS_SUCCESS;
+ }
++/* MISHARE_WORK_END:pe_finish */
+
+ static QDF_STATUS mishare_pe_callback(struct scheduler_msg *msg)
+ {
+@@ -5317,6 +5321,8 @@
+ 	return mishare_pe_finish(msg, true);
+ }
+
++
++/* MISHARE_WORK_BEGIN:pe_post */
+ int mishare_ndi_pe_post(struct wlan_objmgr_vdev *vdev, void *owner,
+ 			bool create, unsigned long session_cookie)
+ {
+@@ -5342,9 +5348,18 @@
+ 	msg.bodyptr = req;
+ 	msg.callback = mishare_pe_callback;
+ 	msg.flush_callback = mishare_pe_flush;
++	{
++		int ret = mishare_runtime_work_get(vdev, owner);
++		if (ret) {
++			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
++			qdf_mem_free(req);
++			return ret;
++		}
++	}
+ 	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_PE,
+ 					QDF_MODULE_ID_TARGET_IF, &msg);
+ 	if (QDF_IS_STATUS_ERROR(status)) {
++		mishare_runtime_work_put(vdev, owner);
+ 		/* Native scheduler returns failure only before queue publication. */
+ 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+ 		qdf_mem_free(req);
+@@ -5352,6 +5367,7 @@
+ 	}
+ 	return 0;
+ }
++/* MISHARE_WORK_END:pe_post */
+ /* MISHARE_END:pe_helpers */
+
+ /* MISHARE_BEGIN:channel_helpers */
+@@ -5458,34 +5474,39 @@
+ 	return 0;
+ }
+
++
++/* MISHARE_WORK_BEGIN:channel_finish */
+ static QDF_STATUS mishare_channel_finish(struct scheduler_msg *msg, bool flushed)
+ {
+ 	struct mishare_channel_request *req = msg->bodyptr;
++	struct wlan_objmgr_vdev *vdev;
+ 	struct wlan_objmgr_psoc *psoc;
+ 	void *owner;
++	uint8_t id;
+ 	uint32_t freq;
+-	uint8_t id;
+ 	int ret;
+
+ 	if (!req)
+ 		return QDF_STATUS_E_INVAL;
+-	psoc = wlan_vdev_get_psoc(req->vdev);
+-	id = wlan_vdev_get_id(req->vdev);
++	vdev = req->vdev;
++	psoc = wlan_vdev_get_psoc(vdev);
++	id = wlan_vdev_get_id(vdev);
+ 	owner = req->owner;
+ 	freq = req->freq;
+-
+-/* MISHARE_SHUTDOWN_BEGIN:channel */
+-	if (!flushed && !mishare_runtime_work_allowed(req->vdev, req->owner))
+-		ret = -ESHUTDOWN;
+-	else
+-/* MISHARE_SHUTDOWN_END:channel */
+-	ret = flushed ? -ECANCELED : mishare_channel_execute(req);
+-	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_LEGACY_MAC_ID);
++	ret = flushed ? -ECANCELED : mishare_runtime_work_enter(vdev, owner);
++	if (!ret) {
++		ret = mishare_channel_execute(req);
++		mishare_runtime_work_exit(vdev, owner);
++	}
+ 	qdf_mem_free(req);
+ 	msg->bodyptr = NULL;
+ 	mishare_runtime_ndi_channel_event(psoc, id, owner, freq, ret);
++	/* Keep both reservation and VDEV ref through owner publication. */
++	mishare_runtime_work_put(vdev, owner);
++	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+ 	return QDF_STATUS_SUCCESS;
+ }
++/* MISHARE_WORK_END:channel_finish */
+
+ static QDF_STATUS mishare_channel_callback(struct scheduler_msg *msg)
+ {
+@@ -5497,6 +5518,8 @@
+ 	return mishare_channel_finish(msg, true);
+ }
+
++
++/* MISHARE_WORK_BEGIN:channel_post */
+ int mishare_ndi_channel_post(struct wlan_objmgr_vdev *vdev, void *owner,
+ 			      unsigned long cookie, uint32_t freq)
+ {
+@@ -5522,15 +5545,25 @@
+ 	msg.bodyptr = req;
+ 	msg.callback = mishare_channel_callback;
+ 	msg.flush_callback = mishare_channel_flush;
++	{
++		int ret = mishare_runtime_work_get(vdev, owner);
++		if (ret) {
++			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
++			qdf_mem_free(req);
++			return ret;
++		}
++	}
+ 	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_PE,
+ 					QDF_MODULE_ID_TARGET_IF, &msg);
+ 	if (QDF_IS_STATUS_ERROR(status)) {
++		mishare_runtime_work_put(vdev, owner);
+ 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+ 		qdf_mem_free(req);
+ 		return qdf_status_to_os_return(status);
+ 	}
+ 	return 0;
+ }
++/* MISHARE_WORK_END:channel_post */
+ /* MISHARE_END:channel_helpers */
+
+ /* MISHARE_BEGIN:start_plan_request */
+@@ -5558,36 +5591,41 @@
+ 		summary);
+ }
+
++
++/* MISHARE_WORK_BEGIN:start_plan_finish */
+ static QDF_STATUS mishare_start_plan_finish(struct scheduler_msg *msg, bool flushed)
+ {
+ 	struct mishare_start_plan_request *req = msg->bodyptr;
+-	struct mishare_ndi_start_summary summary = {0};
++	struct wlan_objmgr_vdev *vdev;
+ 	struct wlan_objmgr_psoc *psoc;
+ 	void *owner;
++	uint8_t id;
++	struct mishare_ndi_start_summary summary = {0};
+ 	uint32_t freq;
+-	uint8_t id;
+ 	int ret;
+
+ 	if (!req)
+ 		return QDF_STATUS_E_INVAL;
+-	psoc = wlan_vdev_get_psoc(req->channel.vdev);
+-	id = wlan_vdev_get_id(req->channel.vdev);
++	vdev = req->channel.vdev;
++	psoc = wlan_vdev_get_psoc(vdev);
++	id = wlan_vdev_get_id(vdev);
+ 	owner = req->channel.owner;
+ 	freq = req->channel.freq;
+-
+-/* MISHARE_SHUTDOWN_BEGIN:start_plan */
+-	if (!flushed && !mishare_runtime_work_allowed(req->channel.vdev, req->channel.owner))
+-		ret = -ESHUTDOWN;
+-	else
+-/* MISHARE_SHUTDOWN_END:start_plan */
+-	ret = flushed ? -ECANCELED : mishare_start_plan_execute(req, &summary);
+-	wlan_objmgr_vdev_release_ref(req->channel.vdev, WLAN_LEGACY_MAC_ID);
++	ret = flushed ? -ECANCELED : mishare_runtime_work_enter(vdev, owner);
++	if (!ret) {
++		ret = mishare_start_plan_execute(req, &summary);
++		mishare_runtime_work_exit(vdev, owner);
++	}
+ 	qdf_mem_free(req);
+ 	msg->bodyptr = NULL;
+ 	mishare_runtime_ndi_start_plan_event(psoc, id, owner, freq, ret,
+ 					    ret ? NULL : &summary);
++	/* Keep both reservation and VDEV ref through owner publication. */
++	mishare_runtime_work_put(vdev, owner);
++	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+ 	return QDF_STATUS_SUCCESS;
+ }
++/* MISHARE_WORK_END:start_plan_finish */
+
+ static QDF_STATUS mishare_start_plan_callback(struct scheduler_msg *msg)
+ {
+@@ -5599,6 +5637,8 @@
+ 	return mishare_start_plan_finish(msg, true);
+ }
+
++
++/* MISHARE_WORK_BEGIN:start_plan_post */
+ int mishare_ndi_start_plan_post(struct wlan_objmgr_vdev *vdev, void *owner,
+ 			      unsigned long cookie, uint32_t freq)
+ {
+@@ -5624,15 +5664,25 @@
+ 	msg.bodyptr = req;
+ 	msg.callback = mishare_start_plan_callback;
+ 	msg.flush_callback = mishare_start_plan_flush;
++	{
++		int ret = mishare_runtime_work_get(vdev, owner);
++		if (ret) {
++			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
++			qdf_mem_free(req);
++			return ret;
++		}
++	}
+ 	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_PE,
+ 					QDF_MODULE_ID_TARGET_IF, &msg);
+ 	if (QDF_IS_STATUS_ERROR(status)) {
++		mishare_runtime_work_put(vdev, owner);
+ 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+ 		qdf_mem_free(req);
+ 		return qdf_status_to_os_return(status);
+ 	}
+ 	return 0;
+ }
++/* MISHARE_WORK_END:start_plan_post */
+ /* MISHARE_END:start_plan_request */
+
+ /* MISHARE_BEGIN:radio_prepare */
+--- a/qcacld-3.0/core/cds/src/cds_api.c
++++ b/qcacld-3.0/core/cds/src/cds_api.c
+@@ -34,6 +34,10 @@
+ #include "cds_reg_service.h"
+ #include "wma_types.h"
+ #include "wlan_hdd_main.h"
++
++/* MISHARE_WORK_BEGIN:cds_include */
++#include "wlan_hdd_mishare_runtime.h"
++/* MISHARE_WORK_END:cds_include */
+ #include "wlan_hdd_power.h"
+ #include "wlan_hdd_tsf.h"
+ #include <linux/vmalloc.h>
+@@ -1417,6 +1421,10 @@
+ 			cds_err("Failed to disable scheduler");
+ 			return QDF_STATUS_E_INVAL;
+ 		}
++
++/* MISHARE_WORK_BEGIN:cds_mc_stopped */
++		mishare_runtime_mc_stopped(wma_handle->psoc);
++/* MISHARE_WORK_END:cds_mc_stopped */
+ 	}
+ 	/*
+ 	 * With new state machine changes cds_close can be invoked without

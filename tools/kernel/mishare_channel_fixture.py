@@ -25,7 +25,7 @@ STUBS=r'''
 #define WMA_MAX_TXPOWER_INVALID 127
 struct ch_params {int ch_width;uint32_t mhz_freq_seg0,mhz_freq_seg1;u8 center_freq_seg0,sec_ch_offset;};
 static bool ch_passive,ch_dfs,ch_invalid,ch_bad_params,ch_scan,ch_bad_des;
-static unsigned ch_connections,ch_prepares,ch_state;
+static unsigned ch_connections,ch_prepares;
 static bool ch_missing_policy,ch_missing_scan;
 static void *wlan_objmgr_psoc_get_comp_private_obj(struct wlan_objmgr_psoc *p,int id) {assert(p && (id==1 || id==2));return (id==1?ch_missing_policy:ch_missing_scan)?NULL:p;}
 static int ch_power=20;static QDF_STATUS ch_prepare_status;
@@ -40,7 +40,6 @@ static int8_t wlan_reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *p
 static void wlan_reg_set_channel_params_for_pwrmode(struct wlan_objmgr_pdev *p,uint32_t f,uint32_t sec,struct ch_params *c,int mode) {
  assert(p && f && !sec && c->ch_width==0 && !mode);c->mhz_freq_seg0=ch_bad_params?f+20:f;c->center_freq_seg0=wlan_reg_freq_to_chan(p,f);
 }
-static unsigned wlan_vdev_mlme_get_state(struct wlan_objmgr_vdev *v) {assert(v);return ch_state;}
 static struct wlan_channel *wlan_vdev_mlme_get_des_chan(struct wlan_objmgr_vdev *v) {return v->vdev_mlme.des_chan;}
 static QDF_STATUS lim_pre_vdev_start(struct mac_context *m,struct vdev_mlme_obj *o,struct pe_session *s) {
  assert(!lock_depth && m==&pe_mac && s==&pe_slot && s->vdev==o->vdev && s->valid && !s->ch_width && s->htCapability==1 && !s->vhtCapability && !s->cac_duration_ms);

@@ -5,6 +5,8 @@ TAGS = ('platform', 'ssr', 'remove', 'module_stop', 'main_include',
         'pe', 'channel', 'start_plan')
 
 def remove_shutdown_additions(text):
+    from mishare_work_origins import remove_work_additions
+    text = remove_work_additions(text)
     for tag in TAGS:
         pattern = (r'\n/\* MISHARE_SHUTDOWN_BEGIN:' + tag +
                    r' \*/\n.*?/\* MISHARE_SHUTDOWN_END:' + tag + r' \*/\n')

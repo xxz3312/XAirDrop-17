@@ -22,6 +22,13 @@ struct mishare_runtime_status {
     bool draining;
     bool blocked;
     enum mishare_quiesce_reason quiesced;
+    unsigned int work_pending;
+    unsigned int work_users;
+    int work_error;
+    bool mc_stop_seen;
+    bool mc_drained; /* Owned MC work only; NOT IRQ/timer/firmware proof. */
+    bool host_reclaim;
+    int reclaim_error;
     int create_error;
     struct mishare_ndi_status ndi;
     struct mishare_radio_status radio;
@@ -36,6 +43,18 @@ unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
                                           enum mishare_quiesce_reason reason);
 /* Native HDD health check; not a reference, exclusive transition or lease. */
 bool mishare_runtime_platform_available(struct wlan_objmgr_psoc *psoc);
+/* Called only after native scheduler_disable returns success. Records a
+ * per-owner MC observation; readiness also requires every reservation to exit.
+ * Does not acknowledge firmware, stop IRQ/timers or free native NDI resources.
+ */
+void mishare_runtime_mc_stopped(struct wlan_objmgr_psoc *psoc);
+/* Explicit, serialized recovery of a never-wired pure host object only.
+ * Requires shutdown fence + MC evidence, matching PAS/INIT/no extension, and
+ * live parents under the same RTNL/exclusive psoc contract as normal destroy.
+ * EINPROGRESS waits for actual host final-free; EUCLEAN retains ambiguous/native
+ * NDI owners. No retry/reset after a reclaim error; no new firmware commands.
+ */
+int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner);
 /* Host-only raw object-manager factory. No SME self-peer/post-setup or WMI.
  * Caller owns RTNL, an exclusive parent psoc transition, and a live netdev/DP
  * interface matching mac throughout creation AND until destroy returns 0.

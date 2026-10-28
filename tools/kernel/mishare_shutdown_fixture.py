@@ -173,9 +173,13 @@ def fixture(root):
     models=MODELS.replace('NATIVE_PLATFORM',predicate)
     for tag in ['ssr','remove','module_stop']:models=models.replace('NATIVE_'+tag.upper(),insertion(main if tag=='module_stop' else ops,tag))
     src=radio.fixture(root)
-    for guard, count in [('!mishare_runtime_work_allowed(req->vdev, req->owner)', 2),
-                         ('!mishare_runtime_work_allowed(req->channel.vdev, req->channel.owner)', 1)]:
-        if src.count(guard)!=count:raise ValueError('Generated fixture dropped a native MC guard')
+    if 'MISHARE_WORK_BEGIN:pe_finish' in src:
+        if src.count('mishare_runtime_work_enter(vdev, owner)')!=3:
+            raise ValueError('Generated fixture dropped a native MC execution lease')
+    else:
+        for guard, count in [('!mishare_runtime_work_allowed(req->vdev, req->owner)', 2),
+                             ('!mishare_runtime_work_allowed(req->channel.vdev, req->channel.owner)', 1)]:
+            if src.count(guard)!=count:raise ValueError('Generated fixture dropped a native MC guard')
     begin=src.index('/* PLATFORM_AVAILABLE_STUB */');end=src.index('/* END_PLATFORM_AVAILABLE_STUB */',begin)+len('/* END_PLATFORM_AVAILABLE_STUB */')
     src=src[:begin]+models+src[end:]
     return src[:src.index('int main(void) {')]+HARNESS
