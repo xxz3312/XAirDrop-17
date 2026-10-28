@@ -1,0 +1,165 @@
+{
+  "status": "NATIVE_WMI_RAW_DATA_BUILD_PASS_ONLY",
+  "commit": "57184ea2203dfa05ab33c3c7171a2ade31675e2d",
+  "kernel_run_id": 40752944098,
+  "kernel_job_id": 123044167483,
+  "kernel_run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40752944098",
+  "tool_run_id": 40752944311,
+  "tool_job_id": 123044167655,
+  "tool_run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40752944311",
+  "validation_artifact": {
+    "id": 12845701528,
+    "bytes": 53399,
+    "sha256": "0a591c73ca7ddb93af9a4021f02037077874027a3c77e942fdf5c6340b302926",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12844653703,
+    "bytes": 337955919,
+    "github_reported_sha256": "d982eb6361eadedbb28b58bf8ade4e6e8b853b9cde4476f7543930bbc1f78e40",
+    "downloaded_independently": false,
+    "installable_certified": false
+  },
+  "tool_artifact": {
+    "id": 12843413830,
+    "bytes": 9745,
+    "sha256": "d4c7302596e7c21a5f3f1d6fe2d300b15e58d2f072fae3efd4744495c0b509f4",
+    "downloaded_and_checksum_verified": true
+  },
+  "tool_build": {
+    "status": "ACTION_TX_ANDROID_BUILD_PASS_ONLY",
+    "commit": "57184ea2203dfa05ab33c3c7171a2ade31675e2d",
+    "ndk": "27.2.12479018",
+    "android_api": 31,
+    "binary_sha256": "e46a3664676d5019fe695c32709ee9ed468c98fa7a3037aed4ffbf1954429b39",
+    "binary_bytes": 16992,
+    "host_protocol_test": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "native_raw_model_test": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+    "phone_executed": false,
+    "radio_tx_verified": false
+  },
+  "source_sha256": {
+    ".github/workflows/popsicle-action-tx.yml": "ea53e8e2a0c525f8726acc64472f9193577fdf2e45ece398cef688a5e3d11698",
+    "native/wireless/action_tx.c": "5322ba60d39257f9be92d9c56acb9faec34c755f27a5b2d24fc1f739b7ee3967",
+    "tests/test_action_tx.c": "e5c04ea1c72ea81c9522aff4dd5604da472d4998091beefe88d593a196af387b",
+    "tests/test_raw_tx.c": "89d1e0048257aee667b8ed4633db28f5a513d49015df2175d5e8d85c274c058f",
+    "tools/kernel/popsicle_ci.py": "e8e4dc9f5b322cffd2703666a8e3b8baf8bde2b6ddb98cf72803eb7205938d31",
+    "kernel/patches/popsicle/0027-mishare-native-raw-vendor-tx.patch": "18f05da777192c890f6ac10f1afa906676e5a71fe72182fe79fcdb4d6de9d910",
+    "kernel/popsicle-hdd/mishare_raw_protocol.h": "e595ef0a932a6b52eec62c54d42e4ad4c04cbb0e395d09488d6dec4aeafba281",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_raw_tx.h": "5c86681ac4db6d4b2e6311091357bea11112f9a1b8ad65d028ae446299d5d0e7",
+    "kernel/popsicle-hdd/wma_mishare_raw_tx.h": "db95a0fa39de97a6d35af476efa94b39eb9c097fa60d2b4a269dc0caea706e07"
+  },
+  "source_bytes_match_ci_head_git_snapshot": true,
+  "selected_patched_native_sha256": {
+    "qcacld-3.0/core/wma/src/wma_data.c": "e474a6e651fbf40e788d42d9b22337b070391f16d29bc975eccc640066f2f7d6",
+    "qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c": "359c220118e4d3cb1517858b947e3c27960bb95c182639944dc804c84f37ed74"
+  },
+  "selected_patched_native_hashes_origin": "Local locked source with patches 0001-0027; raw header hashes bound by exact CI source commit, not separately included by the old fixture hash reports.",
+  "independent_verification": {
+    "compact_zip_size_and_digest_verified": true,
+    "android_binary_hash_size_and_arm64_elf_verified": true,
+    "generated_batch_fixture_hash_matches_report": true,
+    "old_fixture_selected_native_and_runtime_production_hashes_match_report": true,
+    "new_required_raw_entry_present_in_linked_module": true
+  },
+  "python_tests": 44,
+  "existing_native_fixtures": {
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-recovery-fixture.json": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-completed-fixture.json": "MISHARE_COMPLETED_NDI_HOST_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-parent-fixture.json": "MISHARE_PARENT_TEARDOWN_REVOKE_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-work-fixture.json": "MISHARE_OWNED_MC_DRAIN_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-batch-fixture.json": "MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-final-fixture.json": "MISHARE_HOST_FINAL_BOOKKEEPING_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-completion-fixture.json": "MISHARE_NDI_COMPLETION_INTEGRITY_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY"
+  },
+  "new_model_test": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+  "model_sanitizers": [
+    "address",
+    "undefined",
+    "leak detection"
+  ],
+  "model_checks": [
+    "disabled-by-default path",
+    "DATA=1 and native 6Mbps/20MHz parameter preparation",
+    "normal deferred and inline completion preserve actual status",
+    "submit failure frees caller-owned packet/context",
+    "timeout preserves packet/context until real late callback",
+    "allocation, foreign peer, missing peer, MLO, channel and source address refusals",
+    "shared QoS/protected/DS frame validation"
+  ],
+  "required_host_symbols": 85,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "b36af959a576628d1965979d7b07440398d568739e802cbfa3461b1748b509d4",
+    "version_records": 575,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT",
+    "ndk": "HIT"
+  },
+  "default_enabled": false,
+  "requires_patched_wlan_driver": true,
+  "vendor_id": "0x001a11",
+  "vendor_subcmd": "0x1701",
+  "sta_non_mlo_only": true,
+  "fixed_rate_mbps": 6,
+  "fixed_bandwidth_mhz": 20,
+  "native_retry_limit": 1,
+  "kernel_wait_ms": 1000,
+  "creates_peer_or_vdev": false,
+  "overrides_sta_dp_encap_type": false,
+  "automatic_retries": false,
+  "mac80211_tx_status_feedback_implemented": false,
+  "full_native_wmi_transport_executed_in_model": false,
+  "phone_driver_loaded": false,
+  "firmware_raw_data_accepted": false,
+  "radio_tx_verified": false,
+  "airdrop_connected": false,
+  "limitations": "New WMA wrapper executes against modeled native transport/peer/allocation/completion under ASan/UBSan; real vendor dispatch and WMI/FW run only in full compile/link, not executed. Native mgmt_txrx successful-submit/failure/completion/drain ownership contract is reused. Timeout does not force native release; safe SSR/unload under every late/missing callback is not certified. Requires patched WLAN opt-in, existing active non-MLO STA and same-vdev peer on current channel. No NDI/backend initialization, new peer, arbitrary channel/DBS, protected/aggregated data, mac80211 status integration or phone/AWDL interoperability is certified."
+}

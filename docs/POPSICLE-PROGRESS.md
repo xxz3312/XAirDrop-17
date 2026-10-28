@@ -20,7 +20,7 @@
 | START 原生参数准备 | 离线验证通过 | 重查 WMA/self-peer/法规/并发；原生 START 参数构造与摘要，不提交固件命令 |
 | START/host-only UP/STOP/DOWN | 离线构建/模型验证通过 | owned controller 接入专用 MLME 回调、真实响应与 PM 清理；accepted DOWN + INIT 后才删资源；完整原生 SM/WMA 运行及固件未实测，默认调用门关闭 |
 | 动态换频与并发硬件模式 | 待实现 | AWDL 跳频、硬件模式/DBS、与辅助 monitor 同步 |
-| RAW TX | 管理帧首版已实现，待实机 | 新增原生 Action 帧发送/中继工具，匹配真实 cookie/TX status；RAW 数据帧和内核 TX 完成桥未接入 |
+| RAW TX | DATA 首版已实现，待固件 | Action 帧工具已具备；新增 opt-in WMI RAW DATA vendor 入口与 raw-send/raw-relay，限同频道非 MLO STA、已有 peer、6Mbps/20MHz；内核 TX 完成桥与独立 NDI 待接入 |
 | Monitor/native RAW RX | 接收模式已实现，待实机 | 新增 external_monitor=1 借用原生 monitor，真实 RX 桥接、软件帧过滤、计数和启动脚本；完成编译链接，手机收包与 native RAW/peer/BA 尚待验证 |
 | 纯 host 隔离回收 | 离线验证通过 | 限从未发送固件命令的 PAS/INIT 对象；记录被跟踪 MC 排空，等实际 final-free 再释放 owner；NDI/未知发送资源拒绝回收 |
 | 早期 NDI 隔离回收 | 离线验证通过 | 限 CREATE/完整 DP attach、尚无 WMA/self-peer/PE/START；资格化 SSR 窗口内释放 timer，等 DP final-free 后删 host；会话中与部分 attach 拒绝回收 |
@@ -31,10 +31,10 @@
 | SSR/卸载/异常恢复 | 部分完成 | 已实现准入栅栏、被跟踪 MC 排空、早期及普通资源已完成的 NDI 收尾、拆除前窗口撤销及显式批量步骤；会话内 WMA/peer/PE/PM、父资源协调与安全卸载仍待实现 |
 | 固件能力与端到端实测 | 待验证 | 驱动加载、NDI/RAW 实际支持、Apple 发现与双向传输、稳定性和安装包 |
 
-最近内核构建源提交：`dd85ef8fa566aea4998c57f01f7f80e20e8047ba`。
-[Actions 40743774260](https://github.com/xxz3312/XAirDrop-17/actions/runs/40743774260)
+最近内核构建源提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。
+[Actions 40752944098](https://github.com/xxz3312/XAirDrop-17/actions/runs/40752944098)
 已通过 44 项 Python 检查、26 组原生 fixture、完整 WLAN 编译与严格链接；
-84 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
+85 个要求符号存在，575 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
 以上不构成完整私有 ABI/KCFI、手机加载或 AirDrop 可用认证。
 
 已补齐纯 host 与早期 NDI 的显式回收、拆除前窗口撤销和批量步骤。启用调用方前，仍需已准备/STARTed 会话的 WMA/peer/PE/PM 恢复、跨轮询父资源协调、活动 owner 卸载、psoc 复用和并发/硬件模式资源预留；随后接通换频、收发与 Wonder 后端，再做固件与整机联调。
@@ -68,4 +68,6 @@ SSR DP 回调现已校验已知 token 的恢复来源与普通路径混用；15 
 
 开发重点已转向功能打通：新增原生 monitor 接收模式及手动试运行包，先验证模块启动和真实收包，再接 RAW TX、频道控制及 NDI 会话。见 [接收模式运行说明](POPSICLE-RX-BRINGUP.md) 和 [编译证据](research/popsicle-external-monitor-rx-build-pass.json)。新模式尚未在手机执行；已有 26 组原生回归不等于新模式运行认证。
 
-最新功能提交：`7e53a21a5af27c22ebe6c91eab4ef956b3420116`。新增 Android arm64 `action-tx`，支持单帧发送和 Wonder 出站 Action 帧中继，复用原生 nl80211，不替换 WLAN。 [Actions 40749179035](https://github.com/xxz3312/XAirDrop-17/actions/runs/40749179035) 已通过主机协议测试及 Android 编译；本轮未改内核源码，接收模块沿用上述内核构建。见 [Action TX 使用说明](POPSICLE-ACTION-TX.md) 与 [构建证据](research/popsicle-native-action-tx-build-pass.json)。实际发射、RAW 数据帧、mac80211 完成状态回写与完整 AWDL 待实现/验证。
+管理帧工具阶段提交：`7e53a21a5af27c22ebe6c91eab4ef956b3420116`。新增 Android arm64 `action-tx`，支持单帧发送和 Wonder 出站 Action 帧中继，复用原生 nl80211，不替换 WLAN。 [Actions 40749179035](https://github.com/xxz3312/XAirDrop-17/actions/runs/40749179035) 已通过主机协议测试及 Android 编译；本轮未改内核源码，接收模块沿用上述内核构建。见 [Action TX 使用说明](POPSICLE-ACTION-TX.md) 与 [构建证据](research/popsicle-native-action-tx-build-pass.json)。实际发射、RAW 数据帧、mac80211 完成状态回写与完整 AWDL 待实现/验证。
+
+最新功能提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。RAW DATA 驱动入口与 Android 工具已接通编译链，完整 WLAN 编译/严格链接和两个工具/模型测试均通过；native_status 只由真实原生完成回调产生。需要新驱动显式启用 mishare_raw_tx=1，旧接收包/stock WLAN 不具备入口。手机加载、WMI DATA 接受和实际发射待验证。见 [RAW TX 首版说明](POPSICLE-RAW-TX-BRINGUP.md) 与 [构建证据](research/popsicle-native-raw-tx-build-pass.json)。
