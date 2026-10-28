@@ -390,6 +390,7 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner)
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ndi = &entry->state.ndi;
     if (!entry->state.quiesced || entry->state.work_error || entry->state.reclaim_error ||
+        ndi->completion_error ||
         entry->state.ndi_reclaim_started)
         ret = -EUCLEAN;
     else if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
@@ -437,6 +438,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
+           !n->completion_error &&
            !entry->state.recovery_window_closed && !entry->state.ndi_reclaim_started &&
            !entry->state.host_reclaim && !entry->state.draining &&
            entry->vdev && entry->referenced && entry->events && !entry->radio &&
@@ -534,6 +536,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     if (entry->state.work_error || entry->state.recovery_error || entry->state.reclaim_error ||
+        entry->state.ndi.completion_error ||
         entry->state.quiesced != MISHARE_QUIESCE_SSR || entry->state.host_reclaim)
         ret = -EUCLEAN;
     else if (entry->state.ndi_reclaim_ready && entry->state.draining && !entry->vdev)
@@ -668,6 +671,7 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
             goto unlock;
         }
         if (entry->state.work_error || entry->state.reclaim_error ||
+            entry->state.ndi.completion_error ||
             entry->state.recovery_error) {
             ret = -EUCLEAN;
             goto unlock;
@@ -844,9 +848,11 @@ void mishare_runtime_ndi_delete_event(struct wlan_objmgr_psoc *psoc, u8 id,
         if (entry->psoc != psoc || !ndi->active || !entry->vdev ||
             wlan_vdev_get_id(entry->vdev) != id)
             continue;
-        if (!firmware || !ndi->delete_pending || ndi->delete_replied)
+        if (!firmware || !ndi->delete_pending || ndi->delete_replied) {
             ndi->blocked = true;
-        else if (!ndi->blocked)
+            if (!ndi->completion_error)
+                ndi->completion_error = -EUCLEAN;
+        } else if (!ndi->blocked)
             ndi->delete_replied = true;
         break;
     }
@@ -1271,15 +1277,30 @@ int mishare_runtime_ndi_start(struct mishare_runtime_owner *entry)
 
 static void mishare_runtime_ndi_dp_freed(void *context)
 {
-    struct mishare_runtime_owner *entry = context;
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *ndi;
     unsigned long flags;
 
-    /* Native DP calls this after its actual vdev storage has been freed.
-     * The owner cannot disappear while active/detaching is set.
+    /* Match the opaque callback token before dereference. Native DP calls
+     * after storage free; publication is our last access to the owner.
      */
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    entry->state.ndi.dp_freed = true;
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != context)
+            continue;
+        ndi = &entry->state.ndi;
+        if (!ndi->active || !ndi->dp_detaching || !ndi->delete_submitted ||
+            !ndi->delete_replied || ndi->dp_freed) {
+            ndi->blocked = true;
+            if (!ndi->completion_error)
+                ndi->completion_error = -EUCLEAN;
+        } else if (!ndi->completion_error) {
+            ndi->dp_freed = true;
+        }
+        break;
+    }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    /* Unknown/freed tokens are ignored; no dereference after publication. */
 }
 
 static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
@@ -1290,7 +1311,7 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     int ret;
 
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    ret = entry->state.blocked || ndi->blocked;
+    ret = entry->state.blocked || ndi->blocked || ndi->completion_error;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     if (ret)
         return -EUCLEAN;

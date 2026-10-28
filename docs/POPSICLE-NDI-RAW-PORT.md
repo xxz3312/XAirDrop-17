@@ -789,3 +789,29 @@ runtime C 与 0026 逐字节一致。完整诊断大包仅记录 GitHub 哈希�
 
 这仍是离线源码/模型/编译验证。完整 HDD 父资源协调、自动恢复调用方、已准备/
 STARTed 会话恢复及实机验证尚未完成，默认无线入口关闭。
+
+### 0029 普通 NDI 完成事件身份与顺序校验
+
+准备态恢复还需要 peer/WMA/legacy 与父资源协调，不能仅凭 blocked 标志解除
+隔离。复核时先发现普通 DP final-free 回调直接解引用 owner token，且不区分
+重复、过早或错误回收路由；SSR DP 回调此前已具有 registry 身份校验。
+
+普通回调现在先在锁下匹配 live registry 中的不透明 token，未知/已释放 token
+不解引用。只有 NDI active、普通 detach 已启动、DELETE 已提交且真实回执已到、
+此前尚未收到普通 DP 完成，才记录 dp_freed。发布后不再访问 owner。正常 inline/
+延迟回调和停机栅栏后的有效回调仍可记录实际释放事实，不重新开放清理准入。
+
+过早、重复或跨 SSR/普通路由的 DP 回调，以及重复/非固件 DELETE 通知，记录
+永久 completion_error 并保留历史。普通销毁、纯 host 回收、SSR NDI 回收、候选
+窗口资格及批量准入均不能绕过该错误；不会伪造 DELETE ACK 或 DP final-free。
+
+新增 Actions-only 回归覆盖有效 inline/延迟完成、停机后有效发布、未知与释放后
+重复 token、过早/重复/错误路由、DELETE 重复/超时通知及各回收入口保留资源。
+使用生产 owner 控制器与原生 DELETE response/DP wrapper/object-manager free；
+完整 DP storage free、QDF/timer、组件析构仍为模型。指针 registry 比较不能证明
+地址复用/ABA 或模块回调文本寿命，完整父资源协调、准备态/STARTed 恢复和实机
+验证仍待完成，默认入口关闭。
+
+既有批量优先级负对照改为精确恢复 0027 的批量函数，并独立核对历史函数哈希，
+其余新完成事件校验保持当前实现。这样仍验证旧批量错误被新增断言捕获，同时
+避免后续独立修正被整份旧 runtime 覆盖；0028 的整份 runtime 对照证据保持原样。

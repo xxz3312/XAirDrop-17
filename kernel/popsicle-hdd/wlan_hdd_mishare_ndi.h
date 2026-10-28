@@ -44,6 +44,7 @@ struct mishare_ndi_start_summary {
     u32 dtim_period;
 };
 struct mishare_ndi_status {
+    int completion_error; /* Sticky invalid/duplicate native completion. */
     bool active;
     bool blocked;
     bool delete_pending;

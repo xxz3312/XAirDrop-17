@@ -152,7 +152,7 @@ def audit(root):
         run_env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'}
         subprocess.run(command,check=True)
         out=subprocess.check_output([exe],text=True,timeout=45,env=run_env)
-        # Exact preceding implementation is a negative control: the new
+        # Exact historical batch function is a negative control: the new
         # regression must fail on its expected-result assertion, not sanitizer
         # errors or a compiler failure. Compilation/execution stays Actions-only.
         runtime=(production/'wlan_hdd_mishare_runtime.c').read_text()
@@ -175,15 +175,19 @@ def audit(root):
             goto unlock;
         }
 ''',1)
-        previous_hash=hashlib.sha256(previous.encode()).hexdigest()
-        assert previous_hash=='1c8a52cbc9b8743300cd180ff6dea08500019850d8b86381eafb5b59dcdbce47'
+        previous_batch=parent.recovery.function(previous,'mishare_runtime_reclaim_batch')
+        previous_batch=previous_batch.replace('            entry->state.ndi.completion_error ||\n','',1)
+        previous_hash=hashlib.sha256(previous_batch.encode()).hexdigest()
+        assert previous_hash=='b9994529bd2d39c6498a5f6ab078085f1401971b25ce6fa846c5d4702214f878'
+        current_batch=parent.recovery.function(runtime,'mishare_runtime_reclaim_batch')
+        previous=runtime.replace(current_batch,previous_batch,1)
         (d/'wlan_hdd_mishare_runtime.c').write_text(previous)
         subprocess.run(command,check=True)
         rejected=subprocess.run([exe],text=True,timeout=45,env=run_env,capture_output=True)
         assert rejected.returncode==-6 and 'mishare_runtime_reclaim_batch(&psoc,items,fault==4?1:2)==expected' in rejected.stderr
     if out.strip()!='MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY':raise ValueError('Unexpected fixture output')
     return {'status':out.strip(),'source_commit':pin,'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),
-            'negative_control':{'previous_runtime_sha256':previous_hash,'exact_previous_runtime_rejected_by_new_assertion':True},
+            'negative_control':{'previous_batch_function_sha256':previous_hash,'exact_historical_batch_function_rejected_by_new_assertion':True},
             'native_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in parent.BASE},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h']},
             'checks':['bounded opaque-token and exact-psoc validation before dereference','complete table coverage including pending physical final-free; duplicate/stale/foreign/missing entries do not mutate','SSR-first fence, sticky errors and owned MC reservations checked before every batch step','full coverage and fatal preflight errors take precedence over MC waiting in either registry order; rejected slots and native resources remain unchanged','multiple distinct modeled VDEVs preserve their own object/event final-free identities','mixed host and early NDI release with reordered slots and inline/delayed DP callbacks','successful slots clear; pending/unsupported slots retain authoritative handles and individual results','earlier error is not hidden by later success; no fabricated native DELETE acknowledgment','parent-window revocation between polls remains effective; zero only after exact psoc registry empties'],
