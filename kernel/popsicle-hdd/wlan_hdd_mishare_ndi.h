@@ -29,6 +29,7 @@ struct mishare_ndi_create_result {
     bool dp_attempted;
     bool dp_attached;
     bool stats_owned;
+    unsigned long dp_cookie; /* Exact attach-time DP soc identity, not a ref. */
     u8 stats_id;
 };
 /* Scalars copied from the native target START parameter builder. No cached
@@ -96,6 +97,10 @@ int mishare_ndi_wire_create(struct wlan_objmgr_vdev *vdev,
 int mishare_ndi_native_delete(struct wlan_objmgr_vdev *vdev);
 int mishare_ndi_native_dp_detach(struct wlan_objmgr_vdev *vdev,
                                  void (*callback)(void *), void *context);
+int mishare_ndi_recovery_timer_deinit(struct wlan_objmgr_vdev *vdev);
+int mishare_ndi_recovery_dp_detach(struct wlan_objmgr_vdev *vdev,
+                                   unsigned long dp_cookie,
+                                   void (*callback)(void *), void *context);
 int mishare_ndi_release_stats(struct vdev_mlme_obj *mlme,
                               struct mishare_ndi_create_result *result);
 int mishare_ndi_radio_prepare(struct wlan_objmgr_vdev *vdev, void *owner,

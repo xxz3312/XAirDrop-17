@@ -14,6 +14,8 @@ ORIGINALS = json.loads(r'''{
 }''')
 
 def remove_work_additions(text):
+    from mishare_recovery_origins import remove_recovery_additions
+    text = remove_recovery_additions(text)
     for tag, original in ORIGINALS.items():
         pattern = (r'\n/\* MISHARE_WORK_BEGIN:' + tag +
                    r' \*/\n.*?/\* MISHARE_WORK_END:' + tag + r' \*/\n')

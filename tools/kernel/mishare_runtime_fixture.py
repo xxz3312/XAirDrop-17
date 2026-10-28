@@ -83,6 +83,10 @@ static QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *v) { asse
 static struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(struct wlan_objmgr_pdev*,struct wlan_vdev_create_params*);
 #include "wlan_hdd_mishare_txn.c"
 #include "wlan_hdd_mishare_events.c"
+/* RECOVERY_TRANSPORT_STUBS */
+int mishare_ndi_recovery_timer_deinit(struct wlan_objmgr_vdev *v) { (void)v;assert(0);return -EIO; }
+int mishare_ndi_recovery_dp_detach(struct wlan_objmgr_vdev *v,unsigned long k,void (*cb)(void*),void *c) { (void)v;(void)k;(void)cb;(void)c;assert(0);return -EIO; }
+/* END_RECOVERY_TRANSPORT_STUBS */
 /* NDI_TRANSPORT_STUBS: host-only cases must never submit native transport. */
 int mishare_ndi_native_create(struct vdev_mlme_obj *m, struct mishare_ndi_create_result *r) { (void)m;(void)r;assert(0);return -EIO; }
 int mishare_ndi_native_delete(struct wlan_objmgr_vdev *v) { (void)v;assert(0);return -EIO; }

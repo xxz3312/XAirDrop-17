@@ -189,6 +189,9 @@ def check_mishare_host_symbols(work, module, report_name):
     names += ['mishare_runtime_work_get', 'mishare_runtime_work_enter',
               'mishare_runtime_work_exit', 'mishare_runtime_work_put',
               'mishare_runtime_mc_stopped', 'mishare_runtime_reclaim_host']
+    names += ['mishare_runtime_recovery_candidates', 'mishare_runtime_recovery_open',
+              'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
+              'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -230,6 +233,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/mishare_recovery_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-recovery-fixture.json'],
+               'mishare-recovery-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_work_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-work-fixture.json'],
                'mishare-work-fixture.log')

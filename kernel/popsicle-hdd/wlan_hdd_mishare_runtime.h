@@ -29,6 +29,15 @@ struct mishare_runtime_status {
     bool mc_drained; /* Owned MC work only; NOT IRQ/timer/firmware proof. */
     bool host_reclaim;
     int reclaim_error;
+    bool recovery_window;
+    bool recovery_window_closed;
+    bool ndi_reclaim_started;
+    bool recovery_timer_attempted;
+    bool recovery_timer_released;
+    bool recovery_dp_attempted;
+    bool recovery_dp_freed;
+    bool ndi_reclaim_ready;
+    int recovery_error;
     int create_error;
     struct mishare_ndi_status ndi;
     struct mishare_radio_status radio;
@@ -55,6 +64,19 @@ void mishare_runtime_mc_stopped(struct wlan_objmgr_psoc *psoc);
  * NDI owners. No retry/reset after a reclaim error; no new firmware commands.
  */
 int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner);
+/* Internal SSR-only origin: qualified stopped HIF/HTC/RX + blocked WMI with
+ * work queues flushed. Closes irrevocably at native cds_close, before parents
+ * disappear. No firmware ACK or ownership reset is manufactured.
+ */
+unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc);
+void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc);
+void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
+/* Explicit serialized recovery of fully attached, never-prepared NDI only.
+ * Caller retains RTNL/exclusive psoc and exact DP/timer parents throughout all
+ * polls; stop CDS parent destruction until completion. No automatic caller.
+ * Partial attach, peer/PE/radio/DELETE history and unknown commands stay held.
+ */
+int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
 /* Host-only raw object-manager factory. No SME self-peer/post-setup or WMI.
  * Caller owns RTNL, an exclusive parent psoc transition, and a live netdev/DP
  * interface matching mac throughout creation AND until destroy returns 0.

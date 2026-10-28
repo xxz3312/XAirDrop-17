@@ -240,7 +240,7 @@ bool mishare_runtime_prepare_free(struct wlan_objmgr_vdev *vdev,
         for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
             if (vdev->vdev_comp_priv_obj[id]) {
                 entry->state.blocked = true;
-                if (entry->state.host_reclaim)
+                if (entry->state.host_reclaim || entry->state.ndi_reclaim_ready)
                     entry->state.reclaim_error = -EUCLEAN;
                 allowed = false;
                 break;
@@ -389,7 +389,8 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ndi = &entry->state.ndi;
-    if (!entry->state.quiesced || entry->state.work_error || entry->state.reclaim_error)
+    if (!entry->state.quiesced || entry->state.work_error || entry->state.reclaim_error ||
+        entry->state.ndi_reclaim_started)
         ret = -EUCLEAN;
     else if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
         ret = -EINPROGRESS;
@@ -426,6 +427,184 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner)
         entry->state.host_reclaim = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     }
+    return mishare_runtime_host_destroy(owner, true);
+}
+
+/* No wire commands or state-machine events occur on this recovery route. */
+static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *n = &entry->state.ndi;
+    return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
+           entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
+           !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
+           !entry->state.recovery_window_closed && !entry->state.ndi_reclaim_started &&
+           !entry->state.host_reclaim && !entry->state.draining &&
+           entry->vdev && entry->referenced && entry->events && !entry->radio &&
+           entry->cookie == (unsigned long)entry->vdev && !entry->pe_cookie &&
+           n->active && !n->create_error && n->create.timer_ready &&
+           n->create.wire_attempted && n->create.wire_accepted &&
+           n->create.dp_attempted && n->create.dp_attached && n->create.dp_cookie &&
+           n->create.stats_owned && !n->legacy_ready && !n->wma_bound && !n->context_error &&
+           !n->peer_create_attempted && !n->peer_created && !n->peer_delete_pending &&
+           !n->pe_requested && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
+           !n->delete_pending && !n->delete_submitted && !n->delete_replied &&
+           !n->dp_detaching && !n->dp_freed;
+}
+unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    unsigned int count = 0;
+    if (!psoc)
+        return 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next)
+        if (entry->psoc == psoc && mishare_runtime_ndi_recovery_candidate(entry))
+            count++;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return count;
+}
+void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    if (!psoc)
+        return;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next)
+        if (entry->psoc == psoc && mishare_runtime_ndi_recovery_candidate(entry))
+            entry->state.recovery_window = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    if (!psoc)
+        return;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc != psoc)
+            continue;
+        entry->state.recovery_window = false;
+        entry->state.recovery_window_closed = true;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+static void mishare_runtime_recovery_dp_freed(void *context)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != context || !entry->state.ndi_reclaim_started)
+            continue;
+        if (!entry->state.recovery_dp_attempted || entry->state.recovery_dp_freed) {
+            if (!entry->state.recovery_error)
+                entry->state.recovery_error = -EUCLEAN;
+        } else {
+            entry->state.recovery_dp_freed = true;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    /* No access to context after publication. Unknown/freed tokens are ignored. */
+}
+static int mishare_runtime_recovery_error(struct mishare_runtime_owner *entry, int error)
+{
+    unsigned long flags;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (!entry->state.recovery_error)
+        entry->state.recovery_error = error ? error : -EUCLEAN;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return -EUCLEAN;
+}
+int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_vdev_txn txn;
+    struct vdev_mlme_obj *m;
+    unsigned long flags;
+    bool started, timer_done, dp_attempted, dp_freed;
+    int ret = 0;
+    if (!owner)
+        return -EINVAL;
+    entry = *owner;
+    if (!entry)
+        return 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (entry->state.work_error || entry->state.recovery_error || entry->state.reclaim_error ||
+        entry->state.quiesced != MISHARE_QUIESCE_SSR || entry->state.host_reclaim)
+        ret = -EUCLEAN;
+    else if (entry->state.ndi_reclaim_ready && entry->state.draining && !entry->vdev)
+        ret = 1; /* Only final-free bookkeeping remains; no native handle access. */
+    else if (entry->state.recovery_window_closed)
+        ret = -ESHUTDOWN;
+    else if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
+        ret = -EINPROGRESS;
+    else if (!entry->state.ndi_reclaim_started && !mishare_runtime_ndi_recovery_candidate(entry))
+        ret = -EUCLEAN;
+    else if (!entry->state.recovery_window)
+        ret = -EINPROGRESS;
+    started = entry->state.ndi_reclaim_started;
+    timer_done = entry->state.recovery_timer_released;
+    dp_attempted = entry->state.recovery_dp_attempted;
+    dp_freed = entry->state.recovery_dp_freed;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret == 1)
+        return mishare_runtime_host_destroy(owner, true);
+    if (ret)
+        return ret;
+    m = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+    if (!m || m->vdev != entry->vdev || m->ext_vdev_ptr ||
+        wlan_vdev_mlme_get_opmode(entry->vdev) != QDF_PASSTHRU_MODE ||
+        m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI || m->mgmt.generic.subtype ||
+        wlan_vdev_mlme_get_state(entry->vdev) != WLAN_VDEV_S_INIT)
+        return mishare_runtime_recovery_error(entry, -EUCLEAN);
+    if (!started) {
+        if (mishare_events_snapshot(entry->events, &txn) ||
+            txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
+            txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+            return mishare_runtime_recovery_error(entry, -EUCLEAN);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.ndi_reclaim_started = true;
+        entry->state.recovery_timer_attempted = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_recovery_timer_deinit(entry->vdev);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.recovery_timer_released = true;
+        entry->state.ndi.create.timer_ready = false;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        timer_done = true;
+    }
+    if (!timer_done)
+        return mishare_runtime_recovery_error(entry, -EUCLEAN);
+    if (!dp_attempted) {
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.recovery_dp_attempted = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_recovery_dp_detach(entry->vdev, entry->state.ndi.create.dp_cookie,
+                                            mishare_runtime_recovery_dp_freed, entry);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.ndi.create.stats_owned = false; /* Native detach resets stats ID. */
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS; /* Submit return must precede final host deletion. */
+    }
+    if (!dp_freed)
+        return -EINPROGRESS;
+    /* INIT was observed, never manufactured. No DELETE ACK flags are written. */
+    m->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
+    m->proto.generic.nss_2g = 0;
+    m->proto.generic.nss_5g = 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    entry->state.ndi.create.dp_attached = false;
+    entry->state.ndi.active = false;
+    entry->state.ndi_reclaim_ready = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     return mishare_runtime_host_destroy(owner, true);
 }
 

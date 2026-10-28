@@ -1,0 +1,136 @@
+--- a/qcacld-3.0/core/cds/src/cds_api.c
++++ b/qcacld-3.0/core/cds/src/cds_api.c
+@@ -1398,6 +1398,24 @@
+  *
+  * Return: QDF status
+  */
++
++/* MISHARE_RECOVERY_BEGIN:cds_helper */
++#include "wmi_unified_api.h"
++static void mishare_cds_recovery_window(tp_wma_handle wma,
++                                      struct hif_opaque_softc *hif)
++{
++ if (!wma || !wma->psoc || !hif || !gp_cds_context ||
++     !gp_cds_context->htc_ctx || !cds_is_driver_recovering() ||
++     !mishare_runtime_recovery_candidates(wma->psoc) ||
++     wmi_validate_handle(wma->wmi_handle) || !wmi_is_blocked(wma->wmi_handle) ||
++     hif_get_target_status(hif) != TARGET_STATUS_RESET)
++  return;
++ /* HTC/IRQ/RX stop preceded this call. Drain independent WMI work queues
++  * while timer/DP/MLME parents still exist. No default-owner path changes. */
++ if (QDF_IS_STATUS_SUCCESS(wma_wmi_work_close()))
++  mishare_runtime_recovery_open(wma->psoc);
++}
++/* MISHARE_RECOVERY_END:cds_helper */
+ QDF_STATUS cds_post_disable(void)
+ {
+ 	tp_wma_handle wma_handle;
+@@ -1452,6 +1470,10 @@
+ 		return QDF_STATUS_E_INVAL;
+ 	}
+
++/* MISHARE_RECOVERY_BEGIN:cds_window */
++	mishare_cds_recovery_window(wma_handle, hif_ctx);
++/* MISHARE_RECOVERY_END:cds_window */
++
+ 	cdp_pdev_pre_detach(cds_get_context(QDF_MODULE_ID_SOC),
+ 			    OL_TXRX_PDEV_ID, 1);
+
+@@ -1471,6 +1493,10 @@
+ {
+ 	QDF_STATUS qdf_status;
+
++
++/* MISHARE_RECOVERY_BEGIN:cds_close */
++	mishare_runtime_recovery_close(psoc);
++/* MISHARE_RECOVERY_END:cds_close */
+ 	qdf_hang_event_unregister_notifier(&cds_hang_event_notifier);
+ 	qdf_status = cds_sched_close();
+ 	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+--- a/qca-wifi-host-cmn/target_if/mlme/psoc/src/target_if_psoc_timer_tx_ops.c
++++ b/qca-wifi-host-cmn/target_if/mlme/psoc/src/target_if_psoc_timer_tx_ops.c
+@@ -232,3 +232,43 @@
+ 	if (QDF_IS_STATUS_SUCCESS(status))
+ 		vdev_rsp->rt_lock.is_lock_acquired = true;
+ }
++
++/* MISHARE_RECOVERY_BEGIN:timer */
++#include "wlan_hdd_mishare_ndi.h"
++#include <wlan_vdev_mlme.h>
++#include <linux/errno.h>
++int mishare_ndi_recovery_timer_deinit(struct wlan_objmgr_vdev *vdev)
++{
++ struct wlan_objmgr_psoc *psoc;
++ struct wlan_lmac_if_mlme_rx_ops *rx;
++ struct vdev_response_timer *r;
++ struct vdev_mlme_obj *m;
++ uint8_t id;
++ if (!vdev || wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++  return -EUCLEAN;
++ psoc = wlan_vdev_get_psoc(vdev);
++ id = wlan_vdev_get_id(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ if (!psoc || id >= WLAN_UMAC_PSOC_MAX_VDEVS || !m || m->vdev != vdev ||
++     m->ext_vdev_ptr || m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI ||
++     m->mgmt.generic.subtype || wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT)
++  return -EUCLEAN;
++ rx = target_if_vdev_mgr_get_rx_ops(psoc);
++ if (!rx || !rx->psoc_get_vdev_response_timer_info)
++  return -EUCLEAN;
++ r = rx->psoc_get_vdev_response_timer_info(psoc, id);
++ if (!r || r->psoc != psoc || r->vdev_id != id ||
++     qdf_atomic_read(&r->rsp_timer_inuse) != 1 || r->rsp_status ||
++     r->rt_lock.is_lock_acquired)
++  return -EUCLEAN;
++ /* Even an inactive timer is synchronously excluded before native free. */
++ qdf_timer_sync_cancel(&r->rsp_timer);
++ if (r->psoc != psoc || r->vdev_id != id || r->rsp_status ||
++     qdf_atomic_read(&r->rsp_timer_inuse) != 1 || r->rt_lock.is_lock_acquired)
++  return -EUCLEAN;
++ target_if_psoc_vdev_rsp_timer_deinit(psoc, id);
++ if (r->psoc || qdf_atomic_read(&r->rsp_timer_inuse) || r->rt_lock.is_lock_acquired)
++  return -EUCLEAN;
++ return 0;
++}
++/* MISHARE_RECOVERY_END:timer */
+--- a/qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_tgt_if_tx_api.c
++++ b/qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_tgt_if_tx_api.c
+@@ -177,6 +177,10 @@
+ 	info.qdf_opmode = wlan_vdev_mlme_get_opmode(vdev);
+ 	wlan_vdev_mgr_fill_mlo_bridge_vap_params(&info, vdev);
+ 	wlan_vdev_mgr_fill_mlo_params(&info, param);
++
++/* MISHARE_RECOVERY_BEGIN:dp_cookie */
++	result->dp_cookie = (unsigned long)soc;
++/* MISHARE_RECOVERY_END:dp_cookie */
+ 	result->dp_attempted = true;
+ 	status = cdp_vdev_attach(soc, wlan_objmgr_pdev_get_pdev_id(pdev), &info);
+ 	result->dp_attached = status == QDF_STATUS_SUCCESS;
+@@ -912,3 +916,27 @@
+ 	return qdf_status_to_os_return(cdp_vdev_detach(soc,
+ 				wlan_vdev_get_id(vdev), callback, context));
+ }
++
++/* MISHARE_RECOVERY_BEGIN:dp_detach */
++int mishare_ndi_recovery_dp_detach(struct wlan_objmgr_vdev *vdev,
++                                   unsigned long dp_cookie,
++                                   void (*callback)(void *), void *context)
++{
++ struct wlan_objmgr_psoc *psoc;
++ struct vdev_mlme_obj *m;
++ ol_txrx_soc_handle soc;
++ if (!vdev || !dp_cookie || !callback || !context ||
++     wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++  return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
++ psoc = wlan_vdev_get_psoc(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ if (!psoc || !m || m->vdev != vdev || m->ext_vdev_ptr ||
++     m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI || m->mgmt.generic.subtype ||
++     wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT)
++  return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
++ soc = wlan_psoc_get_dp_handle(psoc);
++ if (!soc || (unsigned long)soc != dp_cookie)
++  return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
++ return mishare_ndi_native_dp_detach(vdev, callback, context);
++}
++/* MISHARE_RECOVERY_END:dp_detach */

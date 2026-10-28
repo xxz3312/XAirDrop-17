@@ -606,3 +606,34 @@ scheduler 文件和完整 native SM 源码与固定目标版本逐字节一致�
 
 该证据不等于真实内核线程/IRQ/timer/固件已验证，也不覆盖 NDI 的 WMA、PE、
 peer、DP 与未知发送隔离资源回收。默认无线调用门继续关闭，尚未上机加载。
+
+## 0025：pre-context NDI 的 SSR 回收
+
+新增只覆盖“CREATE/DP attach 完成，但从未准备 legacy/WMA/self-peer/PE、频道、
+START plan 或 radio”的显式 `mishare_runtime_reclaim_ndi()`。部分 attach、CREATE
+发送未知、DELETE/事务历史、已进入会话的 owner 继续隔离。没有默认恢复调用方。
+
+原生 `cds_post_disable()` 完成 MC、HIF/ISR、HTC、RX 停止后，只有 SSR 标记、
+HIF TARGET_STATUS_RESET、有效且 blocked 的 WMI、已排空 owned MC 和精确候选
+owner 同时成立，才额外执行原生 WMA/WMI 工作队列清理并开放窗口。没有候选
+owner 时不增加 WMI flush。窗口在原生 `cds_close()` 进入时永久关闭，不能重开。
+这是驱动记录的复位/停机条件，不是固件物理复位或 DELETE ACK 的独立证明。
+
+回收先核对 PAS/NDI/INIT、空 extension、事务 serial=0，再同步取消无 pending
+response、无 runtime PM 锁的准确原生 timer，并执行原生 deinit。timer 状态漂移
+或错误会永久保留资源。CREATE 时记录 DP soc cookie；detach 前必须匹配当前父
+实例，提交失败不能当作“没有 DP”。统计 ID 的释放来自原生 detach，实际 DP
+final-free 回调到达后才能转回 host 类型并进入 object-manager 删除。不会发布
+伪造 STOP/DOWN/DELETE 完成，不写普通 delete_replied/dp_freed，不清原始发送历史。
+
+window 关闭后的迟到 DP 回调只记录事实，不授权新的 native 删除；已经进入纯
+host 最终删除的 owner 仅能等待真实 final-free 并释放 bookkeeping。调用方必须
+保留准确 psoc/DP/timer 父资源及 RTNL/独占父事务，阻止 CDS 继续销毁父上下文，
+直到轮询完成；此协调、活动 owner 下安全卸载、模块文本寿命与 psoc 地址复用
+尚未实现，因此默认无线入口继续关闭。
+
+新增 Actions-only 回归执行完整原生 CDS post-disable、WMI stop/blocked/work close/
+remove-work、timer deinit、owned DP wrapper 和真实 object-manager final-free。
+HIF/HTC、QDF scheduler/IRQ/timer/workqueue、完整 DP detach/storage free 和组件
+析构仍是模型；DP callback 在 native storage free 之后的来源顺序另行源码审计。
+完整 WMA/self-peer/PE/STARTed NDI/PM 恢复回收及手机固件行为仍未完成验证。
