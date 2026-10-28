@@ -1,6 +1,6 @@
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-28）
 
-当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径及停机准入栅栏的离线验证。
+当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据与纯 host 回收的离线验证。
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
@@ -22,20 +22,23 @@
 | 动态换频与并发硬件模式 | 待实现 | AWDL 跳频、硬件模式/DBS、与辅助 monitor 同步 |
 | RAW TX | 待实现 | 目标接口已分析；帧发送桥接、队列和完成回收未接入 |
 | Monitor/native RAW RX | 待实现 | 接收桥接、过滤、peer/BA 等目标适配 |
-| SSR/卸载/异常恢复 | 停机准入栅栏离线通过；恢复待完善 | 原生 SSR/remove/module-stop 标记旧 owner，拒绝排队任务/迟到响应并保留资源；不是在途屏障，完整排空、回收及活动 owner 卸载尚未实现 |
+| 纯 host 隔离回收 | 离线验证通过 | 限从未发送固件命令的 PAS/INIT 对象；记录被跟踪 MC 排空，等实际 final-free 再释放 owner；NDI/未知发送资源拒绝回收 |
+| SSR/卸载/异常恢复 | 部分完成 | 已关闭旧 owner 准入并记录被跟踪 MC 排空；NDI 的 IRQ/timer/WMA/PE/DP 回收及活动 owner 安全卸载尚未实现 |
 | 固件能力与端到端实测 | 待验证 | 驱动加载、NDI/RAW 实际支持、Apple 发现与双向传输、稳定性和安装包 |
 
-最新源提交：`541f91ce8328a10af27cbdcc0ed3594f0676a02d`。
-[Actions 40619757403](https://github.com/xxz3312/XAirDrop-17/actions/runs/40619757403)
-已通过 44 项 Python 检查、19 组原生 fixture、完整 WLAN 编译与严格链接；
-70 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
+最新源提交：`c026f2048a12bfb7ae2d1ffc3a71b77ce783c700`。
+[Actions 40642419522](https://github.com/xxz3312/XAirDrop-17/actions/runs/40642419522)
+已通过 44 项 Python 检查、20 组原生 fixture、完整 WLAN 编译与严格链接；
+76 个要求符号存在，574 条版本记录无不匹配、未解决依赖为空，7 项选定布局 MATCH。
 以上不构成完整私有 ABI/KCFI、手机加载或 AirDrop 可用认证。
 
-停机准入栅栏已接入。启用调用方前，仍需真正的 MC/IRQ/timer 在途排空、隔离资源回收、活动 owner 卸载和并发/硬件模式资源预留；随后接通换频、收发与 Wonder 后端，再做固件与整机联调。
+已补齐被跟踪任务的 MC 排空证据与纯 host 回收。启用调用方前，仍需 NDI 的 IRQ/timer/WMA/PE/DP 回收协议、活动 owner 卸载、psoc 复用和并发/硬件模式资源预留；随后接通换频、收发与 Wonder 后端，再做固件与整机联调。
 新增回归执行原生 target-if 启停发送/响应、owned WMA wrapper 和 PM helper；完整原生 SM 与 WMA START 后处理在回归中仍为模型。
+新增 MC 回归执行原生 scheduler_disable/queue flush 和 owned PE callback；QDF 线程/事件/队列原语、完整 native MC 线程及组件析构仍为模型。
 DOWN 没有固件 ACK，accepted DOWN 只表示原生提交成功及 PM 清理，不能称为固件确认。
 详细证据见 [频道准备报告](research/popsicle-owned-channel-build-pass.json) 和
 [启停响应检查报告](research/popsicle-start-stop-response-build-pass.json)，以及
 [START 参数准备报告](research/popsicle-owned-start-plan-build-pass.json) 和
 [启停生命周期报告](research/popsicle-owned-radio-lifecycle-build-pass.json) 和
-[停机准入栅栏报告](research/popsicle-shutdown-admission-build-pass.json)。
+[停机准入栅栏报告](research/popsicle-shutdown-admission-build-pass.json) 和
+[MC 排空与纯 host 回收报告](research/popsicle-owned-mc-drain-reclaim-build-pass.json)。

@@ -583,3 +583,26 @@ owner 并返回 EINPROGRESS；只有实际 final-free 才允许释放 owner。�
 无线调用门保持关闭。native scheduler_disable、单队列与全队列 flush 函数由
 新增 Actions-only 回归完整执行；QDF wait/thread/queue 原语和完整 native MC
 线程仍为模型，另用 pthread 暂停真实 owned PE callback 验证等待与完成顺序。
+
+
+### 0024 构建验证结果
+
+[Actions 40642419522](https://github.com/xxz3312/XAirDrop-17/actions/runs/40642419522)
+在源提交 `c026f2048a12bfb7ae2d1ffc3a71b77ce783c700` 全部通过：44 项 Python
+检查、20 组原生 fixture、完整 WLAN 编译与严格链接。76 个要求符号存在，
+WLAN 574 条版本记录无不匹配，未解决依赖为空，7 项选定结构布局 MATCH。
+工具链/bindgen 缓存命中，新增排空/回收回归在 ASan/UBSan 下通过。
+
+回归还验证了 radio 请求发布时发生停机：在第二次健康读取时关闭 owner，
+不得发送 START，也不得把已隔离状态改写成普通 CANCELLED。排空前的 active/
+reservation、already-disabled 分支、延迟 final-free、计数错误、事务历史、
+组件残留和删除失败都不能授权提前回收。NDI 资源始终拒绝进入纯 host 回收路径。
+
+紧凑 ZIP 已独立下载并核对大小与 SHA-256；重新生成 fixture、四个原生文件与
+四个生产文件哈希均匹配。两个修改的原生文件可精确恢复到上一阶段原文，两个
+scheduler 文件和完整 native SM 源码与固定目标版本逐字节一致。完整诊断大包
+只记录 GitHub 的哈希，未独立下载，也不可安装。
+详见 [MC 排空与纯 host 回收报告](research/popsicle-owned-mc-drain-reclaim-build-pass.json)。
+
+该证据不等于真实内核线程/IRQ/timer/固件已验证，也不覆盖 NDI 的 WMA、PE、
+peer、DP 与未知发送隔离资源回收。默认无线调用门继续关闭，尚未上机加载。
