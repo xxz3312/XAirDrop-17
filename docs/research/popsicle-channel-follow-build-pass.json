@@ -1,0 +1,78 @@
+{
+  "stage": "0038",
+  "status": "CHANNEL_FOLLOW_ANDROID_BUILD_AND_MODEL_PASS_ONLY",
+  "functional_commit": "2f95a88a8a2affd2dabe987fbfd39c2cb2e827d5",
+  "validated_commit": "b32354789133462815de0d16fc1a6241301a9e2a",
+  "workflow_run": 40763644465,
+  "workflow_job": 123081874422,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40763644465",
+  "artifact": {
+    "id": 12848214615,
+    "bytes": 15942,
+    "sha256": "30dda0f890f36af2b4d8caad61f3bdd9e7ef549f3bde8fd2f4105c57b2aff38f",
+    "zip_and_scripts_verified": true
+  },
+  "android_build": {
+    "status": "ACTION_TX_ANDROID_BUILD_PASS_ONLY",
+    "commit": "b32354789133462815de0d16fc1a6241301a9e2a",
+    "ndk": "27.2.12479018",
+    "android_api": 31,
+    "binary_sha256": "a8f9954118ced6ab8965f9936ab7e671ff9c71ab20e8872ceeb1ed20329bdff8",
+    "binary_bytes": 21344,
+    "host_protocol_test": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "native_raw_model_test": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+    "session_command_model_tests": 15,
+    "channel_follow_model_test": "CHANNEL_FOLLOW_MODEL_PASS_ONLY",
+    "sta_channel_follow": true,
+    "combined_action_raw_relay": true,
+    "phone_executed": false,
+    "radio_tx_verified": false
+  },
+  "validation": {
+    "session_command_model_tests": 15,
+    "channel_follower": "CHANNEL_FOLLOW_MODEL_PASS_ONLY",
+    "action_protocol": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "raw_native_submit": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+    "c_sanitizers": [
+      "address",
+      "undefined"
+    ],
+    "follower_cases": [
+      "initial sync with absent monitor get_channel",
+      "unchanged frequency avoids setter",
+      "monitor readback mismatch resynchronizes",
+      "2.4/5GHz transition",
+      "disconnected/unsupported frequency",
+      "different PHY/interface type",
+      "set rejection preserves published state",
+      "STA roam after set refuses publication",
+      "removed interface",
+      "changed PHY",
+      "malformed or mismatched interface reply",
+      "exact sequence command ACK/error",
+      "queued datagrams drained"
+    ]
+  },
+  "initial_ci": {
+    "run": 40763449472,
+    "result": "failed",
+    "reason": "test model injected roam before set because previous setter calls were counted; fixed model triggers roam on next successful setter",
+    "fix_commit": "b32354789133462815de0d16fc1a6241301a9e2a"
+  },
+  "kernel_changed": false,
+  "full_kernel_evidence_reused": {
+    "commit": "57184ea2203dfa05ab33c3c7171a2ade31675e2d",
+    "run": 40752944098
+  },
+  "phone_executed": false,
+  "radio_channel_verified": false,
+  "radio_tx_verified": false,
+  "limitations": [
+    "STA home-channel following only; no AWDL slot scheduling",
+    "SET_WIPHY acceptance and STA readback do not certify monitor firmware channel",
+    "no atomic channel lease or DBS reservation",
+    "no dedicated NDI backend initialization",
+    "no mac80211 completion feedback",
+    "native radio and phone not executed"
+  ]
+}

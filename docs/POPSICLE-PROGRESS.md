@@ -19,7 +19,7 @@
 | 初始频道参数 | 离线验证通过 | 2.4/5GHz HT20、法规/并发/扫描检查及原生参数准备；不发 START |
 | START 原生参数准备 | 离线验证通过 | 重查 WMA/self-peer/法规/并发；原生 START 参数构造与摘要，不提交固件命令 |
 | START/host-only UP/STOP/DOWN | 离线构建/模型验证通过 | owned controller 接入专用 MLME 回调、真实响应与 PM 清理；accepted DOWN + INIT 后才删资源；完整原生 SM/WMA 运行及固件未实测，默认调用门关闭 |
-| 动态换频与并发硬件模式 | 待实现 | AWDL 跳频、硬件模式/DBS、与辅助 monitor 同步 |
+| 动态换频与并发硬件模式 | 原生频道跟随首版已实现 | 新增 opt-in STA home channel 跟随、同 PHY monitor 同步与旧帧排空；AWDL 时间槽跳频、硬件模式/DBS 和原子频道预留仍待实现 |
 | RAW TX | DATA 首版已实现，待固件 | Action 帧工具已具备；新增 opt-in WMI RAW DATA vendor 入口与 raw-send/raw-relay，限同频道非 MLO STA、已有 peer、6Mbps/20MHz；内核 TX 完成桥与独立 NDI 待接入 |
 | Monitor/native RAW RX | 接收模式已实现，待实机 | 新增 external_monitor=1 借用原生 monitor，真实 RX 桥接、软件帧过滤、计数和启动脚本；完成编译链接，手机收包与 native RAW/peer/BA 尚待验证 |
 | 统一收发会话入口 | 首版已实现，待实机 | relay-all 单进程分派 Action/RAW；前台会话按需创建 monitor、核对频道、统一启动/清理；独立 NDI 初始化仍待接通 |
@@ -73,4 +73,6 @@ SSR DP 回调现已校验已知 token 的恢复来源与普通路径混用；15 
 
 RAW DATA 阶段提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。RAW DATA 驱动入口与 Android 工具已接通编译链，完整 WLAN 编译/严格链接和两个工具/模型测试均通过；native_status 只由真实原生完成回调产生。需要新驱动显式启用 mishare_raw_tx=1，旧接收包/stock WLAN 不具备入口。手机加载、WMI DATA 接受和实际发射待验证。见 [RAW TX 首版说明](POPSICLE-RAW-TX-BRINGUP.md) 与 [构建证据](research/popsicle-native-raw-tx-build-pass.json)。
 
-最新功能提交：`8f4a8afa609a687f48c79746329507afe094fbe3`。统一收发会话入口与 Action/RAW 单进程分派已实现。[Actions 40757236509](https://github.com/xxz3312/XAirDrop-17/actions/runs/40757236509) 通过 13 项会话命令模型测试、协议/RAW 提交模型和 Android arm64 编译。本轮未改内核，完整 WLAN 证据仍为 0036。见 [统一会话说明](POPSICLE-SESSION-BRINGUP.md) 与 [构建证据](research/popsicle-unified-session-build-pass.json)。独立 NDI 初始化、动态换频、mac80211 状态回写及手机互通仍待完成。
+统一会话阶段提交：`8f4a8afa609a687f48c79746329507afe094fbe3`。统一收发会话入口与 Action/RAW 单进程分派已实现。[Actions 40757236509](https://github.com/xxz3312/XAirDrop-17/actions/runs/40757236509) 通过 13 项会话命令模型测试、协议/RAW 提交模型和 Android arm64 编译。本轮未改内核，完整 WLAN 证据仍为 0036。见 [统一会话说明](POPSICLE-SESSION-BRINGUP.md) 与 [构建证据](research/popsicle-unified-session-build-pass.json)。独立 NDI 初始化、动态换频、mac80211 状态回写及手机互通仍待完成。
+
+频道跟随阶段：功能提交 `2f95a88a8a2affd2dabe987fbfd39c2cb2e827d5`，最终验证提交 `b32354789133462815de0d16fc1a6241301a9e2a`。新增 `--follow-channel`，持续跟随原生 STA/P2P client 当前频道并同步 monitor，换频与发送串行执行；掉线、同步失败和设置后再次换频停止会话。此为 home channel 跟随，不含 AWDL 时间槽调度。[Actions 40763644465](https://github.com/xxz3312/XAirDrop-17/actions/runs/40763644465) 已通过 15 项会话命令测试、频道跟随/Action/RAW 模型与 Android arm64 编译。见 [使用说明](POPSICLE-CHANNEL-FOLLOW.md) 与 [验证报告](research/popsicle-channel-follow-build-pass.json)。本轮未改内核，完整 WLAN 构建证据仍沿用 0036；手机收发未验证。

@@ -84,3 +84,5 @@ sh /data/local/tmp/xairdrop/popsicle-session.sh status \
 产物包含新版 action-tx、两个启动脚本与构建记录，不包含 WLAN 或 Wonder .ko。
 产物 ZIP 已独立校验大小、哈希，工具 ELF/二进制哈希及两个脚本与源码一致。
 详见 [构建证据](research/popsicle-unified-session-build-pass.json)。
+
+0038 新增可选 `--follow-channel`：运行中跟随原生 STA/P2P client 的 home channel，同步同 PHY monitor 和下一帧发送频率。借用 monitor 时须同时提供 `--configure-monitor`。默认固定频道不变；具体行为、限制和验证见 [频道跟随说明](POPSICLE-CHANNEL-FOLLOW.md)。
