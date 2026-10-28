@@ -17,6 +17,7 @@
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/atomic.h>
+#include <linux/if_arp.h>
 
 #include "core.h"
 #include "mac80211.h"
@@ -91,6 +92,7 @@ static rx_handler_result_t wonder_rx_80211_frame(struct wonder_data *wonder, str
 	struct ieee80211_radiotap_header *radhdr;
 	struct net_device *vdev = NULL;
 	unsigned int rtlen, hdrlen;
+	u32 frame_filter;
 
 	if (!wonder || !wonder->vdev) {
 		wonder_error("RX received but interface not active. Dropping.\n");
@@ -121,7 +123,12 @@ static rx_handler_result_t wonder_rx_80211_frame(struct wonder_data *wonder, str
 			"radhdr_len: %d\n", __func__, skb->dev->name, skb->protocol, radhdr->it_len);
 		hexdump("wonder_rx_header: ", (u8 *)hdr, sizeof(struct ieee80211_hdr));
 	}
-	if (!wonder_80211_filter(hdr)) {
+	frame_filter = READ_ONCE(wonder->wondertap_data.rx_frame_filter);
+	if ((!wonder_external_monitor && !wonder_80211_filter(hdr)) ||
+	    ((frame_filter & BIT(31)) &&
+	     (le16_to_cpu(hdr->frame_control) &
+	      (IEEE80211_FCTL_FTYPE | IEEE80211_FCTL_STYPE)) !=
+	     (frame_filter & 0xff))) {
 		vdev->stats.rx_dropped++;
 		if (IS_ENABLED(CONFIG_WONDER_RX_DEBUG)) {
 			wonder_error("Dropping frame with frame control: %x.\n", hdr->frame_control);
@@ -570,17 +577,28 @@ static int wonder_rx_setup(struct wonder_data *wonder)
 		wonder_error("Failed to register RX handler\n");
 		return ret;
 	}
+	wonder->rx_registered = true;
 	wonder_info("Registered mac80211 RX handler with Vendor.\n");
 	return 0;
 }
 
 static void wonder_rx_reset(struct wonder_data *wonder)
 {
-	if (!wonder->vdev || !wonder->pdev) {
-		return;
+	if (wonder->rx_registered && wonder->pdev) {
+		netdev_rx_handler_unregister(wonder->pdev);
+		wonder->rx_registered = false;
 	}
-	netdev_rx_handler_unregister(wonder->pdev);
 	wonder->vdev = NULL;
+}
+
+/* Called under RTNL before a borrowed native interface can disappear. */
+void wonder_external_monitor_detach(struct wonder_data *wonder)
+{
+	wonder_rx_reset(wonder);
+	wonder_pdev_put(wonder);
+	mutex_lock(&wonder->wondertap_data.lock);
+	wonder->wondertap_data.state = WONDERTAP_STATE_DOWN;
+	mutex_unlock(&wonder->wondertap_data.lock);
 }
 
 #define WONDER_TX_ROOM (sizeof(struct ieee80211_radiotap_header) + 1 + sizeof(struct wonder_txd))
@@ -595,6 +613,10 @@ static void wonder_tx(struct ieee80211_hw *hw,
 	struct ieee80211_hdr *hdr;
 	struct wonder_txd *txd;
 	unsigned int room = skb_headroom(skb);
+
+	/* Native monitor is borrowed for RX only; never report synthetic TX success. */
+	if (wonder_external_monitor)
+		goto drop;
 
 	if (unlikely(!pdev) || unlikely(!vdev)) {
 		wonder_error("Physical device is not exist, dropping packet.\n");
@@ -668,6 +690,31 @@ static int wonder_start(struct ieee80211_hw *hw)
 	const char* pdev_name = physical_name;
 	int ret;
 
+	if (wonder_external_monitor) {
+		ret = wonder_pdev_get(wonder, pdev_name);
+		if (ret)
+			return ret;
+		if (!netif_running(wonder->pdev) || !netif_device_present(wonder->pdev) ||
+		    wonder->pdev->type != ARPHRD_IEEE80211_RADIOTAP ||
+		    !wonder->pdev->ieee80211_ptr ||
+		    wonder->pdev->ieee80211_ptr->iftype != NL80211_IFTYPE_MONITOR ||
+		    wonder->pdev->ieee80211_ptr->wiphy == hw->wiphy) {
+			wonder_pdev_put(wonder);
+			return -ENODEV;
+		}
+		ret = wonder_rx_setup(wonder);
+		if (ret) {
+			wonder_pdev_put(wonder);
+			return ret;
+		}
+		mutex_lock(&wonder->wondertap_data.lock);
+		ether_addr_copy(wonder->wondertap_data.mac_addr, wonder->pdev->dev_addr);
+		wonder->wondertap_data.state = WONDERTAP_STATE_UP;
+		mutex_unlock(&wonder->wondertap_data.lock);
+		wonder_info("External monitor %s RX bridge started; native driver owns channel\n", pdev_name);
+		return 0;
+	}
+
 	/* This should turn on the hardware and frame reception. */
 	wonder_info("HW started.\n");
 	ret = wondertap_get_capabilities(&wonder->wondertap_data, &wondertap_capabilities);
@@ -720,7 +767,13 @@ static void wonder_stop(struct ieee80211_hw *hw)
 	wonder_info("HW stopped.\n");
 	wonder_rx_reset(wonder);
 	wonder_pdev_put(wonder);
-	wondertap_deinit(&wonder->wondertap_data);
+	if (wonder_external_monitor) {
+		mutex_lock(&wonder->wondertap_data.lock);
+		wonder->wondertap_data.state = WONDERTAP_STATE_DOWN;
+		mutex_unlock(&wonder->wondertap_data.lock);
+	} else {
+		wondertap_deinit(&wonder->wondertap_data);
+	}
 }
 
 static int wonder_config(struct ieee80211_hw *hw, u32 changed)
@@ -878,6 +931,9 @@ static int wonder_add_interface(struct ieee80211_hw *hw,
 			return -EOPNOTSUPP;
 		}
 	}
+
+	if (wonder_external_monitor && vif->type != NL80211_IFTYPE_MONITOR)
+		return -EOPNOTSUPP;
 
 	/* Accept supported interface types */
 	if (vif->type != NL80211_IFTYPE_MONITOR &&
@@ -1143,6 +1199,9 @@ void *wonder_mac80211_init(void)
 		BIT(NL80211_IFTYPE_MONITOR) |
 		BIT(NL80211_IFTYPE_NAN) |           /* Added NAN mode support */
 		BIT(NL80211_IFTYPE_STATION);        /* Added STATION mode support */
+
+	if (wonder_external_monitor)
+		hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_MONITOR);
 
 	/* Set the band that supports NAN, mandatory if NL80211_IFTYPE_NAN is supported */
 	hw->wiphy->nan_supported_bands |= BIT(NL80211_BAND_2GHZ);

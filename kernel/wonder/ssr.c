@@ -31,6 +31,15 @@ static int wonder_netdev_event(struct notifier_block *nb, unsigned long event, v
 	if (!wonder || !wonder->pdev || dev != wonder->pdev)
 		return NOTIFY_DONE;
 
+	if (wonder_external_monitor &&
+	    (event == NETDEV_DOWN || event == NETDEV_UNREGISTER)) {
+		if (wonder->vdev)
+			netif_stop_queue(wonder->vdev);
+		wonder_external_monitor_detach(wonder);
+		wonder_info("Native monitor stopped; restart the Wonder interface after native RX is ready\n");
+		return NOTIFY_OK;
+	}
+
 	switch (event) {
 	case NETDEV_DOWN:
 		wonder_info("Physical device %s is down. Triggering recovery.\n", dev->name);

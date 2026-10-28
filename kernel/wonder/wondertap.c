@@ -4,6 +4,7 @@
 #include <linux/export.h>
 #include <linux/etherdevice.h>
 #include <linux/delay.h>
+#include <linux/ieee80211.h>
 
 #include "include/wonder/wondertap.h"
 #include "wondertap_internal.h"
@@ -153,6 +154,9 @@ int wondertap_set_freq(struct wondertap_data *wondertap, const struct wondertap_
 {
 	int ret = -EOPNOTSUPP;
 
+	if (wonder_external_monitor)
+		return -EOPNOTSUPP;
+
 	mutex_lock(&wondertap->lock);
 	if (wondertap_is_up(wondertap)) {
 		if (wondertap->cached_freq.freq == params->freq &&
@@ -182,6 +186,26 @@ int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter
 {
 	int ret = -EOPNOTSUPP;
 
+	if (wonder_external_monitor) {
+		const struct wondertap_frame_filter_params *filter = params;
+		u32 value = 0;
+
+		if (filter_type != WONDERTAP_FILTER_TYPE_FRAME)
+			return -EOPNOTSUPP;
+		if (!filter)
+			return -EINVAL;
+		if (filter->enabled) {
+			if ((filter->frame_type != IEEE80211_FTYPE_MGMT &&
+			     filter->frame_type != IEEE80211_FTYPE_CTRL &&
+			     filter->frame_type != IEEE80211_FTYPE_DATA) ||
+			    (filter->frame_subtype & ~IEEE80211_FCTL_STYPE))
+				return -EINVAL;
+			value = BIT(31) | filter->frame_type | filter->frame_subtype;
+		}
+		WRITE_ONCE(wondertap->rx_frame_filter, value);
+		return 0;
+	}
+
 	mutex_lock(&wondertap->lock);
 	if (wondertap_is_up(wondertap)) {
 		if (wondertap_ops && wondertap_ops->set_filter) {
@@ -203,6 +227,9 @@ int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter
 int wondertap_set_fixed_tx_rate(struct wondertap_data *wondertap, const struct wondertap_fixed_tx_rate_params *params)
 {
 	int ret = -EOPNOTSUPP;
+
+	if (wonder_external_monitor)
+		return -EOPNOTSUPP;
 
 	mutex_lock(&wondertap->lock);
 	wondertap->cached_tx_rate = *params;
@@ -226,6 +253,9 @@ int wondertap_set_fixed_tx_rate(struct wondertap_data *wondertap, const struct w
 int wondertap_set_tx_rate_mask(struct wondertap_data *wondertap, const struct wondertap_tx_rate_mask_params *params)
 {
 	int ret = -EOPNOTSUPP;
+
+	if (wonder_external_monitor)
+		return -EOPNOTSUPP;
 
 	mutex_lock(&wondertap->lock);
 	wondertap->cached_tx_rate.preamble = params->max_preamble;
@@ -266,6 +296,13 @@ int wondertap_set_reg(struct wondertap_data *wondertap, const char *country_code
 
 int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wondertap_capability *features)
 {
+	if (wonder_external_monitor) {
+		if (!features)
+			return -EINVAL;
+		memset(features, 0, sizeof(*features));
+		features->bits.frame_type_filter = 1;
+		return 0;
+	}
 	if (wondertap_ops && wondertap_ops->get_capabilities) {
 		return wondertap_ops->get_capabilities(wondertap->vendor_handle, features);
 	}

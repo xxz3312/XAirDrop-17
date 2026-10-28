@@ -4,6 +4,8 @@
 
 #include "include/wonder/wondertap.h"
 
+extern bool wonder_external_monitor;
+
 enum wondertap_state {
     WONDERTAP_STATE_DOWN,
     WONDERTAP_STATE_UP,
@@ -24,6 +26,7 @@ struct wondertap_data {
 	struct mutex lock;
 	u8 mac_addr[ETH_ALEN];
 	u32 cache_flags;
+	u32 rx_frame_filter; /* bit 31 enables exact frame type/subtype matching. */
 	struct wondertap_set_freq_params cached_freq;
 	struct wondertap_frame_filter_params cached_frame_filter;
 	struct wondertap_fixed_tx_rate_params cached_tx_rate;

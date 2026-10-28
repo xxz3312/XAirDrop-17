@@ -20,5 +20,6 @@ int wonder_debugfs_init(void *data);
 void wonder_debugfs_exit(void);
 int wonder_features_init(struct wonder_data *wonder);
 void wonder_features_exit(struct wonder_data *wonder);
+void wonder_external_monitor_detach(struct wonder_data *wonder);
 
 #endif /* __WONDER_MAC80211_H__ */

@@ -29,6 +29,12 @@ module_param(physical_name, charp, 0444);
 MODULE_PARM_DESC(physical_name, "Interface name to use (e.g., wlan0, radiotap0, ...)");
 
 
+/* Reuse a user-configured native monitor netdev for real RX bring-up. */
+bool wonder_external_monitor;
+module_param_named(external_monitor, wonder_external_monitor, bool, 0444);
+MODULE_PARM_DESC(external_monitor,
+                "RX-only bridge from an existing UP radiotap monitor; no vendor init or TX");
+
 #define WONDER_MAX_COMPAT_VERSIONS 4
 static int wonder_ver_match_table[WONDER_VERSION_MAX][WONDER_MAX_COMPAT_VERSIONS] = {
 	{ WONDER_VERSION_1_0, -1 },
@@ -231,6 +237,15 @@ static int wonder_probe(struct platform_device *pdev)
 	wondertap = &wonder->wondertap_data;
 	wondertap->wlan_node = NULL;
 
+	platform_set_drvdata(pdev, wondertap);
+	if (wonder_external_monitor) {
+		dev_info(&pdev->dev, "External native monitor RX mode; channel belongs to native driver\n");
+		ret = wonder_debugfs_init(wonder);
+		if (ret)
+			goto err_free_hw;
+		return 0;
+	}
+
 	/*
 	 * Resolve the provider device this master will bind against.
 	 * DT product: follow the 'wondertap-provider' phandle as before.
@@ -292,7 +307,8 @@ static void wonder_remove(struct platform_device *pdev)
 {
 	struct wondertap_data *wondertap = platform_get_drvdata(pdev);
 
-	component_master_del(&pdev->dev, &wonder_comp_ops);
+	if (!wonder_external_monitor)
+		component_master_del(&pdev->dev, &wonder_comp_ops);
 	wonder_debugfs_exit();
 	platform_set_drvdata(pdev, NULL);
 	of_node_put(wondertap->wlan_node);

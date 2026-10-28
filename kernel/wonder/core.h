@@ -38,6 +38,7 @@ struct wonder_data {
 	enum nl80211_iftype iftype;
 	unsigned int config_filters;
 	bool tx_stop;
+	bool rx_registered;
 	struct wondertap_data wondertap_data;
 	struct work_struct pdev_down_work;
 	struct notifier_block netdev_notifier;
