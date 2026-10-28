@@ -112,6 +112,9 @@ struct mishare_runtime_reclaim_item {
  * All must carry the original SSR fence and drained owned-MC evidence.
  * Full coverage is checked before owner policy; fatal policy/accounting errors
  * take precedence over waiting owners regardless of registry list order.
+ * Accepted host-delete owners also pass the same metadata-shape check as
+ * final retirement, before any item performs native work. Actual final-free
+ * waits remain per-item; this check does not hold parents or drain callbacks.
  * Preflight errors leave every item unchanged. After admission, item results
  * describe a possibly partial step; unsupported owners remain retained.
  * EINPROGRESS waits for real callbacks; other errors require diagnosis with

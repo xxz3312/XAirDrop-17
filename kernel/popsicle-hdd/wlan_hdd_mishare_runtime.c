@@ -675,6 +675,18 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     return mishare_runtime_host_destroy(owner, true);
 }
 
+/* Registry lock held. Pure metadata only: no native pointer is dereferenced. */
+static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entry)
+{
+    struct mishare_ndi_status *n = &entry->state.ndi;
+
+    return entry->state.host_delete_accepted && entry->state.draining &&
+           entry->state.allocated && !entry->vdev && !entry->referenced &&
+           !entry->events && !entry->radio && !entry->pe_cookie && !n->active &&
+           !n->legacy_ready && !n->wma_bound && !n->create.timer_ready &&
+           !n->create.stats_owned;
+}
+
 int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner)
 {
     struct mishare_runtime_owner *entry, **link;
@@ -700,11 +712,7 @@ int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner)
         entry->state.work_error || entry->state.reclaim_error ||
         entry->state.recovery_error || n->completion_error)
         ret = -EUCLEAN;
-    else if (!entry->state.host_delete_accepted || !entry->state.draining ||
-             !entry->state.allocated || entry->vdev || entry->referenced ||
-             entry->events || entry->radio || entry->pe_cookie || n->active ||
-             n->legacy_ready || n->wma_bound || n->create.timer_ready ||
-             n->create.stats_owned)
+    else if (!mishare_runtime_final_shape_valid(entry))
         ret = -EUCLEAN;
     else if (!entry->state.mc_drained || entry->state.work_pending ||
              entry->state.work_users || !entry->state.freed)
@@ -782,6 +790,15 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
         if (entry->state.work_error || entry->state.reclaim_error ||
             entry->state.ndi.completion_error ||
             entry->state.recovery_error) {
+            ret = -EUCLEAN;
+            goto unlock;
+        }
+        /* An accepted delete selects metadata-only retirement. Reject
+         * impossible retained handles before ANY item performs native work,
+         * even if another owner is still waiting for MC or final-free.
+         */
+        if (entry->state.host_delete_accepted &&
+            !mishare_runtime_final_shape_valid(entry)) {
             ret = -EUCLEAN;
             goto unlock;
         }
