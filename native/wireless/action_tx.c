@@ -473,6 +473,9 @@ static int feedback_relay(struct client *c,const char *listen,const unsigned cha
         rejected++;
     }
     ret=set_monitor_channel(&q,q.ifindex,freq);if (ret) goto done;
+    /* Discard frames queued between the initial claim and software tuning. */
+    ret=feedback_ack(&q,WONDER_FB_RELEASE,owner,0,0);if (ret) goto done;
+    claimed=false;resets++;
     unsigned software_freq=freq;
     struct channel_follow channel={.tx=c->ifindex};
     if (follow) {
