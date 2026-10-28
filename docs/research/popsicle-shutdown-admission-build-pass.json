@@ -1,0 +1,134 @@
+{
+  "status": "OWNED_SHUTDOWN_ADMISSION_OFFLINE_PASS_ONLY",
+  "commit": "541f91ce8328a10af27cbdcc0ed3594f0676a02d",
+  "run_id": 40619757403,
+  "job_id": 122590748055,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40619757403",
+  "validation_artifact": {
+    "id": 12786929198,
+    "bytes": 41677,
+    "sha256": "895ae318e62aa23d9794d0e1164f43e9d74a71ccf07d30822a78d8a43641d4b2",
+    "downloaded_and_checksum_verified": true
+  },
+  "diagnostic_artifact": {
+    "id": 12786914222,
+    "bytes": 337790670,
+    "github_reported_sha256": "342fb18f7f57106df3566b9d14e6f6cf4fffe2ffa2ad674be71384dee2bb594e",
+    "downloaded_independently": false,
+    "installable": false
+  },
+  "shutdown_fixture": {
+    "status": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "8170969cf6b92169b7a408bcd7dd7180979690af09616378d46418ea56b353af",
+    "native_sha256": {
+      "qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c": "964fa4c29cc592d69f85bb6631f2c8a36794fabba8e8df37560644ed7a23d920",
+      "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "f9817e1228dfec95551cdb18327e1a4b2b1602dc39f4a3384386d345dd98729d",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "9e866026a6131f9686252b31c7c623e6aee2d3e09f3e85291f06d7e0637999d3"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "dc480897301cec04a06c8e67915c82ae6ee65561a9f911a7c57b260de96bbba4",
+      "wlan_hdd_mishare_runtime.h": "fe567701b2b2331fcb132fd8b604baae828282adcecee5453089cec50ea6c0bf",
+      "wlan_hdd_mishare_ndi.h": "5789d88716f5f9468a2f625d834e3f35daeceed25a5301aa9d4d6fe98390919d",
+      "wlan_hdd_mishare_radio.c": "3ca4a8e93d1b0638fb1fdf4ce074515956b57dbcd7077f648dc147b542d1cfed",
+      "wlan_hdd_mishare_radio.h": "ed0b3fb9deed508e8e40f5613c5be41cefa008f73ed387bcc092bdd38931b6f5",
+      "wlan_hdd_mishare_events.c": "68c7c0cf267ebf9ccd4517a90909e262e3c586a98e29f2cf77c2afc0896fe442",
+      "wlan_hdd_mishare_events.h": "6ee0f88ea590f972c754cf2318bba94bf03e2881edd7ba08a49ab45ce10f066d"
+    },
+    "ordinary_before_shutdown_sha256": {
+      "qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c": "8033a302fcf313317e931e8c46f20e793f4e1fadcabf4d397934d188d92804ef",
+      "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "becc33f8c7ee68b6b806d944951ebb591034e0060ee1d86f23012eeba08aa891",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "925f135ec416f293363bd0d0e7d3f39991e15849617926f150507b2d4d6609bc"
+    },
+    "checks": [
+      "native health predicate rejects missing/wrong/disabled/recovery/unload/bad/module-stop context before allocation",
+      "exact SSR/remove/module-stop hooks run before native teardown callbacks",
+      "wrong PSOC and foreign opaque owner leave live owner unchanged",
+      "28 queued/native-response/radio-state and flush combinations retain owned parents and cancel queued work",
+      "first shutdown reason and quarantine survive reinit, duplicate shutdown and late free notification",
+      "transaction pending/serial/submitted/replied evidence preserved on fencing",
+      "all owner APIs and new MAC admission on fenced psoc reject",
+      "late response versus shutdown registry locking raced with pthreads"
+    ],
+    "limitations": "Executes production owner/radio/event registry, native health predicate and exact bounded shutdown calls under ASan/UBSan. Full native shutdown functions, scheduler/IRQ/timer synchronization, native SM/WMA postprocessing and object/DP primitives remain models. A work admission check is not an in-flight execution barrier. No recovery reclaim, psoc replacement/address reuse, safe active-owner unload, module-text lifetime, concurrency/hardware-mode lease, phone loading or firmware behavior is certified. Existing quarantined owner refs remain retained. Default HDD/Wonder caller stays disabled."
+  },
+  "native_fixtures": {
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY"
+  },
+  "independent_verification": {
+    "generated_fixture_hash_matches": true,
+    "three_native_and_seven_production_file_hashes_match": true,
+    "three_pre_shutdown_source_hashes_match_after_bounded_removal": true,
+    "native_sm_unchanged_from_locked_target": true,
+    "native_sm_source_sha256": "81ed7e217c9e8ba849c2cd13b6f95f708acd0b8e1abc1dc52454a6959f504649"
+  },
+  "python_tests": 44,
+  "required_host_symbols": 70,
+  "wlan_module": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "72c15ad3e7f29c0e0c672ac15c2ccbe7a5dc67eef55a07bdf55a02553b940294",
+    "version_records": 574,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "cache": {
+    "toolchains": "HIT",
+    "bindgen": "HIT"
+  },
+  "runtime_backend_caller": false,
+  "phone_driver_loaded": false,
+  "firmware_start_submitted_on_phone": false,
+  "airdrop_connected": false,
+  "in_flight_quiescence_barrier_implemented": false,
+  "quarantine_resource_reclaim_implemented": false,
+  "remaining": [
+    "in-flight MC/IRQ/timer barrier and exact owned recovery cleanup",
+    "safe active-owner unload and module-text lifetime",
+    "replacement psoc identity/address-reuse handling and parent reclamation",
+    "concurrency/hardware-mode reservation and channel switching",
+    "RAW TX/native RX/Wonder callbacks",
+    "phone firmware acceptance and Apple bidirectional transfers"
+  ]
+}

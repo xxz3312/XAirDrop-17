@@ -537,3 +537,23 @@ module-stop 标记。PE、频道、START 参数准备和 radio MC 请求在执�
 停机调用插入，覆盖 28 组阶段/flush 组合、同 psoc 新 MAC 拒绝、错误 psoc/owner、
 重复停机/重初始化、迟到响应与线程锁竞争。完整 HDD shutdown、native SM/WMA
 后处理、scheduler/IRQ/对象/DP 同步仍是模型边界。编译与实机验证结果另行记录。
+
+
+### 0023 构建验证结果
+
+[Actions 40619757403](https://github.com/xxz3312/XAirDrop-17/actions/runs/40619757403)
+在源提交 `541f91ce8328a10af27cbdcc0ed3594f0676a02d` 全部通过：44 项 Python
+检查、19 组原生 fixture、完整 WLAN 编译与严格链接。70 个要求符号存在，
+WLAN 574 条版本记录无不匹配，未解决依赖为空，7 项选定结构布局 MATCH。
+工具链/bindgen 缓存命中，新增停机回归在 ASan/UBSan 下通过。频道测试提取器
+保留并执行实际新增准入检查；另外以剥离明确新增块后的原文哈希审计普通路径。
+
+紧凑报告 ZIP 已独立下载并核对大小与 SHA-256；重新生成的 fixture、三个原生
+文件和七个生产文件哈希与报告一致。三个原生文件移除本阶段明确插入后与上一
+阶段逐字节一致；完整原生 SM 源文件与固定目标版本一致。完整诊断大包仅记录
+GitHub 提供的哈希，未独立下载，也不可安装。
+详见 [停机准入栅栏报告](research/popsicle-shutdown-admission-build-pass.json)。
+
+这些检查没有执行完整 HDD 原生 shutdown 或证明在途任务/IRQ/timer 已排空，
+没有释放隔离 owner，也没有验证活动 owner 下卸载、模块文本寿命或 psoc 地址
+重用。默认调用门继续关闭；安全回收、并发预留、RAW/Wonder 和实机联调仍待补齐。
