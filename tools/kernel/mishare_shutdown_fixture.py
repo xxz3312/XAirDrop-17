@@ -21,8 +21,9 @@ MODELS = r'''
 #define DRIVER_MODULES_ENABLED 3
 struct hdd_context {struct wlan_objmgr_psoc *psoc;int driver_status;};
 static struct hdd_context health;
+static unsigned health_queries;
 static bool health_missing,health_recovering,health_unloading,health_bad,health_stop;
-static void *shutdown_cds_get_context(int id) {assert(id==5);return health_missing?NULL:&health;}
+static void *shutdown_cds_get_context(int id) {assert(id==5);health_queries++;return health_missing?NULL:&health;}
 static bool cds_is_driver_recovering(void) {return health_recovering;}
 static bool cds_is_driver_unloading(void) {return health_unloading;}
 static bool cds_is_driver_in_bad_state(void) {return health_bad;}
@@ -49,7 +50,8 @@ static void fence(struct mishare_runtime_owner *o, enum mishare_quiesce_reason r
  assert(mishare_events_snapshot(o->events,&after)==0 && after.state==MISHARE_TXN_QUARANTINED);
  assert(before.serial==after.serial && before.pending==after.pending && before.submitted==after.submitted && before.replied==after.replied);
  assert(last_vdev->refs==(int)refs && !ctx_delete_calls && !wire_deletes && !dp_detaches && !delete_calls);
- assert(!mishare_runtime_work_allowed(last_vdev,o) && !mishare_runtime_work_allowed(last_vdev,(void*)1));
+ unsigned queries=health_queries;
+ assert(!mishare_runtime_work_allowed(last_vdev,o) && !mishare_runtime_work_allowed(last_vdev,(void*)1) && health_queries==queries);
  assert(mishare_runtime_destroy(&o)==-EUCLEAN && o);
  assert(mishare_runtime_ndi_create(o,1,1)==-EUCLEAN);
  assert(mishare_runtime_ndi_prepare(o)==-EUCLEAN);
@@ -85,6 +87,7 @@ int main(void) {
  reset_shutdown();struct mishare_runtime_owner *o=with_plan();
  assert(!mishare_runtime_quiesce_psoc(&other,MISHARE_QUIESCE_SSR) && mishare_runtime_work_allowed(last_vdev,o));
  assert(!mishare_runtime_work_allowed(NULL,o) && !mishare_runtime_work_allowed(last_vdev,(void*)1));
+ health_recovering=true;assert(!mishare_runtime_work_allowed(last_vdev,(void*)1) && !state(o).quiesced);health_recovering=false;
  start_up(o);assert(mishare_runtime_destroy(&o)==-EINPROGRESS);radio_run(false);assert(radio_reply_stop()==QDF_STATUS_SUCCESS);radio_run(false);assert(mishare_runtime_destroy(&o)==-EINPROGRESS);after_radio(&o);
  /* Each child deliberately retains quarantined resources; never reset refs/SM. */
  for(int stage=0;stage<14;stage++) for(int flush=0;flush<2;flush++) {
@@ -112,12 +115,15 @@ int main(void) {
    unsigned starts=radio_starts,stops=radio_stops,downs=radio_downs;
    unsigned prepares=ch_prepares,creates=pe_creates,deletes=pe_deletes,refs=last_vdev->refs;
    unsigned expected_refs=refs-(pe_pending.bodyptr?1:0);
+   struct mishare_vdev_txn prior,closed;assert(!mishare_events_snapshot(o->events,&prior));
    /* Execute the exact native hook insertions, then check first reason. */
    enum mishare_quiesce_reason reason=stage==11?MISHARE_QUIESCE_REMOVE:stage==12?MISHARE_QUIESCE_MODULE_STOP:stage==13?MISHARE_QUIESCE_UNAVAILABLE:MISHARE_QUIESCE_SSR;
    if(stage==11)shutdown_remove(&health);
    else if(stage==12)shutdown_module_stop(&health);
    else if(stage==13) {health_recovering=true;assert(!mishare_runtime_work_allowed(last_vdev,o));health_recovering=false;}
    else shutdown_ssr(&health);
+   assert(!mishare_events_snapshot(o->events,&closed) && closed.state==MISHARE_TXN_QUARANTINED);
+   assert(prior.serial==closed.serial && prior.pending==closed.pending && prior.submitted==closed.submitted && prior.replied==closed.replied);
    fence(o,reason);
    while(radio_q_len)radio_run(flush);
    if(pe_pending.bodyptr)run_pe(flush);

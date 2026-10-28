@@ -54,19 +54,13 @@ unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
     return count;
 }
 
-bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner)
+static bool mishare_runtime_work_identity(struct wlan_objmgr_vdev *vdev,
+                                           void *owner,
+                                           struct wlan_objmgr_psoc *psoc)
 {
     struct mishare_runtime_owner *entry;
-    struct wlan_objmgr_psoc *psoc;
     unsigned long flags;
     bool allowed = false;
-    if (!vdev || !owner)
-        return false;
-    psoc = wlan_vdev_get_psoc(vdev);
-    if (!mishare_runtime_platform_available(psoc)) {
-        mishare_runtime_quiesce_psoc(psoc, MISHARE_QUIESCE_UNAVAILABLE);
-        return false;
-    }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next) {
         if (entry != owner || entry->psoc != psoc || entry->vdev != vdev)
@@ -77,6 +71,23 @@ bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner)
     }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     return allowed;
+}
+
+bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner)
+{
+    struct wlan_objmgr_psoc *psoc;
+    if (!vdev || !owner)
+        return false;
+    psoc = wlan_vdev_get_psoc(vdev);
+    /* Reject foreign/fenced tokens before touching native HDD context. */
+    if (!mishare_runtime_work_identity(vdev, owner, psoc))
+        return false;
+    if (!mishare_runtime_platform_available(psoc)) {
+        mishare_runtime_quiesce_psoc(psoc, MISHARE_QUIESCE_UNAVAILABLE);
+        return false;
+    }
+    /* Shutdown can close admission while the health snapshot is taken. */
+    return mishare_runtime_work_identity(vdev, owner, psoc);
 }
 
 void mishare_runtime_allocated(struct wlan_objmgr_vdev *vdev)
