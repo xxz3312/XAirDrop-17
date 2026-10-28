@@ -835,3 +835,35 @@ STARTed 会话恢复及实机验证尚未完成，默认无线入口关闭。
 永久错误、合法栅栏后完成仅发布事实；错误状态下各显式入口保留资源。完整
 父资源协调、准备态/STARTed 恢复、地址复用、模块回调文本寿命和实机验证仍待
 完成，默认无线入口关闭。
+
+### 0030 普通 DELETE/DP 已完成后的 NDI host 收尾
+
+显式 `mishare_runtime_reclaim_ndi()` 新增已完成传输资源的窄分支：普通 DELETE
+已提交且真实回执已记录，普通 DP detach 已成功提交且真实 final-free 已记录，
+timer_ready/stats_owned 已由普通流程清除；同时必须从未准备 WMA/legacy/self-peer/
+PE/频道/START 参数或 radio，且无 completion/work/reclaim/recovery 永久错误。
+
+这些 owner 与原早期候选一起，经过既有 CDS 的 HIF/HTC/RX 停止、blocked WMI
+和独立 WMI 队列排空资格化后才开放 SSR 窗口。不能仅因 DELETE/DP 已完成就
+省略窗口；如果 DP 回调在资格化帧过去后才到，本分支只等待，不自动补开窗口。
+窗口在父资源拆除前仍永久关闭。默认路径没有 owner 时不增加 WMI flush。
+
+窗口内再次验证准确 PAS/NDI/INIT、空 extension、零事务历史与完整候选事实后，
+只退回 host 类型、启动对象管理器删除并等真实物理 final-free，不再发送 DELETE、
+清理 response timer、detach DP 或释放统计 ID。保留普通 CREATE/DELETE/DP 历史，
+新增 ndi_completed_reclaim 标识来源，不写 SSR timer/DP 尝试或完成标记。
+已进入 host 逻辑删除的 owner 仍可在窗口关闭后仅完成最终释放 bookkeeping。
+
+共享 host 删除在原生操作前后都检查 completion_error；若删除期间出现错误回调，
+保留诊断 owner 与已发生的物理释放事实，不再把本次步骤报告为成功。不能回滚
+已经发生的 native free，也不能依赖此检查代替父资源/并发执行屏障。
+
+新增回归覆盖普通 inline/延迟 DP 完成、批量推进、延迟 VDEV final-free、原始
+历史保留、未完成/晚到 proof、窗口关闭、native/事务漂移、对象删除失败、删除中
+错误回调和已准备 peer 上下文拒绝。完整 DP/QDF/HIF/组件析构仍为模型；父实例
+协调、自动恢复、准备态/STARTed 回收、地址复用与手机固件验证继续保留为未完成。
+
+普通 detach 新增独立 dp_detach_submitted 标记，只在原生 wrapper 成功返回后设置。
+它与 dp_detaching 尝试标记、dp_freed 回调事实分别记录；即使 inline 回调先到，
+也不能把随后失败的提交返回当作成功。新增回归包含“inline free 后返回失败”，
+该 owner 保持隔离，不进入已完成收尾分支。

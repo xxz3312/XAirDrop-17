@@ -51,6 +51,7 @@ struct mishare_ndi_status {
     bool delete_submitted;
     bool delete_replied;
     bool dp_detaching;
+    bool dp_detach_submitted; /* Ordinary detach returned success, not free. */
     bool dp_freed;
     bool legacy_ready;
     bool wma_bound;

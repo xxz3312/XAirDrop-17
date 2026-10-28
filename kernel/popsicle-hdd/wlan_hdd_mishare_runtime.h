@@ -37,6 +37,7 @@ struct mishare_runtime_status {
     bool recovery_dp_attempted;
     bool recovery_dp_freed;
     bool ndi_reclaim_ready;
+    bool ndi_completed_reclaim; /* Ordinary DELETE + DP free already observed. */
     int recovery_error;
     int create_error;
     struct mishare_ndi_status ndi;
@@ -74,10 +75,14 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner);
 unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
-/* Explicit serialized recovery of fully attached, never-prepared NDI only.
+/* Explicit serialized recovery of never-prepared NDI only: either early
+ * CREATE/DP state, or ordinary DELETE + DP final-free already completed.
+ * Both routes require the qualified SSR/WMI window before parent teardown.
+ * The completed route submits no firmware/DP/timer operations and preserves
+ * ordinary completion history; it only starts host deletion/final-free wait.
  * Caller retains RTNL/exclusive psoc and exact DP/timer parents throughout all
  * polls; stop CDS parent destruction until completion. No automatic caller.
- * Partial attach, peer/PE/radio/DELETE history and unknown commands stay held.
+ * Partial attach, peer/PE/radio and incomplete DELETE history stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
 /* Bounded caller-owned handle table, not the native psoc vdev limit. */
