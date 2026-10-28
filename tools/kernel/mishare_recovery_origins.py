@@ -10,6 +10,8 @@ ORIGINALS = json.loads(r'''{
   "dp_detach": ""
 }''')
 def remove_recovery_additions(text):
+    from mishare_parent_origins import remove_parent_additions
+    text = remove_parent_additions(text)
     for tag, original in ORIGINALS.items():
         p = r'\n/\* MISHARE_RECOVERY_BEGIN:' + tag + r' \*/\n.*?/\* MISHARE_RECOVERY_END:' + tag + r' \*/\n'
         text, count = re.subn(p, lambda m: original, text, flags=re.S)

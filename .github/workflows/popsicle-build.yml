@@ -29,6 +29,8 @@ on:
       - tools/kernel/mishare_work_origins.py
       - tools/kernel/mishare_recovery_fixture.py
       - tools/kernel/mishare_recovery_origins.py
+      - tools/kernel/mishare_parent_fixture.py
+      - tools/kernel/mishare_parent_origins.py
       - tools/kernel/mishare_session_fixture.py
       - tools/kernel/mishare_context_fixture.py
       - tools/kernel/mishare_firmware_fixture.py

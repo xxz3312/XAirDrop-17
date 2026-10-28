@@ -1,0 +1,51 @@
+--- a/qcacld-3.0/core/cds/src/cds_api.c
++++ b/qcacld-3.0/core/cds/src/cds_api.c
+@@ -1564,6 +1564,10 @@
+ 
+ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
+ {
++
++/* MISHARE_PARENT_BEGIN:cds_dp_close */
++	mishare_runtime_recovery_close(psoc);
++/* MISHARE_PARENT_END:cds_dp_close */
+ 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
+ 
+ 	qdf_nbuf_stop_replenish_timer();
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -21426,6 +21426,10 @@
+ 
+ void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev)
+ {
++
++/* MISHARE_PARENT_BEGIN:hdd_pdev_close */
++	mishare_runtime_recovery_close(wlan_pdev_get_psoc(pdev));
++/* MISHARE_PARENT_END:hdd_pdev_close */
+ 	ucfg_mlme_pdev_close(pdev);
+ }
+ 
+--- a/qca-wifi-host-cmn/init_deinit/dispatcher/src/dispatcher_init_deinit.c
++++ b/qca-wifi-host-cmn/init_deinit/dispatcher/src/dispatcher_init_deinit.c
+@@ -16,6 +16,11 @@
+  */
+ 
+ #include "cfg_dispatcher.h"
++
++/* MISHARE_PARENT_BEGIN:dispatcher_include */
++#include "wlan_hdd_mishare_runtime.h"
++#include "wlan_objmgr_pdev_obj.h"
++/* MISHARE_PARENT_END:dispatcher_include */
+ #include <qdf_types.h>
+ #include <qdf_trace.h>
+ #include <qdf_threads.h>
+@@ -1666,6 +1671,10 @@
+ {
+ 	QDF_STATUS status;
+ 
++/* MISHARE_PARENT_BEGIN:dispatcher_pdev_close */
++	mishare_runtime_recovery_close(wlan_pdev_get_psoc(pdev));
++/* MISHARE_PARENT_END:dispatcher_pdev_close */
++
+ 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_green_ap_pdev_close(pdev));
+ 
+ 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_pdev_close(pdev));

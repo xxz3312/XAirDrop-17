@@ -658,3 +658,25 @@ WLAN 574 条版本记录无不匹配，未解决依赖为空，7 项选定结构
 final-free、window 关闭后不得重开及会话/部分 attach 拒绝。原始 CREATE 历史和
 quarantine 保留，普通 DELETE ACK 标记不变。父资源协调与自动恢复调用方尚未
 接入，已准备或 STARTed 会话仍保留；默认无线入口关闭，没有上机加载或传输验证。
+
+### 0026 父资源拆除前撤销回收窗口
+
+复核原生 HDD 调用链后发现：正常停机在 `cds_close()` 前已调用 `cds_dp_close()`、
+关闭并删除 pdev；启动失败回退则先 `dispatcher_pdev_close()` / pdev 删除，再
+DP close。因此只在 CDS close 撤销窗口，不能覆盖较早的父资源拆除。
+
+0026 在完整原生 `cds_dp_close()` 的 interrupt detach / timer / DP deinit 前，
+以及 `hdd_component_pdev_close()`、`dispatcher_pdev_close()` 的首个组件 close
+前，按准确 psoc 永久关闭现有 owner 的恢复窗口。保留 CDS close 的后备关闭。
+此变更不改变原生拆除顺序、返回值或 owner 的 quarantine/CREATE 历史。
+
+窗口关闭后，未开始、待 DP 回调、inline DP 已回调但尚未进入 host 删除的 owner
+均不能继续访问 timer/DP/MLME 或开始 host 删除；迟到回调不恢复资格。已经完成
+host 逻辑删除、仅等最终 free 的路径仍可完成 bookkeeping。无 owner 的原生清理
+照常执行，外来 psoc 不能关闭当前 owner 的窗口。
+
+这是关闭后续准入的修正，不是父资源 lease，也不能等待或中止已进入的 reclaim
+调用。调用方仍须串行化父资源拆除与所有轮询，并在异步回调期间保留准确父实例；
+完整协调器、自动恢复调用方和活动 owner 下安全卸载尚未接入。默认入口关闭。
+新增回归执行完整原生 CDS DP close、HDD/dispatcher pdev close；它们调用的实际
+DP、IRQ、timer 和组件析构仍为模型，完整 HDD 停机/错误回退路径只做源码审计。

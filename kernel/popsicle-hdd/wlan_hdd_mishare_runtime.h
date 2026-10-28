@@ -65,8 +65,11 @@ void mishare_runtime_mc_stopped(struct wlan_objmgr_psoc *psoc);
  */
 int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner);
 /* Internal SSR-only origin: qualified stopped HIF/HTC/RX + blocked WMI with
- * work queues flushed. Closes irrevocably at native cds_close, before parents
- * disappear. No firmware ACK or ownership reset is manufactured.
+ * work queues flushed. Closes irrevocably before native CDS DP close or HDD /
+ * dispatcher pdev component close; cds_close also closes it as a fallback.
+ * These fences revoke admission, not hold parent references or wait for an
+ * active reclaim call. Caller must serialize teardown with all reclaim polls.
+ * No firmware ACK or ownership reset is manufactured.
  */
 unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc);
