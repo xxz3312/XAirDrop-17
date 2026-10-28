@@ -267,6 +267,20 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
     printf("{\"event\":\"raw_tx_status\",\"native_status\":%u,\"bytes\":%zu,\"freq\":%u}\n",status,len,freq);fflush(stdout);
     return status?-ENOMSG:0;
 }
+/* Dispatch one outgoing frame to exactly one transport. Validation/source
+ * policy remains in the existing transport-specific preparation helpers. */
+static int prepare_relay_frame(bool raw_only,bool combined,unsigned char *frame,
+                               size_t len,const unsigned char mac[6],bool rewrite,
+                               bool *use_raw) {
+    *use_raw=raw_only;
+    if (combined) {
+        if (!len) return -EMSGSIZE;
+        if (frame[0]==0xd0) *use_raw=false;
+        else if (frame[0]==0x08 || frame[0]==0x88) *use_raw=true;
+        else return -EOPNOTSUPP;
+    }
+    return *use_raw?prepare_raw_frame(frame,len,mac,rewrite):prepare_frame(frame,len,mac,rewrite);
+}
 static int native_interface(const char *name,unsigned *index,unsigned char mac[6]) {
     if (strlen(name)>=IFNAMSIZ) return -ENAMETOOLONG;
     *index=if_nametoindex(name);if (!*index) return -ENODEV;
@@ -313,7 +327,8 @@ static void usage(void) {
          "RAW modes require patched WLAN loaded with mishare_raw_tx=1.\n"
          "action-tx send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] [--timeout-ms 3000]\n"
          "action-tx relay --listen wonder0 --dev wlan0 --freq MHz [--rewrite-source] [--max-frames 1] [--seconds 30]\n"
-         "Root required. Action frames only, on-channel native TX. No automatic retries.\n"
+         "action-tx relay-all --listen wonder0 --dev wlan0 --freq MHz [--max-frames 1000] [--seconds 300]\n"
+         "Root required. Explicit Action or RAW DATA transport, on-channel only. No automatic retries.\n"
          "A submitted cookie is not a TX status; group frames have no peer ACK guarantee.");
 }
 #ifndef ACTION_TX_TEST
@@ -322,8 +337,9 @@ int main(int argc,char **argv) {
     bool radiotap=false,rewrite=false;unsigned freq=0,timeout=3000,limit=1,seconds=30;
     if (!strcmp(mode,"--help") || !strcmp(mode,"help")) {usage();return 0;}
     bool raw=!strcmp(mode,"raw-send") || !strcmp(mode,"raw-relay");
-    if (!raw && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
-    bool relay=!strcmp(mode,"relay") || !strcmp(mode,"raw-relay");
+    bool combined=!strcmp(mode,"relay-all");
+    if (!raw && !combined && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
+    bool relay=!strcmp(mode,"relay") || !strcmp(mode,"raw-relay") || combined;
     for (int i=2;i<argc;i++) {
         const char *arg=argv[i];
         if (!strcmp(arg,"--radiotap")) radiotap=true;
@@ -359,8 +375,9 @@ int main(int argc,char **argv) {
         if (capture<0) {ret=-errno;goto done;}
         struct sockaddr_ll addr={.sll_family=AF_PACKET,.sll_protocol=htons(ETH_P_ALL),.sll_ifindex=(int)index};
         if (bind(capture,(void *)&addr,sizeof(addr))) {ret=-errno;close(capture);goto done;}
-        unsigned sent=0,failed=0,ignored=0,source_mismatch=0;int64_t deadline=now_ms()+(int64_t)seconds*1000;
-        printf("{\"event\":\"relay_ready\",\"mode\":\"%s\"}\n",raw?"raw_data_frames_only":"action_frames_only");fflush(stdout);
+        unsigned sent=0,failed=0,ignored=0,source_mismatch=0;
+        unsigned action_completed=0,raw_completed=0,action_failed=0,raw_failed=0;int64_t deadline=now_ms()+(int64_t)seconds*1000;
+        printf("{\"event\":\"relay_ready\",\"mode\":\"%s\"}\n",combined?"action_and_raw_data":raw?"raw_data_frames_only":"action_frames_only");fflush(stdout);
         while (sent+failed<limit && !interrupted) {
             ret=wait_read(capture,deadline);if (ret) break;
             unsigned char frame[8192];struct sockaddr_ll from={0};socklen_t size=sizeof(from);
@@ -369,17 +386,20 @@ int main(int argc,char **argv) {
             if (n>(ssize_t)sizeof(frame) || size<sizeof(from) || from.sll_ifindex!=(int)index || from.sll_pkttype!=PACKET_OUTGOING) {ignored++;continue;}
             size_t length=(size_t)n;
             ret=strip_radiotap(frame,&length);if (ret) {ignored++;continue;}
-            ret=raw?prepare_raw_frame(frame,length,mac,rewrite):prepare_frame(frame,length,mac,rewrite);
+            bool use_raw=false;
+            ret=prepare_relay_frame(raw,combined,frame,length,mac,rewrite,&use_raw);
             if (ret) {
                 if (ret==-EADDRNOTAVAIL && ++source_mismatch==1)
                     fprintf(stderr,"relay: source MAC differs from native interface; --rewrite-source is explicit and changes protocol identity\n");
                 ignored++;continue;
             }
-            ret=raw?raw_tx(&c,freq,frame,length,(int)timeout):action_tx(&c,freq,frame,length,(int)timeout);
+            ret=use_raw?raw_tx(&c,freq,frame,length,(int)timeout):action_tx(&c,freq,frame,length,(int)timeout);
+            if (ret) {if (use_raw) raw_failed++;else action_failed++;}
+            else {if (use_raw) raw_completed++;else action_completed++;}
             if (ret) {failed++;fprintf(stderr,"{\"event\":\"tx_error\",\"errno\":%d}\n",-ret);} else sent++;
         }
         close(capture);
-        printf("{\"event\":\"relay_summary\",\"completed\":%u,\"failed\":%u,\"ignored\":%u,\"source_mismatch\":%u}\n",sent,failed,ignored,source_mismatch);
+        printf("{\"event\":\"relay_summary\",\"completed\":%u,\"failed\":%u,\"ignored\":%u,\"source_mismatch\":%u,\"action_completed\":%u,\"raw_completed\":%u,\"action_failed\":%u,\"raw_failed\":%u}\n",sent,failed,ignored,source_mismatch,action_completed,raw_completed,action_failed,raw_failed);
         ret=failed?-EIO:sent?0:ret?ret:-ENODATA;
     }
 done:

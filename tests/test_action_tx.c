@@ -81,6 +81,16 @@ int main(void) {
     raw[24]=0x80;assert(prepare_raw_frame(raw,sizeof(raw),mac,false)==-EOPNOTSUPP);raw[24]=0;
     unsigned char wire[MISHARE_RAW_HEADER]={0};mishare_raw_set_word(wire,1);mishare_raw_set_word(wire+8,sizeof(raw));
     assert(mishare_raw_word(wire)==1 && mishare_raw_word(wire+8)==sizeof(raw));
+    /* Unified relay selects exactly one transport and retains both modes'
+     * frame/source restrictions. RX packet exclusion remains in capture loop. */
+    bool use_raw=true;action(f);raw[24]=0;
+    assert(!prepare_relay_frame(false,true,f,25,mac,false,&use_raw) && !use_raw);
+    assert(!prepare_relay_frame(false,true,raw,sizeof(raw),mac,false,&use_raw) && use_raw);
+    assert(prepare_relay_frame(false,false,raw,sizeof(raw),mac,false,&use_raw)==-EOPNOTSUPP);
+    assert(prepare_relay_frame(true,false,f,25,mac,false,&use_raw)==-EOPNOTSUPP);
+    f[0]=0x40;assert(prepare_relay_frame(false,true,f,25,mac,false,&use_raw)==-EOPNOTSUPP);action(f);
+    f[10]++;assert(prepare_relay_frame(false,true,f,25,mac,false,&use_raw)==-EADDRNOTAVAIL);
+    assert(!prepare_relay_frame(false,true,f,25,mac,true,&use_raw) && !use_raw);
     unsigned parsed;assert(!number("5180",2300,5900,&parsed) && parsed==5180);
     assert(number("5180x",2300,5900,&parsed)==-EINVAL);
     puts("ACTION_TX_PROTOCOL_TEST_PASS_ONLY");return 0;

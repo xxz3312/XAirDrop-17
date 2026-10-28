@@ -1,4 +1,4 @@
-name: Popsicle native Action TX tool
+name: Popsicle native TX bridge
 on:
   workflow_dispatch:
   push:
@@ -7,6 +7,9 @@ on:
       - .github/workflows/popsicle-action-tx.yml
       - native/wireless/action_tx.c
       - tests/test_action_tx.c
+      - tests/test_popsicle_session.py
+      - tools/device/popsicle-session.sh
+      - tools/device/popsicle-rx-start.sh
       - tests/test_raw_tx.c
       - kernel/popsicle-hdd/mishare_raw_protocol.h
       - kernel/popsicle-hdd/wma_mishare_raw_tx.h
@@ -26,6 +29,9 @@ jobs:
         run: |
           test "$GITHUB_ACTIONS" = true
           mkdir -p out
+          python3 -m unittest discover -s tests -p 'test_popsicle_session.py'
+          sh -n tools/device/popsicle-session.sh
+          sh -n tools/device/popsicle-rx-start.sh
           cc -std=c11 -Wall -Wextra -Werror -Wno-unused-function -g -fsanitize=address,undefined tests/test_action_tx.c -o out/host-test
           ASAN_OPTIONS=detect_leaks=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 out/host-test
           cc -std=c11 -Wall -Wextra -Werror -Wno-unused-function -g -fsanitize=address,undefined tests/test_raw_tx.c -o out/raw-test
@@ -53,12 +59,13 @@ jobs:
           "$ndk_bin/aarch64-linux-android31-clang" -std=c11 -Wall -Wextra -Werror -O2 -fPIE -pie -fstack-protector-strong -D_FORTIFY_SOURCE=2 native/wireless/action_tx.c -o out/action-tx
           "$ndk_bin/llvm-strip" out/action-tx
           "$ndk_bin/llvm-readelf" -h out/action-tx > out/elf-header.txt
+          cp tools/device/popsicle-session.sh tools/device/popsicle-rx-start.sh out/
           python3 - <<'PY'
           import hashlib,json,os
           from pathlib import Path
           binary=Path('out/action-tx').read_bytes()
           assert binary[:4]==b'\x7fELF' and int.from_bytes(binary[18:20],'little')==183
-          Path('out/build.json').write_text(json.dumps({'status':'ACTION_TX_ANDROID_BUILD_PASS_ONLY','commit':os.environ['GITHUB_SHA'],'ndk':os.environ['NDK_VERSION'],'android_api':31,'binary_sha256':hashlib.sha256(binary).hexdigest(),'binary_bytes':len(binary),'host_protocol_test':'ACTION_TX_PROTOCOL_TEST_PASS_ONLY','native_raw_model_test':'RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY','phone_executed':False,'radio_tx_verified':False},indent=2)+'\n')
+          Path('out/build.json').write_text(json.dumps({'status':'ACTION_TX_ANDROID_BUILD_PASS_ONLY','commit':os.environ['GITHUB_SHA'],'ndk':os.environ['NDK_VERSION'],'android_api':31,'binary_sha256':hashlib.sha256(binary).hexdigest(),'binary_bytes':len(binary),'host_protocol_test':'ACTION_TX_PROTOCOL_TEST_PASS_ONLY','native_raw_model_test':'RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY','session_command_model_tests':13,'combined_action_raw_relay':True,'phone_executed':False,'radio_tx_verified':False},indent=2)+'\n')
           PY
       - uses: actions/upload-artifact@v4
         with:
@@ -67,4 +74,6 @@ jobs:
             out/action-tx
             out/build.json
             out/elf-header.txt
+            out/popsicle-session.sh
+            out/popsicle-rx-start.sh
           if-no-files-found: error
