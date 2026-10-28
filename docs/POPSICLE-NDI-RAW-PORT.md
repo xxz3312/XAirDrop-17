@@ -680,3 +680,27 @@ host 逻辑删除、仅等最终 free 的路径仍可完成 bookkeeping。无 ow
 完整协调器、自动恢复调用方和活动 owner 下安全卸载尚未接入。默认入口关闭。
 新增回归执行完整原生 CDS DP close、HDD/dispatcher pdev close；它们调用的实际
 DP、IRQ、timer 和组件析构仍为模型，完整 HDD 停机/错误回退路径只做源码审计。
+
+协调器接入约束：正常 HDD stop 在 `cds_post_disable()` 返回错误后仍继续后续
+拆除（记录错误并触发断言）；启动失败回退调用点直接忽略该返回值。因此不能
+仅让 CDS 返回失败就视为父资源被保留，也不能仅在 `cds_close()` 拦截。未来实现
+必须在外层 HDD 拆除流程中明确保留父实例并处理异步完成、失败及上层继续拆除。
+
+
+### 0026 构建验证结果
+
+[Actions 40675754483](https://github.com/xxz3312/XAirDrop-17/actions/runs/40675754483)
+在源提交 `04b809efed826c69dc4914a4c296b18e41beecc4` 全部通过：44 项 Python
+检查、22 组原生 fixture、完整 WLAN 编译及严格链接。82 个要求符号存在，
+574 条版本记录无不匹配、未解决依赖为空，7 项选定结构布局 MATCH。
+工具链与 bindgen 缓存命中；新增回归在 ASan/UBSan 下通过。
+
+紧凑 ZIP 已独立下载并核对大小与 SHA-256；重新生成的新增 fixture、三个原生
+文件和两个生产文件哈希匹配 CI。三个原生文件移除有界新增块后，均与 0025
+原文逐字节一致；生产 runtime C 保持原样。完整诊断大包仅记录 GitHub 哈希，
+未独立下载且不可安装。详见 [父资源拆除窗口报告](research/popsicle-parent-teardown-window-build-pass.json)。
+
+原生回归覆盖三个拆除入口、尚未开始/待 DP 回调/inline 已回调但未删 host、
+迟到 DP 回调、不可重开窗口、已进入 host final-free 的 bookkeeping、外来 psoc
+和无 owner 路径。完整父资源协调器与自动调用方仍待实现，已准备/STARTed 会话
+继续隔离；默认无线入口关闭，未在手机加载或验证固件与传输。
