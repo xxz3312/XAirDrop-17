@@ -1,0 +1,65 @@
+name: Popsicle native Action TX tool
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-action-tx.yml
+      - native/wireless/action_tx.c
+      - tests/test_action_tx.c
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NDK_VERSION: 27.2.12479018
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exercise frame and netlink protocol without radio access
+        run: |
+          test "$GITHUB_ACTIONS" = true
+          mkdir -p out
+          cc -std=c11 -Wall -Wextra -Werror -Wno-unused-function -g -fsanitize=address,undefined tests/test_action_tx.c -o out/host-test
+          ASAN_OPTIONS=detect_leaks=1:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1 out/host-test
+      - uses: actions/cache/restore@v4
+        id: ndk
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Prepare pinned Android NDK
+        run: |
+          mkdir -p .xos-ndk
+          if [ ! -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/clang" ]; then
+            cp -a "$ANDROID_HOME/licenses" .xos-ndk/
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-ndk" "ndk;$NDK_VERSION"
+          fi
+      - uses: actions/cache/save@v4
+        if: steps.ndk.outputs.cache-hit != 'true'
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Build arm64 Android executable
+        run: |
+          ndk_bin="$PWD/.xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$ndk_bin/aarch64-linux-android31-clang" -std=c11 -Wall -Wextra -Werror -O2 -fPIE -pie -fstack-protector-strong -D_FORTIFY_SOURCE=2 native/wireless/action_tx.c -o out/action-tx
+          "$ndk_bin/llvm-strip" out/action-tx
+          "$ndk_bin/llvm-readelf" -h out/action-tx > out/elf-header.txt
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          binary=Path('out/action-tx').read_bytes()
+          assert binary[:4]==b'\x7fELF' and int.from_bytes(binary[18:20],'little')==183
+          Path('out/build.json').write_text(json.dumps({'status':'ACTION_TX_ANDROID_BUILD_PASS_ONLY','commit':os.environ['GITHUB_SHA'],'ndk':os.environ['NDK_VERSION'],'android_api':31,'binary_sha256':hashlib.sha256(binary).hexdigest(),'binary_bytes':len(binary),'host_protocol_test':'ACTION_TX_PROTOCOL_TEST_PASS_ONLY','phone_executed':False,'radio_tx_verified':False},indent=2)+'\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-action-tx-${{ github.run_id }}
+          path: |
+            out/action-tx
+            out/build.json
+            out/elf-header.txt
+          if-no-files-found: error
