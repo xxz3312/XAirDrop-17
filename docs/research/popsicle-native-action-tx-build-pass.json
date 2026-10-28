@@ -1,0 +1,66 @@
+{
+  "status": "NATIVE_ACTION_TX_TOOL_BUILD_PASS_ONLY",
+  "commit": "7e53a21a5af27c22ebe6c91eab4ef956b3420116",
+  "run_id": 40749179035,
+  "job_id": 123030943919,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/40749179035",
+  "artifact": {
+    "id": 12842928237,
+    "bytes": 9003,
+    "sha256": "e8ba856fe8c3258450d7e5c0ec66c157ad2780606d43ad77ace13f9089e65934",
+    "downloaded_and_checksum_verified": true
+  },
+  "android_binary": {
+    "status": "ACTION_TX_ANDROID_BUILD_PASS_ONLY",
+    "commit": "7e53a21a5af27c22ebe6c91eab4ef956b3420116",
+    "ndk": "27.2.12479018",
+    "android_api": 31,
+    "binary_sha256": "dbfa772b05bc4ae580bfb41a755e3e212b8eaa2f2fef9c443dd09da2a935ac50",
+    "binary_bytes": 15456,
+    "host_protocol_test": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "phone_executed": false,
+    "radio_tx_verified": false
+  },
+  "source_sha256": {
+    "native/wireless/action_tx.c": "d014d34ea750f1992eb1f56e3cef69857995d3af3de02cc4044ca7f06549331b",
+    "tests/test_action_tx.c": "e78a18aa4fcae95c6ffeaea57c82ea065efda8a42b476a2f6d4f3a819aeba424",
+    ".github/workflows/popsicle-action-tx.yml": "fd29ffa0801907d2510d11902eb5d880b3428bdcce2407fbc239980d42aa3340"
+  },
+  "host_test_sanitizers": [
+    "address",
+    "undefined",
+    "leak detection"
+  ],
+  "host_checks": [
+    "Action-only unprotected/unfragmented frame validation",
+    "explicit source address rewrite only",
+    "radiotap header and FCS removal; bad FCS rejection",
+    "netlink attribute alignment, flags, duplicates and truncation",
+    "netlink ACK cannot create a TX completion",
+    "exact interface/frame/cookie identity including status before cookie",
+    "wrong cookie/interface/frame rejected",
+    "single datagram can contain reply plus early status",
+    "kernel errno preserved without retries"
+  ],
+  "package": {
+    "filename": "XAirDrop-17-Action-TX-0035.zip",
+    "bytes": 772976,
+    "sha256": "b65dea02deebb100d3a63e1bd14d047396b395a298c6adc21680d399aff89ffa"
+  },
+  "rx_module_reused": {
+    "source_commit": "dd85ef8fa566aea4998c57f01f7f80e20e8047ba",
+    "run_id": 40743774260,
+    "sha256": "8cd248a74c707fbca8a36bbb714bb9404654710056475073040392ce7bb9866b",
+    "reused_unchanged": true
+  },
+  "ndk_cache": "HIT",
+  "wlan_or_wonder_kernel_sources_modified": false,
+  "phone_executed": false,
+  "radio_tx_verified": false,
+  "mac80211_tx_status_feedback_implemented": false,
+  "raw_data_tx_implemented": false,
+  "offchannel_tx_enabled": false,
+  "automatic_retries": false,
+  "airdrop_connected": false,
+  "limitations": "Runs pure protocol tests and builds Android arm64 executable with pinned NDK. No real nl80211 device/firmware path was executed in CI. Requires UP native Ethernet-type WLAN/P2P interface on the requested channel, kernel permission and native management TX support. Relay forwards only PACKET_OUTGOING Action frames; monitor RX, data frames and other management frames are ignored. Strict cookie/frame/interface matching and group-destination status do not prove over-the-air receipt. Source rewrite is explicit and may break AWDL identity; body identities are not rewritten. Existing kernel receive module is unchanged from stage 0034. Full data TX, in-kernel mac80211 TX status, dynamic channel/DBS, NDI backend init and phone interoperability remain pending."
+}
