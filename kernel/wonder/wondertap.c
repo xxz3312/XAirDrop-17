@@ -196,7 +196,7 @@ int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter
 			return -EINVAL;
 		if (filter->enabled) {
 			if ((filter->frame_type != IEEE80211_FTYPE_MGMT &&
-			     filter->frame_type != IEEE80211_FTYPE_CTRL &&
+			     filter->frame_type != IEEE80211_FTYPE_CTL &&
 			     filter->frame_type != IEEE80211_FTYPE_DATA) ||
 			    (filter->frame_subtype & ~IEEE80211_FCTL_STYPE))
 				return -EINVAL;
