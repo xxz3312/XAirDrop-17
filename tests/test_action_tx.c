@@ -8,18 +8,20 @@ struct radio_model {
     struct channel_interface tx,mon;
     unsigned queries,sets,last_freq;
     int set_error,query_error;
-    bool roam_after_set;
+    bool roam_after_set,roamed;
 };
 static int model_query(void *context,unsigned index,struct channel_interface *out) {
     struct radio_model *r=context;r->queries++;
     if (r->query_error) return r->query_error;
     *out=index==r->tx.index?r->tx:r->mon;
-    if (r->roam_after_set && r->sets && index==r->tx.index) out->freq=5200;
+    if (r->roamed && index==r->tx.index) out->freq=5200;
     return 0;
 }
 static int model_set(void *context,unsigned index,unsigned freq) {
     struct radio_model *r=context;assert(index==r->mon.index);
-    r->sets++;r->last_freq=freq;return r->set_error;
+    r->sets++;r->last_freq=freq;
+    if (!r->set_error && r->roam_after_set) r->roamed=true;
+    return r->set_error;
 }
 static void channel_tests(void) {
     struct radio_model r={.tx={4,2,NL80211_IFTYPE_STATION,5180},.mon={6,2,NL80211_IFTYPE_MONITOR,0}};
@@ -40,7 +42,7 @@ static void channel_tests(void) {
     assert(follow_channel(&f,&r,model_query,model_set)==-EBUSY && f.freq==2412 && f.changes==1);
     r.set_error=0;r.roam_after_set=true;
     assert(follow_channel(&f,&r,model_query,model_set)==-EAGAIN && f.freq==2412 && f.changes==1);
-    r.roam_after_set=false;r.query_error=-ENODEV;unsigned sets=r.sets;
+    r.roam_after_set=false;r.roamed=false;r.query_error=-ENODEV;unsigned sets=r.sets;
     assert(follow_channel(&f,&r,model_query,model_set)==-ENODEV && r.sets==sets);
     r.query_error=0;r.tx.phy=r.mon.phy=7;
     assert(follow_channel(&f,&r,model_query,model_set)==-EXDEV && r.sets==sets);
