@@ -3,6 +3,29 @@
 #include "../native/wireless/action_tx.c"
 #include <assert.h>
 
+/* A kernel NLMSG_ERROR timeout and a receive timeout share errno 110.
+ * Preserve matching-sequence error provenance; ACK/unrelated errors do not. */
+static void request_error_tests(void) {
+    struct client c={.seq=77,.family=25};
+    struct message m={.n=NLMSG_LENGTH(sizeof(struct nlmsgerr))};
+    struct nlmsghdr h={.nlmsg_len=(uint32_t)m.n,.nlmsg_type=NLMSG_ERROR,.nlmsg_seq=77};
+    struct nlmsgerr e={.error=-ETIMEDOUT};struct bytes reply;
+    memcpy(m.data,&h,sizeof(h));memcpy(m.data+NLMSG_HDRLEN,&e,sizeof(e));
+    c.request_error_stage="reply_parse";
+    assert(consume(&c,m.data,m.n,NL80211_CMD_VENDOR,&reply)==-ETIMEDOUT);
+    assert(!strcmp(c.request_error_stage,"kernel_reply"));
+    h.nlmsg_seq=78;memcpy(m.data,&h,sizeof(h));c.request_error_stage="reply_parse";
+    assert(!consume(&c,m.data,m.n,NL80211_CMD_VENDOR,&reply));
+    assert(!strcmp(c.request_error_stage,"reply_parse"));
+    h.nlmsg_seq=77;e.error=0;memcpy(m.data,&h,sizeof(h));memcpy(m.data+NLMSG_HDRLEN,&e,sizeof(e));
+    assert(!consume(&c,m.data,m.n,NL80211_CMD_VENDOR,&reply));
+    assert(!strcmp(c.request_error_stage,"reply_parse"));
+    e.error=ETIMEDOUT;memcpy(m.data+NLMSG_HDRLEN,&e,sizeof(e));
+    assert(consume(&c,m.data,m.n,NL80211_CMD_VENDOR,&reply)==-EBADMSG);
+    assert(!strcmp(c.request_error_stage,"reply_parse"));
+    assert(consume(&c,m.data,m.n-1,NL80211_CMD_VENDOR,&reply)==-EBADMSG);
+}
+
 static unsigned char mac[6]={2,1,2,3,4,5};
 struct radio_model {
     struct channel_interface tx,mon;
@@ -80,6 +103,7 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
     ((struct nlmsghdr *)(void *)m->data)->nlmsg_len=(uint32_t)m->n;
 }
 int main(void) {
+    request_error_tests();
     channel_tests();
     /* Kernel vendor replies append raw bytes and may omit final padding at
      * both attribute and netlink-message levels. Exercise every residue. */

@@ -59,5 +59,14 @@
     "vendor_action_verified": false,
     "awdl_verified": false,
     "limitations": "Short bring-up log only; not long-term stability, all-feature or Apple interoperability certification."
+  },
+  "phone_vendor_action_result": {
+    "frequency_mhz": 5240,
+    "errno": 110,
+    "send_exit": 1,
+    "native_completion_reported": false,
+    "stock_restore_reported": true,
+    "error_origin": "Undetermined: current tool conflates kernel NLMSG_ERROR -ETIMEDOUT and local reply receive timeout",
+    "rf_transmission_confirmed": false
   }
 }

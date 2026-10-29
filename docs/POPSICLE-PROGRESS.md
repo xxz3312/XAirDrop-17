@@ -4,7 +4,7 @@
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
-最新实机结果：0049 已成功加载自编译 WLAN（5.2.1.137C）与配套 provider，注册 /dev/wlan，收到固件 ready；框架写入 Wifi Turning On 后进入 STA connectivity 模式。wpa_supplicant 报告连接完成，DHCP ACK 和 ConnectivityService CONNECTED 也已观察到。旧的缺少 provider、cfg80211 TESTMODE 布局、INI 前缀及 WLAN 控制节点构建遗漏均已越过。本次日志还存在可选诊断功能不支持和一次扫描失败记录，不据此宣称长期稳定或所有功能完整。下一步使用现有 0049 包测试一次 vendor Action 的原生完成回调；该路径、完整 AWDL 和 Apple 互传仍未实机验证。
+最新实机结果：0049 已成功加载自编译 WLAN、注册 /dev/wlan，完成 Wi-Fi 开启、AP 连接与 DHCP。随后一次 vendor Action 测试返回 ETIMEDOUT（110），send_exit=1，没有 native_status 完成报告；手动恢复已显示 STOCK_RESTORED。现有工具把驱动通过 NLMSG_ERROR 返回的超时与本地接收超时显示成相同文案，不能据此推断帧已上空口或固件完全不支持。0050 只补充工具侧请求阶段和耗时诊断，沿用 0049 驱动和实验帧，不自动重发；vendor Action、完整 AWDL 和 Apple 互传仍待验证。
 
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |

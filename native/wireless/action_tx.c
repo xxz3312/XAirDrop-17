@@ -48,6 +48,7 @@ struct client {
     uint64_t cookie;
     bool have_cookie;
     unsigned completion_outcome;
+    const char *request_error_stage;
 };
 static volatile sig_atomic_t interrupted;
 static void on_signal(int signal_number) { (void)signal_number; interrupted = 1; }
@@ -170,7 +171,10 @@ static int consume(struct client *c,const unsigned char *data,size_t len,unsigne
         if (h.nlmsg_type==NLMSG_ERROR) {
             if (n<sizeof(struct nlmsgerr)) return -EBADMSG;
             int error;memcpy(&error,body,4);
-            if (h.nlmsg_seq==c->seq && error) return error<0?error:-EBADMSG;
+            if (h.nlmsg_seq==c->seq && error) {
+                if (error<0) c->request_error_stage="kernel_reply";
+                return error<0?error:-EBADMSG;
+            }
         } else if (h.nlmsg_type==c->family || h.nlmsg_type==GENL_ID_CTRL) {
             if (n<GENL_HDRLEN) return -EBADMSG;
             unsigned cmd=body[0];struct bytes attrs={body+GENL_HDRLEN,n-GENL_HDRLEN};
@@ -188,10 +192,13 @@ static int consume(struct client *c,const unsigned char *data,size_t len,unsigne
 }
 static int request(struct client *c,struct message *m,unsigned command,
                    unsigned char *buffer,struct bytes *reply,int timeout_ms) {
+    c->request_error_stage="send";
     int ret=transmit(c,m);if (ret) return ret;
     int64_t deadline=now_ms()+timeout_ms;
     for (;;) {
+        c->request_error_stage="reply_receive";
         ret=receive(c,buffer,MESSAGE_MAX,deadline);if (ret<0) return ret;
+        c->request_error_stage="reply_parse";
         ret=consume(c,buffer,(size_t)ret,command,reply);
         if (ret<0) return ret;
         if (ret==1) return 0;
@@ -375,7 +382,13 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
     if (!ret) ret=add_attr(&m,NL80211_ATTR_VENDOR_SUBCMD,&subcmd,4);
     if (!ret) ret=add_attr(&m,NL80211_ATTR_VENDOR_DATA,payload,MISHARE_RAW_HEADER+len);
     if (ret) return ret;
-    ret=request(c,&m,NL80211_CMD_VENDOR,buffer,&reply,timeout_ms);if (ret) return ret;
+    int64_t started=now_ms();
+    ret=request(c,&m,NL80211_CMD_VENDOR,buffer,&reply,timeout_ms);
+    if (ret) {
+        fprintf(stderr,"{\"event\":\"vendor_request_error\",\"stage\":\"%s\",\"errno\":%d,\"elapsed_ms\":%" PRId64 ",\"timeout_ms\":%d}\n",
+                c->request_error_stage?c->request_error_stage:"unknown",-ret,now_ms()-started,timeout_ms);
+        return ret;
+    }
     if (attr(reply,NL80211_ATTR_VENDOR_DATA,&result)!=1 || result.n!=MISHARE_RAW_HEADER ||
         mishare_raw_word(result.p)!=MISHARE_RAW_VERSION ||
         mishare_raw_word(result.p+8)!=len || mishare_raw_word(result.p+12)!=1)
