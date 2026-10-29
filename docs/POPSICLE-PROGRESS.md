@@ -1,6 +1,12 @@
+## 最新阶段 0058
+
+新增默认关闭的单STA完整管理帧实验路径、标准nl80211接收工具和一键60秒观察脚本，不依赖monitor/LPC。仅显式run-mgmt-rx启用；加入MAC上下文消失时关闭路由且不调用SME的停机保护。修正版内核[40926997789](https://github.com/xxz3312/XAirDrop-17/actions/runs/40926997789)、工具[40927043957](https://github.com/xxz3312/XAirDrop-17/actions/runs/40927043957)、打包[40927044125](https://github.com/xxz3312/XAirDrop-17/actions/runs/40927044125)均通过。53项内核host Python检查、生产owner helper模型、15项切换脚本与4项观察脚本测试通过，严格链接无未解决依赖，7项选定布局匹配；这些不认证完整私有ABI或固件。
+
+已生成并校验0058测试包（7,488,393字节）。完整MIF接收、超过256字节的有效AWDL帧、AWDL同步/选举与文件互传仍待实机验证。SME注册仅为PE主机队列提交，不是固件过滤命令。见[0058步骤](POPSICLE-FULL-MGMT-RX-0058.md)与[构建证据](research/popsicle-full-mgmt-rx-0058-build-pass.json)。只对既有popsicle/6.12.69测试环境提供实验包，不能推广为小米17 Pro适配认证。
+
 ## 最新阶段 0057
 
-0056实机首次完整解析1帧PSF（247字节、7个TLV）；208候选TLV越界，首个MIF样本256字节但至少需277字节。0057已在固定WLAN源定位header DMA固定256字节设置和header-copy路径；新增可重复静态审计和推断边界回归。尚未修改/修复完整MIF接收，无新手机包、不需重跑旧测试。后续要接固件管理帧注册及广播RX路由，或完整monitor packet DMA；不能直接增大不存在的枚举。5项Python审计回归通过CI 40923724035；实际目标工作树审计已运行并记录哈希。本轮无C/内核改动或新实机运行。见 [0057源码定位](POPSICLE-CAPTURE-LIMIT-0057.md)。
+0056实机首次完整解析1帧PSF（247字节、7个TLV）；208候选TLV越界，首个MIF样本256字节但至少需277字节。0057已在固定WLAN源定位header DMA固定256字节设置和header-copy路径；新增可重复静态审计和推断边界回归。尚未修改/修复完整MIF接收，无新手机包、不需重跑旧测试。后续要探索原生完整管理帧指示和广播RX路由，或完整monitor packet DMA；SME/PE注册仅为主机队列提交，不能称作固件过滤命令；不能直接增大不存在的枚举。见 [0057源码定位](POPSICLE-CAPTURE-LIMIT-0057.md)。
 
 ## 最新阶段 0056
 
@@ -21,7 +27,7 @@
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-29）
 
 当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收（含准入错误优先级及最终记账状态预检）的离线验证，并补齐普通 DP/DELETE 与 SSR DP 完成事件校验及普通资源已完成后的 NDI host 收尾和普通 host 删除后的最终记账。
-实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
+实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问、LPC/OCC接收和1帧AWDL PSF结构解析；完整AWDL同步与文件互传尚未实现。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
 最新实机结果：0049 自编译 WLAN 已完成加载、/dev/wlan 注册、HAL 开启、AP 连接和 DHCP。0050 工具沿用同一驱动完成一次 45 字节实验广播 vendor Action：native_status=0、send_exit=0，随后 STOCK_RESTORED。此前一次 errno 110 本次未复现，尚不能据此确定旧超时成因。此结果只证明收到原生完成回调，不证明独立空口捕获、对端接收、Apple AWDL 或长期稳定。0051 已新增显式 vendor-action-relay --feedback，原生成功按 token 回写 NOACK，错误/超时回写 FAILED，禁止升级为 peer ACK；CI 40890855957 通过，0052 手机已确认完整 token 闭环：native_status=0，NOACK=1，completed/reported=1，failed/rejected=0，Wonder 已卸载且 STOCK_RESTORED；monitor 删除出现一条 DP peer 状态警告，待跟踪。详见 [0051 测试步骤](POPSICLE-VENDOR-FEEDBACK-0051.md)。
@@ -43,7 +49,7 @@
 | START/host-only UP/STOP/DOWN | 离线构建/模型验证通过 | owned controller 接入专用 MLME 回调、真实响应与 PM 清理；accepted DOWN + INIT 后才删资源；完整原生 SM/WMA 运行及固件未实测，默认调用门关闭 |
 | 动态换频与并发硬件模式 | 原生频道跟随首版已实现 | 新增 opt-in STA home channel 跟随、同 PHY monitor 同步与旧帧排空；AWDL 时间槽跳频、硬件模式/DBS 和原子频道预留仍待实现 |
 | RAW TX / vendor Action TX | vendor Action 一次原生完成实机通过；DATA 待固件 | 0050/0049 返回 native_status=0（45 字节广播实验帧），独立空口/对端接收未验证；Action 帧工具已具备；新增 opt-in WMI RAW DATA vendor 入口与 raw-send/raw-relay，限同频道非 MLO STA、已有 peer、6Mbps/20MHz；新增 opt-in 原始 skb/token 完成桥；独立 NDI 待接入 |
-| Monitor/native RAW RX | 原生 LPC → Wonder → 用户态已实机通过 | 0041 修正嵌套请求并确认接口并发限制，0042 修正 RX 协议值门槛；Wonder RX 增加 1277，invalid=0，wonder0 pcap 帧头可解析。仅当前 BSS 本地捕获，完整 native RAW/peer/BA 与 AWDL 尚待验证 |
+| Monitor/native RAW RX | 原生 LPC → Wonder → 用户态已实机通过 | 0041 修正嵌套请求并确认接口并发限制，0042 修正 RX 协议值门槛；Wonder RX 增加 1277，invalid=0，wonder0 pcap 帧头可解析；0055显式OCC收到Action，0056解析1帧247字节PSF。默认LPC仍为当前BSS捕获；MIF受256字节header限制，完整管理帧路径待实机验证 |
 | 统一收发会话入口 | 首版已实现，待实机 | relay-all 单进程分派 Action/RAW；前台会话按需创建 monitor、核对频道、统一启动/清理；新增 --tx-feedback 选择原始帧完成桥；独立 NDI 初始化仍待接通 |
 | mac80211 发送状态回写 | 外部 monitor 路径首版已实现，待实机 | 原始 skb 有界队列、owner/token 匹配、完成/超时/退出处理；Action 明确 ACK 才回写 ACK，RAW 不推断单播 ACK；默认 full backend 旧路径未改 |
 | 纯 host 隔离回收 | 离线验证通过 | 限从未发送固件命令的 PAS/INIT 对象；记录被跟踪 MC 排空，等实际 final-free 再释放 owner；NDI/未知发送资源拒绝回收 |

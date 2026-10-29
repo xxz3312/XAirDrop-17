@@ -1,0 +1,41 @@
+{
+  "controller_tool_source_commit": "cea5b833f5bf2dbfd14b42c36f57c1a77cba0bb5",
+  "kernel_source_commit": "bf714dca4a4cbe0b25446e2b618c03716a28c1ac",
+  "kernel_run": 40926997789,
+  "tool_run": 40927043957,
+  "package_run": 40927044125,
+  "original_module_sha256": {
+    "qca_cld3_peach_v2.ko": "2177b7cddbb3f553ac18f1c806fd304cb424d5a0258e7152781d4a3381066aa1",
+    "opairshare_wonder_provider.ko": "8b1c55b4d98d2867209671e47b4e2b676e64d19553f7e2bf611201dadfc4ab6a"
+  },
+  "stripped_wlan_sha256": "097d6e8cea920166f6ea7bee6c3be3c7110ec216e0df734d4b40cc4622e32ce3",
+  "stripped_wlan_bytes": 21511616,
+  "stripped_provider_sha256": "4748f595addca36cf67ffc0b88e742514abafe5938080dbda9de038c6ac373ac",
+  "tool_sha256": "6c3f49adc422814fd7f2c14362555a9e5326701479528a594c567746599f5150",
+  "strip": "NDK 27.2.12479018 llvm-strip --strip-debug; .modinfo/__versions byte comparison passed",
+  "default_mgmt_rx": false,
+  "manual_opt_in": "popsicle-wlan-trial.sh run-mgmt-rx",
+  "host_registration_is_sme_pe_submission_only": true,
+  "firmware_full_rx_verified": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "stage": "0058 full native management RX experimental path",
+  "kernel_ci_conclusion": "success",
+  "tool_ci_conclusion": "success",
+  "package_ci_conclusion": "success",
+  "kernel_host_python_tests": 53,
+  "trial_controller_tests": 15,
+  "observation_controller_tests": 4,
+  "owner_model_marker": "MISHARE_MGMT_RX_OWNER_MODEL_PASS_ONLY",
+  "selected_btf_layout_matches": 7,
+  "unresolved_wlan_imports": [],
+  "bundle_checksums": "all passed",
+  "package_sha256": "9c518e24bf12bfc224ee5f76a910a257d3449a15e52ac2e182d024f4575e4f72",
+  "package_bytes": 7488393,
+  "scope_limits": [
+    "SME/PE host registration submission is not firmware acceptance",
+    "Synthetic and modeled fixtures do not execute complete firmware/native concurrency",
+    "Only recorded module and selected layout checks; not complete private ABI certification",
+    "Phone execution, complete MIF reception, AWDL synchronization and Apple file transfer unverified"
+  ]
+}

@@ -1,6 +1,6 @@
 # 0058：独立完整管理帧接收试运行
 
-新 WLAN 新增默认关闭的 mishare_mgmt_rx 参数。它在 native register_frames 末尾为单个非MLO STA提交Apple vendor Action前缀的SME/PE主机匹配规则，失败沿原注册回退路径清理；重复注册会重提，覆盖SSR重放。PE按type+prefix全局替换、并不按session隔离，因此只允许一个STA owner。注销先关闭新路由再提交主机规则删除；提交失败永久关闭该helper，要求正常卸载/重载，不能强制卸载。
+新 WLAN 新增默认关闭的 mishare_mgmt_rx 参数。它在 native register_frames 末尾为单个非MLO STA提交Apple vendor Action前缀的SME/PE主机匹配规则，失败沿原注册回退路径清理；重复注册会重提，覆盖SSR重放。PE按type+prefix全局替换、并不按session隔离，因此只允许一个STA owner。注销先关闭新路由再提交主机规则删除；提交失败或MAC上下文已消失时永久关闭该helper；后者不会向SME传NULL。上述异常均要求正常卸载/重载，不能强制卸载。
 
 在原生HDD vdev同步保护内，仅对已提交owner的默认link、受支持大小、未保护/未分片的Apple type8候选帧，允许组播DA或owner本机单播DA进入该STA的原生cfg80211管理帧上报，保留真实frm_len。不使用monitor/LPC，不把256字节header片段补零或拼成完整帧。原生cfg80211_rx_info同时显式清零。
 
