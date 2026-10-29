@@ -4,9 +4,7 @@
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
-最新实机结果：0046 的原 WLAN 正常卸载，新 WLAN 因 `Unknown symbol opairshare_set_wonder_priv_data (err -2)` 拒绝加载；包文件校验正确，自动恢复原驱动，采集时尚未关联 AP。原因是包遗漏本项目 provider，而非 WLAN 文件不存在。
-
-0047 补入同一次 0045 原生构建的 `opairshare_wonder_provider.ko`，run 在关闭 Wi-Fi 前先加载依赖；恢复时先释放实验 WLAN 的导入，再清理本次 provider。已有 provider 不接管。14 项生产脚本模型测试和打包 CI [40850062416](https://github.com/xxz3312/XAirDrop-17/actions/runs/40850062416) 通过，校验包与符号导出，尚待实机重新验证加载。详见 [0047 手动测试](POPSICLE-WLAN-TRIAL-0047.md)。
+最新实机结果：0047 已成功解析 WLAN 的 provider 依赖，但 host probe 失败，未创建 wlan0，脚本自动恢复原驱动。日志与原厂 cfg80211 二进制确认：WLAN 回调表缺少 TESTMODE 的两个槽位，后半段偏移 16 字节；另有 CHIP_NAME 导致 INI 目录错误。0048 修正正常构建配置，CI 审计 65 项实际回调重定位、NULL 槽位和 peach_v2 配置前缀。完整构建 [40856837869](https://github.com/xxz3312/XAirDrop-17/actions/runs/40856837869) 已通过（50 项 Python 检查，最终回调表 1048 字节/65 项位置正确，INI 前缀正确）；0048 尚待实机加载，不宣称 RF/AWDL 通过。
 
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |

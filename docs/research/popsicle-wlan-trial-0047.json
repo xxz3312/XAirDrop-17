@@ -11,12 +11,22 @@
   "provider_sha256": "4748f595addca36cf67ffc0b88e742514abafe5938080dbda9de038c6ac373ac",
   "controller_model_tests": 14,
   "upstream": "Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted",
-  "phone_trial_executed": false,
+  "phone_trial_executed": true,
   "rf_awdl_verified": false,
   "package_job": 123367030668,
   "artifact_id": 12885879287,
   "artifact_zip_sha256": "5df3de016dd6e0f262e542c181d6e8890ffd5c8c775dd7f61cf0be17f8a1be08",
   "trial_zip_bytes": 7425060,
   "trial_zip_sha256": "3aff7e0770d64fbe9f2e9af744e5bcd1c4c7528d143234a0c272cbe83f83aeca",
-  "conclusion": "success"
+  "conclusion": "success",
+  "phone_result": {
+    "provider_loaded": true,
+    "wlan_insmod_returned_success": true,
+    "wlan0_created": false,
+    "stock_restored": true,
+    "probe_result": -1,
+    "cfg80211_warning": "wiphy_new_nm+0x8d8; stock TESTMODE slots absent from old WLAN callback table",
+    "wrong_ini_directory": "wlan/qca_cld/qca_cld3_peach_v2/",
+    "stock_ini_directory": "wlan/qca_cld/peach_v2/"
+  }
 }

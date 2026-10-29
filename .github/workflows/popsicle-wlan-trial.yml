@@ -24,8 +24,8 @@ jobs:
           python3 -m unittest discover -s tests -p test_popsicle_wlan_trial.py
       - uses: actions/download-artifact@v4
         with:
-          name: popsicle-diagnostics-40841130362-1
-          run-id: 40841130362
+          name: popsicle-diagnostics-40856837869-1
+          run-id: 40856837869
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: diagnostic
       - uses: actions/download-artifact@v4
@@ -47,47 +47,47 @@ jobs:
           fi
       - name: Verify original binaries and remove debug information in CI
         run: |
-          mkdir -p extracted out/XAirDrop-17-WLAN-Trial-0047/kernel
+          mkdir -p extracted out/XAirDrop-17-WLAN-Trial-0048/kernel
           tar -xzf diagnostic/diagnostic-modules-not-for-install.tar.gz -C extracted qca_cld3_peach_v2.ko opairshare_wonder_provider.ko
           python3 - <<'PY'
           import hashlib,json
           from pathlib import Path
-          assert hashlib.sha256(Path('extracted/qca_cld3_peach_v2.ko').read_bytes()).hexdigest()=='1c998d320351a37f54fca2e0b93808db7b8d73ea05c108df8b93b046936a0567'
+          assert hashlib.sha256(Path('extracted/qca_cld3_peach_v2.ko').read_bytes()).hexdigest()=='aeae012460698a2bf63e325ec7554db7eee928fbcd16e0446e30c233bd3b2932'
           assert hashlib.sha256(Path('extracted/opairshare_wonder_provider.ko').read_bytes()).hexdigest()=='8b1c55b4d98d2867209671e47b4e2b676e64d19553f7e2bf611201dadfc4ab6a'
           build=json.loads(Path('tool/build.json').read_text())
           assert build['commit']=='d8365331d8920786fcdb345a31679347d7903273'
           assert hashlib.sha256(Path('tool/action-tx').read_bytes()).hexdigest()==build['binary_sha256']
           PY
           ndk_bin="$PWD/.xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin"
-          "$ndk_bin/llvm-strip" --strip-debug extracted/qca_cld3_peach_v2.ko -o out/XAirDrop-17-WLAN-Trial-0047/kernel/qca_cld3_peach_v2.ko
-          "$ndk_bin/llvm-strip" --strip-debug extracted/opairshare_wonder_provider.ko -o out/XAirDrop-17-WLAN-Trial-0047/kernel/opairshare_wonder_provider.ko
-          "$ndk_bin/llvm-readelf" -p .modinfo out/XAirDrop-17-WLAN-Trial-0047/kernel/qca_cld3_peach_v2.ko > out/module-info.txt
-          "$ndk_bin/llvm-nm" --defined-only out/XAirDrop-17-WLAN-Trial-0047/kernel/opairshare_wonder_provider.ko | grep -q ' T opairshare_set_wonder_priv_data$'
+          "$ndk_bin/llvm-strip" --strip-debug extracted/qca_cld3_peach_v2.ko -o out/XAirDrop-17-WLAN-Trial-0048/kernel/qca_cld3_peach_v2.ko
+          "$ndk_bin/llvm-strip" --strip-debug extracted/opairshare_wonder_provider.ko -o out/XAirDrop-17-WLAN-Trial-0048/kernel/opairshare_wonder_provider.ko
+          "$ndk_bin/llvm-readelf" -p .modinfo out/XAirDrop-17-WLAN-Trial-0048/kernel/qca_cld3_peach_v2.ko > out/module-info.txt
+          "$ndk_bin/llvm-nm" --defined-only out/XAirDrop-17-WLAN-Trial-0048/kernel/opairshare_wonder_provider.ko | grep -q ' T opairshare_set_wonder_priv_data$'
           grep -q 'name=qca_cld3_peach_v2' out/module-info.txt
           grep -q 'parm=mishare_action_tx:' out/module-info.txt
       - name: Assemble manual trial with source and license
         run: |
-          cp tools/device/popsicle-wlan-trial.sh out/XAirDrop-17-WLAN-Trial-0047/
-          cp tool/action-tx out/XAirDrop-17-WLAN-Trial-0047/
-          cp docs/POPSICLE-WLAN-TRIAL-0047.md out/XAirDrop-17-WLAN-Trial-0047/README.md
-          cp LICENSE out/XAirDrop-17-WLAN-Trial-0047/
-          cp LICENSES/GPL-2.0-only.txt out/XAirDrop-17-WLAN-Trial-0047/
-          cp LICENSES/LGPL-3.0.txt out/XAirDrop-17-WLAN-Trial-0047/
-          git archive --format=tar.gz --prefix=XAirDrop-17/ --output=out/XAirDrop-17-WLAN-Trial-0047/source.tar.gz HEAD
+          cp tools/device/popsicle-wlan-trial.sh out/XAirDrop-17-WLAN-Trial-0048/
+          cp tool/action-tx out/XAirDrop-17-WLAN-Trial-0048/
+          cp docs/POPSICLE-WLAN-TRIAL-0048.md out/XAirDrop-17-WLAN-Trial-0048/README.md
+          cp LICENSE out/XAirDrop-17-WLAN-Trial-0048/
+          cp LICENSES/GPL-2.0-only.txt out/XAirDrop-17-WLAN-Trial-0048/
+          cp LICENSES/LGPL-3.0.txt out/XAirDrop-17-WLAN-Trial-0048/
+          git archive --format=tar.gz --prefix=XAirDrop-17/ --output=out/XAirDrop-17-WLAN-Trial-0048/source.tar.gz HEAD
           python3 - <<'PY'
           import hashlib,json,os,zipfile
           from pathlib import Path
-          p=Path('out/XAirDrop-17-WLAN-Trial-0047')
-          frame=bytes.fromhex('d0000000ffffffffffff020000000001ffffffffffff00007f020000')+b'XAIRDROP0047_TEST'
+          p=Path('out/XAirDrop-17-WLAN-Trial-0048')
+          frame=bytes.fromhex('d0000000ffffffffffff020000000001ffffffffffff00007f020000')+b'XAIRDROP0048_TEST'
           p.joinpath('action-vendor.bin').write_bytes(frame)
           ko=p/'kernel/qca_cld3_peach_v2.ko'
           b=ko.read_bytes()
           assert b[:4]==b'\x7fELF' and int.from_bytes(b[18:20],'little')==183
           assert len(b)<50*1024*1024
-          report={'controller_commit':os.environ['GITHUB_SHA'],'native_source_commit':'d8365331d8920786fcdb345a31679347d7903273','native_run':40841130362,'tool_run':40841130477,'package_run':int(os.environ['GITHUB_RUN_ID']),'original_wlan_sha256':'1c998d320351a37f54fca2e0b93808db7b8d73ea05c108df8b93b046936a0567','stripped_wlan_sha256':hashlib.sha256(b).hexdigest(),'stripped_wlan_bytes':len(b),'strip':'NDK 27.2.12479018 llvm-strip --strip-debug','provider_sha256':hashlib.sha256((p/'kernel/opairshare_wonder_provider.ko').read_bytes()).hexdigest(),'controller_model_tests':14,'upstream':'Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted','phone_trial_executed':False,'rf_awdl_verified':False}
+          report={'controller_commit':os.environ['GITHUB_SHA'],'native_source_commit':'c1121b8fb0a2a58c7a1a88890f65fd4fc625edf2','native_run':40856837869,'tool_run':40841130477,'package_run':int(os.environ['GITHUB_RUN_ID']),'original_wlan_sha256':'aeae012460698a2bf63e325ec7554db7eee928fbcd16e0446e30c233bd3b2932','stripped_wlan_sha256':hashlib.sha256(b).hexdigest(),'stripped_wlan_bytes':len(b),'strip':'NDK 27.2.12479018 llvm-strip --strip-debug','provider_sha256':hashlib.sha256((p/'kernel/opairshare_wonder_provider.ko').read_bytes()).hexdigest(),'controller_model_tests':14,'kernel_python_checks':50,'wlan_elf_callbacks_checked':65,'upstream':'Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted','phone_trial_executed':False,'rf_awdl_verified':False}
           p.joinpath('BUILD.json').write_text(json.dumps(report,indent=2)+'\n')
           p.joinpath('SHA256SUMS').write_text(''.join(hashlib.sha256(f.read_bytes()).hexdigest()+'  '+f.relative_to(p).as_posix()+'\n' for f in sorted(p.rglob('*')) if f.is_file() and f.name!='SHA256SUMS'))
-          with zipfile.ZipFile('out/XAirDrop-17-WLAN-Trial-0047.zip','w',zipfile.ZIP_DEFLATED) as z:
+          with zipfile.ZipFile('out/XAirDrop-17-WLAN-Trial-0048.zip','w',zipfile.ZIP_DEFLATED) as z:
             for f in sorted(p.rglob('*')):
               if f.is_file():z.write(f,f.relative_to(p.parent))
           PY
@@ -95,7 +95,7 @@ jobs:
         with:
           name: popsicle-wlan-trial-${{ github.run_id }}
           path: |
-            out/XAirDrop-17-WLAN-Trial-0047.zip
-            out/XAirDrop-17-WLAN-Trial-0047/BUILD.json
+            out/XAirDrop-17-WLAN-Trial-0048.zip
+            out/XAirDrop-17-WLAN-Trial-0048/BUILD.json
             out/module-info.txt
           if-no-files-found: error

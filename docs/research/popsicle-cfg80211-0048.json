@@ -25,5 +25,24 @@
     "Pass CHIP_NAME=peach_v2 while preserving MODNAME=qca_cld3_peach_v2",
     "Audit 65 actual ELF callback relocations, NULL slots, table size and target INI prefix in CI"
   ],
-  "limitations": "Bounded allocator/callback-location evidence, not complete function prototype, private ABI, KCFI or firmware compatibility certification. Phone 0047 trial failed and automatically restored stock."
+  "limitations": "Bounded allocator/callback-location evidence, not complete function prototype, private ABI, KCFI or firmware compatibility certification. Phone 0047 trial failed and automatically restored stock.",
+  "native_run": 40856837869,
+  "native_job": 123389805409,
+  "native_source_commit": "c1121b8fb0a2a58c7a1a88890f65fd4fc625edf2",
+  "native_conclusion": "success",
+  "kernel_python_checks": 50,
+  "elf_callback_audit": {
+    "status": "SELECTED_CFG80211_CALLBACK_SLOTS_MATCH_ONLY",
+    "table_bytes": 1048,
+    "callbacks_checked": 65,
+    "testmode_slots": [
+      "0x1c0",
+      "0x1c8"
+    ],
+    "p2p_slots_null": true,
+    "limitations": "Not full cfg80211 ABI, function prototype, KCFI or RF certification.",
+    "wlan_sha256": "aeae012460698a2bf63e325ec7554db7eee928fbcd16e0446e30c233bd3b2932",
+    "ini_prefix": "wlan/qca_cld/peach_v2/"
+  },
+  "phone_0048_verified": false
 }
