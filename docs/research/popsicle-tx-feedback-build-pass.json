@@ -1,0 +1,137 @@
+{
+  "stage": "0039",
+  "status": "TX_FEEDBACK_KERNEL_AND_ANDROID_BUILD_MODEL_PASS_ONLY",
+  "kernel_commit": "188246a0008a986741379b105fcfde92d64b8d88",
+  "tool_commit": "1a1166b8816b151f36a4f6a7b464e70e1a43dc53",
+  "kernel_run": 40768050808,
+  "kernel_job": 123097744044,
+  "tool_run": 40768365980,
+  "tool_job": 123098545817,
+  "kernel_ci_success": true,
+  "tool_ci_success": true,
+  "python_tests": 44,
+  "native_fixture_groups": {
+    "mishare-final-fixture.json": "MISHARE_HOST_FINAL_BOOKKEEPING_FIXTURE_PASS_ONLY",
+    "mishare-start-plan-fixture.json": "MISHARE_OWNED_START_PLAN_FIXTURE_PASS_ONLY",
+    "mishare-ops-fixture.json": "MISHARE_DEDICATED_OPS_FIXTURE_PASS_ONLY",
+    "mishare-completion-fixture.json": "MISHARE_NDI_COMPLETION_INTEGRITY_FIXTURE_PASS_ONLY",
+    "mishare-batch-fixture.json": "MISHARE_SSR_BATCH_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-completed-fixture.json": "MISHARE_COMPLETED_NDI_HOST_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-recovery-fixture.json": "MISHARE_EARLY_NDI_RESET_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-context-fixture.json": "MISHARE_OWNED_CONTEXT_PEER_FIXTURE_PASS_ONLY",
+    "mishare-events-fixture.json": "MISHARE_NATIVE_EVENT_ORIGIN_FIXTURE_PASS_ONLY",
+    "mishare-create-delete-fixture.json": "MISHARE_CREATE_DELETE_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-work-fixture.json": "MISHARE_OWNED_MC_DRAIN_RECLAIM_FIXTURE_PASS_ONLY",
+    "mishare-backend-fixture.json": "MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY",
+    "mishare-parent-fixture.json": "MISHARE_PARENT_TEARDOWN_REVOKE_FIXTURE_PASS_ONLY",
+    "mishare-response-fixture.json": "MISHARE_NATIVE_RESPONSE_HANDLER_FIXTURE_PASS_ONLY",
+    "mishare-mlme-fixture.json": "MISHARE_MLME_PREFLIGHT_FIXTURE_PASS_ONLY",
+    "mishare-channel-fixture.json": "MISHARE_OWNED_CHANNEL_PREPARE_FIXTURE_PASS_ONLY",
+    "passthru-mode-fixture.json": "HOST_MODE_FIXTURE_PASS_ONLY",
+    "mishare-runtime-fixture.json": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "mishare-radio-fixture.json": "MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "mishare-ndi-fixture.json": "MISHARE_WMA_NDI_COMPAT_FIXTURE_PASS_ONLY",
+    "mishare-txn-fixture.json": "MISHARE_TXN_EVENT_FIXTURE_PASS_ONLY",
+    "mishare-shutdown-fixture.json": "MISHARE_SHUTDOWN_ADMISSION_FIXTURE_PASS_ONLY",
+    "mishare-session-fixture.json": "MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY",
+    "mishare-firmware-fixture.json": "MISHARE_OWNED_NDI_RESOURCE_FIXTURE_PASS_ONLY",
+    "mishare-host-fixture.json": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "mishare-commands-fixture.json": "MISHARE_COMMAND_SUBMIT_FIXTURE_PASS_ONLY"
+  },
+  "session_tests": 16,
+  "queue_model": "WONDER_FEEDBACK_OWNERSHIP_MODEL_PASS_ONLY",
+  "kernel_validation_artifact": {
+    "id": 12852212312,
+    "bytes": 53400,
+    "sha256": "a948202ffe7c927426cd89af17b6d00e7dd34c663892fdf7bbb8b243d9c985f8",
+    "downloaded_verified": true
+  },
+  "kernel_diagnostic_artifact": {
+    "id": 12851219018,
+    "bytes": 338186032,
+    "sha256": "4af43284789670290a93b0d3ab9ad8f8748c025bc211fb06ecf4df578b681b9a",
+    "downloaded_verified": true,
+    "wonder_module_extracted_verified": true
+  },
+  "tool_artifact": {
+    "id": 12851176618,
+    "bytes": 18352,
+    "sha256": "636ee39c7067959e04c8f30cbf6b94fe8e64ea151b497af736009e98698e573d",
+    "downloaded_verified": true
+  },
+  "tool_build": {
+    "status": "ACTION_TX_ANDROID_BUILD_PASS_ONLY",
+    "commit": "1a1166b8816b151f36a4f6a7b464e70e1a43dc53",
+    "ndk": "27.2.12479018",
+    "android_api": 31,
+    "binary_sha256": "53c0cffba842d2081a1ff577da0ee4e86cf91dd0ce7dc7851075b739dc292951",
+    "binary_bytes": 25464,
+    "host_protocol_test": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "native_raw_model_test": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+    "session_command_model_tests": 16,
+    "wonder_feedback_model": "WONDER_FEEDBACK_OWNERSHIP_MODEL_PASS_ONLY",
+    "token_completion_bridge": true,
+    "channel_follow_model_test": "CHANNEL_FOLLOW_MODEL_PASS_ONLY",
+    "sta_channel_follow": true,
+    "combined_action_raw_relay": true,
+    "phone_executed": false,
+    "radio_tx_verified": false
+  },
+  "modules": {
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "100b1310d071d0722b4a630267691349a2b4e9bb11332689b6b9f8064a50db5b",
+      "version_records": 107,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b36af959a576628d1965979d7b07440398d568739e802cbfa3461b1748b509d4",
+      "version_records": 575,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    }
+  },
+  "wlan_unresolved": [],
+  "required_host_symbols": 85,
+  "selected_layout_matches": 7,
+  "phone_executed": false,
+  "radio_tx_verified": false,
+  "runtime_certified": false,
+  "limits": [
+    "No standalone NDI backend init",
+    "No AWDL slot scheduling or full Apple discovery/transfer",
+    "RAW status=0 does not prove peer ACK",
+    "Full native mac80211/firmware runtime still untested; metadata queue model is not actual kernel concurrency testing",
+    "Default full backend synthetic TX path unchanged"
+  ]
+}

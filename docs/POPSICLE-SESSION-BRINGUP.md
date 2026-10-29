@@ -86,3 +86,5 @@ sh /data/local/tmp/xairdrop/popsicle-session.sh status \
 详见 [构建证据](research/popsicle-unified-session-build-pass.json)。
 
 0038 新增可选 `--follow-channel`：运行中跟随原生 STA/P2P client 的 home channel，同步同 PHY monitor 和下一帧发送频率。借用 monitor 时须同时提供 `--configure-monitor`。默认固定频道不变；具体行为、限制和验证见 [频道跟随说明](POPSICLE-CHANNEL-FOLLOW.md)。
+
+0039 新增可选 `--tx-feedback`：加载新 Wonder 的原始 skb/token 完成队列，工具按真实原生完成回写 mac80211。默认不启用；需要本阶段新模块和工具，见 [完成回写说明](POPSICLE-TX-FEEDBACK.md)。

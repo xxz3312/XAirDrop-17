@@ -1,0 +1,96 @@
+{
+  "stage": "0040",
+  "status": "MANUAL_DEVICE_TRIAL_PACKAGE_PREPARED_ONLY",
+  "package": {
+    "bytes": 2656084,
+    "sha256": "fb1888dcf8fd5db4f36d5a5a779e863fb09d55e0dd2040e6a1c6ffcde7c4b008",
+    "payload_files": 29,
+    "kernel_run": 40768050808,
+    "tool_run": 40822824724,
+    "phone_executed": false
+  },
+  "package_name": "XAirDrop-17-Device-Trial-0040.zip",
+  "source_commit": "0ff3a33c8b25f48d6b8b0918fbd128c6c068648e",
+  "kernel_build_commit": "188246a0008a986741379b105fcfde92d64b8d88",
+  "kernel_source_tree_identical": true,
+  "kernel_run": 40768050808,
+  "kernel_job": 123097744044,
+  "tool_run": 40822824724,
+  "tool_job": 123278946102,
+  "tool_artifact": {
+    "id": 12875181697,
+    "bytes": 19362,
+    "sha256": "80414c7aeead64be2ccb890f943be703bb99c0947db34fc058ac4d89b738f934",
+    "downloaded_verified": true
+  },
+  "tool_build": {
+    "status": "ACTION_TX_ANDROID_BUILD_PASS_ONLY",
+    "commit": "0ff3a33c8b25f48d6b8b0918fbd128c6c068648e",
+    "ndk": "27.2.12479018",
+    "android_api": 31,
+    "binary_sha256": "7154071a3c1f2bbf251c36954f3572ec7a5f464364ff078c897586f72f232336",
+    "binary_bytes": 27216,
+    "host_protocol_test": "ACTION_TX_PROTOCOL_TEST_PASS_ONLY",
+    "native_raw_model_test": "RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY",
+    "session_command_model_tests": 16,
+    "wonder_feedback_model": "WONDER_FEEDBACK_OWNERSHIP_MODEL_PASS_ONLY",
+    "token_completion_bridge": true,
+    "wonder_action_injection": true,
+    "channel_follow_model_test": "CHANNEL_FOLLOW_MODEL_PASS_ONLY",
+    "sta_channel_follow": true,
+    "combined_action_raw_relay": true,
+    "phone_executed": false,
+    "radio_tx_verified": false
+  },
+  "wonder_module": {
+    "bytes": 1960088,
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "100b1310d071d0722b4a630267691349a2b4e9bb11332689b6b9f8064a50db5b",
+    "version_records": 107,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "validation": {
+    "zip_crc_and_all_payload_hashes": true,
+    "module_and_tool_arm64_elf": true,
+    "scripts_equal_ci_artifact": true,
+    "script_shell_syntax": true,
+    "source_archive_contains_matching_kernel_and_tool_sources": true,
+    "session_model_tests": 16,
+    "protocol_channel_queue_raw_c_models": "PASS_ONLY",
+    "c_sanitizers": [
+      "address",
+      "undefined"
+    ],
+    "injection_packet_tests": [
+      "minimal radiotap wrapper",
+      "capacity limit",
+      "source mismatch",
+      "explicit rewrite",
+      "reject DATA frames"
+    ]
+  },
+  "default_tests": [
+    "manual RX bring-up without native WLAN replacement",
+    "explicit experimental broadcast Action send",
+    "explicit Wonder injection and token completion"
+  ],
+  "wlan_replacement_included": false,
+  "phone_executed": false,
+  "radio_tx_verified": false,
+  "airdrop_ready": false
+}
