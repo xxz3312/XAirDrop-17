@@ -4,6 +4,10 @@
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
+最新实机结果：0046 的原 WLAN 正常卸载，新 WLAN 因 `Unknown symbol opairshare_set_wonder_priv_data (err -2)` 拒绝加载；包文件校验正确，自动恢复原驱动，采集时尚未关联 AP。原因是包遗漏本项目 provider，而非 WLAN 文件不存在。
+
+0047 补入同一次 0045 原生构建的 `opairshare_wonder_provider.ko`，run 在关闭 Wi-Fi 前先加载依赖；恢复时先释放实验 WLAN 的导入，再清理本次 provider。已有 provider 不接管。14 项生产脚本模型测试和打包 CI [40850062416](https://github.com/xxz3312/XAirDrop-17/actions/runs/40850062416) 通过，校验包与符号导出，尚待实机重新验证加载。详见 [0047 手动测试](POPSICLE-WLAN-TRIAL-0047.md)。
+
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |
 | GitHub Actions 与缓存 | 已完成 | 自动编译、工具链/bindgen 缓存、诊断报告 |

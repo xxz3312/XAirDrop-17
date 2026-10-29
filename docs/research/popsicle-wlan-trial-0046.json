@@ -10,12 +10,20 @@
   "strip": "NDK 27.2.12479018 llvm-strip --strip-debug",
   "controller_model_tests": 10,
   "upstream": "Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted",
-  "phone_trial_executed": false,
+  "phone_trial_executed": true,
   "rf_awdl_verified": false,
   "package_job": 123349836674,
   "artifact_id": 12884332520,
   "artifact_zip_sha256": "0d8dfbba8764f541d34fba19381355fd7da796627d0e789aad3870b9d4b9cb7b",
   "trial_zip_bytes": 7417803,
   "trial_zip_sha256": "2e0961e27df9d2b30c84dbdbfd44dba6a6abb3a9296b2c4234e79bb54b66ad88",
-  "conclusion": "success"
+  "conclusion": "success",
+  "phone_result": {
+    "trial_driver_loaded": false,
+    "loader_error": "Unknown symbol opairshare_set_wonder_priv_data (err -2)",
+    "bundle_integrity_verified": true,
+    "stock_restored": true,
+    "associated_at_log_capture": false,
+    "fix": "0047 includes same-build native provider and loads it before stock disruption"
+  }
 }

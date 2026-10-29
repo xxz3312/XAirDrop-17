@@ -1,0 +1,22 @@
+{
+  "controller_commit": "e9a271b9339b89f122231a1edfb55bf53c0fdb98",
+  "native_source_commit": "d8365331d8920786fcdb345a31679347d7903273",
+  "native_run": 40841130362,
+  "tool_run": 40841130477,
+  "package_run": 40850062416,
+  "original_wlan_sha256": "1c998d320351a37f54fca2e0b93808db7b8d73ea05c108df8b93b046936a0567",
+  "stripped_wlan_sha256": "ff524b7782c743f74cad623414a261e8de2ef30e8d5a9f5fc698dfea8eada8b3",
+  "stripped_wlan_bytes": 21483664,
+  "strip": "NDK 27.2.12479018 llvm-strip --strip-debug",
+  "provider_sha256": "4748f595addca36cf67ffc0b88e742514abafe5938080dbda9de038c6ac373ac",
+  "controller_model_tests": 14,
+  "upstream": "Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted",
+  "phone_trial_executed": false,
+  "rf_awdl_verified": false,
+  "package_job": 123367030668,
+  "artifact_id": 12885879287,
+  "artifact_zip_sha256": "5df3de016dd6e0f262e542c181d6e8890ffd5c8c775dd7f61cf0be17f8a1be08",
+  "trial_zip_bytes": 7425060,
+  "trial_zip_sha256": "3aff7e0770d64fbe9f2e9af744e5bcd1c4c7528d143234a0c272cbe83f83aeca",
+  "conclusion": "success"
+}
