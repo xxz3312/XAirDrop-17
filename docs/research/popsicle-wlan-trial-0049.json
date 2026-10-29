@@ -68,5 +68,16 @@
     "stock_restore_reported": true,
     "error_origin": "Undetermined: current tool conflates kernel NLMSG_ERROR -ETIMEDOUT and local reply receive timeout",
     "rf_transmission_confirmed": false
+  },
+  "phone_vendor_action_followup": {
+    "tool": "0050",
+    "driver": "0049",
+    "native_status": 0,
+    "send_exit": 0,
+    "bytes": 45,
+    "frequency_mhz": 5240,
+    "stock_restore_reported": true,
+    "prior_timeout_cause": "Undetermined; one subsequent success does not identify the previous timeout origin",
+    "awdl_verified": false
   }
 }

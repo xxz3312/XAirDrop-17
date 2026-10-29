@@ -9,8 +9,21 @@
   "zip_sha256": "4c24145bee983db5a520f3c5888fc04374a5dc39dfd1170ef406a99ba9df4de4",
   "zip_bytes": 1783093,
   "ci_conclusion": "success",
-  "phone_executed": false,
+  "phone_executed": true,
   "kernel_changed": false,
   "auto_retry": false,
-  "purpose": "Identify kernel NLMSG_ERROR versus userspace reply timeout; does not fix or prove RF TX"
+  "purpose": "Identify kernel NLMSG_ERROR versus userspace reply timeout; does not fix or prove RF TX",
+  "phone_result": {
+    "event": "vendor_action_tx_status",
+    "native_status": 0,
+    "bytes": 45,
+    "frequency_mhz": 5240,
+    "send_exit": 0,
+    "stock_restore_reported": true,
+    "prior_timeout_reproduced": false,
+    "prior_timeout_root_cause_determined": false,
+    "peer_reception_verified": false,
+    "awdl_verified": false,
+    "limitations": "One experimental broadcast vendor Action completion only; no independent over-the-air capture, peer ACK, Apple interoperability or stability proof."
+  }
 }

@@ -4,7 +4,7 @@
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
-最新实机结果：0049 已成功加载自编译 WLAN、注册 /dev/wlan，完成 Wi-Fi 开启、AP 连接与 DHCP。随后一次 vendor Action 测试返回 ETIMEDOUT（110），send_exit=1，没有 native_status 完成报告；手动恢复已显示 STOCK_RESTORED。现有工具把驱动通过 NLMSG_ERROR 返回的超时与本地接收超时显示成相同文案，不能据此推断帧已上空口或固件完全不支持。0050 只补充工具侧请求阶段和耗时诊断，沿用 0049 驱动和实验帧，不自动重发；vendor Action、完整 AWDL 和 Apple 互传仍待验证。
+最新实机结果：0049 自编译 WLAN 已完成加载、/dev/wlan 注册、HAL 开启、AP 连接和 DHCP。0050 工具沿用同一驱动完成一次 45 字节实验广播 vendor Action：native_status=0、send_exit=0，随后 STOCK_RESTORED。此前一次 errno 110 本次未复现，尚不能据此确定旧超时成因。此结果只证明收到原生完成回调，不证明独立空口捕获、对端接收、Apple AWDL 或长期稳定。下一阶段把显式 vendor Action 发送路径接入 Wonder/token 完成桥，再做协议联调。
 
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |
@@ -22,7 +22,7 @@
 | START 原生参数准备 | 离线验证通过 | 重查 WMA/self-peer/法规/并发；原生 START 参数构造与摘要，不提交固件命令 |
 | START/host-only UP/STOP/DOWN | 离线构建/模型验证通过 | owned controller 接入专用 MLME 回调、真实响应与 PM 清理；accepted DOWN + INIT 后才删资源；完整原生 SM/WMA 运行及固件未实测，默认调用门关闭 |
 | 动态换频与并发硬件模式 | 原生频道跟随首版已实现 | 新增 opt-in STA home channel 跟随、同 PHY monitor 同步与旧帧排空；AWDL 时间槽跳频、硬件模式/DBS 和原子频道预留仍待实现 |
-| RAW TX | DATA 首版已实现，待固件 | Action 帧工具已具备；新增 opt-in WMI RAW DATA vendor 入口与 raw-send/raw-relay，限同频道非 MLO STA、已有 peer、6Mbps/20MHz；新增 opt-in 原始 skb/token 完成桥；独立 NDI 待接入 |
+| RAW TX / vendor Action TX | vendor Action 一次原生完成实机通过；DATA 待固件 | 0050/0049 返回 native_status=0（45 字节广播实验帧），独立空口/对端接收未验证；Action 帧工具已具备；新增 opt-in WMI RAW DATA vendor 入口与 raw-send/raw-relay，限同频道非 MLO STA、已有 peer、6Mbps/20MHz；新增 opt-in 原始 skb/token 完成桥；独立 NDI 待接入 |
 | Monitor/native RAW RX | 原生 LPC → Wonder → 用户态已实机通过 | 0041 修正嵌套请求并确认接口并发限制，0042 修正 RX 协议值门槛；Wonder RX 增加 1277，invalid=0，wonder0 pcap 帧头可解析。仅当前 BSS 本地捕获，完整 native RAW/peer/BA 与 AWDL 尚待验证 |
 | 统一收发会话入口 | 首版已实现，待实机 | relay-all 单进程分派 Action/RAW；前台会话按需创建 monitor、核对频道、统一启动/清理；新增 --tx-feedback 选择原始帧完成桥；独立 NDI 初始化仍待接通 |
 | mac80211 发送状态回写 | 外部 monitor 路径首版已实现，待实机 | 原始 skb 有界队列、owner/token 匹配、完成/超时/退出处理；Action 明确 ACK 才回写 ACK，RAW 不推断单播 ACK；默认 full backend 旧路径未改 |
