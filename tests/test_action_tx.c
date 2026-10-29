@@ -255,6 +255,16 @@ int main(void) {
     assert(u16(vendor_data.p-2)==(NL80211_ATTR_VENDOR_DATA|NLA_F_NESTED));
     assert(attr(vendor_data,2,&data_rx)==1 && data_rx.n==4 && u32(data_rx.p)==1);
     assert(attr(vendor_data,4,&mgmt_rx)==1 && mgmt_rx.n==4 && u32(mgmt_rx.p)==1);
+    /* OCC must select RX management, data AND control, plus operating type 1.
+     * No TX filter and no fallback request is emitted. Default LPC is unchanged. */
+    assert(!capture_message_mode(&capture_client,&capture,true,true));
+    capture_attrs=(struct bytes){capture.data+NLMSG_HDRLEN+GENL_HDRLEN,capture.n-NLMSG_HDRLEN-GENL_HDRLEN};
+    assert(attr(capture_attrs,NL80211_ATTR_VENDOR_DATA,&vendor_data)==1 && vendor_data.n==32);
+    for (unsigned kind=2;kind<=8;kind+=2) {
+        struct bytes value;assert(attr(vendor_data,kind,&value)==1 && value.n==4 && u32(value.p)==1);
+    }
+    for (unsigned kind=1;kind<=7;kind+=2) {struct bytes absent;assert(!attr(vendor_data,kind,&absent));}
+    assert(u16(vendor_data.p-2)==(NL80211_ATTR_VENDOR_DATA|NLA_F_NESTED));
     assert(!capture_message(&capture_client,&capture,false));
     capture_attrs=(struct bytes){capture.data+NLMSG_HDRLEN+GENL_HDRLEN,capture.n-NLMSG_HDRLEN-GENL_HDRLEN};
     assert(attr(capture_attrs,NL80211_ATTR_VENDOR_DATA,&vendor_data)==1 && !vendor_data.n);

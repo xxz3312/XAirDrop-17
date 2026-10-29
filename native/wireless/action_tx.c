@@ -627,7 +627,7 @@ static int number(const char *s,unsigned min,unsigned max,unsigned *out) {
 #define QCA_CAPTURE_VENDOR 0x001374U
 #define QCA_CAPTURE_SET 202U
 #define QCA_CAPTURE_GET 225U
-static int capture_message(struct client *c,struct message *m,bool start) {
+static int capture_message_mode(struct client *c,struct message *m,bool start,bool occ) {
     unsigned vendor=QCA_CAPTURE_VENDOR,command=start?QCA_CAPTURE_SET:QCA_CAPTURE_GET;
     struct message payload={0};unsigned all=1;
     /* QCA's policy is structured: the OUTER VENDOR_DATA attribute needs
@@ -636,6 +636,8 @@ static int capture_message(struct client *c,struct message *m,bool start) {
     if (start) {
         ret=add_attr(&payload,2,&all,4); /* DATA_RX_FRAME_TYPE_ALL */
         if (!ret) ret=add_attr(&payload,4,&all,4); /* MGMT_RX_FRAME_TYPE_ALL */
+        if (!ret && occ) ret=add_attr(&payload,6,&all,4); /* CTRL_RX_FRAME_TYPE_ALL: OCC requires all three classes */
+        if (!ret && occ) ret=add_attr(&payload,8,&all,4); /* OPERATING_TYPE_OCC=1; explicit opt-in */
     }
     if (ret) return ret;
     begin(m,c->family,NL80211_CMD_VENDOR,++c->seq);
@@ -644,6 +646,9 @@ static int capture_message(struct client *c,struct message *m,bool start) {
     if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_SUBCMD,&command,4);
     if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_DATA|(start?NLA_F_NESTED:0),payload.data,payload.n);
     return ret;
+}
+static int capture_message(struct client *c,struct message *m,bool start) {
+    return capture_message_mode(c,m,start,false);
 }
 static int capture_result(struct bytes reply,bool *running) {
     struct bytes data,state;
@@ -657,9 +662,9 @@ static int capture_query(struct client *c,bool *running) {
     ret=request(c,&m,NL80211_CMD_VENDOR,buffer,&reply,3000);
     return ret?ret:capture_result(reply,running);
 }
-static int capture_set(struct client *c) {
+static int capture_set(struct client *c,bool occ) {
     struct message m;unsigned char buffer[MESSAGE_MAX];
-    int ret=capture_message(c,&m,true);if (ret) return ret;
+    int ret=capture_message_mode(c,&m,true,occ);if (ret) return ret;
     ret=transmit(c,&m);if (ret) return ret;
     int64_t deadline=now_ms()+3000;
     for (;;) {
@@ -668,10 +673,15 @@ static int capture_set(struct client *c) {
     }
 }
 static int capture_main(int argc,char **argv,bool start) {
-    const char *dev=NULL;bool require_running=false;
+    const char *dev=NULL;bool require_running=false,occ=false,have_mode=false;
     for (int i=2;i<argc;i++) {
         if (!strcmp(argv[i],"--dev") && i+1<argc && !dev) dev=argv[++i];
         else if (!strcmp(argv[i],"--require-running") && !start) require_running=true;
+        else if (!strcmp(argv[i],"--operating-mode") && start && !have_mode && i+1<argc) {
+            const char *mode=argv[++i];have_mode=true;
+            if (!strcmp(mode,"occ")) occ=true;
+            else if (strcmp(mode,"lpc")) return 2;
+        }
         else return 2;
     }
     if (!dev || !*dev || strlen(dev)>=IFNAMSIZ || strchr(dev,'/')) return 2;
@@ -691,8 +701,8 @@ static int capture_main(int argc,char **argv,bool start) {
     ret=capture_query(&c,&running);if (ret) goto done;
     if (start) {
         if (running) {ret=-EALREADY;goto done;} /* Never reconfigure someone else's capture. */
-        ret=capture_set(&c);if (ret) goto done;
-        puts("{\"event\":\"capture_config_accepted\",\"rx_verified\":false}");fflush(stdout);
+        ret=capture_set(&c,occ);if (ret) goto done;
+        printf("{\"event\":\"capture_config_accepted\",\"requested_operating_mode\":\"%s\",\"mode_verified\":false,\"rx_verified\":false}\n",occ?"occ":"lpc");fflush(stdout);
         ret=capture_query(&c,&running);if (ret) goto done;
     }
     printf("{\"event\":\"capture_status\",\"running\":%s}\n",running?"true":"false");
@@ -900,7 +910,7 @@ static void usage(void) {
          "action-tx vendor-action-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] (requires patched WLAN mishare_action_tx=1)\n"
          "action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
          "action-tx capture-status --dev wlan0 [--require-running]\n"
-         "action-tx capture-start --dev misharemon0 (explicit QCA local RX capture; stop by bringing down its monitor)\n"
+         "action-tx capture-start --dev misharemon0 [--operating-mode lpc|occ] (explicit QCA RX capture; no mode readback; stop by bringing down monitor)\n"
          "action-tx vendor-action-relay --listen wonder0 --dev wlan0 --freq MHz --feedback [--rewrite-source] [--max-frames 1]\n"
          "Vendor relay accepts category 127 only; native completion reports NOACK, never peer ACK.\n"
          "action-tx raw-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source]\n"

@@ -10,6 +10,8 @@ ROOT=Path(__file__).resolve().parents[1]
 RX_TOOL='''#!/bin/sh
 printf '%s\\n' "$1" >> "$MODEL_ROOT/events"
 if [ "$1" = capture-start ]; then
+    [ "$4" = --operating-mode ] || exit 2
+    case "$5" in lpc|occ) ;; *) exit 2 ;; esac
     [ "$CASE" != capture_fail ] || exit 1
 else
     [ "$CASE" != listen_fail ] || exit 1
@@ -18,7 +20,7 @@ fi
 '''
 
 class RxRunnerTest(unittest.TestCase):
-    def run_case(self,case=''):
+    def run_case(self,case='',mode='lpc'):
         with tempfile.TemporaryDirectory() as tmp:
             r=Path(tmp)
             for d in ['bin','sys/class/net','sys/module','data/local/tmp','bundle']:(r/d).mkdir(parents=True,exist_ok=True)
@@ -27,13 +29,13 @@ class RxRunnerTest(unittest.TestCase):
             b=r/'bundle'
             for f in ['wonder.ko','SHA256SUMS']:(b/f).touch()
             (b/'popsicle-rx-start.sh').write_text(HELPER.replace('else\n', 'elif [ "$1" = status ]; then\n echo modeled_RX_status\nelse\n'))
-            (b/'action-tx-0054').write_text(RX_TOOL);(b/'action-tx-0054').chmod(0o755)
+            (b/'action-tx-0055').write_text(RX_TOOL);(b/'action-tx-0055').chmod(0o755)
             if case=='existing':(r/'sys/module/wonder').mkdir()
             if case=='p2p_up':
                 (r/'sys/class/net/p2p0').mkdir();(r/'sys/class/net/p2p0/flags').write_text('0x1003')
             source=(ROOT/'tools/device/popsicle-awdl-rx-test.sh').read_text().replace('/sys/',str(r/'sys')+'/').replace('/data/local/tmp/',str(r/'data/local/tmp')+'/')
             (r/'run.sh').write_text(source)
-            result=subprocess.run(['sh',str(r/'run.sh'),str(b),str(r/'logs')],env=dict(os.environ,MODEL_ROOT=tmp,CASE=case,PATH=str(r/'bin')+':'+os.environ['PATH']),capture_output=True,text=True,timeout=5)
+            result=subprocess.run(['sh',str(r/'run.sh'),str(b),str(r/'logs'),mode],env=dict(os.environ,MODEL_ROOT=tmp,CASE=case,PATH=str(r/'bin')+':'+os.environ['PATH']),capture_output=True,text=True,timeout=5)
             events=(r/'events').read_text().splitlines() if (r/'events').exists() else []
             return result,events,(r/'sys/class/net/xawdlmon0').exists(),(r/'sys/module/wonder').exists()
 
@@ -62,6 +64,19 @@ class RxRunnerTest(unittest.TestCase):
                 result,events,_,_=self.run_case(case)
                 self.assertNotEqual(result.returncode,0)
                 self.assertEqual(events,[])
+
+    def test_explicit_occ_does_not_transmit(self):
+        result,events,mon,wonder=self.run_case(mode='occ')
+        self.assertEqual(result.returncode,0,result.stderr)
+        self.assertEqual(events.count('capture-start'),1)
+        self.assertNotIn('inject',events)
+        self.assertFalse(mon or wonder)
+
+    def test_invalid_mode_stops_before_mutation(self):
+        result,events,mon,wonder=self.run_case(mode='invalid')
+        self.assertNotEqual(result.returncode,0)
+        self.assertEqual(events,[])
+        self.assertFalse(mon or wonder)
 
     def test_stop_failure_keeps_bound_monitor(self):
         result,events,mon,wonder=self.run_case('stop_fail')

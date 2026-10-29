@@ -1,6 +1,10 @@
+## 最新阶段 0055
+
+0054 实机：7733 包全部通过来源/格式检查，其中 583 Beacon、7150 DATA，Action=0。源码审计确认默认 LPC 是客户端/BSS 采集，新增显式 OCC 工作频道采集请求（RX 三类+operating_type=1），不自动回退。SET/GET 无模式读回，且 SUBFILTER 分支可能忽略模式属性，故始终 mode_verified=false；OCC 实际范围待验证。见 [0055 测试步骤](POPSICLE-CAPTURE-SCOPE-0055.md)。
+
 ## 最新阶段 0054
 
-0053 实机运行约 60 秒：Wonder RX=1043、invalid=0，监听 packets=1043、observed=0、ignored=1043，无解析/运行错误且正常清理。由于旧 ignored 合并了来源过滤和帧类型过滤，不能据此认定频道上没有 AWDL。0054 新增 16 类互斥过滤结果、帧类型/Action 分类与首包非身份元数据，并记录测试前后 STA 频道；仍只读、不换频、不认证 Apple 身份。CI 40912482421 已通过全部协议/过滤统计模型、16 项会话、6 组 TX controller、4 组 RX controller 与 Android 编译；0054 实机待测。见 [0054 测试说明](POPSICLE-AWDL-RX-0054.md)。
+0053 实机运行约 60 秒：Wonder RX=1043、invalid=0，监听 packets=1043、observed=0、ignored=1043，无解析/运行错误且正常清理。由于旧 ignored 合并了来源过滤和帧类型过滤，不能据此认定频道上没有 AWDL。0054 新增 16 类互斥过滤结果、帧类型/Action 分类与首包非身份元数据，并记录测试前后 STA 频道；仍只读、不换频、不认证 Apple 身份。见 [0054 测试说明](POPSICLE-AWDL-RX-0054.md)。
 
 ## 最新阶段 0053
 

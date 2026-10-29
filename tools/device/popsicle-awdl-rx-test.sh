@@ -2,7 +2,9 @@
 # Bounded receive observation through native LPC and Wonder; no transmission.
 set -eu
 fail() { echo "ERROR: $*" >&2; exit 1; }
-[ "$#" = 2 ] || fail 'Usage: sh popsicle-awdl-rx-test.sh /path/0054-bundle /path/new-log-directory'
+[ "$#" = 2 ] || [ "$#" = 3 ] || fail 'Usage: sh popsicle-awdl-rx-test.sh /path/0055-bundle /path/new-log-directory [lpc|occ]'
+operating_mode=${3:-lpc}
+case "$operating_mode" in lpc|occ) ;; *) fail 'Unknown operating mode; use lpc or occ.' ;; esac
 [ "$(id -u)" = 0 ] || fail 'Run with su.'
 bundle=$(cd "$1" && pwd)
 mkdir "$2" || fail 'Log directory must be new.'
@@ -57,7 +59,7 @@ for tool in iw ip sha256sum awk grep insmod rmmod; do command -v "$tool" >/dev/n
 [ ! -e /sys/class/net/wonder0 ] || fail 'wonder0 already exists.'
 [ ! -e "/sys/class/net/$monitor" ] || fail 'Test monitor already exists.'
 (cd "$bundle" && sha256sum -c SHA256SUMS) > "$logs/checksums.txt" 2>&1 || fail 'Bundle checksum failed.'
-[ -x "$bundle/action-tx-0054" ] || fail 'Run chmod 755 on action-tx-0054 first.'
+[ -x "$bundle/action-tx-0055" ] || fail 'Run chmod 755 on action-tx-0055 first.'
 for file in wonder.ko popsicle-rx-start.sh; do [ -f "$bundle/$file" ] || fail "Missing $file"; done
 freq() { iw dev wlan0 link | awk '/freq:/{printf "%d", $2; exit}'; }
 # QCA LPC requires inactive secondary non-monitor interfaces. Do not change them here.
@@ -70,16 +72,16 @@ case "$freq_before" in ''|*[!0-9]*) fail 'STA must be connected.' ;; esac
 [ "$freq_before" -ge 2400 ] && [ "$freq_before" -le 5900 ] || fail 'Unsupported frequency.'
 phy=$(iw dev wlan0 info | awk '$1=="wiphy"{print $2; exit}')
 case "$phy" in ''|*[!0-9]*) fail 'Cannot identify native PHY.' ;; esac
-printf 'freq=%s\n' "$freq_before" > "$logs/setup.txt"
+printf 'freq=%s\nrequested_operating_mode=%s\nmode_verified=false\n' "$freq_before" "$operating_mode" > "$logs/setup.txt"
 iw dev wlan0 link > "$logs/wifi-before.txt" 2>&1
 iw phy "phy$phy" interface add "$monitor" type monitor >> "$logs/setup.txt" 2>&1
 own_monitor=1
 ip link set "$monitor" up >> "$logs/setup.txt" 2>&1
-"$bundle/action-tx-0054" capture-start --dev "$monitor" >> "$logs/setup.txt" 2>&1
+"$bundle/action-tx-0055" capture-start --dev "$monitor" --operating-mode "$operating_mode" >> "$logs/setup.txt" 2>&1
 sh "$bundle/popsicle-rx-start.sh" start "$bundle/wonder.ko" "$monitor" >> "$logs/setup.txt" 2>&1
 own_wonder=1
 sh "$bundle/popsicle-rx-start.sh" status > "$logs/rx-before.txt" 2>&1
-"$bundle/action-tx-0054" awdl-listen --dev wonder0 --seconds 60 --max-frames 10 > "$logs/awdl-rx.log" 2>&1 &
+"$bundle/action-tx-0055" awdl-listen --dev wonder0 --seconds 60 --max-frames 10 > "$logs/awdl-rx.log" 2>&1 &
 listener_pid=$!
 listener_rc=0
 wait "$listener_pid" || listener_rc=$?

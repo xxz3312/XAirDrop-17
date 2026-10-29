@@ -1,0 +1,28 @@
+{
+  "status": "SOURCE_AUDIT_ONLY_OCC_NOT_DEVICE_VERIFIED",
+  "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+  "files": {
+    "qca-wifi-host-cmn/os_if/linux/qca_vendor.h": "1032eda51decf4db6263998461784030b80d9d5b4a3a9cbd6d21297ee150e1a5",
+    "qcacld-3.0/os_if/dp/src/os_if_dp_local_pkt_capture.c": "4b4be40b7f46d8490e2629be5ed872a99988ed672a3f70073307bae69abef58f"
+  },
+  "findings": [
+    "Existing MGMT_RX ALL bit includes management class; absence of Action is not a missing user-space category filter",
+    "Default operating type LPC captures current client/BSS traffic",
+    "OCC attribute 8 value 1 requests operating-channel scope; driver non-subfilter branch requires management+data+control classes",
+    "WLAN_LOCAL_PKT_CAPTURE_SUBFILTER branch does not consume operating type; ACK and running status cannot prove OCC active",
+    "Stock firmware behavior and full operating-channel visibility remain unverified"
+  ],
+  "previous_device_test": {
+    "packets": 7733,
+    "beacons": 583,
+    "data": 7150,
+    "actions": 0,
+    "source_filter_rejections": 0,
+    "frequency_before_mhz": 5240,
+    "frequency_after_mhz": 5240,
+    "exit": 0,
+    "cleanup": "Wonder unloaded and monitor deleted",
+    "dp_peer_warning": "repeated during teardown; deletion completed"
+  },
+  "raw_logs_published": false
+}
