@@ -1,0 +1,37 @@
+{
+  "controller_commit": "ab638cb3c7b8e85c7b2f81e8b79fb090257e0405",
+  "native_source_commit": "c1121b8fb0a2a58c7a1a88890f65fd4fc625edf2",
+  "native_run": 40856837869,
+  "tool_run": 40841130477,
+  "package_run": 40858945739,
+  "original_wlan_sha256": "aeae012460698a2bf63e325ec7554db7eee928fbcd16e0446e30c233bd3b2932",
+  "stripped_wlan_sha256": "41560b3576b284d4799f2db0f6733811c593fc4211601d2d02cfff9133baac47",
+  "stripped_wlan_bytes": 21483664,
+  "strip": "NDK 27.2.12479018 llvm-strip --strip-debug",
+  "provider_sha256": "4748f595addca36cf67ffc0b88e742514abafe5938080dbda9de038c6ac373ac",
+  "controller_model_tests": 14,
+  "kernel_python_checks": 50,
+  "wlan_elf_callbacks_checked": 65,
+  "upstream": "Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted",
+  "phone_trial_executed": false,
+  "rf_awdl_verified": false,
+  "package_job": 123396939630,
+  "artifact_id": 12889893597,
+  "artifact_zip_sha256": "cd6f2b2915453201e097be6b96fb8e86de3fd9df79b2013fd4c7a4a7741671fb",
+  "trial_zip_bytes": 7430134,
+  "trial_zip_sha256": "f24f482323406ea051c94d6f2747f3432314ab2c612a314c9d16fbbd69fdbb4f",
+  "conclusion": "success",
+  "stripped_elf_audit": {
+    "status": "SELECTED_CFG80211_CALLBACK_SLOTS_MATCH_ONLY",
+    "table_bytes": 1048,
+    "callbacks_checked": 65,
+    "testmode_slots": [
+      "0x1c0",
+      "0x1c8"
+    ],
+    "p2p_slots_null": true,
+    "limitations": "Not full cfg80211 ABI, function prototype, KCFI or RF certification.",
+    "wlan_sha256": "41560b3576b284d4799f2db0f6733811c593fc4211601d2d02cfff9133baac47",
+    "ini_prefix": "wlan/qca_cld/peach_v2/"
+  }
+}
