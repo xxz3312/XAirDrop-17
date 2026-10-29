@@ -1,0 +1,98 @@
+name: Popsicle runtime WLAN trial bundle
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-wlan-trial.yml
+      - tools/device/popsicle-wlan-trial.sh
+      - tests/test_popsicle_wlan_trial.py
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      NDK_VERSION: 27.2.12479018
+    steps:
+      - uses: actions/checkout@v4
+      - name: Exercise actual shell controller with modeled Android commands
+        run: |
+          sh -n tools/device/popsicle-wlan-trial.sh
+          python3 -m unittest discover -s tests -p test_popsicle_wlan_trial.py
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-diagnostics-40841130362-1
+          run-id: 40841130362
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: diagnostic
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-action-tx-40841130477
+          run-id: 40841130477
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: tool
+      - uses: actions/cache/restore@v4
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Prepare pinned strip tool
+        run: |
+          mkdir -p .xos-ndk
+          if [ ! -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" ]; then
+            cp -a "$ANDROID_HOME/licenses" .xos-ndk/
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-ndk" "ndk;$NDK_VERSION"
+          fi
+      - name: Verify original binaries and remove debug information in CI
+        run: |
+          mkdir -p extracted out/XAirDrop-17-WLAN-Trial-0046/kernel
+          tar -xzf diagnostic/diagnostic-modules-not-for-install.tar.gz -C extracted qca_cld3_peach_v2.ko
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          assert hashlib.sha256(Path('extracted/qca_cld3_peach_v2.ko').read_bytes()).hexdigest()=='1c998d320351a37f54fca2e0b93808db7b8d73ea05c108df8b93b046936a0567'
+          build=json.loads(Path('tool/build.json').read_text())
+          assert build['commit']=='d8365331d8920786fcdb345a31679347d7903273'
+          assert hashlib.sha256(Path('tool/action-tx').read_bytes()).hexdigest()==build['binary_sha256']
+          PY
+          ndk_bin="$PWD/.xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$ndk_bin/llvm-strip" --strip-debug extracted/qca_cld3_peach_v2.ko -o out/XAirDrop-17-WLAN-Trial-0046/kernel/qca_cld3_peach_v2.ko
+          "$ndk_bin/llvm-readelf" -p .modinfo out/XAirDrop-17-WLAN-Trial-0046/kernel/qca_cld3_peach_v2.ko > out/module-info.txt
+          grep -q 'name=qca_cld3_peach_v2' out/module-info.txt
+          grep -q 'parm=mishare_action_tx:' out/module-info.txt
+      - name: Assemble manual trial with source and license
+        run: |
+          cp tools/device/popsicle-wlan-trial.sh out/XAirDrop-17-WLAN-Trial-0046/
+          cp tool/action-tx out/XAirDrop-17-WLAN-Trial-0046/
+          cp docs/POPSICLE-WLAN-TRIAL-0046.md out/XAirDrop-17-WLAN-Trial-0046/README.md
+          cp LICENSE out/XAirDrop-17-WLAN-Trial-0046/
+          cp LICENSES/GPL-2.0-only.txt out/XAirDrop-17-WLAN-Trial-0046/
+          cp LICENSES/LGPL-3.0.txt out/XAirDrop-17-WLAN-Trial-0046/
+          git archive --format=tar.gz --prefix=XAirDrop-17/ --output=out/XAirDrop-17-WLAN-Trial-0046/source.tar.gz HEAD
+          python3 - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          p=Path('out/XAirDrop-17-WLAN-Trial-0046')
+          frame=bytes.fromhex('d0000000ffffffffffff020000000001ffffffffffff00007f020000')+b'XAIRDROP0046_TEST'
+          p.joinpath('action-vendor.bin').write_bytes(frame)
+          ko=p/'kernel/qca_cld3_peach_v2.ko'
+          b=ko.read_bytes()
+          assert b[:4]==b'\x7fELF' and int.from_bytes(b[18:20],'little')==183
+          assert len(b)<50*1024*1024
+          report={'controller_commit':os.environ['GITHUB_SHA'],'native_source_commit':'d8365331d8920786fcdb345a31679347d7903273','native_run':40841130362,'tool_run':40841130477,'package_run':int(os.environ['GITHUB_RUN_ID']),'original_wlan_sha256':'1c998d320351a37f54fca2e0b93808db7b8d73ea05c108df8b93b046936a0567','stripped_wlan_sha256':hashlib.sha256(b).hexdigest(),'stripped_wlan_bytes':len(b),'strip':'NDK 27.2.12479018 llvm-strip --strip-debug','controller_model_tests':10,'upstream':'Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted','phone_trial_executed':False,'rf_awdl_verified':False}
+          p.joinpath('BUILD.json').write_text(json.dumps(report,indent=2)+'\n')
+          p.joinpath('SHA256SUMS').write_text(''.join(hashlib.sha256(f.read_bytes()).hexdigest()+'  '+f.relative_to(p).as_posix()+'\n' for f in sorted(p.rglob('*')) if f.is_file() and f.name!='SHA256SUMS'))
+          with zipfile.ZipFile('out/XAirDrop-17-WLAN-Trial-0046.zip','w',zipfile.ZIP_DEFLATED) as z:
+            for f in sorted(p.rglob('*')):
+              if f.is_file():z.write(f,f.relative_to(p.parent))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-wlan-trial-${{ github.run_id }}
+          path: |
+            out/XAirDrop-17-WLAN-Trial-0046.zip
+            out/XAirDrop-17-WLAN-Trial-0046/BUILD.json
+            out/module-info.txt
+          if-no-files-found: error
