@@ -14,8 +14,8 @@ jobs:
     timeout-minutes: 55
     env:
       NDK_VERSION: 27.2.12479018
-      KERNEL_RUN: '40925143188'
-      KERNEL_COMMIT: '44f530d98c49247702dec72f68db5129008611f1'
+      KERNEL_RUN: '40926997789'
+      KERNEL_COMMIT: 'bf714dca4a4cbe0b25446e2b618c03716a28c1ac'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -53,8 +53,8 @@ jobs:
           PY
       - uses: actions/download-artifact@v4
         with:
-          name: popsicle-diagnostics-40925143188-${{ steps.inputs.outputs.kernel_attempt }}
-          run-id: 40925143188
+          name: popsicle-diagnostics-40926997789-${{ steps.inputs.outputs.kernel_attempt }}
+          run-id: 40926997789
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: diagnostic
       - uses: actions/download-artifact@v4
