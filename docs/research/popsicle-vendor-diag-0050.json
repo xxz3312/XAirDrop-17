@@ -1,0 +1,16 @@
+{
+  "source_commit": "1b0cb7649adcd89b15d2d0605f3bdb2ec54c7288",
+  "tool_run": 40885034665,
+  "tool_job": 123486333999,
+  "artifact_id": 12901378009,
+  "artifact_sha256": "cf9808159927d8d45f769e889e138119052231dcfdaad9059c7de3913d153251",
+  "binary_sha256": "b43c97b9ba8a28e6a03b5772eba15f77aa237d28d36afb6960625f4eff7280c0",
+  "binary_bytes": 31376,
+  "zip_sha256": "4c24145bee983db5a520f3c5888fc04374a5dc39dfd1170ef406a99ba9df4de4",
+  "zip_bytes": 1783093,
+  "ci_conclusion": "success",
+  "phone_executed": false,
+  "kernel_changed": false,
+  "auto_retry": false,
+  "purpose": "Identify kernel NLMSG_ERROR versus userspace reply timeout; does not fix or prove RF TX"
+}
