@@ -13,9 +13,15 @@
 int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
                         const unsigned char *frame, size_t len,
                         unsigned int *native_status);
+int mishare_action_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
+                           const unsigned char *frame, size_t len,
+                           unsigned int *native_status);
 static bool mishare_raw_tx;
 module_param(mishare_raw_tx, bool, 0444);
 MODULE_PARM_DESC(mishare_raw_tx, "Experimental native on-channel WMI RAW DATA vendor TX");
+static bool mishare_action_tx;
+module_param(mishare_action_tx, bool, 0444);
+MODULE_PARM_DESC(mishare_action_tx, "Experimental native on-channel vendor Action TX");
 struct mishare_raw_pending {
     struct completion done;
     refcount_t refs;
@@ -40,9 +46,9 @@ static QDF_STATUS mishare_raw_complete(void *context, qdf_nbuf_t buf,
 /* Native mgmt_txrx owns its descriptor, peer reference and completion after a
  * successful submit. Waiter/callback hold separate context refs; timeout does
  * not release the native packet or invent completion. No retries/peer create. */
-int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
+static int mishare_native_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
                         const unsigned char *frame, size_t len,
-                        unsigned int *native_status)
+                        unsigned int *native_status, bool action)
 {
     struct mishare_raw_pending *pending;
     struct wlan_objmgr_peer *peer;
@@ -54,9 +60,11 @@ int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
     unsigned int id;
     int ret;
 
-    if (!mishare_raw_tx)
+    if (!(action ? mishare_action_tx : mishare_raw_tx))
         return -EOPNOTSUPP;
-    if (!vdev || !native_status || !mishare_raw_frame_valid(frame, len))
+    if (!vdev || !native_status ||
+        !(action ? mishare_action_frame_valid(frame, len) :
+                   mishare_raw_frame_valid(frame, len)))
         return -EINVAL;
     if (!wma || wma_validate_handle(wma))
         return -ENODEV;
@@ -107,7 +115,7 @@ int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
     params.use_6mbps = 1;
     params.tx_params_valid = true;
     wma_update_tx_send_params(&params.tx_param, RATEID_6MBPS);
-    params.tx_param.frame_type = 1; /* Native tx_send_params: DATA=1. */
+    params.tx_param.frame_type = action ? 0 : 1; /* Native MGMT=0, DATA=1. */
     params.tx_param.bw_mask = BIT(2); /* 20 MHz */
     params.tx_param.retry_limit = 1;
     status = wlan_mgmt_txrx_mgmt_frame_tx(peer, pending, packet, NULL,
@@ -127,4 +135,16 @@ int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
     }
     mishare_raw_put(pending);
     return ret;
+}
+int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
+                        const unsigned char *frame, size_t len,
+                        unsigned int *native_status)
+{
+    return mishare_native_tx_sync(vdev, freq, frame, len, native_status, false);
+}
+int mishare_action_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
+                           const unsigned char *frame, size_t len,
+                           unsigned int *native_status)
+{
+    return mishare_native_tx_sync(vdev, freq, frame, len, native_status, true);
 }

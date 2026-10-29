@@ -6,6 +6,9 @@
 int mishare_raw_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
                         const unsigned char *frame, size_t len,
                         unsigned int *native_status);
+int mishare_action_tx_sync(struct wlan_objmgr_vdev *vdev, unsigned int freq,
+                           const unsigned char *frame, size_t len,
+                           unsigned int *native_status);
 static int mishare_raw_vendor_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
                                  const void *data, int data_len)
 {
@@ -15,7 +18,7 @@ static int mishare_raw_vendor_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
     struct wlan_objmgr_vdev *vdev;
     struct sk_buff *reply;
     unsigned char response[MISHARE_RAW_HEADER] = {0};
-    unsigned int freq, length, status = 0;
+    unsigned int freq, length, kind, status = 0;
     int ret;
 
     if (!capable(CAP_NET_ADMIN))
@@ -24,10 +27,13 @@ static int mishare_raw_vendor_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
         return -EINVAL;
     freq = mishare_raw_word(request + 4);
     length = mishare_raw_word(request + 8);
+    kind = mishare_raw_word(request + 12);
     if (mishare_raw_word(request) != MISHARE_RAW_VERSION ||
-        mishare_raw_word(request + 12) || length > MISHARE_RAW_MAX ||
+        kind > MISHARE_RAW_ACTION_KIND || length > MISHARE_RAW_MAX ||
         data_len != (int)(MISHARE_RAW_HEADER + length) ||
-        !mishare_raw_frame_valid(request + MISHARE_RAW_HEADER, length))
+        !(kind == MISHARE_RAW_ACTION_KIND ?
+          mishare_action_frame_valid(request + MISHARE_RAW_HEADER, length) :
+          mishare_raw_frame_valid(request + MISHARE_RAW_HEADER, length)))
         return -EINVAL;
     ret = osif_vdev_sync_op_start(wdev->netdev, &sync);
     if (ret)
@@ -41,8 +47,12 @@ static int mishare_raw_vendor_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
         ret = -ENODEV;
         goto stop;
     }
-    ret = mishare_raw_tx_sync(vdev, freq, request + MISHARE_RAW_HEADER,
-                              length, &status);
+    if (kind == MISHARE_RAW_ACTION_KIND)
+        ret = mishare_action_tx_sync(vdev, freq, request + MISHARE_RAW_HEADER,
+                                     length, &status);
+    else
+        ret = mishare_raw_tx_sync(vdev, freq, request + MISHARE_RAW_HEADER,
+                                  length, &status);
     hdd_objmgr_put_vdev_by_user(vdev, WLAN_HDD_ID_OBJ_MGR);
     if (ret)
         goto stop;

@@ -199,7 +199,8 @@ def check_mishare_host_symbols(work, module, report_name):
               'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
               'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
     names += ['mishare_runtime_reclaim_batch']
-    names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync']
+    names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync',
+              'mishare_action_tx_sync']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}

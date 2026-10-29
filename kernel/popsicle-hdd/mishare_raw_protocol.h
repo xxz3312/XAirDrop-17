@@ -8,6 +8,18 @@
 #define MISHARE_RAW_VERSION 1U
 #define MISHARE_RAW_HEADER 16U
 #define MISHARE_RAW_MAX 2304U
+#define MISHARE_RAW_ACTION_KIND 1U
+/* Separate opt-in request kind: unprotected vendor-specific Action only. */
+static inline int mishare_action_frame_valid(const unsigned char *p, size_t n)
+{
+    unsigned int fc;
+    if (!p || n < 28 || n > MISHARE_RAW_MAX)
+        return 0;
+    fc = (unsigned int)p[0] | (unsigned int)p[1]<<8;
+    return (fc & 0x00ff) == 0x00d0 &&
+           !(fc & (0x0300 | 0x0400 | 0x4000 | 0x8000)) &&
+           !(p[22] & 15) && p[24] == 127;
+}
 static inline unsigned int mishare_raw_word(const unsigned char *p)
 {
     return (unsigned int)p[0] | (unsigned int)p[1]<<8 |

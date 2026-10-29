@@ -354,6 +354,11 @@ static int prepare_raw_frame(unsigned char *frame,size_t length,
     }
     return 0;
 }
+static int prepare_vendor_action(unsigned char *frame,size_t length,
+                                  const unsigned char mac[6],bool rewrite) {
+    if (!mishare_action_frame_valid(frame,length)) return -EOPNOTSUPP;
+    return prepare_frame(frame,length,mac,rewrite);
+}
 static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size_t len,int timeout_ms) {
     unsigned char buffer[MESSAGE_MAX],payload[MISHARE_RAW_HEADER+FRAME_MAX]={0};
     struct bytes reply,result;struct message m;
@@ -361,6 +366,8 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
     c->frame=NULL;c->status_count=0;c->have_cookie=false;c->completion_outcome=WONDER_FB_FAILED;
     mishare_raw_set_word(payload,MISHARE_RAW_VERSION);
     mishare_raw_set_word(payload+4,freq);mishare_raw_set_word(payload+8,(unsigned)len);
+    bool vendor_action=mishare_action_frame_valid(frame,len);
+    if (vendor_action) mishare_raw_set_word(payload+12,MISHARE_RAW_ACTION_KIND);
     memcpy(payload+MISHARE_RAW_HEADER,frame,len);
     begin(&m,c->family,NL80211_CMD_VENDOR,++c->seq);
     int ret=add_attr(&m,NL80211_ATTR_IFINDEX,&c->ifindex,4);
@@ -375,7 +382,8 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
         return -EBADMSG;
     unsigned status=mishare_raw_word(result.p+4);
     if (!status) c->completion_outcome=WONDER_FB_NOACK;
-    printf("{\"event\":\"raw_tx_status\",\"native_status\":%u,\"bytes\":%zu,\"freq\":%u}\n",status,len,freq);fflush(stdout);
+    printf("{\"event\":\"%s\",\"native_status\":%u,\"bytes\":%zu,\"freq\":%u}\n",
+           vendor_action?"vendor_action_tx_status":"raw_tx_status",status,len,freq);fflush(stdout);
     return status?-ENOMSG:0;
 }
 /* Dispatch one outgoing frame to exactly one transport. Validation/source
@@ -690,7 +698,8 @@ done:
     close(fd);return ret;
 }
 static void usage(void) {
-    puts("action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
+    puts("action-tx vendor-action-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] (requires patched WLAN mishare_action_tx=1)\n"
+         "action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
          "action-tx capture-status --dev wlan0 [--require-running]\n"
          "action-tx capture-start --dev misharemon0 (explicit QCA local RX capture; stop by bringing down its monitor)\n"
          "action-tx raw-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source]\n"
@@ -714,7 +723,8 @@ int main(int argc,char **argv) {
     bool raw=!strcmp(mode,"raw-send") || !strcmp(mode,"raw-relay");
     bool combined=!strcmp(mode,"relay-all");
     bool inject=!strcmp(mode,"inject");
-    if (!raw && !combined && !inject && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
+    bool vendor_action=!strcmp(mode,"vendor-action-send");
+    if (!raw && !combined && !inject && !vendor_action && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
     bool relay=!strcmp(mode,"relay") || !strcmp(mode,"raw-relay") || combined;
     for (int i=2;i<argc;i++) {
         const char *arg=argv[i];
@@ -754,8 +764,9 @@ int main(int argc,char **argv) {
         size_t n=fread(frame,1,sizeof(frame),f);bool bad=ferror(f) || !feof(f);fclose(f);
         if (bad) {ret=-EMSGSIZE;goto done;}
         if (radiotap) {ret=strip_radiotap(frame,&n);if (ret) goto done;}
-        ret=raw?prepare_raw_frame(frame,n,mac,rewrite):prepare_frame(frame,n,mac,rewrite);if (ret) goto done;
-        ret=raw?raw_tx(&c,freq,frame,n,(int)timeout):action_tx(&c,freq,frame,n,(int)timeout);
+        ret=vendor_action?prepare_vendor_action(frame,n,mac,rewrite):
+            raw?prepare_raw_frame(frame,n,mac,rewrite):prepare_frame(frame,n,mac,rewrite);if (ret) goto done;
+        ret=(raw || vendor_action)?raw_tx(&c,freq,frame,n,(int)timeout):action_tx(&c,freq,frame,n,(int)timeout);
     } else if (feedback) {
         ret=feedback_relay(&c,listen_dev,mac,freq,timeout,limit,seconds,raw,combined,rewrite,follow,monitor);
     } else {

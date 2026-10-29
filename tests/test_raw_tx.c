@@ -71,8 +71,9 @@ static int wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *p,void *ctx,qdf
  assert(p==&peer && !download && comp==WLAN_UMAC_COMP_MLME && peer_refs==1);
  assert(params->tx_frame==pkt && params->pdata==pkt->bytes && params->vdev_id==1 && !params->chanfreq);
  assert(params->qdf_ctx==(void*)3 && params->tx_type==GENERIC_NODOWLOAD_ACK_COMP_INDEX);
- assert(params->tx_params_valid && params->tx_param.frame_type==1 && params->tx_param.mcs_mask==16 && params->tx_param.nss_mask==1 && params->tx_param.preamble_type==1 && params->tx_param.bw_mask==4 && params->tx_param.retry_limit==1);
- assert(mishare_raw_frame_valid(pkt->bytes,params->frm_len));submit_calls++;
+ bool action=mishare_action_frame_valid(pkt->bytes,params->frm_len);
+ assert(params->tx_params_valid && params->tx_param.frame_type==(action?0U:1U) && params->tx_param.mcs_mask==16 && params->tx_param.nss_mask==1 && params->tx_param.preamble_type==1 && params->tx_param.bw_mask==4 && params->tx_param.retry_limit==1);
+ assert(action || mishare_raw_frame_valid(pkt->bytes,params->frm_len));submit_calls++;
  if(model==3)return 1;
  callback=fn;callback_context=ctx;callback_packet=pkt;
  if(model==1)fire(0);
@@ -100,5 +101,21 @@ int main(void) {
  frame[1]=0x40;assert(!mishare_raw_frame_valid(frame,sizeof(frame)));frame[1]=0;
  frame[1]=2;assert(!mishare_raw_frame_valid(frame,sizeof(frame)));frame[1]=1;assert(mishare_raw_frame_valid(frame,sizeof(frame)));
  assert(submit_calls==calls && !live_contexts && !live_packets && !peer_refs);
+ unsigned char action[28]={0xd0};memset(action+4,0xff,6);memcpy(action+10,vdev.mac,6);action[24]=127;action[25]=2;
+ assert(mishare_action_frame_valid(action,sizeof(action)));
+ assert(mishare_action_tx_sync(&vdev,5180,action,sizeof(action),&status)==-EOPNOTSUPP);
+ mishare_raw_tx=false;mishare_action_tx=true;model=1;
+ assert(!mishare_action_tx_sync(&vdev,5180,action,sizeof(action),&status) && !status);
+ assert(mishare_raw_tx_sync(&vdev,5180,frame,sizeof(frame),&status)==-EOPNOTSUPP);
+ assert(mishare_action_tx_sync(&vdev,5180,frame,sizeof(frame),&status)==-EINVAL);
+ action[24]=4;assert(mishare_action_tx_sync(&vdev,5180,action,sizeof(action),&status)==-EINVAL);action[24]=127;
+ action[22]=1;assert(!mishare_action_frame_valid(action,sizeof(action)));action[22]=0;
+ action[1]=0x40;assert(!mishare_action_frame_valid(action,sizeof(action)));action[1]=0;
+ assert(!mishare_action_frame_valid(action,27));
+ action[10]++;assert(mishare_action_tx_sync(&vdev,5180,action,sizeof(action),&status)==-EINVAL);action[10]--;
+ assert(mishare_action_tx_sync(&vdev,2412,action,sizeof(action),&status)==-EINVAL);
+ vdev.mlo=1;assert(mishare_action_tx_sync(&vdev,5180,action,sizeof(action),&status)==-EINVAL);vdev.mlo=0;
+ model=2;assert(mishare_action_tx_sync(&vdev,5180,action,sizeof(action),&status)==-ETIMEDOUT && live_contexts==1 && live_packets==1);
+ fire(0);assert(!live_contexts && !live_packets && !peer_refs);
  puts("RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY");return 0;
 }
