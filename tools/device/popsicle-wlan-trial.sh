@@ -92,11 +92,13 @@ finish() {
     exit "$finish_exit_rc"
 }
 [ "$(id -u)" = 0 ] || die 'Run as root.'
-case "${1:-check}" in check|run|restore|status) ;; *) die 'Usage: sh popsicle-wlan-trial.sh check|run|restore|status [bundle]';; esac
+case "${1:-check}" in check|run|run-mgmt-rx|restore|status) ;; *) die 'Usage: sh popsicle-wlan-trial.sh check|run|run-mgmt-rx|restore|status [bundle]';; esac
 ACTION=${1:-check}
+ENABLE_MGMT_RX=0
+if [ "$ACTION" = run-mgmt-rx ]; then ENABLE_MGMT_RX=1; ACTION=run; fi
 if [ "$ACTION" = status ]; then
     grep "^$NAME " /proc/modules || true
-    for p in mishare_action_tx mishare_raw_tx; do
+    for p in mishare_action_tx mishare_raw_tx mishare_mgmt_rx mishare_mgmt_rx_routed; do
         f=/sys/module/$NAME/parameters/$p
         [ ! -r "$f" ] || { printf '%s=' "$p"; cat "$f"; }
     done
@@ -158,7 +160,12 @@ stop_hals || die 'Wi-Fi HAL did not stop.'
 sleep 2
 echo 'Unloading original WLAN with ordinary rmmod (no force).'
 rmmod "$NAME" || die 'Original WLAN is busy; no forced unload.'
-insmod "$BUNDLE/kernel/$NAME.ko" mishare_action_tx=1 mishare_raw_tx=0 || die 'Trial driver load failed.'
+if [ "$ENABLE_MGMT_RX" = 1 ]; then
+    insmod "$BUNDLE/kernel/$NAME.ko" mishare_action_tx=1 mishare_raw_tx=0 mishare_mgmt_rx=1 || die 'Trial driver load failed.'
+    [ "$(cat "/sys/module/$NAME/parameters/mishare_mgmt_rx" 2>/dev/null)" = Y ] || die 'Management RX opt-in was not enabled.'
+else
+    insmod "$BUNDLE/kernel/$NAME.ko" mishare_action_tx=1 mishare_raw_tx=0 || die 'Trial driver load failed.'
+fi
 [ "$(cat "/sys/module/$NAME/parameters/mishare_action_tx" 2>/dev/null)" = Y ] || die 'Action backend is not enabled.'
 wait_wlan || die 'Trial driver did not create wlan0.'
 start_hals || die 'HAL restart failed.'

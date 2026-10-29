@@ -244,7 +244,38 @@ static void awdl_parse_detail_tests(void) {
     puts("AWDL_PARSE_DETAIL_MODEL_PASS_ONLY");
 }
 
+static void mgmt_event_message(struct message *m,unsigned index,unsigned freq,const unsigned char *frame,size_t n) {
+    begin(m,25,NL80211_CMD_FRAME,0);
+    assert(!add_attr(m,NL80211_ATTR_IFINDEX,&index,4));
+    assert(!add_attr(m,NL80211_ATTR_WIPHY_FREQ,&freq,4));
+    assert(!add_attr(m,NL80211_ATTR_FRAME,frame,n));
+    ((struct nlmsghdr *)(void *)m->data)->nlmsg_len=(uint32_t)m->n;
+}
+static void awdl_mgmt_rx_tests(void) {
+    struct client c={.family=25,.ifindex=24,.seq=8};struct message m;
+    assert(!mgmt_register_message(&c,&m));
+    struct bytes attrs={m.data+NLMSG_HDRLEN+GENL_HDRLEN,m.n-NLMSG_HDRLEN-GENL_HDRLEN},v;
+    assert(m.data[NLMSG_HDRLEN]==NL80211_CMD_REGISTER_FRAME && c.seq==9);
+    assert(attr(attrs,NL80211_ATTR_IFINDEX,&v)==1 && v.n==4 && u32(v.p)==24);
+    assert(attr(attrs,NL80211_ATTR_FRAME_TYPE,&v)==1 && v.n==2 && u16(v.p)==0xd0);
+    assert(attr(attrs,NL80211_ATTR_FRAME_MATCH,&v)==1 && v.n==5 && !memcmp(v.p,"\x7f\x00\x17\xf2\x08",5));
+    assert(!attr(attrs,NL80211_ATTR_RECEIVE_MULTICAST,&v));
+    unsigned char f[277]={0xd0};f[24]=127;f[26]=0x17;f[27]=0xf2;f[28]=8;f[29]=16;f[30]=3;f[40]=4;f[41]=234;
+    struct mgmt_rx_stats s={0};mgmt_event_message(&m,24,5240,f,sizeof(f));
+    assert(!mgmt_rx_datagram(&c,m.data,m.n,&s,false));
+    assert(s.events==1 && s.parsed==1 && s.max_bytes==277 && s.over_256==1);
+    assert(s.detail.candidate_reasons[AWDL_PARSED]==1);
+    mgmt_event_message(&m,24,5240,f,256);assert(!mgmt_rx_datagram(&c,m.data,m.n,&s,false));
+    assert(s.events==2 && s.malformed==1 && s.detail.candidate_reasons[AWDL_TLV_OVERRUN]==1);
+    mgmt_event_message(&m,25,5240,f,sizeof(f));assert(!mgmt_rx_datagram(&c,m.data,m.n,&s,false) && s.ignored==1);
+    mgmt_event_message(&m,24,0,f,sizeof(f));assert(!mgmt_rx_datagram(&c,m.data,m.n,&s,false) && s.malformed==2);
+    mgmt_event_message(&m,24,5240,f,sizeof(f));assert(mgmt_rx_datagram(&c,m.data,m.n-1,&s,false)==-EBADMSG);
+    f[28]=9;mgmt_event_message(&m,24,5240,f,sizeof(f));assert(!mgmt_rx_datagram(&c,m.data,m.n,&s,false) && s.ignored==2);
+    puts("AWDL_NL80211_MGMT_RX_MODEL_PASS_ONLY");
+}
+
 int main(void) {
+    awdl_mgmt_rx_tests();
     awdl_parse_detail_tests();
     awdl_rx_accounting_tests();
     awdl_observation_tests();

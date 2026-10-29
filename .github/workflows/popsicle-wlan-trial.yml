@@ -1,12 +1,6 @@
-name: Popsicle runtime WLAN trial bundle
+name: Historical 0049 runtime WLAN trial bundle
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/popsicle-wlan-trial.yml
-      - tools/device/popsicle-wlan-trial.sh
-      - tests/test_popsicle_wlan_trial.py
 permissions:
   contents: read
   actions: read

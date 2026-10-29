@@ -1,0 +1,88 @@
+name: Popsicle full management RX trial 0058
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-mgmt-rx-bundle.yml
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      NDK_VERSION: 27.2.12479018
+      KERNEL_RUN: '40925143188'
+      KERNEL_COMMIT: '44f530d98c49247702dec72f68db5129008611f1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exercise actual trial and observation controllers
+        run: |
+          sh -n tools/device/popsicle-wlan-trial.sh
+          sh -n tools/device/popsicle-mgmt-rx-test.sh
+          python3 -m unittest discover -s tests -p 'test_popsicle_wlan_trial.py'
+          python3 -m unittest discover -s tests -p 'test_mgmt_rx_runner.py'
+      - name: Wait for source-matched successful driver and tool runs
+        id: inputs
+        env:
+          GH_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import json,os,time,urllib.request
+          base='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/'
+          def get(path):
+            req=urllib.request.Request(base+path,headers={'Authorization':'Bearer '+os.environ['GH_READ_TOKEN'],'Accept':'application/vnd.github+json'})
+            with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
+          for _ in range(120):
+            kernel=get('runs/'+os.environ['KERNEL_RUN'])
+            assert kernel['head_sha']==os.environ['KERNEL_COMMIT']
+            tools=get('workflows/popsicle-action-tx.yml/runs?head_sha='+os.environ['GITHUB_SHA']+'&per_page=5')['workflow_runs']
+            tool=tools[0] if tools else None
+            if kernel['status']=='completed' and kernel['conclusion']!='success':raise RuntimeError('Driver run did not pass; no package')
+            if tool and tool['status']=='completed' and tool['conclusion']!='success':raise RuntimeError('Tool run did not pass; no package')
+            if kernel['conclusion']=='success' and tool and tool['conclusion']=='success':break
+            print('Waiting for recorded driver/tool checks',flush=True);time.sleep(20)
+          else:raise RuntimeError('Timed out waiting for validated inputs')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+            out.write('tool_run='+str(tool['id'])+'\n')
+            out.write('kernel_attempt='+str(kernel['run_attempt'])+'\n')
+          PY
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-diagnostics-40925143188-${{ steps.inputs.outputs.kernel_attempt }}
+          run-id: 40925143188
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: diagnostic
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-action-tx-${{ steps.inputs.outputs.tool_run }}
+          run-id: ${{ steps.inputs.outputs.tool_run }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: tool
+      - uses: actions/cache/restore@v4
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Prepare pinned strip tool and assemble verified manual package
+        env:
+          TOOL_RUN: ${{ steps.inputs.outputs.tool_run }}
+        run: |
+          mkdir -p .xos-ndk extracted
+          if [ ! -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" ]; then
+            cp -a "$ANDROID_HOME/licenses" .xos-ndk/
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-ndk" "ndk;$NDK_VERSION"
+          fi
+          tar -xzf diagnostic/diagnostic-modules-not-for-install.tar.gz -C extracted qca_cld3_peach_v2.ko opairshare_wonder_provider.ko
+          python3 tools/kernel/package_mgmt_rx_0058.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-mgmt-rx-trial-${{ github.run_id }}
+          path: |
+            out/XAirDrop-17-Mgmt-RX-0058.zip
+            out/XAirDrop-17-Mgmt-RX-0058/BUILD.json
+            out/module-info.txt
+          if-no-files-found: error

@@ -885,11 +885,114 @@ static void print_awdl_rx_stats(const struct awdl_rx_stats *s) {
     puts("]}");
 }
 
-static void print_awdl(const struct awdl_observation *o,bool live) {
+static void print_awdl(const struct awdl_observation *o,const char *source) {
     printf("{\"event\":\"awdl_action_observed\",\"source\":\"%s\",\"subtype\":%u,\"tlvs\":%u,\"sync_tlvs\":%u,\"channel_tlvs\":%u,\"election_tlvs\":%u,\"authenticated_peer\":false}\n",
-           live?"monitor_rx":"offline_file",o->subtype,o->tlvs,o->sync,o->channels,o->election);
+           source,o->subtype,o->tlvs,o->sync,o->channels,o->election);
     fflush(stdout);
 }
+static int mgmt_register_message(struct client *c,struct message *m) {
+    unsigned short type=0x00d0;
+    const unsigned char prefix[]={127,0,0x17,0xf2,8};
+    begin(m,c->family,NL80211_CMD_REGISTER_FRAME,++c->seq);
+    int ret=add_attr(m,NL80211_ATTR_IFINDEX,&c->ifindex,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_FRAME_TYPE,&type,2);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_FRAME_MATCH,prefix,sizeof(prefix));
+    /* Legacy single-socket registration also receives matching group frames;
+     * this driver does not advertise MULTICAST_REGISTRATIONS extension. */
+    return ret;
+}
+/* This decoder consumes full 802.11 frames, without a radiotap header. */
+static int mgmt_rx_event(struct bytes attrs,unsigned index,struct bytes *frame,unsigned *freq) {
+    struct bytes iface,frequency;
+    if (attr(attrs,NL80211_ATTR_IFINDEX,&iface)!=1 || iface.n!=4) return -EBADMSG;
+    if (u32(iface.p)!=index) return 0;
+    if (attr(attrs,NL80211_ATTR_WIPHY_FREQ,&frequency)!=1 || frequency.n!=4 ||
+        attr(attrs,NL80211_ATTR_FRAME,frame)!=1) return -EBADMSG;
+    *freq=u32(frequency.p);
+    if (*freq<2400 || *freq>5900 || frame->n<29 || frame->n>FRAME_MAX) return -EBADMSG;
+    if (frame->p[0]!=0xd0 || memcmp(frame->p+24,"\x7f\x00\x17\xf2\x08",5)) return 0;
+    return 1;
+}
+struct mgmt_rx_stats {unsigned events,parsed,malformed,unsupported,ignored,over_256,max_bytes;struct awdl_rx_stats detail;};
+static int mgmt_rx_datagram(struct client *c,const unsigned char *data,size_t length,
+                            struct mgmt_rx_stats *stats,bool emit) {
+    while (length) {
+        if (length<NLMSG_HDRLEN) return -EBADMSG;
+        struct nlmsghdr h;memcpy(&h,data,sizeof(h));
+        if (h.nlmsg_len<NLMSG_HDRLEN || h.nlmsg_len>length) return -EBADMSG;
+        size_t step=align4(h.nlmsg_len);
+        if (step>length) {if (h.nlmsg_len!=length) return -EBADMSG;step=length;}
+        size_t n=h.nlmsg_len-NLMSG_HDRLEN;const unsigned char *body=data+NLMSG_HDRLEN;
+        if (h.nlmsg_type==c->family) {
+            if (n<GENL_HDRLEN) return -EBADMSG;
+            if (body[0]==NL80211_CMD_FRAME) {
+                struct bytes frame;unsigned freq=0;
+                int ret=mgmt_rx_event((struct bytes){body+GENL_HDRLEN,n-GENL_HDRLEN},c->ifindex,&frame,&freq);
+                if (ret<0) stats->malformed++;
+                else if (!ret) stats->ignored++;
+                else {
+                    struct awdl_observation o;struct awdl_parse_detail d;
+                    stats->events++;
+                    if (frame.n>stats->max_bytes) stats->max_bytes=(unsigned)frame.n;
+                    if (frame.n>256) stats->over_256++;
+                    ret=inspect_awdl_detail(frame.p,frame.n,&o,&d);
+                    if (!stats->detail.candidate_reasons[d.reason]++) stats->detail.samples[d.reason]=d;
+                    if (ret==1) {stats->parsed++;if (emit) print_awdl(&o,"nl80211_mgmt");}
+                    else if (ret==-EPROTONOSUPPORT) stats->unsupported++;
+                    else stats->malformed++;
+                }
+            }
+        } else if (h.nlmsg_type==NLMSG_ERROR) {
+            if (n<sizeof(struct nlmsgerr)) return -EBADMSG;
+            int err;memcpy(&err,body,4);if (h.nlmsg_seq==c->seq && err) return err<0?err:-EBADMSG;
+        }
+        data+=step;length-=step;
+    }
+    return 0;
+}
+static int awdl_mgmt_main(int argc,char **argv) {
+    const char *dev=NULL;unsigned seconds=60,limit=10;
+    for (int i=2;i<argc;i++) {
+        const char *key=argv[i];if (++i>=argc) return 2;
+        if (!strcmp(key,"--dev") && !dev) dev=argv[i];
+        else if (!strcmp(key,"--seconds")) {if (number(argv[i],1,300,&seconds)) return 2;}
+        else if (!strcmp(key,"--max-frames")) {if (number(argv[i],1,1000,&limit)) return 2;}
+        else return 2;
+    }
+    if (!dev) return 2;
+    struct client c={.fd=-1};unsigned index;unsigned char mac[6];
+    struct mgmt_rx_stats stats={0};int ret=native_interface(dev,&index,mac);
+    if (ret) goto done;
+    ret=connect_nl(&c);if (ret) goto done;c.ifindex=index;
+    struct channel_interface info;
+    ret=query_channel(&c,index,&info);if (ret) goto done;
+    if (info.type!=NL80211_IFTYPE_STATION || info.freq<2400 || info.freq>5900) {ret=-ENOLINK;goto done;}
+    struct message request;unsigned char buffer[MESSAGE_MAX];
+    ret=mgmt_register_message(&c,&request);if (!ret) ret=transmit(&c,&request);if (ret) goto done;
+    signal(SIGINT,on_signal);signal(SIGTERM,on_signal);
+    int64_t deadline=now_ms()+3000;
+    for (;;) {
+        ret=receive(&c,buffer,sizeof(buffer),deadline);if (ret<0) goto done;
+        ret=channel_ack(buffer,(size_t)ret,c.seq);if (ret) {if (ret<0) goto done;break;}
+    }
+    puts("{\"event\":\"awdl_mgmt_ready\",\"source\":\"nl80211_mgmt\",\"registration_acknowledged\":true,\"firmware_full_rx_verified\":false}");fflush(stdout);
+    deadline=now_ms()+(int64_t)seconds*1000;ret=0;
+    while (!interrupted && stats.parsed<limit) {
+        int n=receive(&c,buffer,sizeof(buffer),deadline);
+        if (n==-ETIMEDOUT || (n==-EINTR && interrupted)) break;
+        if (n<0) {ret=n;break;}
+        ret=mgmt_rx_datagram(&c,buffer,(size_t)n,&stats,true);if (ret) break;
+    }
+done:
+    /* Closing the socket removes only this socket's cfg80211 registration. */
+    if (c.fd>=0) close(c.fd);
+    print_awdl_candidate_stats(&stats.detail);
+    printf("{\"event\":\"awdl_mgmt_rx_summary\",\"events\":%u,\"parsed\":%u,\"over_256\":%u,\"max_frame_bytes\":%u,\"malformed\":%u,\"unsupported\":%u,\"ignored\":%u,\"error\":%d,\"airdrop_verified\":false}\n",
+           stats.events,stats.parsed,stats.over_256,stats.max_bytes,stats.malformed,stats.unsupported,stats.ignored,ret);
+    if (ret) fprintf(stderr,"AWDL mgmt receive: %s (%d); no monitor fallback or retry\n",strerror(-ret),-ret);
+    return ret?1:0;
+}
+
 static int awdl_main(int argc,char **argv,bool live) {
     const char *dev=NULL,*file=NULL;bool radiotap=false;unsigned seconds=60,limit=10;
     for (int i=2;i<argc;i++) {
@@ -908,7 +1011,7 @@ static int awdl_main(int argc,char **argv,bool live) {
         size_t n=fread(frame,1,sizeof(frame),f);bool bad=ferror(f) || !feof(f);fclose(f);
         if (bad || (radiotap && strip_radiotap(frame,&n))) return 1;
         int found=inspect_awdl(frame,n,&observation);
-        if (found==1) {print_awdl(&observation,false);return 0;}
+        if (found==1) {print_awdl(&observation,"offline_file");return 0;}
         fprintf(stderr,"AWDL inspect: %s\n",found<0?"malformed or unsupported AWDL candidate":"not compatible AWDL Action");return 1;
     }
     if (strlen(dev)>=IFNAMSIZ) return 2;
@@ -940,7 +1043,7 @@ static int awdl_main(int argc,char **argv,bool live) {
         }
         enum awdl_rx_reason reason=awdl_classify_rx(&from,size,index,frame,(size_t)n,sizeof(frame),&observation,&stats);
         stats.reasons[reason]++;
-        if (reason==RX_OBSERVED) {observed++;print_awdl(&observation,true);}
+        if (reason==RX_OBSERVED) {observed++;print_awdl(&observation,"monitor_rx");}
         else if (reason==RX_UNSUPPORTED_AWDL) unsupported++;
         else if (reason==RX_PACKET_TRUNCATED || reason==RX_RADIOTAP_ERROR ||
                  reason==RX_SHORT_FRAME || reason==RX_BAD_FRAME_VERSION || reason==RX_BAD_AWDL) malformed++;
@@ -954,7 +1057,8 @@ static int awdl_main(int argc,char **argv,bool live) {
 }
 
 static void usage(void) {
-    puts("action-tx awdl-listen --dev wonder0 [--seconds 60] [--max-frames 10] (read-only; requires configured RX)\n"
+    puts("action-tx awdl-mgmt-listen --dev wlan0 [--seconds 60] [--max-frames 10] (experimental patched WLAN mgmt RX)\n"
+         "action-tx awdl-listen --dev wonder0 [--seconds 60] [--max-frames 10] (read-only; requires configured RX)\n"
          "action-tx awdl-inspect --frame FILE [--radiotap] (offline format check only)\n"
          "action-tx vendor-action-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] (requires patched WLAN mishare_action_tx=1)\n"
          "action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
@@ -975,6 +1079,7 @@ static void usage(void) {
 }
 #ifndef ACTION_TX_TEST
 int main(int argc,char **argv) {
+    if (argc>1 && !strcmp(argv[1],"awdl-mgmt-listen")) return awdl_mgmt_main(argc,argv);
     if (argc>1 && (!strcmp(argv[1],"awdl-listen") || !strcmp(argv[1],"awdl-inspect")))
         return awdl_main(argc,argv,!strcmp(argv[1],"awdl-listen"));
     if (argc>1 && (!strcmp(argv[1],"capture-status") || !strcmp(argv[1],"capture-start")))

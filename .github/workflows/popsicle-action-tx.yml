@@ -7,6 +7,8 @@ on:
       - .github/workflows/popsicle-action-tx.yml
       - native/wireless/action_tx.c
       - tests/test_action_tx.c
+      - tests/test_mgmt_rx_runner.py
+      - tools/device/popsicle-mgmt-rx-test.sh
       - tests/test_awdl_rx_runner.py
       - tools/device/popsicle-awdl-rx-test.sh
       - tests/test_vendor_feedback_runner.py
@@ -39,6 +41,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_popsicle_session.py'
           python3 -m unittest discover -s tests -p 'test_vendor_feedback_runner.py'
           python3 -m unittest discover -s tests -p 'test_awdl_rx_runner.py'
+          python3 -m unittest discover -s tests -p 'test_mgmt_rx_runner.py'
+          sh -n tools/device/popsicle-mgmt-rx-test.sh
           sh -n tools/device/popsicle-awdl-rx-test.sh
           sh -n tools/device/popsicle-vendor-feedback-test.sh
           sh -n tools/device/popsicle-session.sh
@@ -72,6 +76,7 @@ jobs:
           "$ndk_bin/aarch64-linux-android31-clang" -std=c11 -Wall -Wextra -Werror -O2 -fPIE -pie -fstack-protector-strong -D_FORTIFY_SOURCE=2 native/wireless/action_tx.c -o out/action-tx
           "$ndk_bin/llvm-strip" out/action-tx
           "$ndk_bin/llvm-readelf" -h out/action-tx > out/elf-header.txt
+          cp tools/device/popsicle-mgmt-rx-test.sh out/
           cp tools/device/popsicle-awdl-rx-test.sh out/
           cp tools/device/popsicle-vendor-feedback-test.sh out/
           cp tools/device/popsicle-session.sh tools/device/popsicle-rx-start.sh out/
@@ -89,6 +94,7 @@ jobs:
             out/action-tx
             out/build.json
             out/elf-header.txt
+            out/popsicle-mgmt-rx-test.sh
             out/popsicle-awdl-rx-test.sh
             out/popsicle-vendor-feedback-test.sh
             out/popsicle-session.sh

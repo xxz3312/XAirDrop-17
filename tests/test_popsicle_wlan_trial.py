@@ -51,7 +51,12 @@ elif cmd=='insmod':
  if new and s.get('load_fail'):sys.exit(1)
  if not new and s.get('restore_fail'):sys.exit(1)
  if new:assert (r/'sys/module/opairshare_wonder_provider').is_dir()
- if new:assert a[1:]==['mishare_action_tx=1','mishare_raw_tx=0']
+ if new:
+  assert a[1:3]==['mishare_action_tx=1','mishare_raw_tx=0']
+  if len(a)>3:
+   assert a[3:]==['mishare_mgmt_rx=1']
+   s['mgmt_rx']=True;save()
+   p=r/'sys/module/qca_cld3_peach_v2/parameters';p.mkdir(parents=True,exist_ok=True);(p/'mishare_mgmt_rx').write_text('Y\n')
  module(new)
 else: raise AssertionError(cmd)
 '''
@@ -96,6 +101,12 @@ class TrialTest(unittest.TestCase):
                                 capture_output=True, text=True, timeout=20)
         self.state = json.loads((self.root/'model.json').read_text())
         return result
+
+    def test_mgmt_rx_requires_explicit_action(self):
+        r=self.run_trial('run-mgmt-rx')
+        self.assertEqual(r.returncode,0,r.stdout+r.stderr)
+        self.assertTrue(self.state.get('mgmt_rx'))
+        self.assertEqual(self.run_trial('restore').returncode,0)
 
     def test_check_does_not_touch_wifi_or_driver(self):
         r = self.run_trial('check')
