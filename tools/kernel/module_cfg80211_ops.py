@@ -99,6 +99,19 @@ def check_table(table, relocations):
             'limitations': 'Not full cfg80211 ABI, function prototype, KCFI or RF certification.'}
 
 
+CONTROL_SYMBOLS = {'wlan_hdd_state_fops', 'wlan_hdd_state_ctrl_param_open',
+                   'wlan_hdd_state_ctrl_param_write', 'wlan_hdd_state_ctrl_param_release'}
+
+
+def check_control_symbols(names):
+    missing = CONTROL_SYMBOLS - set(names)
+    if missing:
+        raise ValueError('Missing Android /dev/wlan control implementation: ' + ', '.join(sorted(missing)))
+    return {'status': 'CONTROL_IMPLEMENTATION_PRESENT_ONLY',
+            'symbols': sorted(CONTROL_SYMBOLS),
+            'limitations': 'Symbol presence does not prove device-node creation, HAL compatibility or Wi-Fi enable.'}
+
+
 def audit(path):
     inspect(path)
     data, sections = load(path)
@@ -143,6 +156,7 @@ def audit(path):
     wrong = b'wlan/qca_cld/qca_cld3_peach_v2/WCNSS_qcom_cfg.ini\0'
     if good not in data or wrong in data:
         raise ValueError('Wrong target INI prefix')
+    report['android_wlan_control'] = check_control_symbols(s[0] for s in syms)
     report.update(wlan_sha256=hashlib.sha256(Path(path).read_bytes()).hexdigest(),
                   ini_prefix='wlan/qca_cld/peach_v2/')
     return report

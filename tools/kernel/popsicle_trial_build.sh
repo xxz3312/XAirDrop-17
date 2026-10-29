@@ -108,8 +108,9 @@ fi
 }
 # Stock external cfg80211 has TESTMODE slots even though the GKI .config
 # disables CFG80211. Preserve the vendor callback ABI without enabling FTM.
+# Android HAL needs /dev/wlan; Kbuild reads WLAN_CTRL_NAME, not CONFIG_WLAN_CTRL_NAME.
 make "${make_args[@]}" "-j$jobs" \
-  "M=$wlan/qcacld-3.0" MODNAME=qca_cld3_peach_v2 CHIP_NAME=peach_v2 \
+  "M=$wlan/qcacld-3.0" MODNAME=qca_cld3_peach_v2 CHIP_NAME=peach_v2 WLAN_CTRL_NAME=wlan \
   "WLAN_ROOT=$wlan/qcacld-3.0" CONFIG_QCA_CLD_WLAN=m \
   CONFIG_QCA_CLD_WLAN_PROFILE=canoe_gki_peach-v2 \
   CONFIG_IPA_OUT_OF_TREE=y \

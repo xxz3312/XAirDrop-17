@@ -1,5 +1,5 @@
 import unittest
-from module_cfg80211_ops import EXPECTED, check_table
+from module_cfg80211_ops import EXPECTED, check_table, CONTROL_SYMBOLS, check_control_symbols
 
 
 class Cfg80211OpsTest(unittest.TestCase):
@@ -31,3 +31,17 @@ class Cfg80211OpsTest(unittest.TestCase):
         table[0x298] = 1
         with self.assertRaises(ValueError):
             check_table(table, EXPECTED)
+
+
+class WlanControlTest(unittest.TestCase):
+    def test_control_present(self):
+        self.assertEqual(check_control_symbols(CONTROL_SYMBOLS)['status'], 'CONTROL_IMPLEMENTATION_PRESENT_ONLY')
+
+    def test_0048_missing_control_rejected(self):
+        with self.assertRaisesRegex(ValueError, '/dev/wlan'):
+            check_control_symbols(set())
+
+    def test_each_control_callback_required(self):
+        for name in CONTROL_SYMBOLS:
+            with self.subTest(name=name), self.assertRaises(ValueError):
+                check_control_symbols(CONTROL_SYMBOLS - {name})

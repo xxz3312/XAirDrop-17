@@ -1,0 +1,20 @@
+{
+  "phone_0048": {
+    "module_loaded": true,
+    "wlan0_created": true,
+    "correct_ini_loaded": true,
+    "firmware_ready_event_received": true,
+    "cfg80211_allocator_warning_observed": false,
+    "framework_wifi_enabled": false,
+    "automatic_stock_restore": true
+  },
+  "source_evidence": {
+    "profile": "qcacld-3.0/configs/canoe_gki_peach-v2_defconfig CONFIG_WLAN_CTRL_NAME=\"wlan\"",
+    "kbuild": "qcacld-3.0/Kbuild only converts WLAN_CTRL_NAME make variable into a C define",
+    "conditional": "wlan_hdd_main.c guards character device state control implementation with #ifdef WLAN_CTRL_NAME",
+    "stock_log": "wlan_hdd_state wlan major: 446 minor: 0 initialized; framework writes Wifi Turning On from UI",
+    "old_elf": "0048 lacks wlan_hdd_state_fops and its open/write/release callbacks"
+  },
+  "fix": "Pass WLAN_CTRL_NAME=wlan; audit actual linked control symbols in addition to cfg80211 table",
+  "limitations": "HAL logcat has not been collected; missing control is a confirmed build omission, not proof it is the only remaining reason Wi-Fi enable fails."
+}
