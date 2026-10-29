@@ -557,6 +557,84 @@ static int number(const char *s,unsigned min,unsigned max,unsigned *out) {
     if (errno || !*s || *end || value<min || value>max) return -EINVAL;
     *out=(unsigned)value;return 0;
 }
+#define QCA_CAPTURE_VENDOR 0x001374U
+#define QCA_CAPTURE_SET 202U
+#define QCA_CAPTURE_GET 225U
+static int capture_message(struct client *c,struct message *m,bool start) {
+    unsigned vendor=QCA_CAPTURE_VENDOR,command=start?QCA_CAPTURE_SET:QCA_CAPTURE_GET;
+    struct message payload={0};unsigned all=1;
+    /* QCA's policy is structured: the OUTER VENDOR_DATA attribute needs
+     * NLA_F_NESTED. Adding an inner wrapper to an iw raw payload is wrong. */
+    int ret=0;
+    if (start) {
+        ret=add_attr(&payload,2,&all,4); /* DATA_RX_FRAME_TYPE_ALL */
+        if (!ret) ret=add_attr(&payload,4,&all,4); /* MGMT_RX_FRAME_TYPE_ALL */
+    }
+    if (ret) return ret;
+    begin(m,c->family,NL80211_CMD_VENDOR,++c->seq);
+    ret=add_attr(m,NL80211_ATTR_IFINDEX,&c->ifindex,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_ID,&vendor,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_SUBCMD,&command,4);
+    if (!ret) ret=add_attr(m,NL80211_ATTR_VENDOR_DATA|(start?NLA_F_NESTED:0),payload.data,payload.n);
+    return ret;
+}
+static int capture_result(struct bytes reply,bool *running) {
+    struct bytes data,state;
+    if (attr(reply,NL80211_ATTR_VENDOR_DATA,&data)!=1 ||
+        attr(data,1,&state)!=1 || state.n!=4 || u32(state.p)>1) return -EBADMSG;
+    *running=u32(state.p)==1;return 0;
+}
+static int capture_query(struct client *c,bool *running) {
+    struct message m;unsigned char buffer[MESSAGE_MAX];struct bytes reply;
+    int ret=capture_message(c,&m,false);if (ret) return ret;
+    ret=request(c,&m,NL80211_CMD_VENDOR,buffer,&reply,3000);
+    return ret?ret:capture_result(reply,running);
+}
+static int capture_set(struct client *c) {
+    struct message m;unsigned char buffer[MESSAGE_MAX];
+    int ret=capture_message(c,&m,true);if (ret) return ret;
+    ret=transmit(c,&m);if (ret) return ret;
+    int64_t deadline=now_ms()+3000;
+    for (;;) {
+        ret=receive(c,buffer,sizeof(buffer),deadline);if (ret<0) return ret;
+        ret=channel_ack(buffer,(size_t)ret,c->seq);if (ret) return ret==1?0:ret;
+    }
+}
+static int capture_main(int argc,char **argv,bool start) {
+    const char *dev=NULL;bool require_running=false;
+    for (int i=2;i<argc;i++) {
+        if (!strcmp(argv[i],"--dev") && i+1<argc && !dev) dev=argv[++i];
+        else if (!strcmp(argv[i],"--require-running") && !start) require_running=true;
+        else return 2;
+    }
+    if (!dev || !*dev || strlen(dev)>=IFNAMSIZ || strchr(dev,'/')) return 2;
+    struct client c={.fd=-1};struct ifreq r={0};bool running=false;
+    int ret=connect_nl(&c);if (ret) goto done;
+    c.ifindex=if_nametoindex(dev);if (!c.ifindex) {ret=-ENODEV;goto done;}
+    int fd=socket(AF_INET,SOCK_DGRAM|SOCK_CLOEXEC,0);if (fd<0) {ret=-errno;goto done;}
+    memcpy(r.ifr_name,dev,strlen(dev)+1);
+    if (ioctl(fd,SIOCGIFFLAGS,&r)) ret=-errno;
+    else if (!(r.ifr_flags&IFF_UP)) ret=-ENETDOWN;
+    close(fd);if (ret) goto done;
+    if (start) {
+        struct channel_interface info;
+        ret=query_channel(&c,c.ifindex,&info);if (ret) goto done;
+        if (info.type!=NL80211_IFTYPE_MONITOR) {ret=-EOPNOTSUPP;goto done;}
+    }
+    ret=capture_query(&c,&running);if (ret) goto done;
+    if (start) {
+        if (running) {ret=-EALREADY;goto done;} /* Never reconfigure someone else's capture. */
+        ret=capture_set(&c);if (ret) goto done;
+        puts("{\"event\":\"capture_config_accepted\",\"rx_verified\":false}");fflush(stdout);
+        ret=capture_query(&c,&running);if (ret) goto done;
+    }
+    printf("{\"event\":\"capture_status\",\"running\":%s}\n",running?"true":"false");
+    if ((start || require_running) && !running) ret=-EAGAIN;
+done:
+    if (c.fd>=0) close(c.fd);
+    if (ret) fprintf(stderr,"QCA capture: %s (%d); no retry or channel change performed\n",strerror(-ret),-ret);
+    return ret?1:0;
+}
 static int injection_packet(unsigned char *out,size_t capacity,unsigned char *frame,size_t length,
                              const unsigned char *mac,bool rewrite) {
     if (length>FRAME_MAX || capacity<length+8) return -EMSGSIZE;
@@ -594,6 +672,8 @@ done:
 }
 static void usage(void) {
     puts("action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
+         "action-tx capture-status --dev wlan0 [--require-running]\n"
+         "action-tx capture-start --dev misharemon0 (explicit QCA local RX capture; stop by bringing down its monitor)\n"
          "action-tx raw-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source]\n"
          "action-tx raw-relay --listen wonder0 --dev wlan0 --freq MHz [--rewrite-source] [--max-frames 1]\n"
          "RAW modes require patched WLAN loaded with mishare_raw_tx=1.\n"
@@ -607,6 +687,8 @@ static void usage(void) {
 }
 #ifndef ACTION_TX_TEST
 int main(int argc,char **argv) {
+    if (argc>1 && (!strcmp(argv[1],"capture-status") || !strcmp(argv[1],"capture-start")))
+        return capture_main(argc,argv,!strcmp(argv[1],"capture-start"));
     const char *mode=argc>1?argv[1]:"",*dev=NULL,*listen_dev=NULL,*file=NULL,*monitor=NULL;
     bool radiotap=false,rewrite=false,follow=false,feedback=false;unsigned freq=0,timeout=3000,limit=1,seconds=30;
     if (!strcmp(mode,"--help") || !strcmp(mode,"help")) {usage();return 0;}

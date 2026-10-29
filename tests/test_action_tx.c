@@ -81,6 +81,31 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
 }
 int main(void) {
     channel_tests();
+    struct client capture_client={.family=25,.ifindex=34};struct message capture;
+    assert(!capture_message(&capture_client,&capture,true));
+    struct bytes capture_attrs={capture.data+NLMSG_HDRLEN+GENL_HDRLEN,capture.n-NLMSG_HDRLEN-GENL_HDRLEN};
+    struct bytes data_rx,mgmt_rx,vendor_data,capture_cmd;
+    assert(attr(capture_attrs,NL80211_ATTR_VENDOR_SUBCMD,&capture_cmd)==1 && u32(capture_cmd.p)==202);
+    assert(attr(capture_attrs,NL80211_ATTR_VENDOR_DATA,&vendor_data)==1 && vendor_data.n==16);
+    /* This is the flag rejected by the actual phone kernel when iw omitted it. */
+    assert(u16(vendor_data.p-2)==(NL80211_ATTR_VENDOR_DATA|NLA_F_NESTED));
+    assert(attr(vendor_data,2,&data_rx)==1 && data_rx.n==4 && u32(data_rx.p)==1);
+    assert(attr(vendor_data,4,&mgmt_rx)==1 && mgmt_rx.n==4 && u32(mgmt_rx.p)==1);
+    assert(!capture_message(&capture_client,&capture,false));
+    capture_attrs=(struct bytes){capture.data+NLMSG_HDRLEN+GENL_HDRLEN,capture.n-NLMSG_HDRLEN-GENL_HDRLEN};
+    assert(attr(capture_attrs,NL80211_ATTR_VENDOR_DATA,&vendor_data)==1 && !vendor_data.n);
+    assert(u16(vendor_data.p-2)==NL80211_ATTR_VENDOR_DATA);
+    assert(attr(capture_attrs,NL80211_ATTR_VENDOR_SUBCMD,&capture_cmd)==1 && u32(capture_cmd.p)==225);
+    struct message state={0},response={0};unsigned state_value=0;bool capture_on=true;
+    assert(!add_attr(&state,1,&state_value,4));assert(!add_attr(&response,NL80211_ATTR_VENDOR_DATA,state.data,state.n));
+    assert(!capture_result((struct bytes){response.data,response.n},&capture_on) && !capture_on);
+    state_value=1;state=(struct message){0};response=(struct message){0};
+    assert(!add_attr(&state,1,&state_value,4));assert(!add_attr(&response,NL80211_ATTR_VENDOR_DATA,state.data,state.n));
+    assert(!capture_result((struct bytes){response.data,response.n},&capture_on) && capture_on);
+    assert(capture_result((struct bytes){response.data,response.n-1},&capture_on)==-EBADMSG);
+    state_value=2;state=(struct message){0};response=(struct message){0};
+    assert(!add_attr(&state,1,&state_value,4));assert(!add_attr(&response,NL80211_ATTR_VENDOR_DATA,state.data,state.n));
+    assert(capture_result((struct bytes){response.data,response.n},&capture_on)==-EBADMSG);
     unsigned char payload[WONDER_FB_HEADER+25]={0},copy[WONDER_FB_MAX];
     uint64_t owner=0x1122334455667788ULL,token=0;size_t frame_length=0;
     wonder_fb_put(payload,WONDER_FB_VERSION);wonder_fb_put(payload+4,25);
