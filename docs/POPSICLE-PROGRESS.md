@@ -1,6 +1,6 @@
 ## 最新阶段 0053
 
-新增只读 AWDL Action 接收识别与离线解析、单终端 LPC/Wonder 采集控制器；识别 Apple OUI、PSF/MIF 和有界 TLV 链。不是 AWDL 同步/选举或 Apple 互传；本阶段 CI/实机证据分别记录。见 [0053 使用步骤](POPSICLE-AWDL-RX-0053.md)。
+新增只读 AWDL Action 接收识别与离线解析、单终端 LPC/Wonder 采集控制器；识别 Apple OUI、PSF/MIF 和有界 TLV 链。不是 AWDL 同步/选举或 Apple 互传；CI 40905959155 已通过：16 项会话、6 组 TX controller、4 组 RX controller、AWDL/协议/反馈/RAW 模型和 Android 编译。0053 实机观察待测。见 [0053 使用步骤](POPSICLE-AWDL-RX-0053.md)。
 
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-29）
 
