@@ -1,4 +1,4 @@
-# 0058 package input: rebuild tool alongside MAC teardown fix.
+# 0059 package input: rebuild tool with the diagnostic observation controller.
 name: Popsicle native TX bridge
 on:
   workflow_dispatch:

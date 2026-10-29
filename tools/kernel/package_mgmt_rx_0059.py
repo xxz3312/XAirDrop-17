@@ -27,10 +27,10 @@ for name in ['qca_cld3_peach_v2.ko','opairshare_wonder_provider.ko']:
         subprocess.run([str(ndk/'llvm-objcopy'),'--dump-section',section+'='+str(after),str(p/'kernel'/name)],check=True)
         assert before.read_bytes()==after.read_bytes()
 info=subprocess.check_output([str(ndk/'llvm-readelf'),'-p','.modinfo',str(p/'kernel/qca_cld3_peach_v2.ko')],text=True)
-assert 'parm=mishare_mgmt_rx_diag:' in info and 'parm=mishare_mgmt_rx:' in info and 'name=qca_cld3_peach_v2' in info
+assert 'parm=mishare_mgmt_rx:' in info and 'name=qca_cld3_peach_v2' in info
 Path('out/module-info.txt').write_text(info)
 symbols=subprocess.check_output([str(ndk/'llvm-nm'),'--defined-only',str(p/'kernel/qca_cld3_peach_v2.ko')],text=True)
-for name in ['mishare_mgmt_rx_register','mishare_mgmt_rx_unregister','mishare_mgmt_rx_route']:
+for name in ['mishare_mgmt_rx_register','mishare_mgmt_rx_unregister','mishare_mgmt_rx_route','mishare_mgmt_diag_count','mishare_mgmt_diag_frame','mishare_mgmt_diag_registration']:
     assert any(line.endswith(' T '+name) for line in symbols.splitlines())
 for name in ['popsicle-wlan-trial.sh','popsicle-mgmt-rx-test.sh']:
     shutil.copy2('tools/device/'+name,p/name)

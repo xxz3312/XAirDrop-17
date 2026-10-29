@@ -1,3 +1,4 @@
+# Verify diagnostic functions in the linked module.
 name: Popsicle full management RX trial 0059
 on:
   workflow_dispatch:
