@@ -1,0 +1,21 @@
+{
+  "status": "CONTROLLER_CI_PASS_PHONE_PENDING",
+  "source_commit": "7c37068ecb5872d491559932039d35a9e4cc7660",
+  "ci_run": 40898427028,
+  "ci_job": 123533801019,
+  "ci_conclusion": "success",
+  "command_model_tests": 6,
+  "existing_session_tests": 16,
+  "protocol_and_feedback_sanitizers": "pass",
+  "android_build": "pass",
+  "reused_tool_run": 40890855957,
+  "reused_wonder_run": 40861769292,
+  "phone_executed": false,
+  "awdl_verified": false,
+  "package": {
+    "name": "XAirDrop-17-Vendor-Feedback-0052.zip",
+    "bytes": 2681155,
+    "sha256": "df7e16521b9257d694660115fd30e72072b1fb5270be8cdd3dca4269369fb397"
+  },
+  "scope": "One experimental broadcast after relay readiness; native completion maps to NOACK; owned teardown; WLAN switching remains manual"
+}
