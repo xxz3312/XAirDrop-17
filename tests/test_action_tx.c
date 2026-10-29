@@ -81,6 +81,35 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
 }
 int main(void) {
     channel_tests();
+    /* Kernel vendor replies append raw bytes and may omit final padding at
+     * both attribute and netlink-message levels. Exercise every residue. */
+    for (unsigned length=49;length<=52;length++) {
+        unsigned char wire[WONDER_FB_HEADER+52]={0},frame[WONDER_FB_MAX];
+        uint64_t owner=0x123456789ULL,token=0;size_t copied=0;
+        wonder_fb_put(wire,WONDER_FB_VERSION);wonder_fb_put(wire+4,length);
+        fbput64(wire+8,owner);fbput64(wire+16,7);action(wire+WONDER_FB_HEADER);
+        struct client c={.family=25,.seq=7};struct message m;struct bytes reply,payload;
+        begin(&m,25,NL80211_CMD_VENDOR,7);
+        assert(!add_attr(&m,NL80211_ATTR_VENDOR_DATA,wire,WONDER_FB_HEADER+length));
+        size_t padding=(4-length%4)%4;
+        ((struct nlmsghdr *)(void *)m.data)->nlmsg_len=(uint32_t)m.n;
+        assert(consume(&c,m.data,m.n,NL80211_CMD_VENDOR,&reply)==1);
+        assert(attr(reply,NL80211_ATTR_VENDOR_DATA,&payload)==1);
+        assert(!feedback_packet(payload,owner,&token,frame,&copied) && copied==length && token==7);
+        m.n-=padding;
+        ((struct nlmsghdr *)(void *)m.data)->nlmsg_len=(uint32_t)m.n;
+        assert(consume(&c,m.data,m.n,NL80211_CMD_VENDOR,&reply)==1);
+        assert(attr(reply,NL80211_ATTR_VENDOR_DATA,&payload)==1);
+        assert(!feedback_packet(payload,owner,&token,frame,&copied) && copied==length);
+        assert(!memcmp(frame,wire+WONDER_FB_HEADER,length));
+        assert(attr((struct bytes){reply.p,reply.n-1},NL80211_ATTR_VENDOR_DATA,&payload)==-EBADMSG);
+        assert(consume(&c,m.data,m.n-1,NL80211_CMD_VENDOR,&reply)==-EBADMSG);
+        if (padding>1) {
+            assert(consume(&c,m.data,m.n+1,NL80211_CMD_VENDOR,&reply)==-EBADMSG);
+            struct bytes attrs={m.data+NLMSG_HDRLEN+GENL_HDRLEN,m.n-NLMSG_HDRLEN-GENL_HDRLEN+1};
+            assert(attr(attrs,NL80211_ATTR_VENDOR_DATA,&payload)==-EBADMSG);
+        }
+    }
     struct client capture_client={.family=25,.ifindex=34};struct message capture;
     assert(!capture_message(&capture_client,&capture,true));
     struct bytes capture_attrs={capture.data+NLMSG_HDRLEN+GENL_HDRLEN,capture.n-NLMSG_HDRLEN-GENL_HDRLEN};

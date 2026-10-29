@@ -81,12 +81,19 @@ static int attr(struct bytes attrs,unsigned type,struct bytes *found) {
     while (attrs.n) {
         if (attrs.n<sizeof(struct nlattr)) return -EBADMSG;
         unsigned len=u16(attrs.p),kind=u16(attrs.p+2)&NLA_TYPE_MASK;
-        if (len<sizeof(struct nlattr) || len>attrs.n || align4(len)>attrs.n) return -EBADMSG;
+        if (len<sizeof(struct nlattr) || len>attrs.n) return -EBADMSG;
+        /* A final raw vendor attribute may end exactly at nla_len, without
+         * tail padding. Padding is still required before another attribute. */
+        size_t step=align4(len);
+        if (step>attrs.n) {
+            if (len!=attrs.n) return -EBADMSG;
+            step=len;
+        }
         if (kind==type) {
             if (have) return -EBADMSG;
             *found=(struct bytes){attrs.p+4,len-4};have=true;
         }
-        attrs.p+=align4(len);attrs.n-=align4(len);
+        attrs.p+=step;attrs.n-=step;
     }
     return have?1:0;
 }
@@ -153,7 +160,12 @@ static int consume(struct client *c,const unsigned char *data,size_t len,unsigne
     while (len) {
         if (len<NLMSG_HDRLEN) return -EBADMSG;
         struct nlmsghdr h;memcpy(&h,data,sizeof(h));
-        if (h.nlmsg_len<NLMSG_HDRLEN || h.nlmsg_len>len || align4(h.nlmsg_len)>len) return -EBADMSG;
+        if (h.nlmsg_len<NLMSG_HDRLEN || h.nlmsg_len>len) return -EBADMSG;
+        size_t step=align4(h.nlmsg_len);
+        if (step>len) {
+            if (h.nlmsg_len!=len) return -EBADMSG;
+            step=h.nlmsg_len;
+        }
         const unsigned char *body=data+NLMSG_HDRLEN;size_t n=h.nlmsg_len-NLMSG_HDRLEN;
         if (h.nlmsg_type==NLMSG_ERROR) {
             if (n<sizeof(struct nlmsgerr)) return -EBADMSG;
@@ -170,7 +182,7 @@ static int consume(struct client *c,const unsigned char *data,size_t len,unsigne
                 *reply=attrs;found=true;
             }
         }
-        size_t step=align4(h.nlmsg_len);data+=step;len-=step;
+        data+=step;len-=step;
     }
     return found?1:0;
 }
