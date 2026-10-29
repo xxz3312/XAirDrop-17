@@ -21,7 +21,7 @@
 | START/host-only UP/STOP/DOWN | 离线构建/模型验证通过 | owned controller 接入专用 MLME 回调、真实响应与 PM 清理；accepted DOWN + INIT 后才删资源；完整原生 SM/WMA 运行及固件未实测，默认调用门关闭 |
 | 动态换频与并发硬件模式 | 原生频道跟随首版已实现 | 新增 opt-in STA home channel 跟随、同 PHY monitor 同步与旧帧排空；AWDL 时间槽跳频、硬件模式/DBS 和原子频道预留仍待实现 |
 | RAW TX | DATA 首版已实现，待固件 | Action 帧工具已具备；新增 opt-in WMI RAW DATA vendor 入口与 raw-send/raw-relay，限同频道非 MLO STA、已有 peer、6Mbps/20MHz；新增 opt-in 原始 skb/token 完成桥；独立 NDI 待接入 |
-| Monitor/native RAW RX | 接收模式已实现，待实机 | 新增 external_monitor=1 借用原生 monitor，真实 RX 桥接、软件帧过滤、计数和启动脚本；完成编译链接，手机收包与 native RAW/peer/BA 尚待验证 |
+| Monitor/native RAW RX | 模块加载/桥接启动已实机确认，收包未通过 | 新增 external_monitor=1 借用原生 monitor，真实 RX 桥接、软件帧过滤、计数和启动脚本；完成编译链接，手机收包与 native RAW/peer/BA 尚待验证 |
 | 统一收发会话入口 | 首版已实现，待实机 | relay-all 单进程分派 Action/RAW；前台会话按需创建 monitor、核对频道、统一启动/清理；新增 --tx-feedback 选择原始帧完成桥；独立 NDI 初始化仍待接通 |
 | mac80211 发送状态回写 | 外部 monitor 路径首版已实现，待实机 | 原始 skb 有界队列、owner/token 匹配、完成/超时/退出处理；Action 明确 ACK 才回写 ACK，RAW 不推断单播 ACK；默认 full backend 旧路径未改 |
 | 纯 host 隔离回收 | 离线验证通过 | 限从未发送固件命令的 PAS/INIT 对象；记录被跟踪 MC 排空，等实际 final-free 再释放 owner；NDI/未知发送资源拒绝回收 |
@@ -83,3 +83,7 @@ RAW DATA 阶段提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。RAW DATA �
 0039 完整内核验证已完成：[Actions 40768050808](https://github.com/xxz3312/XAirDrop-17/actions/runs/40768050808) 通过 44 项 Python、26 组原生 fixture、WLAN/Wonder 编译与严格链接；Wonder 107 条版本记录、WLAN 575 条记录无不匹配/无缺版本依赖，85 个要求符号存在、7 项选定布局 MATCH。0039 工具最终验证源为 `1a1166b8816b151f36a4f6a7b464e70e1a43dc53`，与内核分别记录，不代表手机加载或固件认证。
 
 0040 已整理首轮手动实机包 `XAirDrop-17-Device-Trial-0040.zip`（2,656,084 字节），SHA-256 `fb1888dcf8fd5db4f36d5a5a779e863fb09d55e0dd2040e6a1c6ffcde7c4b008`。复用 0039 新 Wonder，新增仅限 Wonder PHY 的 Action 注入入口和实验广播测试帧；[Actions 40822824724](https://github.com/xxz3312/XAirDrop-17/actions/runs/40822824724) 通过 16 项会话模型、协议/频道/队列/RAW 模型和 Android 编译。包内无 WLAN 替换驱动、无自动安装，尚未上机；按加载/收包、原生 Action、token 回写分步测试。见 [首轮测试说明](POPSICLE-DEVICE-TRIAL-0040.md) 和 [打包证据](research/popsicle-device-trial-0040.json)。
+
+0040 首轮手机反馈：Wonder 成功加载、注册 PHY 并绑定原生 monitor RX handler；两次 RX 计数均为 0，尚未验证收包。STA 活动时标准 monitor 换频返回 EBUSY。QCA GET_MONITOR_MODE 已可查询，返回当时未运行；显式 SET 进一步出现 expected nested data，定位为 nl80211 外层嵌套格式拒绝，不是固件接收失败的证明。原始上传日志未提交到公共仓库。
+
+0041 提交 `6700e2b418e2e39dbc3eb1b8044a51117bdd4900`，新增 capture-start/status，修正 QCA SET 的 NLA_F_NESTED 标志，GET 保持 RAW；不再让用户用 iw raw 数据发送结构化 SET。[Actions 40827521911](https://github.com/xxz3312/XAirDrop-17/actions/runs/40827521911) 通过 16 项会话、协议/频道/队列/RAW 模型及 Android 编译。补丁仅含工具和源码，沿用 0040 Wonder，不替换 WLAN，不改频道；修正版实机效果待反馈。见 [使用说明](POPSICLE-LPC-FIX-0041.md) 与 [验证报告](research/popsicle-lpc-nested-fix-build-pass.json)。
