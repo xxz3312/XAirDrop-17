@@ -199,6 +199,15 @@ static rx_handler_result_t wonder_rx_monitor_handler(struct wonder_data *wonder,
 	struct sk_buff *skb = *pskb;
 
 	/*
+	 * External mode binds only to the selected ARPHRD_IEEE80211_RADIOTAP
+	 * netdev. Native monitor drivers need not assign ETH_P_802_2: use the
+	 * bound device's framing contract and validate radiotap/802.11 below.
+	 * Do not let an unrelated skb protocol value bypass RX validation.
+	 */
+	if (wonder_external_monitor)
+		return wonder_rx_80211_frame(wonder, skb);
+
+	/*
 	 *  It's expected the mac_header and protocol values will be filled in vendor's driver.
 	 *	skb_reset_mac_header(skb);
 	 *	skb->protocol = htons(ETH_P_802_2);
