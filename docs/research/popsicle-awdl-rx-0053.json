@@ -1,38 +1,24 @@
 {
-  "status": "AWDL_RX_OBSERVATION_CI_PASS_PHONE_PENDING",
+  "status": "DEVICE_RX_ACTIVE_NO_AWDL_OBSERVED",
   "source_commit": "ad86cecf8e77a67be28aafed6b4b95626ed0ec70",
   "ci_run": 40905959155,
-  "ci_job": 123560646906,
-  "artifact_id": 12911651526,
-  "artifact_sha256": "a38d70c5e449c962a417da79cb298396deb376730329b3fecdecc610b0803026",
-  "ci_conclusion": "success",
-  "test_groups": {
-    "session": 16,
-    "vendor_controller": 6,
-    "rx_controller": 4,
-    "awdl_parser": "AWDL_OBSERVATION_MODEL_PASS_ONLY",
-    "protocol_feedback_raw_sanitizers": "pass"
+  "device": {
+    "frequency_mhz_at_setup": 5240,
+    "duration_seconds_approx": 60,
+    "wonder_rx_frames": 1043,
+    "wonder_rx_invalid": 0,
+    "listener_packets": 1043,
+    "observed": 0,
+    "ignored": 1043,
+    "malformed": 0,
+    "unsupported": 0,
+    "error": 0,
+    "exit": 0,
+    "wonder_unloaded": true,
+    "monitor_deleted": true
   },
-  "binary": {
-    "bytes": 35288,
-    "sha256": "a5cd7f7113b7b18d87f86940834552ccad690d9f20f3cd1749b7ba0183d52ce0"
-  },
-  "package": {
-    "name": "XAirDrop-17-AWDL-RX-0053.zip",
-    "bytes": 2687839,
-    "sha256": "cfd2ac738f8f636402d1bc2423c2e1bfae5927488066074d6273752660eb0aef"
-  },
-  "phone_executed": false,
-  "peer_authenticated": false,
-  "awdl_sync_implemented": false,
-  "airdrop_verified": false,
-  "protocol_reference_tree": "seemoo-lab/owl 0ee3263f944ea721c355f826aa90d636d012a512",
-  "limits": [
-    "24-byte unprotected/unfragmented management Action only",
-    "version 1.0 PSF/MIF header and TLV bounds, not TLV value semantics",
-    "current STA channel only, no hopping",
-    "zero observed is not discovery success",
-    "packet-socket outgoing/loopback rejected, no peer authentication",
-    "no kernel changes or new WLAN binary"
-  ]
+  "interpretation": "RX chain active; 0053 combines origin and frame rejection in ignored, so cannot distinguish no matching frames from prefilter rejection",
+  "known_observation": "DP peer invalid state warning at monitor teardown; deletion completed; cause not established",
+  "raw_logs_published": false,
+  "airdrop_verified": false
 }

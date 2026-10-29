@@ -1,6 +1,10 @@
+## 最新阶段 0054
+
+0053 实机运行约 60 秒：Wonder RX=1043、invalid=0，监听 packets=1043、observed=0、ignored=1043，无解析/运行错误且正常清理。由于旧 ignored 合并了来源过滤和帧类型过滤，不能据此认定频道上没有 AWDL。0054 新增 16 类互斥过滤结果、帧类型/Action 分类与首包非身份元数据，并记录测试前后 STA 频道；仍只读、不换频、不认证 Apple 身份。见 [0054 测试说明](POPSICLE-AWDL-RX-0054.md)。
+
 ## 最新阶段 0053
 
-新增只读 AWDL Action 接收识别与离线解析、单终端 LPC/Wonder 采集控制器；识别 Apple OUI、PSF/MIF 和有界 TLV 链。不是 AWDL 同步/选举或 Apple 互传；CI 40905959155 已通过：16 项会话、6 组 TX controller、4 组 RX controller、AWDL/协议/反馈/RAW 模型和 Android 编译。0053 实机观察待测。见 [0053 使用步骤](POPSICLE-AWDL-RX-0053.md)。
+新增只读 AWDL Action 接收识别与离线解析、单终端 LPC/Wonder 采集控制器；识别 Apple OUI、PSF/MIF 和有界 TLV 链。不是 AWDL 同步/选举或 Apple 互传；本阶段 CI/实机证据分别记录。见 [0053 使用步骤](POPSICLE-AWDL-RX-0053.md)。
 
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-29）
 

@@ -765,6 +765,67 @@ static bool awdl_rx_origin(const struct sockaddr_ll *from,socklen_t size,unsigne
         (from->sll_pkttype==PACKET_HOST || from->sll_pkttype==PACKET_BROADCAST ||
          from->sll_pkttype==PACKET_MULTICAST || from->sll_pkttype==PACKET_OTHERHOST);
 }
+enum awdl_rx_reason {
+    RX_OBSERVED,RX_SHORT_ADDRESS,RX_WRONG_INTERFACE,RX_WRONG_HARDWARE,
+    RX_OUTGOING,RX_UNKNOWN_ORIGIN,RX_PACKET_TRUNCATED,RX_RADIOTAP_ERROR,
+    RX_TX_METADATA,RX_SHORT_FRAME,RX_BAD_FRAME_VERSION,RX_NON_ACTION,
+    RX_NON_VENDOR_ACTION,RX_NON_APPLE_VENDOR,RX_BAD_AWDL,RX_UNSUPPORTED_AWDL,
+    RX_REASON_MAX
+};
+static const char *const awdl_rx_reason_names[RX_REASON_MAX]={
+    "observed","short_address","wrong_interface","wrong_hardware",
+    "outgoing","unknown_origin","packet_truncated","radiotap_error",
+    "tx_metadata","short_frame","bad_frame_version","non_action",
+    "non_vendor_action","non_apple_vendor","bad_awdl","unsupported_awdl"
+};
+struct awdl_rx_stats {
+    unsigned reasons[RX_REASON_MAX];
+    unsigned types[4],mgmt_subtypes[16],public_actions,vendor_actions,other_actions;
+};
+/* Ordered first-failure accounting: each datagram has exactly one outcome.
+ * Frame-type counters overlap with outcomes and only cover decoded RX input. */
+static enum awdl_rx_reason awdl_classify_rx(const struct sockaddr_ll *from,socklen_t size,
+        unsigned index,unsigned char *frame,size_t n,size_t capacity,
+        struct awdl_observation *o,struct awdl_rx_stats *stats) {
+    *o=(struct awdl_observation){0};
+    if (size<sizeof(*from)) return RX_SHORT_ADDRESS;
+    if (from->sll_ifindex!=(int)index) return RX_WRONG_INTERFACE;
+    if (from->sll_hatype!=ARPHRD_IEEE80211_RADIOTAP) return RX_WRONG_HARDWARE;
+    if (from->sll_pkttype==PACKET_OUTGOING || from->sll_pkttype==PACKET_LOOPBACK) return RX_OUTGOING;
+    if (!awdl_rx_origin(from,size,index)) return RX_UNKNOWN_ORIGIN;
+    if (n>capacity) return RX_PACKET_TRUNCATED;
+    /* Native capture can deliver local TX metadata as an inbound packet.
+     * Radiotap TX_FLAGS (bit 15) identifies this separately from sll_pkttype. */
+    bool tx_metadata=n>=8 && (u32(frame+4)&(1U<<15));
+    if (strip_radiotap(frame,&n)) return RX_RADIOTAP_ERROR;
+    if (tx_metadata) return RX_TX_METADATA;
+    if (n<2) return RX_SHORT_FRAME;
+    if (frame[0]&3) return RX_BAD_FRAME_VERSION;
+    unsigned type=(frame[0]>>2)&3,subtype=frame[0]>>4;
+    stats->types[type]++;
+    if (type==0) stats->mgmt_subtypes[subtype]++;
+    if (frame[0]!=0xd0) return RX_NON_ACTION;
+    if (n<25) return RX_SHORT_FRAME;
+    if (frame[24]==4) stats->public_actions++;
+    else if (frame[24]==127) stats->vendor_actions++;
+    else stats->other_actions++;
+    if (frame[24]!=127) return RX_NON_VENDOR_ACTION;
+    if (n<28) return RX_SHORT_FRAME;
+    if (memcmp(frame+25,"\x00\x17\xf2",3)) return RX_NON_APPLE_VENDOR;
+    int ret=inspect_awdl(frame,n,o);
+    if (ret==1) return RX_OBSERVED;
+    return ret==-EPROTONOSUPPORT?RX_UNSUPPORTED_AWDL:RX_BAD_AWDL;
+}
+static void print_awdl_rx_stats(const struct awdl_rx_stats *s) {
+    printf("{\"event\":\"awdl_rx_filters\"");
+    for (unsigned i=0;i<RX_REASON_MAX;i++) printf(",\"%s\":%u",awdl_rx_reason_names[i],s->reasons[i]);
+    puts("}");
+    printf("{\"event\":\"awdl_rx_frame_types\",\"management\":%u,\"control\":%u,\"data\":%u,\"extension\":%u,\"public_actions\":%u,\"vendor_actions\":%u,\"other_actions\":%u,\"management_subtypes\":[",
+           s->types[0],s->types[1],s->types[2],s->types[3],s->public_actions,s->vendor_actions,s->other_actions);
+    for (unsigned i=0;i<16;i++) printf("%s%u",i?",":"",s->mgmt_subtypes[i]);
+    puts("]}");
+}
+
 static void print_awdl(const struct awdl_observation *o,bool live) {
     printf("{\"event\":\"awdl_action_observed\",\"source\":\"%s\",\"subtype\":%u,\"tlvs\":%u,\"sync_tlvs\":%u,\"channel_tlvs\":%u,\"election_tlvs\":%u,\"authenticated_peer\":false}\n",
            live?"monitor_rx":"offline_file",o->subtype,o->tlvs,o->sync,o->channels,o->election);
@@ -802,6 +863,7 @@ static int awdl_main(int argc,char **argv,bool live) {
     }
     signal(SIGINT,on_signal);signal(SIGTERM,on_signal);
     unsigned packets=0,observed=0,ignored=0,malformed=0,unsupported=0;int error=0;
+    struct awdl_rx_stats stats={0};
     int64_t deadline=now_ms()+(int64_t)seconds*1000;
     puts("{\"event\":\"awdl_listen_ready\",\"read_only\":true}");fflush(stdout);
     while (!interrupted && observed<limit) {
@@ -812,16 +874,21 @@ static int awdl_main(int argc,char **argv,bool live) {
         ssize_t n=recvfrom(fd,frame,sizeof(frame),MSG_TRUNC,(void *)&from,&size);
         if (n<0) {if (errno==EINTR) continue;error=-errno;break;}
         packets++;
-        if (!awdl_rx_origin(&from,size,index)) {ignored++;continue;}
-        size_t len=(size_t)n;
-        if (len>sizeof(frame) || strip_radiotap(frame,&len)) {malformed++;continue;}
-        ret=inspect_awdl(frame,len,&observation);
-        if (ret==1) {observed++;print_awdl(&observation,true);}
-        else if (ret==-EPROTONOSUPPORT) unsupported++;
-        else if (ret<0) malformed++;
+        if (packets==1) {
+            printf("{\"event\":\"awdl_rx_first_metadata\",\"address_bytes\":%u,\"hardware_type\":%u,\"packet_type\":%u,\"packet_bytes\":%zd,\"interface_matches\":%s}\n",
+                   (unsigned)size,from.sll_hatype,from.sll_pkttype,n,from.sll_ifindex==(int)index?"true":"false");
+            fflush(stdout);
+        }
+        enum awdl_rx_reason reason=awdl_classify_rx(&from,size,index,frame,(size_t)n,sizeof(frame),&observation,&stats);
+        stats.reasons[reason]++;
+        if (reason==RX_OBSERVED) {observed++;print_awdl(&observation,true);}
+        else if (reason==RX_UNSUPPORTED_AWDL) unsupported++;
+        else if (reason==RX_PACKET_TRUNCATED || reason==RX_RADIOTAP_ERROR ||
+                 reason==RX_SHORT_FRAME || reason==RX_BAD_FRAME_VERSION || reason==RX_BAD_AWDL) malformed++;
         else ignored++;
     }
     close(fd);
+    print_awdl_rx_stats(&stats);
     printf("{\"event\":\"awdl_rx_summary\",\"packets\":%u,\"observed\":%u,\"ignored\":%u,\"malformed\":%u,\"unsupported\":%u,\"error\":%d,\"airdrop_verified\":false}\n",
            packets,observed,ignored,malformed,unsupported,error);
     return error?1:0; /* observed=0 is a completed observation, not discovery success. */

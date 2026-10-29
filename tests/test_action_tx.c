@@ -161,7 +161,57 @@ static void awdl_observation_tests(void) {
     from.sll_hatype=ARPHRD_ETHER;assert(!awdl_rx_origin(&from,sizeof(from),5));
     puts("AWDL_OBSERVATION_MODEL_PASS_ONLY");
 }
+static void awdl_rx_accounting_tests(void) {
+    unsigned char f[84];struct awdl_observation o;struct awdl_rx_stats stats={0};
+    struct sockaddr_ll from;
+    unsigned seen[RX_REASON_MAX]={0},packets=0;
+#define RESET_RX() do { \
+    memset(f,0,sizeof(f));f[2]=8;f[8]=0xd0;f[32]=127;f[34]=0x17;f[35]=0xf2;f[36]=8;f[37]=0x10; \
+    from=(struct sockaddr_ll){.sll_ifindex=5,.sll_hatype=ARPHRD_IEEE80211_RADIOTAP,.sll_pkttype=PACKET_HOST}; \
+} while (0)
+#define CHECK_RX(size,n,capacity,want) do { \
+    enum awdl_rx_reason reason=awdl_classify_rx(&from,size,5,f,n,capacity,&o,&stats); \
+    assert(reason==(want));seen[reason]++;packets++; \
+} while (0)
+    RESET_RX();CHECK_RX(sizeof(from)-1,48,sizeof(f),RX_SHORT_ADDRESS);
+    RESET_RX();from.sll_ifindex=6;CHECK_RX(sizeof(from),48,sizeof(f),RX_WRONG_INTERFACE);
+    RESET_RX();from.sll_hatype=ARPHRD_ETHER;CHECK_RX(sizeof(from),48,sizeof(f),RX_WRONG_HARDWARE);
+    RESET_RX();from.sll_pkttype=PACKET_OUTGOING;CHECK_RX(sizeof(from),48,sizeof(f),RX_OUTGOING);
+    RESET_RX();from.sll_pkttype=PACKET_LOOPBACK;CHECK_RX(sizeof(from),48,sizeof(f),RX_OUTGOING);
+    RESET_RX();from.sll_pkttype=255;CHECK_RX(sizeof(from),48,sizeof(f),RX_UNKNOWN_ORIGIN);
+    RESET_RX();CHECK_RX(sizeof(from),85,sizeof(f),RX_PACKET_TRUNCATED);
+    RESET_RX();f[0]=1;CHECK_RX(sizeof(from),48,sizeof(f),RX_RADIOTAP_ERROR);
+    RESET_RX();f[5]=0x80;CHECK_RX(sizeof(from),48,sizeof(f),RX_TX_METADATA);
+    RESET_RX();CHECK_RX(sizeof(from),9,sizeof(f),RX_SHORT_FRAME);
+    RESET_RX();f[8]=0xd1;CHECK_RX(sizeof(from),48,sizeof(f),RX_BAD_FRAME_VERSION);
+    RESET_RX();f[8]=0x80;CHECK_RX(sizeof(from),48,sizeof(f),RX_NON_ACTION);
+    RESET_RX();f[8]=0x08;CHECK_RX(sizeof(from),48,sizeof(f),RX_NON_ACTION);
+    RESET_RX();f[8]=0x04;CHECK_RX(sizeof(from),48,sizeof(f),RX_NON_ACTION);
+    RESET_RX();f[32]=4;CHECK_RX(sizeof(from),48,sizeof(f),RX_NON_VENDOR_ACTION);
+    RESET_RX();f[32]=3;CHECK_RX(sizeof(from),48,sizeof(f),RX_NON_VENDOR_ACTION);
+    RESET_RX();CHECK_RX(sizeof(from),32,sizeof(f),RX_SHORT_FRAME);
+    RESET_RX();CHECK_RX(sizeof(from),35,sizeof(f),RX_SHORT_FRAME);
+    RESET_RX();f[35]=0;CHECK_RX(sizeof(from),48,sizeof(f),RX_NON_APPLE_VENDOR);
+    RESET_RX();f[9]=0x40;CHECK_RX(sizeof(from),48,sizeof(f),RX_BAD_AWDL);
+    RESET_RX();f[37]=0x20;CHECK_RX(sizeof(from),48,sizeof(f),RX_UNSUPPORTED_AWDL);
+    RESET_RX();CHECK_RX(sizeof(from),48,sizeof(f),RX_OBSERVED);
+    assert(o.subtype==0 && !o.tlvs);
+    unsigned total=0;
+    for (unsigned i=0;i<RX_REASON_MAX;i++) {assert(seen[i]>0);total+=seen[i];assert(awdl_rx_reason_names[i]);}
+    assert(total==packets && stats.types[0]>0 && stats.types[1]==1 && stats.types[2]==1);
+    assert(stats.mgmt_subtypes[8]==1 && stats.mgmt_subtypes[13]>0);
+    assert(stats.public_actions==1 && stats.other_actions==1 && stats.vendor_actions>0);
+    /* Every truncation of a valid packet is bounded; none can be observed. */
+    for (size_t n=0;n<48;n++) {
+        RESET_RX();assert(awdl_classify_rx(&from,sizeof(from),5,f,n,sizeof(f),&o,&stats)!=RX_OBSERVED);
+    }
+#undef RESET_RX
+#undef CHECK_RX
+    puts("AWDL_RX_ACCOUNTING_MODEL_PASS_ONLY");
+}
+
 int main(void) {
+    awdl_rx_accounting_tests();
     awdl_observation_tests();
     request_error_tests();
     vendor_relay_tests();

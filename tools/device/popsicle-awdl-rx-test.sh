@@ -2,7 +2,7 @@
 # Bounded receive observation through native LPC and Wonder; no transmission.
 set -eu
 fail() { echo "ERROR: $*" >&2; exit 1; }
-[ "$#" = 2 ] || fail 'Usage: sh popsicle-awdl-rx-test.sh /path/0053-bundle /path/new-log-directory'
+[ "$#" = 2 ] || fail 'Usage: sh popsicle-awdl-rx-test.sh /path/0054-bundle /path/new-log-directory'
 [ "$(id -u)" = 0 ] || fail 'Run with su.'
 bundle=$(cd "$1" && pwd)
 mkdir "$2" || fail 'Log directory must be new.'
@@ -57,7 +57,7 @@ for tool in iw ip sha256sum awk grep insmod rmmod; do command -v "$tool" >/dev/n
 [ ! -e /sys/class/net/wonder0 ] || fail 'wonder0 already exists.'
 [ ! -e "/sys/class/net/$monitor" ] || fail 'Test monitor already exists.'
 (cd "$bundle" && sha256sum -c SHA256SUMS) > "$logs/checksums.txt" 2>&1 || fail 'Bundle checksum failed.'
-[ -x "$bundle/action-tx-0053" ] || fail 'Run chmod 755 on action-tx-0053 first.'
+[ -x "$bundle/action-tx-0054" ] || fail 'Run chmod 755 on action-tx-0054 first.'
 for file in wonder.ko popsicle-rx-start.sh; do [ -f "$bundle/$file" ] || fail "Missing $file"; done
 freq() { iw dev wlan0 link | awk '/freq:/{printf "%d", $2; exit}'; }
 # QCA LPC requires inactive secondary non-monitor interfaces. Do not change them here.
@@ -71,19 +71,22 @@ case "$freq_before" in ''|*[!0-9]*) fail 'STA must be connected.' ;; esac
 phy=$(iw dev wlan0 info | awk '$1=="wiphy"{print $2; exit}')
 case "$phy" in ''|*[!0-9]*) fail 'Cannot identify native PHY.' ;; esac
 printf 'freq=%s\n' "$freq_before" > "$logs/setup.txt"
+iw dev wlan0 link > "$logs/wifi-before.txt" 2>&1
 iw phy "phy$phy" interface add "$monitor" type monitor >> "$logs/setup.txt" 2>&1
 own_monitor=1
 ip link set "$monitor" up >> "$logs/setup.txt" 2>&1
-"$bundle/action-tx-0053" capture-start --dev "$monitor" >> "$logs/setup.txt" 2>&1
+"$bundle/action-tx-0054" capture-start --dev "$monitor" >> "$logs/setup.txt" 2>&1
 sh "$bundle/popsicle-rx-start.sh" start "$bundle/wonder.ko" "$monitor" >> "$logs/setup.txt" 2>&1
 own_wonder=1
 sh "$bundle/popsicle-rx-start.sh" status > "$logs/rx-before.txt" 2>&1
-"$bundle/action-tx-0053" awdl-listen --dev wonder0 --seconds 60 --max-frames 10 > "$logs/awdl-rx.log" 2>&1 &
+"$bundle/action-tx-0054" awdl-listen --dev wonder0 --seconds 60 --max-frames 10 > "$logs/awdl-rx.log" 2>&1 &
 listener_pid=$!
 listener_rc=0
 wait "$listener_pid" || listener_rc=$?
 listener_pid=
 sh "$bundle/popsicle-rx-start.sh" status > "$logs/rx-after.txt" 2>&1 || true
+iw dev wlan0 link > "$logs/wifi-after.txt" 2>&1 || true
+printf 'freq_before=%s\nfreq_after=%s\n' "$freq_before" "$(freq)" > "$logs/channels.txt"
 [ "$listener_rc" = 0 ] || fail "AWDL listener exited $listener_rc; inspect awdl-rx.log."
 cat "$logs/awdl-rx.log"
 evidence=1
