@@ -90,6 +90,10 @@ RAW DATA 阶段提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。RAW DATA �
 
 0041 提交 `6700e2b418e2e39dbc3eb1b8044a51117bdd4900`，新增 capture-start/status，修正 QCA SET 的 NLA_F_NESTED 标志，GET 保持 RAW；不再让用户用 iw raw 数据发送结构化 SET。[Actions 40827521911](https://github.com/xxz3312/XAirDrop-17/actions/runs/40827521911) 通过 16 项会话、协议/频道/队列/RAW 模型及 Android 编译。补丁仅含工具和源码，沿用 0040 Wonder，不替换 WLAN，不改频道；修正版实机效果待反馈。见 [使用说明](POPSICLE-LPC-FIX-0041.md) 与 [验证报告](research/popsicle-lpc-nested-fix-build-pass.json)。
 
+## 0052 单终端测试控制器
+
+新增单终端 vendor Action token 测试：就绪后单次注入、频道复查、NOACK 证据检查和有归属的逆序清理；复用 0049/0051 二进制。命令模型本地通过，CI 与手机结果分别记录，不提升 0051 实机验证状态。见 [0052 操作说明](POPSICLE-VENDOR-FEEDBACK-0052.md)。
+
 ## 0042 原生 RX 与桥接修正
 
 原生 LPC 已采集到 Beacon 和 QoS 数据帧；20 秒内原生 RX 增加 1813 包而 Wonder RX/invalid 仍为 0。外部 monitor 的 skb 协议值门槛已修正，构建 40832922219 成功；模块实机验证尚未完成。详见 [0042 测试步骤](POPSICLE-RX-FIX-0042.md)。此进展不代表 AWDL 或 Apple 文件互传已通过。
