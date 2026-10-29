@@ -29,7 +29,7 @@ class RxRunnerTest(unittest.TestCase):
             b=r/'bundle'
             for f in ['wonder.ko','SHA256SUMS']:(b/f).touch()
             (b/'popsicle-rx-start.sh').write_text(HELPER.replace('else\n', 'elif [ "$1" = status ]; then\n echo modeled_RX_status\nelse\n'))
-            (b/'action-tx-0055').write_text(RX_TOOL);(b/'action-tx-0055').chmod(0o755)
+            (b/'action-tx-0056').write_text(RX_TOOL);(b/'action-tx-0056').chmod(0o755)
             if case=='existing':(r/'sys/module/wonder').mkdir()
             if case=='p2p_up':
                 (r/'sys/class/net/p2p0').mkdir();(r/'sys/class/net/p2p0/flags').write_text('0x1003')

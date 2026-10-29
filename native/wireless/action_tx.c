@@ -751,23 +751,54 @@ done:
  * Wire layout checked against seemoo-lab/owl 0ee3263, src/frame.h/rx.c.
  * Independent parser: no OWL implementation code is included. */
 struct awdl_observation { unsigned subtype,tlvs,sync,channels,election; };
-static int inspect_awdl(const unsigned char *f,size_t n,struct awdl_observation *out) {
-    *out=(struct awdl_observation){0};
+enum awdl_parse_reason {
+    AWDL_NOT_CANDIDATE,AWDL_OVERSIZE,AWDL_FRAME_FLAGS,AWDL_FRAGMENT,
+    AWDL_SHORT_HEADER,AWDL_OTHER_TYPE,AWDL_OTHER_VERSION,AWDL_OTHER_SUBTYPE,
+    AWDL_SHORT_TLV,AWDL_TLV_OVERRUN,AWDL_PARSED,AWDL_PARSE_REASON_MAX
+};
+static const char *const awdl_parse_reason_names[AWDL_PARSE_REASON_MAX]={
+    "not_candidate","oversize","frame_flags","fragment","short_header",
+    "other_type","other_version","other_subtype","short_tlv_header","tlv_overrun","parsed"
+};
+struct awdl_parse_detail {
+    enum awdl_parse_reason reason;
+    size_t bytes,tlv_offset,tlv_length,remaining;
+    unsigned frame_control,fragment,type,version,subtype,tlv_type,valid_tlvs;
+    bool protocol_fields_present,tlv_type_present,tlv_length_present;
+};
+static int inspect_awdl_detail(const unsigned char *f,size_t n,struct awdl_observation *out,
+                               struct awdl_parse_detail *d) {
+    *out=(struct awdl_observation){0};*d=(struct awdl_parse_detail){.bytes=n};
     if (n<28 || f[0]!=0xd0 || f[24]!=127 || memcmp(f+25,"\x00\x17\xf2",3)) return 0;
-    if (n>FRAME_MAX || (f[1]&0xc7) || (f[22]&15) || n<40) return -EBADMSG;
-    if (f[28]!=8 || f[29]!=0x10 || (f[30]!=0 && f[30]!=3)) return -EPROTONOSUPPORT;
+    d->frame_control=(unsigned)f[0]|((unsigned)f[1]<<8);d->fragment=f[22]&15;
+    if (n>=31) {d->protocol_fields_present=true;d->type=f[28];d->version=f[29];d->subtype=f[30];}
+    if (n>FRAME_MAX) {d->reason=AWDL_OVERSIZE;return -EBADMSG;}
+    if (f[1]&0xc7) {d->reason=AWDL_FRAME_FLAGS;return -EBADMSG;}
+    if (f[22]&15) {d->reason=AWDL_FRAGMENT;return -EBADMSG;}
+    if (n<40) {d->reason=AWDL_SHORT_HEADER;return -EBADMSG;}
+    if (f[28]!=8) {d->reason=AWDL_OTHER_TYPE;return -EPROTONOSUPPORT;}
+    if (f[29]!=0x10) {d->reason=AWDL_OTHER_VERSION;return -EPROTONOSUPPORT;}
+    if (f[30]!=0 && f[30]!=3) {d->reason=AWDL_OTHER_SUBTYPE;return -EPROTONOSUPPORT;}
     struct awdl_observation value={.subtype=f[30]};
     for (size_t at=40;at<n;) {
-        if (n-at<3) return -EBADMSG;
+        d->tlv_offset=at;d->remaining=n-at;
+        d->tlv_type_present=true;d->tlv_type=f[at];
+        if (n-at<3) {d->reason=AWDL_SHORT_TLV;return -EBADMSG;}
         size_t len=(size_t)f[at+1]|((size_t)f[at+2]<<8);
-        if (len>n-at-3) return -EBADMSG;
-        value.tlvs++;
+        d->tlv_length_present=true;d->tlv_length=len;
+        if (len>n-at-3) {d->reason=AWDL_TLV_OVERRUN;return -EBADMSG;}
+        value.tlvs++;d->valid_tlvs=value.tlvs;
         if (f[at]==4) value.sync++;
         if (f[at]==18) value.channels++;
         if (f[at]==5 || f[at]==24) value.election++;
         at+=3+len;
+        /* The following iteration must not reuse the previous TLV's length. */
+        d->tlv_length_present=false;d->tlv_length=0;
     }
-    *out=value;return 1;
+    d->reason=AWDL_PARSED;*out=value;return 1;
+}
+static int inspect_awdl(const unsigned char *f,size_t n,struct awdl_observation *out) {
+    struct awdl_parse_detail detail;return inspect_awdl_detail(f,n,out,&detail);
 }
 static bool awdl_rx_origin(const struct sockaddr_ll *from,socklen_t size,unsigned index) {
     return size>=sizeof(*from) && from->sll_ifindex==(int)index &&
@@ -790,6 +821,8 @@ static const char *const awdl_rx_reason_names[RX_REASON_MAX]={
 };
 struct awdl_rx_stats {
     unsigned reasons[RX_REASON_MAX];
+    unsigned candidate_reasons[AWDL_PARSE_REASON_MAX];
+    struct awdl_parse_detail samples[AWDL_PARSE_REASON_MAX];
     unsigned types[4],mgmt_subtypes[16],public_actions,vendor_actions,other_actions;
 };
 /* Ordered first-failure accounting: each datagram has exactly one outcome.
@@ -822,11 +855,27 @@ static enum awdl_rx_reason awdl_classify_rx(const struct sockaddr_ll *from,sockl
     if (frame[24]!=127) return RX_NON_VENDOR_ACTION;
     if (n<28) return RX_SHORT_FRAME;
     if (memcmp(frame+25,"\x00\x17\xf2",3)) return RX_NON_APPLE_VENDOR;
-    int ret=inspect_awdl(frame,n,o);
+    struct awdl_parse_detail detail;
+    int ret=inspect_awdl_detail(frame,n,o,&detail);
+    if (!stats->candidate_reasons[detail.reason]++) stats->samples[detail.reason]=detail;
     if (ret==1) return RX_OBSERVED;
     return ret==-EPROTONOSUPPORT?RX_UNSUPPORTED_AWDL:RX_BAD_AWDL;
 }
+static void print_awdl_candidate_stats(const struct awdl_rx_stats *s) {
+    printf("{\"event\":\"awdl_candidate_reasons\"");
+    for (unsigned i=0;i<AWDL_PARSE_REASON_MAX;i++) printf(",\"%s\":%u",awdl_parse_reason_names[i],s->candidate_reasons[i]);
+    puts("}");
+    for (unsigned i=0;i<AWDL_PARSE_REASON_MAX;i++) if (s->candidate_reasons[i]) {
+        const struct awdl_parse_detail *d=&s->samples[i];
+        printf("{\"event\":\"awdl_candidate_sample\",\"reason\":\"%s\",\"frame_bytes\":%zu,\"frame_control\":%u,\"fragment\":%u,\"protocol_fields_present\":%s,\"type\":%u,\"version\":%u,\"subtype\":%u,\"tlv_offset\":%zu,\"remaining\":%zu,\"tlv_type_present\":%s,\"tlv_type\":%u,\"tlv_length_present\":%s,\"tlv_length\":%zu,\"valid_tlvs\":%u}\n",
+               awdl_parse_reason_names[i],d->bytes,d->frame_control,d->fragment,d->protocol_fields_present?"true":"false",
+               d->type,d->version,d->subtype,d->tlv_offset,d->remaining,d->tlv_type_present?"true":"false",
+               d->tlv_type,d->tlv_length_present?"true":"false",d->tlv_length,d->valid_tlvs);
+    }
+}
+
 static void print_awdl_rx_stats(const struct awdl_rx_stats *s) {
+    print_awdl_candidate_stats(s);
     printf("{\"event\":\"awdl_rx_filters\"");
     for (unsigned i=0;i<RX_REASON_MAX;i++) printf(",\"%s\":%u",awdl_rx_reason_names[i],s->reasons[i]);
     puts("}");

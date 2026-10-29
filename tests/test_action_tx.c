@@ -210,7 +210,42 @@ static void awdl_rx_accounting_tests(void) {
     puts("AWDL_RX_ACCOUNTING_MODEL_PASS_ONLY");
 }
 
+static void awdl_parse_detail_tests(void) {
+    unsigned char f[64];struct awdl_observation o;struct awdl_parse_detail d;
+#define RESET_DETAIL() do {memset(f,0,sizeof(f));f[0]=0xd0;f[24]=127;f[26]=0x17;f[27]=0xf2;f[28]=8;f[29]=0x10;} while (0)
+#define CHECK_DETAIL(n,ret,why) do {assert(inspect_awdl_detail(f,n,&o,&d)==ret);assert(d.reason==why);} while (0)
+    RESET_DETAIL();CHECK_DETAIL(40,1,AWDL_PARSED);
+    assert(d.protocol_fields_present && d.type==8 && d.version==16 && d.subtype==0 && d.bytes==40);
+    RESET_DETAIL();f[24]=4;CHECK_DETAIL(40,0,AWDL_NOT_CANDIDATE);
+    RESET_DETAIL();CHECK_DETAIL(FRAME_MAX+1,-EBADMSG,AWDL_OVERSIZE);
+    RESET_DETAIL();f[1]=0x80;CHECK_DETAIL(40,-EBADMSG,AWDL_FRAME_FLAGS);assert(d.frame_control==0x80d0);
+    RESET_DETAIL();f[22]=1;CHECK_DETAIL(40,-EBADMSG,AWDL_FRAGMENT);assert(d.fragment==1);
+    RESET_DETAIL();CHECK_DETAIL(28,-EBADMSG,AWDL_SHORT_HEADER);assert(!d.protocol_fields_present);
+    RESET_DETAIL();CHECK_DETAIL(39,-EBADMSG,AWDL_SHORT_HEADER);assert(d.protocol_fields_present);
+    RESET_DETAIL();f[28]=9;CHECK_DETAIL(40,-EPROTONOSUPPORT,AWDL_OTHER_TYPE);
+    RESET_DETAIL();f[29]=0x20;CHECK_DETAIL(40,-EPROTONOSUPPORT,AWDL_OTHER_VERSION);
+    RESET_DETAIL();f[30]=7;CHECK_DETAIL(40,-EPROTONOSUPPORT,AWDL_OTHER_SUBTYPE);
+    RESET_DETAIL();f[40]=4;f[41]=2;CHECK_DETAIL(44,-EBADMSG,AWDL_TLV_OVERRUN);
+    assert(d.tlv_offset==40 && d.remaining==4 && d.tlv_length==2 && d.tlv_type==4 && d.tlv_length_present && !d.valid_tlvs);
+    RESET_DETAIL();f[40]=4;f[41]=2;f[45]=0xaa;CHECK_DETAIL(46,-EBADMSG,AWDL_SHORT_TLV);
+    assert(d.valid_tlvs==1 && d.tlv_offset==45 && d.remaining==1 && d.tlv_type==0xaa && !d.tlv_length_present && !d.tlv_length);
+    assert(!o.tlvs); /* Diagnostics never publish partial TLVs as parsed success. */
+    RESET_DETAIL();f[40]=4;f[41]=2;CHECK_DETAIL(45,1,AWDL_PARSED);assert(o.tlvs==1 && d.valid_tlvs==1);
+    for (size_t n=0;n<40;n++) {RESET_DETAIL();assert(inspect_awdl_detail(f,n,&o,&d)!=1);}
+    /* The first sample per reason is retained, rather than unbounded payload logging. */
+    unsigned char packet[72]={0};packet[2]=8;RESET_DETAIL();f[1]=0x40;memcpy(packet+8,f,40);
+    struct sockaddr_ll from={.sll_ifindex=5,.sll_hatype=ARPHRD_IEEE80211_RADIOTAP};struct awdl_rx_stats stats={0};
+    assert(awdl_classify_rx(&from,sizeof(from),5,packet,48,sizeof(packet),&o,&stats)==RX_BAD_AWDL);
+    memset(packet,0,sizeof(packet));packet[2]=8;memcpy(packet+8,f,41);
+    assert(awdl_classify_rx(&from,sizeof(from),5,packet,49,sizeof(packet),&o,&stats)==RX_BAD_AWDL);
+    assert(stats.candidate_reasons[AWDL_FRAME_FLAGS]==2 && stats.samples[AWDL_FRAME_FLAGS].bytes==40);
+#undef RESET_DETAIL
+#undef CHECK_DETAIL
+    puts("AWDL_PARSE_DETAIL_MODEL_PASS_ONLY");
+}
+
 int main(void) {
+    awdl_parse_detail_tests();
     awdl_rx_accounting_tests();
     awdl_observation_tests();
     request_error_tests();
