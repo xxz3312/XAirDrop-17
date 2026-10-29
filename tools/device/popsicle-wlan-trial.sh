@@ -8,6 +8,8 @@ BUNDLE=${2:-${0%/*}}
 STATE=/dev/xairdrop17-wlan-trial
 LOCK=/dev/xairdrop17-wlan-trial.lock
 NAME=qca_cld3_peach_v2
+PROVIDER=opairshare_wonder_provider
+PROVIDER_OWNED=0
 CHANGED=0
 KEEP=0
 HALS=
@@ -63,9 +65,14 @@ restore_stock() {
     fi
     if ! loaded; then insmod "$STOCK" || return 1; fi
     wait_wlan || return 1
+    # WLAN's strong import must be released before removing our provider.
+    if [ "$PROVIDER_OWNED" = 1 ] && [ -d "/sys/module/$PROVIDER" ]; then
+        rmmod "$PROVIDER" || return 1
+        PROVIDER_OWNED=0
+    fi
     start_hals || return 1
     if [ "$BEFORE" = 1 ]; then fw svc wifi enable && wait_wifi 1 || return 1; fi
-    rm -f "$STATE/wifi.before" "$STATE/hal.services" "$STATE/stock.path"
+    rm -f "$STATE/wifi.before" "$STATE/hal.services" "$STATE/stock.path" "$STATE/provider.owned"
     rmdir "$STATE" || return 1
     echo 'STOCK_RESTORED (wlan0 present; association not verified).'
 }
@@ -77,6 +84,9 @@ finish() {
             echo 'RESTORE_FAILED: reboot to load the unchanged original driver.'
             finish_exit_rc=1
         fi
+    fi
+    if [ "$ACTION" != restore ] && [ "$CHANGED" = 0 ] && [ "$KEEP" = 0 ] && [ "$PROVIDER_OWNED" = 1 ]; then
+        rmmod "$PROVIDER" || { echo 'Provider cleanup failed; reboot before another trial.'; finish_exit_rc=1; }
     fi
     rmdir "$LOCK" 2>/dev/null || true
     exit "$finish_exit_rc"
@@ -102,6 +112,8 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 if [ "$ACTION" = restore ]; then
     [ -r "$STATE/wifi.before" ] && [ -r "$STATE/hal.services" ] && [ -r "$STATE/stock.path" ] || die 'No complete runtime trial state.'
+    [ "$(cat "$STATE/provider.owned" 2>/dev/null)" = 1 ] || die 'Missing provider ownership state; reboot to restore.'
+    PROVIDER_OWNED=1
     BEFORE=$(cat "$STATE/wifi.before")
     HALS=$(cat "$STATE/hal.services")
     STOCK=$(cat "$STATE/stock.path")
@@ -115,6 +127,7 @@ fi
 loaded || die 'Original WLAN is not loaded.'
 [ ! -e "/sys/module/$NAME/parameters/mishare_action_tx" ] || die 'Experimental WLAN is already loaded.'
 [ ! -d /sys/module/wonder ] || die 'Stop the existing Wonder bridge first.'
+[ ! -d "/sys/module/$PROVIDER" ] || die 'An existing provider is loaded; reboot before this isolated trial.'
 AP=$(ls /sys/class/net | grep -E '^(ap|swlan|softap)|^wlan[1-9]|^ap_br' || true)
 [ -z "$AP" ] || die 'Disable hotspot/secondary WLAN before trial.'
 STOCK=/vendor_dlkm/lib/modules/qca_cld3_peach_v2.ko
@@ -125,15 +138,20 @@ case "$BEFORE" in 0|1) ;; *) die 'Cannot determine original Wi-Fi state.';; esac
 HALS=$(getprop | sed -n 's/^\[init\.svc\.\(vendor\.wifi_hal[^]]*\)\]: \[running\]$/\1/p')
 [ -n "$HALS" ] || die 'No recognized running Wi-Fi HAL; collect service inventory.'
 for h in $HALS; do case "$h" in *[!a-zA-Z0-9_.-]*) die 'Unexpected HAL name.';; esac; done
-[ -r "$BUNDLE/kernel/$NAME.ko" ] && [ -r "$BUNDLE/SHA256SUMS" ] || die 'Incomplete bundle.'
+[ -r "$BUNDLE/kernel/$PROVIDER.ko" ] && [ -r "$BUNDLE/kernel/$NAME.ko" ] && [ -r "$BUNDLE/SHA256SUMS" ] || die 'Incomplete bundle.'
 (cd "$BUNDLE" && sha256sum -c SHA256SUMS) || die 'Bundle checksum failed.'
 echo "CHECK_OK wifi_before=$BEFORE HAL=[$HALS] stock=$STOCK"
 [ "$ACTION" = run ] || exit 0
+# Resolve the mandatory private import before disrupting working stock WLAN.
+insmod "$BUNDLE/kernel/$PROVIDER.ko" || die 'Provider load failed; original WLAN and Wi-Fi were not changed.'
+PROVIDER_OWNED=1
+[ -d "/sys/module/$PROVIDER" ] || die 'Provider did not register; original WLAN was not changed.'
 umask 077
 mkdir "$STATE" || die 'Cannot save trial state.'
 printf '%s\n' "$BEFORE" > "$STATE/wifi.before"
 printf '%s\n' "$HALS" > "$STATE/hal.services"
 printf '%s\n' "$STOCK" > "$STATE/stock.path"
+printf '1\n' > "$STATE/provider.owned"
 CHANGED=1
 fw svc wifi disable && wait_wifi 0 || die 'Wi-Fi did not disable.'
 stop_hals || die 'Wi-Fi HAL did not stop.'

@@ -33,15 +33,24 @@ elif cmd=='svc':
 elif cmd in ('start','stop'):
  event(cmd+':'+a[0]);s['hal']='running' if cmd=='start' else 'stopped';save()
 elif cmd=='rmmod':
+ if a[0]=='opairshare_wonder_provider':
+  event('rmmod:provider')
+  if s['new'] or s.get('provider_busy'):sys.exit(1)
+  shutil.rmtree(r/'sys/module/opairshare_wonder_provider',ignore_errors=True);sys.exit(0)
  event('rmmod:new' if s['new'] else 'rmmod:stock')
  if s.get('busy') and not s['new']:sys.exit(1)
  if s.get('busy_new') and s['new']:sys.exit(1)
  (r/'proc/modules').write_text('');shutil.rmtree(r/'sys/module/qca_cld3_peach_v2',ignore_errors=True)
  shutil.rmtree(r/'sys/class/net/wlan0',ignore_errors=True)
 elif cmd=='insmod':
+ if a[0].endswith('/opairshare_wonder_provider.ko'):
+  event('insmod:provider')
+  if s.get('provider_fail'):sys.exit(1)
+  (r/'sys/module/opairshare_wonder_provider').mkdir(parents=True);sys.exit(0)
  new='/bundle/' in a[0];event('insmod:new' if new else 'insmod:stock')
  if new and s.get('load_fail'):sys.exit(1)
  if not new and s.get('restore_fail'):sys.exit(1)
+ if new:assert (r/'sys/module/opairshare_wonder_provider').is_dir()
  if new:assert a[1:]==['mishare_action_tx=1','mishare_raw_tx=0']
  module(new)
 else: raise AssertionError(cmd)
@@ -67,7 +76,9 @@ class TrialTest(unittest.TestCase):
         module = self.bundle/'kernel'/f'{NAME}.ko'
         module.write_bytes(b'modeled new module')
         (self.root/'vendor_dlkm/lib/modules'/f'{NAME}.ko').write_bytes(b'original module')
-        (self.bundle/'SHA256SUMS').write_text(hashlib.sha256(module.read_bytes()).hexdigest()+f'  kernel/{NAME}.ko\n')
+        provider = self.bundle/'kernel/opairshare_wonder_provider.ko'
+        provider.write_bytes(b'modeled provider')
+        (self.bundle/'SHA256SUMS').write_text(''.join(hashlib.sha256(f.read_bytes()).hexdigest()+'  kernel/'+f.name+'\n' for f in [module, provider]))
         source = SCRIPT.read_text()
         for old, new in [('/system/bin', str(self.root/'bin')), ('/vendor_dlkm', str(self.root/'vendor_dlkm')),
                          ('/vendor/', str(self.root/'vendor')+'/'), ('/sys/', str(self.root/'sys')+'/'),
@@ -95,12 +106,36 @@ class TrialTest(unittest.TestCase):
         r = self.run_trial('run')
         self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
         self.assertTrue(self.state['new'])
-        self.assertEqual(self.state['events'][:4], ['wifi:disable', 'stop:vendor.wifi_hal_legacy', 'rmmod:stock', 'insmod:new'])
+        self.assertEqual(self.state['events'][:5], ['insmod:provider', 'wifi:disable', 'stop:vendor.wifi_hal_legacy', 'rmmod:stock', 'insmod:new'])
         r = self.run_trial('restore')
         self.assertEqual(r.returncode, 0, r.stdout+r.stderr)
         self.assertFalse(self.state['new'])
         self.assertTrue(self.state['wifi'])
         self.assertEqual(self.state['hal'], 'running')
+
+    def test_provider_failure_never_disrupts_stock_wifi(self):
+        self.state['provider_fail'] = True; self.save()
+        r = self.run_trial('run')
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(self.state['events'], ['insmod:provider'])
+        self.assertTrue(self.state['wifi'])
+
+    def test_missing_provider_rejected_before_changes(self):
+        (self.bundle/'kernel/opairshare_wonder_provider.ko').unlink()
+        self.assertNotEqual(self.run_trial('run').returncode, 0)
+        self.assertEqual(self.state['events'], [])
+
+    def test_existing_provider_is_not_adopted_or_unloaded(self):
+        (self.root/'sys/module/opairshare_wonder_provider').mkdir(parents=True)
+        self.assertNotEqual(self.run_trial('run').returncode, 0)
+        self.assertEqual(self.state['events'], [])
+
+    def test_restore_unloads_provider_after_new_wlan(self):
+        self.assertEqual(self.run_trial('run').returncode, 0)
+        self.assertEqual(self.run_trial('restore').returncode, 0)
+        events=self.state['events']
+        self.assertLess(events.index('rmmod:new'), events.index('rmmod:provider'))
+        self.assertFalse((self.root/'sys/module/opairshare_wonder_provider').exists())
 
     def test_load_failure_restores_original_module(self):
         self.state['load_fail'] = True; self.save()
@@ -108,6 +143,7 @@ class TrialTest(unittest.TestCase):
         self.assertNotEqual(r.returncode, 0)
         self.assertIn('STOCK_RESTORED', r.stdout)
         self.assertIn('insmod:stock', self.state['events'])
+        self.assertIn('rmmod:provider', self.state['events'])
         self.assertTrue(self.state['wifi'])
 
     def test_busy_original_never_attempts_new_driver(self):
