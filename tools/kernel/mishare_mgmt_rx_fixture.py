@@ -45,7 +45,8 @@ struct hdd_adapter {struct wlan_hdd_link_info *deflink;struct net_device *dev;in
 #define hdd_adapter_is_link_adapter(a) ((a)->link)
 static bool is_multicast_ether_addr(const unsigned char *a){return a[0]&1;}
 static bool ether_addr_equal(const unsigned char *a,const unsigned char *b){return !memcmp(a,b,6);}
-static void *hdd_adapter_get_mac_handle(struct hdd_adapter *a){(void)a;return (void *)1;}
+static bool mac_alive=true;
+static void *hdd_adapter_get_mac_handle(struct hdd_adapter *a){(void)a;return mac_alive?(void *)1:NULL;}
 static int qdf_status_to_os_return(int n){return n?-5:0;}
 static int reg_calls,unreg_calls,reg_fail,unreg_fail;
 static int sme_register_mgmt_frame(void *m,unsigned char id,unsigned short type,unsigned char *p,unsigned short len){
@@ -84,6 +85,10 @@ int main(void){
  assert(!mishare_mgmt_rx_register(&b));unreg_fail=1;mishare_mgmt_rx_unregister(&b);
  assert(mishare_mgmt_fault && !mishare_mgmt_owner && !mishare_mgmt_reserved);
  assert(mishare_mgmt_rx_register(&a)==-ESHUTDOWN);
+ /* Separate modeled reload: a vanished MAC must never reach SME deregister. */
+ mishare_mgmt_fault=false;unreg_fail=0;assert(!mishare_mgmt_rx_register(&a));
+ int before=unreg_calls;mac_alive=false;mishare_mgmt_rx_unregister(&a);
+ assert(unreg_calls==before && mishare_mgmt_fault && !mishare_mgmt_owner && !mishare_mgmt_reserved);
  puts("MISHARE_MGMT_RX_OWNER_MODEL_PASS_ONLY");return 0;
 }
 '''

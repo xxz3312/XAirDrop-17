@@ -87,6 +87,14 @@ void mishare_mgmt_rx_unregister(struct hdd_adapter *adapter)
     if (mishare_mgmt_reserved != adapter)
         goto unlock;
     smp_store_release(&mishare_mgmt_owner, NULL);
+    /* Native deregister_frames may run after MAC teardown. Close this helper
+     * without calling SME with a vanished context; do not permit adoption. */
+    if (!hdd_adapter_get_mac_handle(adapter)) {
+        mishare_mgmt_fault = true;
+        mishare_mgmt_reserved = NULL;
+        hdd_err("mishare mgmt RX MAC context gone; routing disabled, reload required");
+        goto unlock;
+    }
     status = sme_deregister_mgmt_frame(hdd_adapter_get_mac_handle(adapter),
               adapter->deflink->vdev_id, 0x00d0,
               mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix));
