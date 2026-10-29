@@ -155,7 +155,7 @@ int main(void) {
     assert(!add_attr(&m,17,&value,8));assert(attr((struct bytes){m.data,m.n},17,&a)==-EBADMSG);
     m.data[0]=3;assert(attr((struct bytes){m.data,m.n},99,&a)==-EBADMSG);
     /* A netlink ACK is not a TX completion. An early status needs the exact
-     * subsequent request cookie, interface AND original frame. */
+     * subsequent request cookie, interface AND frame except native sequence. */
     struct client c={.family=25,.seq=7,.ifindex=4,.frame=f,.frame_len=25};
     struct bytes reply;bool ack=false;
     struct nlmsghdr h={.nlmsg_len=NLMSG_HDRLEN+sizeof(struct nlmsgerr),.nlmsg_type=NLMSG_ERROR,.nlmsg_seq=7};
@@ -167,6 +167,18 @@ int main(void) {
     status_message(&m,5,9,f,25,true);assert(!consume(&c,m.data,m.n,NL80211_CMD_FRAME,&reply) && !c.status_count);
     unsigned char wrong[25];memcpy(wrong,f,25);wrong[24]++;
     status_message(&m,4,9,wrong,25,true);assert(!consume(&c,m.data,m.n,NL80211_CMD_FRAME,&reply) && !c.status_count);
+    memcpy(wrong,f,25);wrong[22]=0xb0;wrong[23]=0xa5;
+    assert(status_frame_matches((struct bytes){wrong,25},f,25));
+    status_message(&m,4,9,wrong,25,true);
+    assert(!consume(&c,m.data,m.n,NL80211_CMD_FRAME,&reply) && c.status_count==1);
+    assert(!matching_status(&c,&ack));
+    c.have_cookie=true;c.cookie=10;assert(!matching_status(&c,&ack));
+    c.cookie=9;assert(matching_status(&c,&ack) && ack);
+    c.have_cookie=false;c.status_count=0;
+    wrong[22]|=1;assert(!status_frame_matches((struct bytes){wrong,25},f,25));
+    wrong[22]&=0xf0;wrong[10]^=1;assert(!status_frame_matches((struct bytes){wrong,25},f,25));
+    wrong[10]^=1;wrong[2]^=1;assert(!status_frame_matches((struct bytes){wrong,25},f,25));
+    assert(!status_frame_matches((struct bytes){wrong,24},f,25));
     status_message(&m,4,9,f,25,true);assert(!consume(&c,m.data,m.n,NL80211_CMD_FRAME,&reply));
     assert(c.status_count==1 && !matching_status(&c,&ack));
     c.have_cookie=true;c.cookie=10;assert(!matching_status(&c,&ack));

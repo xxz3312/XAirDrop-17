@@ -120,12 +120,19 @@ static int receive(struct client *c,unsigned char *buffer,size_t size,int64_t de
     if ((m.msg_flags&MSG_TRUNC) || m.msg_namelen<sizeof(peer) || peer.nl_family!=AF_NETLINK || peer.nl_pid) return -EBADMSG;
     return n>0?(int)n:-EIO;
 }
-/* Status may arrive before the command's cookie reply. Buffer only exact
- * interface/frame events, then match the cookie supplied by the command. */
+/* Native P2P TX assigns the 12-bit sequence number before reporting status.
+ * Keep all other bytes (including the fragment number) exact. */
+static bool status_frame_matches(struct bytes frame,const unsigned char *sent,size_t len) {
+    return sent && len>=25 && frame.n==len &&
+        !memcmp(frame.p,sent,22) && (frame.p[22]&15)==(sent[22]&15) &&
+        !memcmp(frame.p+24,sent+24,len-24);
+}
+/* Status may arrive before the command's cookie reply. Buffer only matching
+ * interface/frame events, then require the cookie supplied by the command. */
 static int record_status(struct client *c,struct bytes attrs) {
     struct bytes id,cookie,frame,ack;
     if (attr(attrs,NL80211_ATTR_IFINDEX,&id)!=1 || id.n!=4 || u32(id.p)!=c->ifindex) return 0;
-    if (attr(attrs,NL80211_ATTR_FRAME,&frame)!=1 || frame.n!=c->frame_len || !c->frame || memcmp(frame.p,c->frame,frame.n)) return 0;
+    if (attr(attrs,NL80211_ATTR_FRAME,&frame)!=1 || !status_frame_matches(frame,c->frame,c->frame_len)) return 0;
     if (attr(attrs,NL80211_ATTR_COOKIE,&cookie)!=1 || cookie.n!=8) return -EBADMSG;
     int have_ack=attr(attrs,NL80211_ATTR_ACK,&ack);
     if (have_ack<0 || (have_ack && ack.n)) return -EBADMSG;
