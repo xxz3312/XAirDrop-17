@@ -1,0 +1,29 @@
+{
+  "status": "AWDL_RX_ACCOUNTING_CI_PASS_PHONE_PENDING",
+  "source_commit": "6b2ad50e06f2058078a3d6697ba02aa16d434e96",
+  "ci_run": 40912482421,
+  "ci_job": 123583844350,
+  "ci_conclusion": "success",
+  "artifact_id": 12914073065,
+  "artifact_sha256": "a1e7e904d7539135d6a4cf7760f3be0abd8b27bb64ba0f0e54ae9780f253fc36",
+  "tests": {
+    "session": 16,
+    "vendor_controller": 6,
+    "rx_controller": 4,
+    "awdl_rx_accounting": "AWDL_RX_ACCOUNTING_MODEL_PASS_ONLY",
+    "protocol_feedback_raw_sanitizers": "pass"
+  },
+  "binary": {
+    "bytes": 37016,
+    "sha256": "095acca49ea7e08799f282e365f0692b716300baf208be62826b6e5822a1066a"
+  },
+  "package": {
+    "name": "XAirDrop-17-AWDL-RX-0054.zip",
+    "bytes": 2692122,
+    "sha256": "cad04a3013a407da7108965205c74b846384ef3cbc10b4f61b383496f19e3586"
+  },
+  "scope": "Read-only current-channel capture; mutually exclusive outcome counters; overlapping frame-type counters; no MAC or payload diagnostic dump",
+  "kernel_changed": false,
+  "phone_executed": false,
+  "airdrop_verified": false
+}

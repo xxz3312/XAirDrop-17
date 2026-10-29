@@ -1,6 +1,6 @@
 ## 最新阶段 0054
 
-0053 实机运行约 60 秒：Wonder RX=1043、invalid=0，监听 packets=1043、observed=0、ignored=1043，无解析/运行错误且正常清理。由于旧 ignored 合并了来源过滤和帧类型过滤，不能据此认定频道上没有 AWDL。0054 新增 16 类互斥过滤结果、帧类型/Action 分类与首包非身份元数据，并记录测试前后 STA 频道；仍只读、不换频、不认证 Apple 身份。见 [0054 测试说明](POPSICLE-AWDL-RX-0054.md)。
+0053 实机运行约 60 秒：Wonder RX=1043、invalid=0，监听 packets=1043、observed=0、ignored=1043，无解析/运行错误且正常清理。由于旧 ignored 合并了来源过滤和帧类型过滤，不能据此认定频道上没有 AWDL。0054 新增 16 类互斥过滤结果、帧类型/Action 分类与首包非身份元数据，并记录测试前后 STA 频道；仍只读、不换频、不认证 Apple 身份。CI 40912482421 已通过全部协议/过滤统计模型、16 项会话、6 组 TX controller、4 组 RX controller 与 Android 编译；0054 实机待测。见 [0054 测试说明](POPSICLE-AWDL-RX-0054.md)。
 
 ## 最新阶段 0053
 
