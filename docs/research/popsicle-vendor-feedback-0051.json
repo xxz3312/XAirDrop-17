@@ -1,0 +1,22 @@
+{
+  "source_commit": "aca0eec6bd3249ae02ab01278bca4a5ab503f241",
+  "docs_commit": "3b9d1578d2ca4d39dec7f4df1a26ed309f755f53",
+  "tool_run": 40890855957,
+  "tool_job": 123506941145,
+  "artifact_id": 12903998723,
+  "tool_artifact_sha256": "0f5b3c37d04e9e9c41089db00333971d1568f24e32a2f063d42ae1c821d9bd6d",
+  "binary_sha256": "c06469bcb96e66274af23f5a9341f455f7b7e1095949b29125105a3f87fe6ce1",
+  "binary_bytes": 32144,
+  "wonder_source_run": 40861769292,
+  "wonder_sha256": "8e1d629cfe2a32f552d0190dac09912fb68c4756268ab53f18d0b3bb3f6532ea",
+  "reuse_wlan_trial": "0049",
+  "kernel_changed": false,
+  "explicit_vendor_only": true,
+  "token_feedback": true,
+  "native_success_outcome": "NOACK (1), never peer ACK",
+  "ci_conclusion": "success",
+  "phone_executed": false,
+  "awdl_verified": false,
+  "zip_sha256": "bdc7a081be3bd50db106b26a63700043c9ac5c492b163d2b05a39ae78885f47b",
+  "zip_bytes": 2661468
+}
