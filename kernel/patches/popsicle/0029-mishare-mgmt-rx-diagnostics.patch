@@ -1,0 +1,106 @@
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_process_message_queue.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_process_message_queue.c
+@@ -1139,6 +1139,9 @@
+  *
+  * Return:      True or False for Match or Mismatch respectively.
+  */
++
++#include "wlan_mishare_mgmt_diag.h"
++
+ static bool
+ lim_check_mgmt_registered_frames(struct mac_context *mac_ctx, uint8_t *buff_desc,
+ 				 struct pe_session *session_entry)
+@@ -1160,6 +1163,9 @@
+ 	frm_type = (fc.type << 2) | (fc.subType << 4);
+ 	body = WMA_GET_RX_MPDU_DATA(buff_desc);
+ 	frm_len = WMA_GET_RX_PAYLOAD_LEN(buff_desc);
++	mishare_mgmt_diag_count(MDIAG_PE_CHECK_CALLS);
++	mishare_mgmt_diag_frame(MDIAG_PE_APPLE, (uint8_t *)hdr,
++		frm_len + sizeof(tSirMacMgmtHdr));
+ 
+ 	qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+ 	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
+@@ -1218,6 +1224,8 @@
+ 		if (session_entry)
+ 			vdev_id = session_entry->vdev_id;
+ 
++		mishare_mgmt_diag_frame(MDIAG_PE_MATCH_APPLE, (uint8_t *)hdr,
++			frm_len + sizeof(tSirMacMgmtHdr));
+ 		/* Indicate this to SME */
+ 		lim_send_sme_mgmt_frame_ind(mac_ctx, hdr->fc.subType,
+ 			(uint8_t *) hdr,
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_process_sme_req_messages.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_process_sme_req_messages.c
+@@ -9221,6 +9221,8 @@
+  *
+  * Return: None
+  */
++#include "wlan_mishare_mgmt_diag.h"
++
+ static void __lim_process_sme_register_mgmt_frame_req(struct mac_context *mac_ctx,
+ 		uint32_t *msg_buf)
+ {
+@@ -9234,6 +9236,9 @@
+ 	pe_nofl_debug("Register Frame: register %d, type %d, match length %d",
+ 		      sme_req->registerFrame, sme_req->frameType,
+ 		      sme_req->matchLen);
++	mishare_mgmt_diag_registration(sme_req->registerFrame ?
++		MDIAG_PE_ADD_SEEN : MDIAG_PE_DELETE_SEEN,
++		sme_req->frameType, sme_req->matchData, sme_req->matchLen);
+ 	/* First check whether entry exists already */
+ 	qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+ 	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
+@@ -9292,11 +9297,17 @@
+ 			}
+ 			qdf_mutex_acquire(
+ 					&mac_ctx->lim.lim_frame_register_lock);
+-			qdf_list_insert_front(&mac_ctx->lim.
++			qdf_status = qdf_list_insert_front(&mac_ctx->lim.
+ 					      gLimMgmtFrameRegistratinQueue,
+ 					      &lim_mgmt_regn->node);
++			mishare_mgmt_diag_registration(qdf_status == QDF_STATUS_SUCCESS ?
++				MDIAG_PE_INSERTED : MDIAG_PE_INSERT_FAILED,
++				sme_req->frameType, sme_req->matchData, sme_req->matchLen);
+ 			qdf_mutex_release(
+ 					&mac_ctx->lim.lim_frame_register_lock);
++		} else {
++			mishare_mgmt_diag_registration(MDIAG_PE_ALLOC_FAILED,
++				sme_req->frameType, sme_req->matchData, sme_req->matchLen);
+ 		}
+ 	}
+ 	return;
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_utils.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_utils.c
+@@ -10260,6 +10260,8 @@
+ }
+ #endif
+ 
++#include "wlan_mishare_mgmt_diag.h"
++
+ void lim_send_sme_mgmt_frame_ind(struct mac_context *mac_ctx, uint8_t frame_type,
+ 				 uint8_t *frame, uint32_t frame_len,
+ 				 uint16_t vdev_id, uint32_t rx_freq,
+@@ -10269,6 +10271,7 @@
+ 	uint16_t length;
+ 	struct wlan_objmgr_vdev *vdev;
+ 
++	mishare_mgmt_diag_frame(MDIAG_PE_INDICATION_APPLE, frame, frame_len);
+ 	length = sizeof(tSirSmeMgmtFrameInd) + frame_len;
+ 
+ 	sme_mgmt_frame = qdf_mem_malloc(length);
+@@ -10304,10 +10307,13 @@
+ 	}
+ 
+ send_frame:
+-	if (mac_ctx->mgmt_frame_ind_cb)
++	if (mac_ctx->mgmt_frame_ind_cb) {
++		mishare_mgmt_diag_frame(MDIAG_PE_CALLBACK_APPLE, frame, frame_len);
+ 		mac_ctx->mgmt_frame_ind_cb(sme_mgmt_frame);
+-	else
++	} else {
++		mishare_mgmt_diag_frame(MDIAG_PE_NO_CALLBACK_APPLE, frame, frame_len);
+ 		pe_debug_rl("Management indication callback not registered!!");
++	}
+ 
+ 	qdf_mem_free(sme_mgmt_frame);
+ 

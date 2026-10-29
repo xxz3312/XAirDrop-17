@@ -64,6 +64,7 @@ int main(void){
  a.deflink=&la;b.deflink=&lb;
  unsigned char frame[400]={0xd0};frame[4]=0xff;memcpy(frame+24,"\x7f\x00\x17\xf2\x08",5);
  assert(!mishare_mgmt_rx_register(&a) && !reg_calls);
+ assert(!atomic64_read(&mishare_mgmt_counts[MDIAG_REGISTER_CALLS]));
  assert(!mishare_mgmt_rx_route(&la,frame,277));
  mishare_mgmt_rx=true;a.device_mode=1;assert(!mishare_mgmt_rx_register(&a) && !reg_calls);a.device_mode=0;
  a.ml=true;assert(!mishare_mgmt_rx_register(&a) && !reg_calls);a.ml=false;
@@ -89,6 +90,19 @@ int main(void){
  mishare_mgmt_fault=false;unreg_fail=0;assert(!mishare_mgmt_rx_register(&a));
  int before=unreg_calls;mac_alive=false;mishare_mgmt_rx_unregister(&a);
  assert(unreg_calls==before && mishare_mgmt_fault && !mishare_mgmt_owner && !mishare_mgmt_reserved);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_SKIP_MODE])==1);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_SKIP_ML_ADAPTER])==1);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_MAC_GONE])==1);
+ mishare_mgmt_diag_frame(MDIAG_PE_APPLE,frame,28);
+ assert(!atomic64_read(&mishare_mgmt_counts[MDIAG_PE_APPLE]));
+ mishare_mgmt_diag_frame(MDIAG_PE_APPLE,frame,277);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_PE_APPLE])==1);
+ mishare_mgmt_diag_registration(MDIAG_PE_INSERTED,0xd0,frame+24,4);
+ assert(!atomic64_read(&mishare_mgmt_counts[MDIAG_PE_INSERTED]));
+ mishare_mgmt_diag_registration(MDIAG_PE_INSERTED,0xd0,frame+24,5);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_PE_INSERTED])==1);
+ char dump[PAGE_SIZE];int size=mishare_mgmt_diag_get(dump,NULL);
+ assert(size>0 && size<PAGE_SIZE && strstr(dump,"pe_inserted=1\n") && strstr(dump,"owner_active=0\n"));
  puts("MISHARE_MGMT_RX_OWNER_MODEL_PASS_ONLY");return 0;
 }
 '''

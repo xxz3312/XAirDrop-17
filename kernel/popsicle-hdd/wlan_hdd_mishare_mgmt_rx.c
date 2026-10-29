@@ -31,6 +31,79 @@ static const struct kernel_param_ops mishare_mgmt_routed_ops = {
 };
 module_param_cb(mishare_mgmt_rx_routed, &mishare_mgmt_routed_ops, NULL, 0444);
 
+#include "wlan_mishare_mgmt_diag.h"
+static atomic64_t mishare_mgmt_counts[MDIAG_COUNT];
+static const char * const mishare_mgmt_names[MDIAG_COUNT] = {
+    "register_calls",
+    "skip_invalid",
+    "skip_mode",
+    "skip_ml_adapter",
+    "skip_link_adapter",
+    "register_submitted",
+    "register_failed",
+    "register_busy",
+    "register_fault",
+    "unregister_calls",
+    "mac_gone",
+    "pe_add_seen",
+    "pe_delete_seen",
+    "pe_inserted",
+    "pe_insert_failed",
+    "pe_alloc_failed",
+    "pe_check_calls",
+    "pe_apple",
+    "pe_match_apple",
+    "pe_indication_apple",
+    "pe_callback_apple",
+    "pe_no_callback_apple",
+    "hdd_calls",
+    "hdd_bad_length",
+    "hdd_ineligible",
+    "hdd_wrong_link",
+    "hdd_no_owner",
+    "hdd_bad_flags",
+    "hdd_other_prefix",
+    "hdd_foreign_da",
+    "hdd_apple",
+};
+void mishare_mgmt_diag_count(enum mishare_mgmt_diag_stage stage)
+{
+    if (mishare_mgmt_rx && (unsigned int)stage < MDIAG_COUNT)
+        atomic64_inc_return(&mishare_mgmt_counts[stage]);
+}
+void mishare_mgmt_diag_registration(enum mishare_mgmt_diag_stage stage,
+                                   unsigned int type, const unsigned char *prefix,
+                                   unsigned int length)
+{
+    if (type == 0xd0 && prefix && length == sizeof(mishare_mgmt_prefix) &&
+        !memcmp(prefix, mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix)))
+        mishare_mgmt_diag_count(stage);
+}
+void mishare_mgmt_diag_frame(enum mishare_mgmt_diag_stage stage,
+                            const unsigned char *frame, unsigned int length)
+{
+    if (frame && length >= 29 && length <= 2304 && frame[0] == 0xd0 &&
+        !memcmp(frame + 24, mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix)))
+        mishare_mgmt_diag_count(stage);
+}
+static int mishare_mgmt_diag_get(char *buffer, const struct kernel_param *kp)
+{
+    unsigned int i;
+    int used = 0;
+    (void)kp;
+    for (i = 0; i < MDIAG_COUNT; i++)
+        used += scnprintf(buffer + used, PAGE_SIZE - used, "%s=%lld\n",
+                          mishare_mgmt_names[i], atomic64_read(&mishare_mgmt_counts[i]));
+    /* Each field is an observation; the whole dump is not an atomic snapshot. */
+    used += scnprintf(buffer + used, PAGE_SIZE - used,
+                      "owner_active=%u\n", (unsigned int)!!smp_load_acquire(&mishare_mgmt_owner));
+    return used;
+}
+static const struct kernel_param_ops mishare_mgmt_diag_ops = {
+    .get = mishare_mgmt_diag_get,
+};
+module_param_cb(mishare_mgmt_rx_diag, &mishare_mgmt_diag_ops, NULL, 0444);
+
 static bool mishare_mgmt_sta(struct hdd_adapter *adapter)
 {
     return adapter && adapter->deflink && adapter->dev &&
@@ -46,14 +119,34 @@ int mishare_mgmt_rx_register(struct hdd_adapter *adapter)
     int ret = 0;
     bool previous;
 
-    if (!mishare_mgmt_rx || !mishare_mgmt_sta(adapter))
+    if (!mishare_mgmt_rx)
         return 0;
+    mishare_mgmt_diag_count(MDIAG_REGISTER_CALLS);
+    if (!adapter || !adapter->deflink || !adapter->dev ||
+        adapter->deflink->vdev_id == WLAN_UMAC_VDEV_ID_MAX) {
+        mishare_mgmt_diag_count(MDIAG_SKIP_INVALID);
+        return 0;
+    }
+    if (adapter->device_mode != QDF_STA_MODE) {
+        mishare_mgmt_diag_count(MDIAG_SKIP_MODE);
+        return 0;
+    }
+    if (hdd_adapter_is_ml_adapter(adapter)) {
+        mishare_mgmt_diag_count(MDIAG_SKIP_ML_ADAPTER);
+        return 0;
+    }
+    if (hdd_adapter_is_link_adapter(adapter)) {
+        mishare_mgmt_diag_count(MDIAG_SKIP_LINK_ADAPTER);
+        return 0;
+    }
     mutex_lock(&mishare_mgmt_lock);
     if (mishare_mgmt_fault) {
+        mishare_mgmt_diag_count(MDIAG_REGISTER_FAULT);
         ret = -ESHUTDOWN;
         goto unlock;
     }
     if (mishare_mgmt_reserved && mishare_mgmt_reserved != adapter) {
+        mishare_mgmt_diag_count(MDIAG_REGISTER_BUSY);
         ret = -EBUSY;
         goto unlock;
     }
@@ -66,6 +159,7 @@ int mishare_mgmt_rx_register(struct hdd_adapter *adapter)
               adapter->deflink->vdev_id, 0x00d0,
               mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix));
     ret = qdf_status_to_os_return(status);
+    mishare_mgmt_diag_count(ret ? MDIAG_REGISTER_FAILED : MDIAG_REGISTER_SUBMITTED);
     if (ret && !previous)
         mishare_mgmt_reserved = NULL;
     if (!ret) {
@@ -81,6 +175,7 @@ void mishare_mgmt_rx_unregister(struct hdd_adapter *adapter)
 {
     QDF_STATUS status;
 
+    mishare_mgmt_diag_count(MDIAG_UNREGISTER_CALLS);
     if (!adapter)
         return;
     mutex_lock(&mishare_mgmt_lock);
@@ -90,6 +185,7 @@ void mishare_mgmt_rx_unregister(struct hdd_adapter *adapter)
     /* Native deregister_frames may run after MAC teardown. Close this helper
      * without calling SME with a vanished context; do not permit adoption. */
     if (!hdd_adapter_get_mac_handle(adapter)) {
+        mishare_mgmt_diag_count(MDIAG_MAC_GONE);
         mishare_mgmt_fault = true;
         mishare_mgmt_reserved = NULL;
         hdd_err("mishare mgmt RX MAC context gone; routing disabled, reload required");
@@ -113,19 +209,40 @@ bool mishare_mgmt_rx_route(struct wlan_hdd_link_info *link,
     struct hdd_adapter *adapter;
     long long count;
 
-    if (!mishare_mgmt_rx || !link || !frame || length < 40 || length > 2304)
+    if (!mishare_mgmt_rx)
         return false;
+    mishare_mgmt_diag_count(MDIAG_HDD_CALLS);
+    if (!link || !frame || length < 40 || length > 2304) {
+        mishare_mgmt_diag_count(MDIAG_HDD_BAD_LENGTH);
+        return false;
+    }
+    mishare_mgmt_diag_frame(MDIAG_HDD_APPLE, frame, length);
     adapter = link->adapter;
-    if (!mishare_mgmt_sta(adapter) || adapter->deflink != link ||
-        smp_load_acquire(&mishare_mgmt_owner) != adapter)
+    if (!mishare_mgmt_sta(adapter)) {
+        mishare_mgmt_diag_count(MDIAG_HDD_INELIGIBLE);
         return false;
-    if (frame[0] != 0xd0 || (frame[1] & 0xc7) || (frame[22] & 15) ||
-        memcmp(frame + 24, mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix)))
+    }
+    if (adapter->deflink != link) {
+        mishare_mgmt_diag_count(MDIAG_HDD_WRONG_LINK);
         return false;
-    /* Route only group DA or this owner's actual unicast identity. */
+    }
+    if (smp_load_acquire(&mishare_mgmt_owner) != adapter) {
+        mishare_mgmt_diag_count(MDIAG_HDD_NO_OWNER);
+        return false;
+    }
+    if (frame[0] != 0xd0 || (frame[1] & 0xc7) || (frame[22] & 15)) {
+        mishare_mgmt_diag_count(MDIAG_HDD_BAD_FLAGS);
+        return false;
+    }
+    if (memcmp(frame + 24, mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix))) {
+        mishare_mgmt_diag_count(MDIAG_HDD_OTHER_PREFIX);
+        return false;
+    }
     if (!is_multicast_ether_addr(frame + 4) &&
-        !ether_addr_equal(frame + 4, adapter->dev->dev_addr))
+        !ether_addr_equal(frame + 4, adapter->dev->dev_addr)) {
+        mishare_mgmt_diag_count(MDIAG_HDD_FOREIGN_DA);
         return false;
+    }
     count = atomic64_inc_return(&mishare_mgmt_routed);
     if (count <= 3)
         hdd_info("mishare mgmt RX routed candidate bytes=%u; not protocol authentication", length);
