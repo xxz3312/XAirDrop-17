@@ -93,6 +93,35 @@ static void action(unsigned char *frame) {
     memset(frame,0,25);frame[0]=0xd0;memset(frame+4,0xff,6);
     memcpy(frame+10,mac,6);memset(frame+16,0xff,6);frame[24]=127;
 }
+static void vendor_relay_tests(void) {
+    unsigned char f[28];bool native=false;
+    action(f);f[25]=2;f[26]=0;f[27]=0;
+    assert(!prepare_feedback_frame(false,false,true,f,sizeof(f),mac,false,&native) && native);
+    f[10]^=1;
+    assert(prepare_feedback_frame(false,false,true,f,sizeof(f),mac,false,&native)==-EADDRNOTAVAIL);
+    assert(!prepare_feedback_frame(false,false,true,f,sizeof(f),mac,true,&native) && !memcmp(f+10,mac,6));
+    f[24]=4;assert(prepare_feedback_frame(false,false,true,f,sizeof(f),mac,false,&native)==-EOPNOTSUPP);
+    assert(!prepare_feedback_frame(false,true,false,f,sizeof(f),mac,false,&native) && !native);
+    f[24]=127;f[0]=8;
+    assert(prepare_feedback_frame(false,false,true,f,sizeof(f),mac,false,&native)==-EOPNOTSUPP);
+    f[0]=0xd0;f[1]=0x40;
+    assert(prepare_feedback_frame(false,false,true,f,sizeof(f),mac,false,&native)==-EOPNOTSUPP);
+    f[1]=0;f[22]=1;
+    assert(prepare_feedback_frame(false,false,true,f,sizeof(f),mac,false,&native)==-EOPNOTSUPP);
+    assert(native_completion_outcome(0)==WONDER_FB_NOACK);
+    assert(native_completion_outcome(1)==WONDER_FB_FAILED);
+    assert(relay_feedback_outcome(true,0,native_completion_outcome(0))==WONDER_FB_NOACK);
+    assert(relay_feedback_outcome(true,-ETIMEDOUT,WONDER_FB_NOACK)==WONDER_FB_FAILED);
+    assert(relay_feedback_outcome(true,0,WONDER_FB_ACKED)==WONDER_FB_FAILED);
+    assert(relay_feedback_outcome(false,0,WONDER_FB_ACKED)==WONDER_FB_ACKED);
+    /* Actual token completion message carries NOACK=1, preserving owner/token. */
+    struct client q={.family=25,.ifindex=7};struct message m;struct bytes payload;
+    unsigned outcome=relay_feedback_outcome(true,0,native_completion_outcome(0));
+    assert(!feedback_message(&q,&m,WONDER_FB_COMPLETE,11,99,outcome));
+    struct bytes attrs={m.data+NLMSG_HDRLEN+GENL_HDRLEN,m.n-NLMSG_HDRLEN-GENL_HDRLEN};
+    assert(attr(attrs,NL80211_ATTR_VENDOR_DATA,&payload)==1);
+    assert(fb64(payload.p+8)==11 && fb64(payload.p+16)==99 && wonder_fb_word(payload.p+24)==WONDER_FB_NOACK);
+}
 static void status_message(struct message *m,unsigned index,uint64_t cookie,
                            const unsigned char *frame,size_t len,bool ack) {
     begin(m,25,NL80211_CMD_FRAME_TX_STATUS,0);
@@ -104,6 +133,7 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
 }
 int main(void) {
     request_error_tests();
+    vendor_relay_tests();
     channel_tests();
     /* Kernel vendor replies append raw bytes and may omit final padding at
      * both attribute and netlink-message levels. Exercise every residue. */

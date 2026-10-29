@@ -366,6 +366,15 @@ static int prepare_vendor_action(unsigned char *frame,size_t length,
     if (!mishare_action_frame_valid(frame,length)) return -EOPNOTSUPP;
     return prepare_frame(frame,length,mac,rewrite);
 }
+/* Native vendor completion has no independently verified peer ACK evidence. */
+static unsigned native_completion_outcome(unsigned status) {
+    return status?WONDER_FB_FAILED:WONDER_FB_NOACK;
+}
+static unsigned relay_feedback_outcome(bool native_vendor,int result,unsigned evidence) {
+    if (result) return WONDER_FB_FAILED;
+    if (native_vendor) return evidence==WONDER_FB_NOACK?WONDER_FB_NOACK:WONDER_FB_FAILED;
+    return evidence==WONDER_FB_ACKED || evidence==WONDER_FB_NOACK?evidence:WONDER_FB_FAILED;
+}
 static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size_t len,int timeout_ms) {
     unsigned char buffer[MESSAGE_MAX],payload[MISHARE_RAW_HEADER+FRAME_MAX]={0};
     struct bytes reply,result;struct message m;
@@ -394,7 +403,7 @@ static int raw_tx(struct client *c,unsigned freq,const unsigned char *frame,size
         mishare_raw_word(result.p+8)!=len || mishare_raw_word(result.p+12)!=1)
         return -EBADMSG;
     unsigned status=mishare_raw_word(result.p+4);
-    if (!status) c->completion_outcome=WONDER_FB_NOACK;
+    c->completion_outcome=native_completion_outcome(status);
     printf("{\"event\":\"%s\",\"native_status\":%u,\"bytes\":%zu,\"freq\":%u}\n",
            vendor_action?"vendor_action_tx_status":"raw_tx_status",status,len,freq);fflush(stdout);
     return status?-ENOMSG:0;
@@ -412,6 +421,16 @@ static int prepare_relay_frame(bool raw_only,bool combined,unsigned char *frame,
         else return -EOPNOTSUPP;
     }
     return *use_raw?prepare_raw_frame(frame,len,mac,rewrite):prepare_frame(frame,len,mac,rewrite);
+}
+/* Explicit vendor-only relay; existing automatic dispatch stays unchanged. */
+static int prepare_feedback_frame(bool raw,bool combined,bool vendor_action,
+                                  unsigned char *frame,size_t len,
+                                  const unsigned char mac[6],bool rewrite,bool *use_native) {
+    if (vendor_action) {
+        *use_native=true;
+        return prepare_vendor_action(frame,len,mac,rewrite);
+    }
+    return prepare_relay_frame(raw,combined,frame,len,mac,rewrite,use_native);
 }
 static int native_interface(const char *name,unsigned *index,unsigned char mac[6]) {
     if (strlen(name)>=IFNAMSIZ) return -ENAMETOOLONG;
@@ -494,7 +513,7 @@ static int feedback_pull(struct client *q,uint64_t owner,uint64_t *token,unsigne
     return feedback_packet(payload,owner,token,frame,length);
 }
 static int feedback_relay(struct client *c,const char *listen,const unsigned char *mac,unsigned freq,
-                          unsigned timeout,unsigned limit,unsigned seconds,bool raw,bool combined,
+                          unsigned timeout,unsigned limit,unsigned seconds,bool raw,bool combined,bool vendor_action,
                           bool rewrite,bool follow,const char *monitor) {
     struct client q={.fd=-1};uint64_t owner=0;unsigned sent=0,failed=0,rejected=0,resets=0;
     unsigned reported=0;bool claimed=false;
@@ -551,12 +570,16 @@ static int feedback_relay(struct client *c,const char *listen,const unsigned cha
                 software_freq=freq;
                 continue;
             }
-            if (!ready) {puts("{\"event\":\"relay_ready\",\"mode\":\"token_feedback\"}");fflush(stdout);ready=true;}
+            if (!ready) {
+                if (vendor_action) puts("{\"event\":\"relay_ready\",\"mode\":\"token_feedback\",\"transport\":\"vendor_action\"}");
+                else puts("{\"event\":\"relay_ready\",\"mode\":\"token_feedback\"}");
+                fflush(stdout);ready=true;
+            }
         }
         if (ret==-ENODATA) {poll(NULL,0,100);continue;}
         if (ret) break;
         bool use_raw=false;
-        int validation=prepare_relay_frame(raw,combined,frame,length,mac,rewrite,&use_raw);
+        int validation=prepare_feedback_frame(raw,combined,vendor_action,frame,length,mac,rewrite,&use_raw);
         bool changed=false;
         if (!validation && follow) {
             ret=follow_channel(&channel,c,query_channel,set_monitor_channel);
@@ -568,11 +591,15 @@ static int feedback_relay(struct client *c,const char *listen,const unsigned cha
         else {
             ret=use_raw?raw_tx(c,freq,frame,length,(int)timeout):action_tx(c,freq,frame,length,(int)timeout);
             c->frame=NULL;
-            outcome=ret?WONDER_FB_FAILED:c->completion_outcome;
+            outcome=relay_feedback_outcome(use_raw,ret,c->completion_outcome);
             if (ret) failed++;else sent++;
         }
         ret=feedback_ack(&q,WONDER_FB_COMPLETE,owner,token,outcome);if (ret) break;
         reported++;
+        if (vendor_action) {
+            printf("{\"event\":\"feedback_complete\",\"token\":\"%" PRIu64 "\",\"outcome\":%u}\n",token,outcome);
+            fflush(stdout);
+        }
         if (changed) {
             ret=feedback_ack(&q,WONDER_FB_RELEASE,owner,0,0);if (ret) break;
             claimed=false;resets++;
@@ -715,6 +742,8 @@ static void usage(void) {
          "action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
          "action-tx capture-status --dev wlan0 [--require-running]\n"
          "action-tx capture-start --dev misharemon0 (explicit QCA local RX capture; stop by bringing down its monitor)\n"
+         "action-tx vendor-action-relay --listen wonder0 --dev wlan0 --freq MHz --feedback [--rewrite-source] [--max-frames 1]\n"
+         "Vendor relay accepts category 127 only; native completion reports NOACK, never peer ACK.\n"
          "action-tx raw-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source]\n"
          "action-tx raw-relay --listen wonder0 --dev wlan0 --freq MHz [--rewrite-source] [--max-frames 1]\n"
          "RAW modes require patched WLAN loaded with mishare_raw_tx=1.\n"
@@ -736,9 +765,10 @@ int main(int argc,char **argv) {
     bool raw=!strcmp(mode,"raw-send") || !strcmp(mode,"raw-relay");
     bool combined=!strcmp(mode,"relay-all");
     bool inject=!strcmp(mode,"inject");
-    bool vendor_action=!strcmp(mode,"vendor-action-send");
+    bool vendor_relay=!strcmp(mode,"vendor-action-relay");
+    bool vendor_action=!strcmp(mode,"vendor-action-send") || vendor_relay;
     if (!raw && !combined && !inject && !vendor_action && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
-    bool relay=!strcmp(mode,"relay") || !strcmp(mode,"raw-relay") || combined;
+    bool relay=!strcmp(mode,"relay") || !strcmp(mode,"raw-relay") || combined || vendor_relay;
     for (int i=2;i<argc;i++) {
         const char *arg=argv[i];
         if (!strcmp(arg,"--radiotap")) radiotap=true;
@@ -766,6 +796,7 @@ int main(int argc,char **argv) {
     }
     if (!dev || !freq || (relay?(!listen_dev || file || radiotap || !strcmp(dev,listen_dev)):(!file || listen_dev))) {usage();return 2;}
     if (follow?(!relay || !monitor || !strcmp(monitor,listen_dev) || !strcmp(monitor,dev)):monitor!=NULL) {usage();return 2;}
+    if (vendor_relay && !feedback) {usage();return 2;}
     if (feedback && !relay) {usage();return 2;}
     signal(SIGINT,on_signal);signal(SIGTERM,on_signal);
     struct client c={.fd=-1};unsigned ifindex;unsigned char mac[6];
@@ -781,7 +812,7 @@ int main(int argc,char **argv) {
             raw?prepare_raw_frame(frame,n,mac,rewrite):prepare_frame(frame,n,mac,rewrite);if (ret) goto done;
         ret=(raw || vendor_action)?raw_tx(&c,freq,frame,n,(int)timeout):action_tx(&c,freq,frame,n,(int)timeout);
     } else if (feedback) {
-        ret=feedback_relay(&c,listen_dev,mac,freq,timeout,limit,seconds,raw,combined,rewrite,follow,monitor);
+        ret=feedback_relay(&c,listen_dev,mac,freq,timeout,limit,seconds,raw,combined,vendor_relay,rewrite,follow,monitor);
     } else {
         unsigned index=if_nametoindex(listen_dev);if (!index) {ret=-ENODEV;goto done;}
         struct channel_follow channel={.tx=ifindex};
