@@ -106,12 +106,14 @@ fi
 [[ "$(realpath "$wlan/qcacld-3.0/cmn")" == "$wlan/qca-wifi-host-cmn" ]] || {
   echo 'Unexpected cmn source' >&2; exit 3;
 }
+# Stock external cfg80211 has TESTMODE slots even though the GKI .config
+# disables CFG80211. Preserve the vendor callback ABI without enabling FTM.
 make "${make_args[@]}" "-j$jobs" \
-  "M=$wlan/qcacld-3.0" MODNAME=qca_cld3_peach_v2 \
+  "M=$wlan/qcacld-3.0" MODNAME=qca_cld3_peach_v2 CHIP_NAME=peach_v2 \
   "WLAN_ROOT=$wlan/qcacld-3.0" CONFIG_QCA_CLD_WLAN=m \
   CONFIG_QCA_CLD_WLAN_PROFILE=canoe_gki_peach-v2 \
   CONFIG_IPA_OUT_OF_TREE=y \
   "DATA_IPA_INC=$dataipa/drivers/platform/msm/include" \
-  "EXTRA_CFLAGS=-I$soc/include -I$hwid_include -DCONFIG_IPA3_MODULE=1 -DCONFIG_ARM_SMMU_MODULE=1 -DCONFIG_QCOM_IOMMU_UTIL_MODULE=1" \
+  "EXTRA_CFLAGS=-I$soc/include -I$hwid_include -DCONFIG_NL80211_TESTMODE=1 -DCONFIG_IPA3_MODULE=1 -DCONFIG_ARM_SMMU_MODULE=1 -DCONFIG_QCOM_IOMMU_UTIL_MODULE=1" \
   "${extra_symbols[@]}" "$target"
 echo 'Diagnostic compilation finished; no load, firmware or AirDrop compatibility is implied.'

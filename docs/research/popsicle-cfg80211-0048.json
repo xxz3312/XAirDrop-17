@@ -1,0 +1,29 @@
+{
+  "stock_cfg80211_sha256": "2f5cfd095216912f61fe3823d7a0447209b882054feedcf7e57ea79da54c4c10",
+  "stock_build_id": "82343cb5fef02ab33637b4802a84c3ce7529c9e1",
+  "stock_wiphy_new_nm_warning_offset": "0x8d8",
+  "stock_p2p_allocator_slots": [
+    "0x290",
+    "0x298"
+  ],
+  "stock_roc_allocator_slots": [
+    "0x1f8",
+    "0x200"
+  ],
+  "stock_pno_allocator_slots": [
+    "0x250",
+    "0x258"
+  ],
+  "old_wlan_ops_bytes": 1032,
+  "expected_testmode_enabled_ops_bytes": 1048,
+  "root_causes": [
+    "Stock external cfg80211 has two TESTMODE callback slots; GKI config disables CFG80211 and omits the corresponding define for WLAN",
+    "MODNAME was incorrectly used as CHIP_NAME, selecting qca_cld3_peach_v2 INI directory instead of peach_v2"
+  ],
+  "fix": [
+    "Set CONFIG_NL80211_TESTMODE=1 in WLAN C preprocessor flags to match external vendor cfg80211 layout; do not enable driver FTM flags",
+    "Pass CHIP_NAME=peach_v2 while preserving MODNAME=qca_cld3_peach_v2",
+    "Audit 65 actual ELF callback relocations, NULL slots, table size and target INI prefix in CI"
+  ],
+  "limitations": "Bounded allocator/callback-location evidence, not complete function prototype, private ABI, KCFI or firmware compatibility certification. Phone 0047 trial failed and automatically restored stock."
+}

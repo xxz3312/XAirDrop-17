@@ -15,6 +15,7 @@ import tarfile
 from module_abi import inspect, symvers
 from popsicle_modpost import write_inputs, module_report, merge_generated_exports
 from btf_layout import Btf, RecordedLayouts, compare
+from module_cfg80211_ops import audit as audit_cfg80211_ops
 from module_mac80211_ops import audit as audit_mac80211_ops
 from popsicle_backend_audit import audited_inventory
 
@@ -539,6 +540,9 @@ def modules(work, link_only=False):
                 'modpost-wlan.log')
         path = work / 'wlan/qcacld-3.0/qca_cld3_peach_v2.ko'
         produced.append(path)
+        ops_report = audit_cfg80211_ops(path)
+        (reports / 'wlan-cfg80211-table.json').write_text(json.dumps(ops_report, indent=2) + '\n')
+        print('WLAN ELF cfg80211 callback slots and target INI prefix verified.', flush=True)
         check_mishare_host_symbols(work, path, 'mishare-host-module.json')
         merge_generated_exports(known, symvers([path.parent / 'Module.symvers']))
         result['modules']['wlan'] = module_report(path, expected, known)
