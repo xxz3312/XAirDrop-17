@@ -737,8 +737,100 @@ static int inject_action(const char *dev,const char *file,bool radiotap,bool rew
 done:
     close(fd);return ret;
 }
+/* Read-only format observation, not peer authentication or AWDL synchronization.
+ * Wire layout checked against seemoo-lab/owl 0ee3263, src/frame.h/rx.c.
+ * Independent parser: no OWL implementation code is included. */
+struct awdl_observation { unsigned subtype,tlvs,sync,channels,election; };
+static int inspect_awdl(const unsigned char *f,size_t n,struct awdl_observation *out) {
+    *out=(struct awdl_observation){0};
+    if (n<28 || f[0]!=0xd0 || f[24]!=127 || memcmp(f+25,"\x00\x17\xf2",3)) return 0;
+    if (n>FRAME_MAX || (f[1]&0xc7) || (f[22]&15) || n<40) return -EBADMSG;
+    if (f[28]!=8 || f[29]!=0x10 || (f[30]!=0 && f[30]!=3)) return -EPROTONOSUPPORT;
+    struct awdl_observation value={.subtype=f[30]};
+    for (size_t at=40;at<n;) {
+        if (n-at<3) return -EBADMSG;
+        size_t len=(size_t)f[at+1]|((size_t)f[at+2]<<8);
+        if (len>n-at-3) return -EBADMSG;
+        value.tlvs++;
+        if (f[at]==4) value.sync++;
+        if (f[at]==18) value.channels++;
+        if (f[at]==5 || f[at]==24) value.election++;
+        at+=3+len;
+    }
+    *out=value;return 1;
+}
+static bool awdl_rx_origin(const struct sockaddr_ll *from,socklen_t size,unsigned index) {
+    return size>=sizeof(*from) && from->sll_ifindex==(int)index &&
+        from->sll_hatype==ARPHRD_IEEE80211_RADIOTAP &&
+        (from->sll_pkttype==PACKET_HOST || from->sll_pkttype==PACKET_BROADCAST ||
+         from->sll_pkttype==PACKET_MULTICAST || from->sll_pkttype==PACKET_OTHERHOST);
+}
+static void print_awdl(const struct awdl_observation *o,bool live) {
+    printf("{\"event\":\"awdl_action_observed\",\"source\":\"%s\",\"subtype\":%u,\"tlvs\":%u,\"sync_tlvs\":%u,\"channel_tlvs\":%u,\"election_tlvs\":%u,\"authenticated_peer\":false}\n",
+           live?"monitor_rx":"offline_file",o->subtype,o->tlvs,o->sync,o->channels,o->election);
+    fflush(stdout);
+}
+static int awdl_main(int argc,char **argv,bool live) {
+    const char *dev=NULL,*file=NULL;bool radiotap=false;unsigned seconds=60,limit=10;
+    for (int i=2;i<argc;i++) {
+        if (!strcmp(argv[i],"--radiotap") && !live) {radiotap=true;continue;}
+        if (++i>=argc) return 2;
+        if (!strcmp(argv[i-1],"--dev") && live) dev=argv[i];
+        else if (!strcmp(argv[i-1],"--frame") && !live) file=argv[i];
+        else if (!strcmp(argv[i-1],"--seconds") && live) {if (number(argv[i],1,300,&seconds)) return 2;}
+        else if (!strcmp(argv[i-1],"--max-frames") && live) {if (number(argv[i],1,1000,&limit)) return 2;}
+        else return 2;
+    }
+    if (live?!dev:!file) return 2;
+    unsigned char frame[8192];struct awdl_observation observation;
+    if (!live) {
+        FILE *f=fopen(file,"rb");if (!f) return 1;
+        size_t n=fread(frame,1,sizeof(frame),f);bool bad=ferror(f) || !feof(f);fclose(f);
+        if (bad || (radiotap && strip_radiotap(frame,&n))) return 1;
+        int found=inspect_awdl(frame,n,&observation);
+        if (found==1) {print_awdl(&observation,false);return 0;}
+        fprintf(stderr,"AWDL inspect: %s\n",found<0?"malformed or unsupported AWDL candidate":"not compatible AWDL Action");return 1;
+    }
+    if (strlen(dev)>=IFNAMSIZ) return 2;
+    unsigned index=if_nametoindex(dev);if (!index) return 1;
+    int fd=socket(AF_PACKET,SOCK_RAW|SOCK_CLOEXEC,htons(ETH_P_ALL));if (fd<0) {perror("AWDL socket");return 1;}
+    struct ifreq req={0};memcpy(req.ifr_name,dev,strlen(dev)+1);
+    struct sockaddr_ll bindaddr={.sll_family=AF_PACKET,.sll_protocol=htons(ETH_P_ALL),.sll_ifindex=(int)index};
+    if (ioctl(fd,SIOCGIFHWADDR,&req) || req.ifr_hwaddr.sa_family!=ARPHRD_IEEE80211_RADIOTAP ||
+        ioctl(fd,SIOCGIFFLAGS,&req) || !(req.ifr_flags&IFF_UP) || bind(fd,(void *)&bindaddr,sizeof(bindaddr))) {
+        fprintf(stderr,"AWDL listen requires an UP radiotap monitor interface\n");close(fd);return 1;
+    }
+    signal(SIGINT,on_signal);signal(SIGTERM,on_signal);
+    unsigned packets=0,observed=0,ignored=0,malformed=0,unsupported=0;int error=0;
+    int64_t deadline=now_ms()+(int64_t)seconds*1000;
+    puts("{\"event\":\"awdl_listen_ready\",\"read_only\":true}");fflush(stdout);
+    while (!interrupted && observed<limit) {
+        int ret=wait_read(fd,deadline);
+        if (ret==-ETIMEDOUT || (ret==-EINTR && interrupted)) break;
+        if (ret) {error=ret;break;}
+        struct sockaddr_ll from={0};socklen_t size=sizeof(from);
+        ssize_t n=recvfrom(fd,frame,sizeof(frame),MSG_TRUNC,(void *)&from,&size);
+        if (n<0) {if (errno==EINTR) continue;error=-errno;break;}
+        packets++;
+        if (!awdl_rx_origin(&from,size,index)) {ignored++;continue;}
+        size_t len=(size_t)n;
+        if (len>sizeof(frame) || strip_radiotap(frame,&len)) {malformed++;continue;}
+        ret=inspect_awdl(frame,len,&observation);
+        if (ret==1) {observed++;print_awdl(&observation,true);}
+        else if (ret==-EPROTONOSUPPORT) unsupported++;
+        else if (ret<0) malformed++;
+        else ignored++;
+    }
+    close(fd);
+    printf("{\"event\":\"awdl_rx_summary\",\"packets\":%u,\"observed\":%u,\"ignored\":%u,\"malformed\":%u,\"unsupported\":%u,\"error\":%d,\"airdrop_verified\":false}\n",
+           packets,observed,ignored,malformed,unsupported,error);
+    return error?1:0; /* observed=0 is a completed observation, not discovery success. */
+}
+
 static void usage(void) {
-    puts("action-tx vendor-action-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] (requires patched WLAN mishare_action_tx=1)\n"
+    puts("action-tx awdl-listen --dev wonder0 [--seconds 60] [--max-frames 10] (read-only; requires configured RX)\n"
+         "action-tx awdl-inspect --frame FILE [--radiotap] (offline format check only)\n"
+         "action-tx vendor-action-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] (requires patched WLAN mishare_action_tx=1)\n"
          "action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
          "action-tx capture-status --dev wlan0 [--require-running]\n"
          "action-tx capture-start --dev misharemon0 (explicit QCA local RX capture; stop by bringing down its monitor)\n"
@@ -757,6 +849,8 @@ static void usage(void) {
 }
 #ifndef ACTION_TX_TEST
 int main(int argc,char **argv) {
+    if (argc>1 && (!strcmp(argv[1],"awdl-listen") || !strcmp(argv[1],"awdl-inspect")))
+        return awdl_main(argc,argv,!strcmp(argv[1],"awdl-listen"));
     if (argc>1 && (!strcmp(argv[1],"capture-status") || !strcmp(argv[1],"capture-start")))
         return capture_main(argc,argv,!strcmp(argv[1],"capture-start"));
     const char *mode=argc>1?argv[1]:"",*dev=NULL,*listen_dev=NULL,*file=NULL,*monitor=NULL;

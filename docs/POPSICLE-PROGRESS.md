@@ -1,10 +1,14 @@
+## 最新阶段 0053
+
+新增只读 AWDL Action 接收识别与离线解析、单终端 LPC/Wonder 采集控制器；识别 Apple OUI、PSF/MIF 和有界 TLV 链。不是 AWDL 同步/选举或 Apple 互传；本阶段 CI/实机证据分别记录。见 [0053 使用步骤](POPSICLE-AWDL-RX-0053.md)。
+
 # 小米 17 Pro Max AirDrop 移植进度（2026-10-29）
 
 当前完成了用户态兼容载荷构建、驱动资源/上下文生命周期、初始频道参数、owned NDI 启停路径、停机准入栅栏、被跟踪 MC 排空证据、纯 host 及早期 NDI 回收、父资源拆除前窗口撤销及显式 SSR 批量回收（含准入错误优先级及最终记账状态预检）的离线验证，并补齐普通 DP/DELETE 与 SSR DP 完成事件校验及普通资源已完成后的 NDI host 收尾和普通 host 删除后的最终记账。
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
-最新实机结果：0049 自编译 WLAN 已完成加载、/dev/wlan 注册、HAL 开启、AP 连接和 DHCP。0050 工具沿用同一驱动完成一次 45 字节实验广播 vendor Action：native_status=0、send_exit=0，随后 STOCK_RESTORED。此前一次 errno 110 本次未复现，尚不能据此确定旧超时成因。此结果只证明收到原生完成回调，不证明独立空口捕获、对端接收、Apple AWDL 或长期稳定。0051 已新增显式 vendor-action-relay --feedback，原生成功按 token 回写 NOACK，错误/超时回写 FAILED，禁止升级为 peer ACK；CI 40890855957 通过，完整 token 闭环待实机。详见 [0051 测试步骤](POPSICLE-VENDOR-FEEDBACK-0051.md)。
+最新实机结果：0049 自编译 WLAN 已完成加载、/dev/wlan 注册、HAL 开启、AP 连接和 DHCP。0050 工具沿用同一驱动完成一次 45 字节实验广播 vendor Action：native_status=0、send_exit=0，随后 STOCK_RESTORED。此前一次 errno 110 本次未复现，尚不能据此确定旧超时成因。此结果只证明收到原生完成回调，不证明独立空口捕获、对端接收、Apple AWDL 或长期稳定。0051 已新增显式 vendor-action-relay --feedback，原生成功按 token 回写 NOACK，错误/超时回写 FAILED，禁止升级为 peer ACK；CI 40890855957 通过，0052 手机已确认完整 token 闭环：native_status=0，NOACK=1，completed/reported=1，failed/rejected=0，Wonder 已卸载且 STOCK_RESTORED；monitor 删除出现一条 DP peer 状态警告，待跟踪。详见 [0051 测试步骤](POPSICLE-VENDOR-FEEDBACK-0051.md)。
 
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |
@@ -92,7 +96,7 @@ RAW DATA 阶段提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。RAW DATA �
 
 ## 0052 单终端测试控制器
 
-新增单终端 vendor Action token 测试：就绪后单次注入、频道复查、NOACK 证据检查和有归属的逆序清理；复用 0049/0051 二进制。6 组控制器测试及 16 项既有会话测试、协议/反馈模型与 Android 编译已通过 CI 40898427028。0052 ZIP 已整理（2,681,155 字节）；手机待测，不提升 0051 实机验证状态。见 [0052 操作说明](POPSICLE-VENDOR-FEEDBACK-0052.md)。
+新增单终端 vendor Action token 测试：就绪后单次注入、频道复查、NOACK 证据检查和有归属的逆序清理；复用 0049/0051 二进制。CI 40898427028 已通过；0052 实机单帧发送和 token NOACK 回写、资源清理及原厂驱动恢复已通过。见 [0052 操作说明](POPSICLE-VENDOR-FEEDBACK-0052.md)。
 
 ## 0042 原生 RX 与桥接修正
 

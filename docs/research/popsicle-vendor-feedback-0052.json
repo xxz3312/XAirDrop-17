@@ -1,21 +1,22 @@
 {
-  "status": "CONTROLLER_CI_PASS_PHONE_PENDING",
-  "source_commit": "7c37068ecb5872d491559932039d35a9e4cc7660",
+  "status": "DEVICE_TOKEN_LOOP_PASS_SINGLE_BROADCAST",
+  "controller_source_commit": "7c37068ecb5872d491559932039d35a9e4cc7660",
   "ci_run": 40898427028,
-  "ci_job": 123533801019,
-  "ci_conclusion": "success",
-  "command_model_tests": 6,
-  "existing_session_tests": 16,
-  "protocol_and_feedback_sanitizers": "pass",
-  "android_build": "pass",
-  "reused_tool_run": 40890855957,
-  "reused_wonder_run": 40861769292,
-  "phone_executed": false,
-  "awdl_verified": false,
-  "package": {
-    "name": "XAirDrop-17-Vendor-Feedback-0052.zip",
-    "bytes": 2681155,
-    "sha256": "df7e16521b9257d694660115fd30e72072b1fb5270be8cdd3dca4269369fb397"
+  "device_evidence": {
+    "frame_bytes": 45,
+    "native_status": 0,
+    "token_outcome": 1,
+    "completed": 1,
+    "reported": 1,
+    "failed": 0,
+    "rejected": 0,
+    "exit": 0,
+    "wonder_unloaded": true,
+    "stock_restored_marker": true,
+    "ap_reassociation_verified": false
   },
-  "scope": "One experimental broadcast after relay readiness; native completion maps to NOACK; owned teardown; WLAN switching remains manual"
+  "known_observation": "DP peer invalid state transition during monitor deletion; monitor deletion completed; cause not established",
+  "peer_ack_verified": false,
+  "awdl_verified": false,
+  "raw_logs_published": false
 }

@@ -131,7 +131,38 @@ static void status_message(struct message *m,unsigned index,uint64_t cookie,
     if (ack) assert(!add_attr(m,NL80211_ATTR_ACK,NULL,0));
     ((struct nlmsghdr *)(void *)m->data)->nlmsg_len=(uint32_t)m->n;
 }
+static void awdl_observation_tests(void) {
+    unsigned char f[80]={0xd0};f[24]=127;f[26]=0x17;f[27]=0xf2;
+    f[28]=8;f[29]=0x10;
+    struct awdl_observation o;
+    assert(inspect_awdl(f,40,&o)==1 && o.subtype==0 && !o.tlvs);
+    f[30]=3;f[40]=4;f[41]=1;f[43]=9;f[44]=18;f[47]=24;
+    assert(inspect_awdl(f,50,&o)==1 && o.subtype==3 && o.tlvs==3 && o.sync==1 && o.channels==1 && o.election==1);
+    for (size_t n=28;n<40;n++) assert(inspect_awdl(f,n,&o)==-EBADMSG);
+    f[41]=255;assert(inspect_awdl(f,50,&o)==-EBADMSG && !o.tlvs);f[41]=1;
+    assert(inspect_awdl(f,49,&o)==-EBADMSG);assert(inspect_awdl(f,51,&o)==-EBADMSG);
+    f[29]=0x20;assert(inspect_awdl(f,50,&o)==-EPROTONOSUPPORT);f[29]=0x10;
+    f[30]=2;assert(inspect_awdl(f,50,&o)==-EPROTONOSUPPORT);f[30]=3;
+    f[28]=7;assert(inspect_awdl(f,50,&o)==-EPROTONOSUPPORT);f[28]=8;
+    for (unsigned bit=1;bit<=128;bit<<=1) if (bit&0xc7) {
+        f[1]=(unsigned char)bit;assert(inspect_awdl(f,50,&o)==-EBADMSG);
+    }
+    f[1]=8;assert(inspect_awdl(f,50,&o)==1);f[1]=0;
+    f[22]=1;assert(inspect_awdl(f,50,&o)==-EBADMSG);f[22]=0;
+    f[27]=0;assert(!inspect_awdl(f,50,&o));f[27]=0xf2;
+    f[24]=4;assert(!inspect_awdl(f,50,&o));f[24]=127;
+    f[0]=0x80;assert(!inspect_awdl(f,50,&o));
+    struct sockaddr_ll from={.sll_ifindex=5,.sll_hatype=ARPHRD_IEEE80211_RADIOTAP};
+    assert(awdl_rx_origin(&from,sizeof(from),5));
+    from.sll_pkttype=PACKET_OUTGOING;assert(!awdl_rx_origin(&from,sizeof(from),5));
+    from.sll_pkttype=PACKET_LOOPBACK;assert(!awdl_rx_origin(&from,sizeof(from),5));
+    from.sll_pkttype=PACKET_MULTICAST;assert(awdl_rx_origin(&from,sizeof(from),5));
+    assert(!awdl_rx_origin(&from,sizeof(from)-1,5));assert(!awdl_rx_origin(&from,sizeof(from),6));
+    from.sll_hatype=ARPHRD_ETHER;assert(!awdl_rx_origin(&from,sizeof(from),5));
+    puts("AWDL_OBSERVATION_MODEL_PASS_ONLY");
+}
 int main(void) {
+    awdl_observation_tests();
     request_error_tests();
     vendor_relay_tests();
     channel_tests();
