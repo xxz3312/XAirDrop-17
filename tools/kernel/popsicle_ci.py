@@ -88,6 +88,7 @@ def setup(work):
     # Dormant host helper is compiled into the real target WLAN, not a new module.
     for source, destination in [
         ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc'),
+        ('wlan_hdd_mishare_mgmt_rx.c', 'src'), ('wlan_hdd_mishare_mgmt_rx.h', 'inc'),
         ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc'),
         ('mishare_raw_protocol.h', 'inc'),
         ('wlan_hdd_mishare_raw_tx.h', 'inc'),

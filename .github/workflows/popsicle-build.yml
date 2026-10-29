@@ -36,6 +36,7 @@ on:
       - tools/kernel/mishare_completed_fixture.py
       - tools/kernel/mishare_final_fixture.py
       - tools/kernel/mishare_batch_previous.py
+      - tools/kernel/mishare_mgmt_rx_fixture.py
       - tools/kernel/mishare_session_fixture.py
       - tools/kernel/mishare_context_fixture.py
       - tools/kernel/mishare_firmware_fixture.py
@@ -86,6 +87,7 @@ jobs:
         run: |
           python3 -m unittest discover -s tools/kernel -p 'test_*.py'
           bash -n tools/kernel/popsicle_trial_build.sh
+          python3 tools/kernel/mishare_mgmt_rx_fixture.py
       - name: Install host build dependencies
         run: |
           # Only Ubuntu packages are needed. Unrelated runner repositories can

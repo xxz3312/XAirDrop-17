@@ -1,0 +1,79 @@
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -264,6 +264,7 @@
+ 
+ # MiShare DOWN host-adapter lifecycle; no runtime caller yet.
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_host.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_mgmt_rx.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_backend.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_txn.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_events.o
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c
+@@ -27124,6 +27124,8 @@
+ 	return 0;
+ }
+ 
++#include "wlan_hdd_mishare_mgmt_rx.h"
++
+ /* This function registers for all frame which supplicant is interested in */
+ int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *adapter)
+ {
+@@ -27211,6 +27213,18 @@
+ 		goto dereg_wnm_bss_action_frm;
+ 	}
+ 
++	/* This adds a PE host match, not a firmware RX filter. */
++	{
++		int ret = mishare_mgmt_rx_register(adapter);
++		if (ret) {
++			sme_deregister_mgmt_frame(mac_handle,
++				adapter->deflink->vdev_id, type,
++				(uint8_t *) WNM_NOTIFICATION_FRAME,
++				WNM_NOTIFICATION_FRAME_SIZE);
++			status = QDF_STATUS_E_FAILURE;
++			goto dereg_wnm_bss_action_frm;
++		}
++	}
+ 	return 0;
+ 
+ dereg_wnm_bss_action_frm:
+@@ -27244,6 +27258,7 @@
+ 	uint16_t type = (WLAN_FC0_TYPE_MGMT << 2) | (SIR_MAC_MGMT_ACTION << 4);
+ 
+ 	hdd_enter();
++	mishare_mgmt_rx_unregister(adapter);
+ 
+ 	if (!mac_handle) {
+ 		hdd_err("mac_handle is NULL, failed to deregister frames");
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_p2p.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_p2p.c
+@@ -1332,7 +1332,7 @@
+ 			  uint32_t frm_len,
+ 			  enum nl80211_rxmgmt_flags nl80211_flag)
+ {
+-	struct cfg80211_rx_info info;
++	struct cfg80211_rx_info info = {0};
+ 	struct hdd_context *hdd_ctx = link_info->adapter->hdd_ctx;
+ 	struct wlan_objmgr_vdev *vdev;
+ 
+@@ -1463,6 +1463,8 @@
+ 
+ 	return NULL;
+ }
++
++#include "wlan_hdd_mishare_mgmt_rx.h"
+ 
+ static void
+ __hdd_indicate_mgmt_frame_to_user(struct wlan_hdd_link_info *link_info,
+@@ -1503,6 +1505,10 @@
+ 			frame_type, frm_len, rx_freq);
+ 		return;
+ 	}
++
++	/* Native vdev sync is held; only the opt-in owner may bypass DA lookup. */
++	if (mishare_mgmt_rx_route(link_info, pb_frames, frm_len))
++		goto check_adapter;
+ 
+ 	type = WLAN_HDD_GET_TYPE_FRM_FC(pb_frames[0]);
+ 	sub_type = WLAN_HDD_GET_SUBTYPE_FRM_FC(pb_frames[0]);
