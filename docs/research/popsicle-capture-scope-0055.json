@@ -1,0 +1,37 @@
+{
+  "status": "EXPLICIT_OCC_REQUEST_CI_PASS_DEVICE_SCOPE_UNVERIFIED",
+  "source_commit": "b29044d7f592739f3bc17abe40597f5ab929a531",
+  "ci_run": 40915175815,
+  "ci_job": 123593373812,
+  "ci_conclusion": "success",
+  "artifact_id": 12915432909,
+  "artifact_sha256": "c8ce685e2f0af0c8ec59d65a09bd3c03fd33d22f63e22d3f445e9158ba58cb35",
+  "tests": {
+    "session": 16,
+    "vendor_controller": 6,
+    "rx_controller": 6,
+    "occ_wire_encoding": "RX attrs 2/4/6 and operating type attr8 all u32=1, nested outer; no TX attrs",
+    "default_lpc": "old request encoding unchanged",
+    "protocol_feedback_raw_sanitizers": "pass"
+  },
+  "binary": {
+    "bytes": 37336,
+    "sha256": "74f14d283c15d604cd9c6b9bcabe220811bdf4417749adbf83f5b2702fbdaac4"
+  },
+  "package": {
+    "name": "XAirDrop-17-Capture-Scope-0055.zip",
+    "bytes": 2696017,
+    "sha256": "cbe8dda419e24cbf4e906e3c0e97f7d6e50dcfe5254849a47980fc8631f68969"
+  },
+  "kernel_changed": false,
+  "phone_executed": false,
+  "occ_mode_verified": false,
+  "no_fallback": true,
+  "limits": [
+    "GET reports running boolean only, not capture mode",
+    "SUBFILTER build branch ignores operating type in audited source",
+    "actual stock build path and firmware coverage not established",
+    "requires independent RX control for proof; local TX completion is insufficient",
+    "AWDL synchronization and Apple transfers unverified"
+  ]
+}

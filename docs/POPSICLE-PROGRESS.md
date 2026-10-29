@@ -1,6 +1,6 @@
 ## 最新阶段 0055
 
-0054 实机：7733 包全部通过来源/格式检查，其中 583 Beacon、7150 DATA，Action=0。源码审计确认默认 LPC 是客户端/BSS 采集，新增显式 OCC 工作频道采集请求（RX 三类+operating_type=1），不自动回退。SET/GET 无模式读回，且 SUBFILTER 分支可能忽略模式属性，故始终 mode_verified=false；OCC 实际范围待验证。见 [0055 测试步骤](POPSICLE-CAPTURE-SCOPE-0055.md)。
+0054 实机：7733 包全部通过来源/格式检查，其中 583 Beacon、7150 DATA，Action=0。源码审计确认默认 LPC 是客户端/BSS 采集，新增显式 OCC 工作频道采集请求（RX 三类+operating_type=1），不自动回退。SET/GET 无模式读回，且 SUBFILTER 分支可能忽略模式属性，故始终 mode_verified=false；OCC 实际范围待验证。CI 40915175815 的请求编码、协议/反馈模型、16 项会话、6 组 TX 与 6 组 RX controller 测试、Android 编译均通过；0055 实机范围待验证。见 [0055 测试步骤](POPSICLE-CAPTURE-SCOPE-0055.md)。
 
 ## 最新阶段 0054
 
