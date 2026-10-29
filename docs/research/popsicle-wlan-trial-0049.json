@@ -14,7 +14,7 @@
   "android_control_implementation_checked": true,
   "wlan_elf_callbacks_checked": 65,
   "upstream": "Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted",
-  "phone_trial_executed": false,
+  "phone_trial_executed": true,
   "rf_awdl_verified": false,
   "package_job": 123412419534,
   "artifact_id": 12892148989,
@@ -44,5 +44,20 @@
     },
     "wlan_sha256": "ddbd9a699b54eb3455dad991714d95c9e966ca1db1c644d5a2aa52fb16f9e2a4",
     "ini_prefix": "wlan/qca_cld/peach_v2/"
+  },
+  "phone_result": {
+    "trial_driver_active": true,
+    "driver_version": "5.2.1.137C",
+    "wlan_control_registered": true,
+    "framework_wifi_on_write_observed": true,
+    "firmware_ready": true,
+    "sta_connectivity_mode": true,
+    "ap_association_completed": true,
+    "dhcp_ack_observed": true,
+    "framework_connected": true,
+    "frequency_mhz_at_capture": 5240,
+    "vendor_action_verified": false,
+    "awdl_verified": false,
+    "limitations": "Short bring-up log only; not long-term stability, all-feature or Apple interoperability certification."
   }
 }

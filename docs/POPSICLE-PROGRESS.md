@@ -4,7 +4,7 @@
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
-最新实机结果：0048 的自编译 WLAN 已加载并创建 wlan0，成功读取 peach_v2 INI 和收到固件 ready；试验期间未再观察到原 cfg80211 allocator 警告。但 Android Wi-Fi enable 超时，脚本已自动恢复原厂驱动。旧 ELF 缺少 /dev/wlan 控制节点处理代码：目标 profile 的 CONFIG_WLAN_CTRL_NAME 没有映射到旧式 Kbuild 读取的 WLAN_CTRL_NAME。0049 显式启用 wlan 控制节点，继续保留 65 项回调位置与 INI 检查，并新增控制符号检查；完整构建 [40861769292](https://github.com/xxz3312/XAirDrop-17/actions/runs/40861769292) 已通过，53 项 Python 检查、65 项回调位置和控制符号检查通过；0049 尚待实机。尚未取得 0048 HAL logcat，不能断言这是唯一剩余问题，RF/AWDL 仍未验证。
+最新实机结果：0049 已成功加载自编译 WLAN（5.2.1.137C）与配套 provider，注册 /dev/wlan，收到固件 ready；框架写入 Wifi Turning On 后进入 STA connectivity 模式。wpa_supplicant 报告连接完成，DHCP ACK 和 ConnectivityService CONNECTED 也已观察到。旧的缺少 provider、cfg80211 TESTMODE 布局、INI 前缀及 WLAN 控制节点构建遗漏均已越过。本次日志还存在可选诊断功能不支持和一次扫描失败记录，不据此宣称长期稳定或所有功能完整。下一步使用现有 0049 包测试一次 vendor Action 的原生完成回调；该路径、完整 AWDL 和 Apple 互传仍未实机验证。
 
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |

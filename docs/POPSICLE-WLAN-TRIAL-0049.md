@@ -24,7 +24,7 @@ provider 的加载和所有权清理沿用手动运行时流程：先加载依�
 - 原驱动忙不强制卸载。加载失败或 wlan0/Wi-Fi 未就绪时尝试恢复原驱动及原 Wi-Fi/HAL 状态。脚本无法恢复内核崩溃；重启会重新加载未修改的系统原驱动。
 - 生产 shell 脚本在模拟 Android 命令/文件系统中执行，覆盖 14 个成功、失败、恢复和拒绝路径。这不是内核卸载/加载实机认证。
 
-CI 从 0049 原生构建提取 WLAN 和 provider，核对原始 SHA256，再用固定 NDK 27.2.12479018 llvm-strip --strip-debug 去除调试信息，不改 CRC。工具沿用 40841130477（d8365331d8920786fcdb345a31679347d7903273），包附代码、SHA256SUMS 和许可。0049 尚未实机验证，检查通过或 insmod 返回成功都不代表 probe、Wi-Fi、RF 或 AWDL 可用。
+CI 从 0049 原生构建提取 WLAN 和 provider，核对原始 SHA256，再用固定 NDK 27.2.12479018 llvm-strip --strip-debug 去除调试信息，不改 CRC。工具沿用 40841130477（d8365331d8920786fcdb345a31679347d7903273），包附代码、SHA256SUMS 和许可。0049 实机已确认控制节点注册、Wi-Fi 开启、AP 连接和 DHCP 成功；vendor Action、完整 AWDL 与 Apple 互传仍待验证。仅检查通过或 insmod 返回成功不能证明这些后续能力。
 
 ## 1. 结束现有 Wonder 测试
 
