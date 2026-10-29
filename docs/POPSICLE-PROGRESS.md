@@ -99,3 +99,7 @@ Public Action 实机提交返回 cookie=256，iw 观察到 cookie 0x100 的 acke
 ## 0044 完成回传闭环与回包解析
 
 0043 原生 49-byte Public Action 发送已实机匹配状态并退出 0；52-byte 测试帧经 Wonder token 队列 → 原生发送 → token 完成回传，completed=1、reported=1、failed=0、rejected=0。49-byte 队列回复此前触发 EBADMSG，0044 修正最终 netlink 消息/属性可省略末尾填充的解析；49/50/51/52-byte、截断和部分填充回归与 Android 编译通过（Actions 40840072145）。0044 原长度闭环仍待实机验证。详见 [0044](POPSICLE-FEEDBACK-FIX-0044.md)。广播完成不证明对端收到，AWDL 与 Apple 互传仍未验证。
+
+## 0045 独立原生 vendor Action 入口
+
+0044 原始 49-byte 帧的完整 token 回路已实机通过：completed=1、reported=1、failed=0、rejected=0。0045 新增显式 vendor-action-send 和默认关闭、独立加载参数 mishare_action_tx；通过原生 WMI MGMT 发送 category 127，限非 MLO STA 当前频道并保留源地址/peer 检查。用户态回归/Android 构建 40841130477 与完整 WLAN 构建 40841130362 均成功；86 必需符号、575 WLAN 导入记录与所选布局检查通过。原生 WLAN 替换、固件接受、空口接收、NDI/AWDL 时槽/身份和 Apple 互传仍待验证。下一步先运行只读 WLAN 加载预检，详见 [0045](POPSICLE-VENDOR-ACTION-0045.md)。

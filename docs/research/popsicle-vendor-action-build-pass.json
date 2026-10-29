@@ -1,0 +1,45 @@
+{
+  "source_commit": "d8365331d8920786fcdb345a31679347d7903273",
+  "tool_run": 40841130477,
+  "kernel_run": 40841130362,
+  "kernel_job": 123337497774,
+  "conclusion": "success",
+  "validation_artifact": 12883047626,
+  "validation_zip_sha256": "f674b086b62fcbc24f1e2d262bf6471212e9f4fe1c7bcbacda274f904d692395",
+  "diagnostic_artifact": 12883825045,
+  "required_symbols": 86,
+  "missing_symbols": [],
+  "action_symbol_required": true,
+  "wlan": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "sha256": "1c998d320351a37f54fca2e0b93808db7b8d73ea05c108df8b93b046936a0567",
+    "version_records": 575,
+    "version_record_mismatches": {},
+    "layout": {
+      "section_size": 1600,
+      "init_offset": 392,
+      "exit_offset": 1528
+    },
+    "undefined_without_version": [],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ],
+    "vermagic_exact_match": false,
+    "vermagic_reference_loader_match": true,
+    "vermagic_stock_loader_match": true,
+    "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+    "btf_present": false,
+    "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+  },
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "phone_new_backend_tested": false,
+  "limitations": "Build evidence only; native WLAN installation, firmware acceptance, RF reception and AWDL transfer unverified."
+}
