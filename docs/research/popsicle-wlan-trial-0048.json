@@ -13,7 +13,7 @@
   "kernel_python_checks": 50,
   "wlan_elf_callbacks_checked": 65,
   "upstream": "Leekin2/XAirDrop@eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76 module/action.sh; manual runtime flow adapted",
-  "phone_trial_executed": false,
+  "phone_trial_executed": true,
   "rf_awdl_verified": false,
   "package_job": 123396939630,
   "artifact_id": 12889893597,
@@ -33,5 +33,17 @@
     "limitations": "Not full cfg80211 ABI, function prototype, KCFI or RF certification.",
     "wlan_sha256": "41560b3576b284d4799f2db0f6733811c593fc4211601d2d02cfff9133baac47",
     "ini_prefix": "wlan/qca_cld/peach_v2/"
+  },
+  "phone_result": {
+    "module_loaded": true,
+    "wlan0_created": true,
+    "target_ini_loaded": true,
+    "firmware_ready_event_received": true,
+    "cfg80211_allocator_warning_observed": false,
+    "framework_wifi_enabled": false,
+    "failure": "Wi-Fi did not enable within controller timeout",
+    "automatic_stock_restore": true,
+    "confirmed_build_omission": "Android /dev/wlan control implementation was not compiled in",
+    "only_remaining_cause_proven": false
   }
 }

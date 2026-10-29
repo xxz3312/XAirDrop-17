@@ -4,7 +4,7 @@
 实机已确认 MiShare 对临时 XOS 服务的 Binder 元数据访问；还没有实际 AWDL 收发。
 “离线通过”指源码、模型测试、编译与链接等检查，不代表手机加载或固件接受。
 
-最新实机结果：0047 已成功解析 WLAN 的 provider 依赖，但 host probe 失败，未创建 wlan0，脚本自动恢复原驱动。日志与原厂 cfg80211 二进制确认：WLAN 回调表缺少 TESTMODE 的两个槽位，后半段偏移 16 字节；另有 CHIP_NAME 导致 INI 目录错误。0048 修正正常构建配置，CI 审计 65 项实际回调重定位、NULL 槽位和 peach_v2 配置前缀。完整构建 [40856837869](https://github.com/xxz3312/XAirDrop-17/actions/runs/40856837869) 已通过（50 项 Python 检查，最终回调表 1048 字节/65 项位置正确，INI 前缀正确）；0048 尚待实机加载，不宣称 RF/AWDL 通过。
+最新实机结果：0048 的自编译 WLAN 已加载并创建 wlan0，成功读取 peach_v2 INI 和收到固件 ready；试验期间未再观察到原 cfg80211 allocator 警告。但 Android Wi-Fi enable 超时，脚本已自动恢复原厂驱动。旧 ELF 缺少 /dev/wlan 控制节点处理代码：目标 profile 的 CONFIG_WLAN_CTRL_NAME 没有映射到旧式 Kbuild 读取的 WLAN_CTRL_NAME。0049 显式启用 wlan 控制节点，继续保留 65 项回调位置与 INI 检查，并新增控制符号检查；完整构建 [40861769292](https://github.com/xxz3312/XAirDrop-17/actions/runs/40861769292) 已通过，53 项 Python 检查、65 项回调位置和控制符号检查通过；0049 尚待实机。尚未取得 0048 HAL logcat，不能断言这是唯一剩余问题，RF/AWDL 仍未验证。
 
 | 模块 | 状态 | 已完成与剩余边界 |
 | --- | --- | --- |

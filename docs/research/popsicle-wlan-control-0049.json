@@ -16,5 +16,34 @@
     "old_elf": "0048 lacks wlan_hdd_state_fops and its open/write/release callbacks"
   },
   "fix": "Pass WLAN_CTRL_NAME=wlan; audit actual linked control symbols in addition to cfg80211 table",
-  "limitations": "HAL logcat has not been collected; missing control is a confirmed build omission, not proof it is the only remaining reason Wi-Fi enable fails."
+  "limitations": "HAL logcat has not been collected; missing control is a confirmed build omission, not proof it is the only remaining reason Wi-Fi enable fails.",
+  "native_source_commit": "370f249aabf1d53bdcbda15f66de850a4e07f5d6",
+  "native_run": 40861769292,
+  "native_job": 123406528568,
+  "native_conclusion": "success",
+  "kernel_python_checks": 53,
+  "elf_audit": {
+    "status": "SELECTED_CFG80211_CALLBACK_SLOTS_MATCH_ONLY",
+    "table_bytes": 1048,
+    "callbacks_checked": 65,
+    "testmode_slots": [
+      "0x1c0",
+      "0x1c8"
+    ],
+    "p2p_slots_null": true,
+    "limitations": "Not full cfg80211 ABI, function prototype, KCFI or RF certification.",
+    "android_wlan_control": {
+      "status": "CONTROL_IMPLEMENTATION_PRESENT_ONLY",
+      "symbols": [
+        "wlan_hdd_state_ctrl_param_open",
+        "wlan_hdd_state_ctrl_param_release",
+        "wlan_hdd_state_ctrl_param_write",
+        "wlan_hdd_state_fops"
+      ],
+      "limitations": "Symbol presence does not prove device-node creation, HAL compatibility or Wi-Fi enable."
+    },
+    "wlan_sha256": "e7fc425dc8e2af83aa7fe2063c1b17716e1fcceae86d8c95b1bfe6756e963237",
+    "ini_prefix": "wlan/qca_cld/peach_v2/"
+  },
+  "phone_0049_verified": false
 }
