@@ -11,7 +11,7 @@ id) echo 0 ;;
 iw) echo 'freq: 5240' ;;
 sha256sum) [ "$CASE" != checksum_fail ] ;;
 dmesg) echo modeled_kernel ;;
-action-tx-0058)
+action-tx-0059)
  echo called >> "$MODEL_ROOT/events"
  echo '{"event":"awdl_mgmt_rx_summary","events":0,"parsed":0,"over_256":0}'
  [ "$CASE" != tool_fail ] ;;
@@ -25,19 +25,23 @@ class MgmtRunnerTest(unittest.TestCase):
             params=r/'sys/module/qca_cld3_peach_v2/parameters'
             (params/'mishare_mgmt_rx').write_text('N' if case=='disabled' else 'Y')
             (params/'mishare_mgmt_rx_routed').write_text('0')
+            if case!='missing_diag':(params/'mishare_mgmt_rx_diag').write_text('register_submitted=1\npe_inserted=1\nowner_active=1\n')
             if case=='wonder':(r/'sys/module/wonder').mkdir()
-            for name in ['id','iw','sha256sum','dmesg','action-tx-0058']:
-                p=(r/'bundle' if name=='action-tx-0058' else r/'bin')/name;p.write_text(MOCK);p.chmod(0o755)
+            for name in ['id','iw','sha256sum','dmesg','action-tx-0059']:
+                p=(r/'bundle' if name=='action-tx-0059' else r/'bin')/name;p.write_text(MOCK);p.chmod(0o755)
             source=(ROOT/'tools/device/popsicle-mgmt-rx-test.sh').read_text().replace('/sys/',str(r/'sys')+'/').replace('/data/local/tmp/',str(r/'data/local/tmp')+'/')
             (r/'test.sh').write_text(source)
             result=subprocess.run(['sh',str(r/'test.sh'),str(r/'bundle'),str(r/'logs')],env=dict(os.environ,MODEL_ROOT=tmp,CASE=case,PATH=str(r/'bin')+':'+os.environ['PATH']),capture_output=True,text=True,timeout=5)
             called=(r/'events').read_text().splitlines() if (r/'events').exists() else []
             outcome=(r/'logs/result.txt').read_text() if (r/'logs/result.txt').exists() else ''
+            if called:
+                self.assertEqual((r/'logs/diag-before.txt').read_text(),(r/'logs/diag-after.txt').read_text())
+                self.assertIn('pe_inserted=1', (r/'logs/diag-before.txt').read_text())
             return result,called,outcome
     def test_zero_events_is_observation_not_success(self):
         r,c,out=self.run_case();self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(c,['called']);self.assertEqual(out,'exit=0\n');self.assertIn('MGMT_RX_OBSERVATION_COMPLETE',r.stdout)
     def test_requires_enabled_driver_and_no_old_wonder(self):
-        for case in ['disabled','wonder']:
+        for case in ['disabled','wonder','missing_diag']:
             with self.subTest(case=case):
                 r,c,_=self.run_case(case);self.assertNotEqual(r.returncode,0);self.assertFalse(c)
     def test_checksum_failure_never_starts_tool(self):

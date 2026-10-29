@@ -1,0 +1,23 @@
+{
+  "stage": "0058",
+  "bundle_checksums": "all passed",
+  "trial_driver_active": true,
+  "sta_connected_before_after": true,
+  "sta_frequency_mhz": 5240,
+  "registration_acknowledged": true,
+  "routed_before": 0,
+  "routed_after": 0,
+  "events": 0,
+  "parsed": 0,
+  "over_256": 0,
+  "listener_exit": 0,
+  "stock_restored_wlan_present": true,
+  "restored_association_verified": false,
+  "firmware_full_rx_verified": false,
+  "airdrop_verified": false,
+  "notes": [
+    "No route counters to locate first missing stage",
+    "DRM warning precedes trial driver switch; not evidence of management RX fault",
+    "DP peer state warnings remain unresolved"
+  ]
+}

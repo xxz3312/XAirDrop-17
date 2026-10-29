@@ -98,7 +98,7 @@ ENABLE_MGMT_RX=0
 if [ "$ACTION" = run-mgmt-rx ]; then ENABLE_MGMT_RX=1; ACTION=run; fi
 if [ "$ACTION" = status ]; then
     grep "^$NAME " /proc/modules || true
-    for p in mishare_action_tx mishare_raw_tx mishare_mgmt_rx mishare_mgmt_rx_routed; do
+    for p in mishare_action_tx mishare_raw_tx mishare_mgmt_rx mishare_mgmt_rx_routed mishare_mgmt_rx_diag; do
         f=/sys/module/$NAME/parameters/$p
         [ ! -r "$f" ] || { printf '%s=' "$p"; cat "$f"; }
     done
