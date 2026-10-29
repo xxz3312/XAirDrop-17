@@ -22,5 +22,17 @@
     "qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c": "359c220118e4d3cb1517858b947e3c27960bb95c182639944dc804c84f37ed74",
     "kernel/wonder/mac80211.c": "0cdfcfbf2f809fc7731192bd0e25ffc2ea434215c8d6c98d16bd7fe32ecd7d04",
     "native/wireless/action_tx.c": "487adfa6bf54c4817ee26af98f29de6e3816180b85c0441b7b16a680ae6ed96f"
-  }
+  },
+  "audit_source_commit": "dc2bb2e215ae27111649a43af289bea5f790a489",
+  "wlan_source_base_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+  "wlan_worktree_has_existing_popsicle_patches": true,
+  "audited_modified_native_files": [
+    "qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c"
+  ],
+  "ci_run": 40923724035,
+  "ci_job": 123623535258,
+  "ci_conclusion": "success",
+  "ci_scope": "5 Python source-inference guard fixtures; actual target source audit executed in workspace; no C/kernel build or new phone run",
+  "runtime_changed": false,
+  "phone_retest_required": false
 }

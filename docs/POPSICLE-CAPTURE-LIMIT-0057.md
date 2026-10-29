@@ -8,7 +8,7 @@
 
 ## 已找到的限制
 
-固定 MiCode WLAN 源36df473046706a5259942e1bf7222108dbbb860f中：
+检查的 MiCode WLAN 工作树基于36df473046706a5259942e1bf7222108dbbb860f，含此前popsicle适配补丁；本轮审计文件中wlan_hdd_cfg80211.c为已修改文件，其余三个DP文件未改。报告记录当前文件哈希，结论限定于这些内容：
 
 1. os_if_dp_local_pkt_capture.c 把LPC/OCC设置交给 cdp_start_local_pkt_capture。
 2. dp_mon_filter.c 的 dp_mon_start_local_pkt_capture 调用 dp_mon_set_local_pkt_capture_rx_filter。
@@ -43,3 +43,7 @@ python3 tools/kernel/audit_capture_limit.py \
 另一条是完整monitor packet DMA/RX ring路径；它与当前header TLV截取不同，需要目标硬件/固件、并发资源和生命周期验证。将来RAW DATA通路仍需要单独实现，管理帧indication不能代替数据接收后端。
 
 本阶段仅把截断来源及改造要求落到可核对的源码；full_frame_rx_implemented=false，不能称完整帧修复完成。
+
+## 验证记录
+
+审计脚本已对实际目标工作树运行。CI 40923724035 的5项Python fixture通过，包括枚举变化、较大枚举出现、接收路径变化及SME调用/bridge裁剪识别。CI执行的是合成源码fixture，不等于再次验证目标固件或运行完整WLAN。源码定位提交：dc2bb2e215ae27111649a43af289bea5f790a489。本轮没有新的C/内核编译或手机测试。
