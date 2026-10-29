@@ -1,0 +1,26 @@
+{
+  "status": "SOURCE_HEADER_COPY_LIMIT_FOUND_NOT_FIRMWARE_CERTIFICATION",
+  "configured_header_bytes": 256,
+  "header_dma_encodings": {
+    "64": 1,
+    "128": 2,
+    "256": 3
+  },
+  "maximum_declared_header_bytes": 256,
+  "uses_header_tlv_copy": true,
+  "wonder_bridge_has_trim_call": false,
+  "listener_buffer_bytes": 8192,
+  "listener_requests_full_datagram_length": true,
+  "registration_callback_programs_sme": false,
+  "registration_scope": "only audited update_mgmt_frame_registrations body; not all firmware paths",
+  "stock_binary_matches_audited_source": false,
+  "full_frame_rx_implemented": false,
+  "evidence_sha256": {
+    "qca-wifi-host-cmn/dp/wifi3.0/monitor/dp_mon_filter.c": "c4b7b0e7629db99d83c00a9da2f12c76c2ecc3c32c79272b2af45f2ca3064035",
+    "qca-wifi-host-cmn/dp/wifi3.0/monitor/dp_mon_filter.h": "d3f45f4fcdf4bdf523886839006a6e01854bed4b34be2e30ded6aee3a82d9e2d",
+    "qca-wifi-host-cmn/dp/wifi3.0/monitor/dp_rx_mon.c": "d4b1daf8ebad28e732bd081beca74c014ea7491bcf533479cda940f0b13e12fc",
+    "qcacld-3.0/core/hdd/src/wlan_hdd_cfg80211.c": "359c220118e4d3cb1517858b947e3c27960bb95c182639944dc804c84f37ed74",
+    "kernel/wonder/mac80211.c": "0cdfcfbf2f809fc7731192bd0e25ffc2ea434215c8d6c98d16bd7fe32ecd7d04",
+    "native/wireless/action_tx.c": "487adfa6bf54c4817ee26af98f29de6e3816180b85c0441b7b16a680ae6ed96f"
+  }
+}

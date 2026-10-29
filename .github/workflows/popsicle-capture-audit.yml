@@ -1,0 +1,21 @@
+name: Popsicle capture limit source audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-capture-audit.yml
+      - tools/kernel/audit_capture_limit.py
+      - tests/test_capture_limit_audit.py
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check source-change and inference guards
+        run: python3 -m unittest discover -s tests -p 'test_capture_limit_audit.py'
