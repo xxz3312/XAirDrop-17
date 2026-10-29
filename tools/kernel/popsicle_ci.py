@@ -194,7 +194,91 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_ndi_radio_prepare', 'mishare_ndi_radio_start_response',
              'mishare_ndi_radio_host_up', 'mishare_ndi_radio_mark_down',
              'mishare_ndi_radio_start_pm_release']
-    names += ['mishare_runtime_quiesce_psoc', 'mishare…1418 tokens truncated…hare-create-delete-fixture.json'],
+    names += ['mishare_runtime_quiesce_psoc', 'mishare_runtime_platform_available',
+              'mishare_runtime_work_allowed', 'mishare_events_quiesce_psoc',
+              'mishare_radio_quiesce_psoc']
+    names += ['mishare_runtime_work_get', 'mishare_runtime_work_enter',
+              'mishare_runtime_work_exit', 'mishare_runtime_work_put',
+              'mishare_runtime_mc_stopped', 'mishare_runtime_reclaim_host']
+    names += ['mishare_runtime_recovery_candidates', 'mishare_runtime_recovery_open',
+              'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
+              'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
+    names += ['mishare_runtime_reclaim_batch']
+    names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync',
+              'mishare_action_tx_sync']
+    output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
+                                      '--defined-only', str(module)], text=True)
+    defined = {line.split()[-1] for line in output.splitlines() if line.split()}
+    missing = sorted(set(names) - defined)
+    result = {'status': 'HOST_HELPER_SYMBOLS_PRESENT_ONLY' if not missing else 'MISSING_HOST_HELPER_SYMBOLS',
+              'sha256': hashlib.sha256(module.read_bytes()).hexdigest(), 'symbols': names, 'missing': missing,
+              'limitations': 'Actual linked symbol presence only; not host registration, firmware or radio validation.'}
+    if module.suffix == '.ko':
+        dependencies = inspect(module)['modinfo'].get('depends', [])
+        result['dependencies'] = dependencies
+        if not any('opairshare_wonder_provider' in value.split(',') for value in dependencies):
+            raise ValueError('Missing strong private provider dependency')
+    (work / 'artifacts/reports' / report_name).write_text(json.dumps(result, indent=2) + '\n')
+    if missing:
+        raise ValueError('Host helper was not built: ' + ', '.join(missing))
+
+
+def build(work, phase):
+    artifacts = work / 'artifacts'
+    logs = artifacts / 'logs'
+    logs.mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    # This narrow header was rechecked against the recorded stock caller ABI.
+    env['POPSICLE_HWID_INCLUDE'] = str(REPO / 'kernel/compat/popsicle')
+    tools = work / 'toolchains'
+    object_phase = 'wlan-object' if phase == 'module-trial' else phase
+    args = ['bash', REPO / 'tools/kernel/popsicle_trial_build.sh', object_phase,
+            work / 'baseline', work / 'common', work / 'soc', work / 'wlan',
+            work / 'reference-modules/vendor/qcom/opensource/dataipa',
+            tools / 'clang-r536225', tools / 'rust-1.82.0.p2', tools / 'host', work / 'out']
+    def logged(command, filename):
+        with (logs / filename).open('w') as log:
+            process = subprocess.Popen(list(map(str, command)), env=env,
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in process.stdout:
+                print(line, end='', flush=True)
+                log.write(line)
+            if process.wait():
+                raise subprocess.CalledProcessError(process.returncode, command)
+
+    try:
+        logged(['python3', REPO / 'tools/kernel/mishare_final_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-final-fixture.json'],
+               'mishare-final-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_completed_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-completed-fixture.json'],
+               'mishare-completed-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_completion_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-completion-fixture.json'],
+               'mishare-completion-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_batch_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-batch-fixture.json'],
+               'mishare-batch-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_parent_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-parent-fixture.json'],
+               'mishare-parent-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_recovery_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-recovery-fixture.json'],
+               'mishare-recovery-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_work_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-work-fixture.json'],
+               'mishare-work-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_shutdown_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-shutdown-fixture.json'],
+               'mishare-shutdown-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/passthru_mode_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/passthru-mode-fixture.json'],
+               'passthru-mode-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_ndi_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-ndi-fixture.json'],
+               'mishare-ndi-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_create_delete_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-create-delete-fixture.json'],
                'mishare-create-delete-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_radio_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-radio-fixture.json'],
