@@ -1,0 +1,30 @@
+{
+  "status": "BOUNDED_CANDIDATE_DIAGNOSTICS_CI_PASS_PHONE_PENDING",
+  "source_commit": "9930de32f30587a599864e0c89bfbe6be09e02ea",
+  "ci_run": 40916786406,
+  "ci_job": 123599034748,
+  "ci_conclusion": "success",
+  "artifact_id": 12915534065,
+  "artifact_sha256": "6e11d2d35d3cdd4ba54830df3ca4d6f94cf04a23cb87e311cbaee66ae12d59ba",
+  "tests": {
+    "session": 16,
+    "vendor_controller": 6,
+    "rx_controller": 6,
+    "parse_detail": "AWDL_PARSE_DETAIL_MODEL_PASS_ONLY",
+    "sanitizers": "pass"
+  },
+  "binary": {
+    "bytes": 38552,
+    "sha256": "5a31922377935657e44859248d3c8bd17202bdfe172bb7976ff5d3cac6db6e54"
+  },
+  "package": {
+    "name": "XAirDrop-17-AWDL-Parse-0056.zip",
+    "bytes": 2698944,
+    "sha256": "c6260b4d6ede3d2425d97349bd0b35e2e476a39e28136ca1e1f591153d00f307"
+  },
+  "validation_relaxed": false,
+  "samples": "first numeric-only sample per parse reason; no identifiers/payload",
+  "kernel_changed": false,
+  "phone_executed": false,
+  "airdrop_verified": false
+}
