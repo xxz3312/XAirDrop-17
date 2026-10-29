@@ -95,3 +95,7 @@ RAW DATA 阶段提交：`57184ea2203dfa05ab33c3c7171a2ade31675e2d`。RAW DATA �
 ## 0043 原生 Action 完成事件
 
 Public Action 实机提交返回 cookie=256，iw 观察到 cookie 0x100 的 acked 状态；旧工具逐字节帧匹配导致超时。原生驱动会填写 12-bit 序列号；0043 只放宽这 12 位，继续严格校验其余帧内容、接口和 cookie。Actions 40836954137 编译回归通过，工具实机待测。广播状态不证明 Apple 收到；非 Public AWDL 帧仍受 STA 入口限制。详见 [0043](POPSICLE-TX-STATUS-FIX-0043.md)。
+
+## 0044 完成回传闭环与回包解析
+
+0043 原生 49-byte Public Action 发送已实机匹配状态并退出 0；52-byte 测试帧经 Wonder token 队列 → 原生发送 → token 完成回传，completed=1、reported=1、failed=0、rejected=0。49-byte 队列回复此前触发 EBADMSG，0044 修正最终 netlink 消息/属性可省略末尾填充的解析；49/50/51/52-byte、截断和部分填充回归与 Android 编译通过（Actions 40840072145）。0044 原长度闭环仍待实机验证。详见 [0044](POPSICLE-FEEDBACK-FIX-0044.md)。广播完成不证明对端收到，AWDL 与 Apple 互传仍未验证。
