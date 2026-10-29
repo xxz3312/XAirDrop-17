@@ -70,7 +70,7 @@ jobs:
           from pathlib import Path
           binary=Path('out/action-tx').read_bytes()
           assert binary[:4]==b'\x7fELF' and int.from_bytes(binary[18:20],'little')==183
-          Path('out/build.json').write_text(json.dumps({'status':'ACTION_TX_ANDROID_BUILD_PASS_ONLY','commit':os.environ['GITHUB_SHA'],'ndk':os.environ['NDK_VERSION'],'android_api':31,'binary_sha256':hashlib.sha256(binary).hexdigest(),'binary_bytes':len(binary),'host_protocol_test':'ACTION_TX_PROTOCOL_TEST_PASS_ONLY','native_raw_model_test':'RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY','session_command_model_tests':16,'wonder_feedback_model':'WONDER_FEEDBACK_OWNERSHIP_MODEL_PASS_ONLY','token_completion_bridge':True,'channel_follow_model_test':'CHANNEL_FOLLOW_MODEL_PASS_ONLY','sta_channel_follow':True,'combined_action_raw_relay':True,'phone_executed':False,'radio_tx_verified':False},indent=2)+'\n')
+          Path('out/build.json').write_text(json.dumps({'status':'ACTION_TX_ANDROID_BUILD_PASS_ONLY','commit':os.environ['GITHUB_SHA'],'ndk':os.environ['NDK_VERSION'],'android_api':31,'binary_sha256':hashlib.sha256(binary).hexdigest(),'binary_bytes':len(binary),'host_protocol_test':'ACTION_TX_PROTOCOL_TEST_PASS_ONLY','native_raw_model_test':'RAW_NATIVE_SUBMIT_MODEL_PASS_ONLY','session_command_model_tests':16,'wonder_feedback_model':'WONDER_FEEDBACK_OWNERSHIP_MODEL_PASS_ONLY','token_completion_bridge':True,'wonder_action_injection':True,'channel_follow_model_test':'CHANNEL_FOLLOW_MODEL_PASS_ONLY','sta_channel_follow':True,'combined_action_raw_relay':True,'phone_executed':False,'radio_tx_verified':False},indent=2)+'\n')
           PY
       - uses: actions/upload-artifact@v4
         with:

@@ -557,8 +557,44 @@ static int number(const char *s,unsigned min,unsigned max,unsigned *out) {
     if (errno || !*s || *end || value<min || value>max) return -EINVAL;
     *out=(unsigned)value;return 0;
 }
+static int injection_packet(unsigned char *out,size_t capacity,unsigned char *frame,size_t length,
+                             const unsigned char *mac,bool rewrite) {
+    if (length>FRAME_MAX || capacity<length+8) return -EMSGSIZE;
+    int ret=prepare_frame(frame,length,mac,rewrite);if (ret) return ret;
+    memset(out,0,8);out[2]=8;memcpy(out+8,frame,length);return (int)(length+8);
+}
+static int inject_action(const char *dev,const char *file,bool radiotap,bool rewrite) {
+    if (!*dev || strlen(dev)>=IFNAMSIZ || strchr(dev,'/')) return -EINVAL;
+    char path[128],name[32]={0};
+    snprintf(path,sizeof(path),"/sys/class/net/%s/phy80211/name",dev);
+    FILE *f=fopen(path,"r");if (!f) return -errno;
+    bool wonder=fgets(name,sizeof(name),f)!=NULL && !strcmp(name,"wonder\n");fclose(f);
+    if (!wonder) return -EXDEV; /* Never inject directly onto a native radio. */
+    unsigned index=if_nametoindex(dev);if (!index) return -ENODEV;
+    int fd=socket(AF_PACKET,SOCK_RAW|SOCK_CLOEXEC,htons(ETH_P_ALL));if (fd<0) return -errno;
+    struct ifreq r={0};memcpy(r.ifr_name,dev,strlen(dev)+1);int ret=0;unsigned char mac[6];
+    if (ioctl(fd,SIOCGIFFLAGS,&r)) {ret=-errno;goto done;}
+    if (!(r.ifr_flags&IFF_UP)) {ret=-ENETDOWN;goto done;}
+    if (ioctl(fd,SIOCGIFHWADDR,&r)) {ret=-errno;goto done;}
+    if (r.ifr_hwaddr.sa_family!=ARPHRD_IEEE80211_RADIOTAP) {ret=-EOPNOTSUPP;goto done;}
+    memcpy(mac,r.ifr_hwaddr.sa_data,6);
+    unsigned char frame[8192],packet[FRAME_MAX+8];size_t n;
+    f=fopen(file,"rb");if (!f) {ret=-errno;goto done;}
+    n=fread(frame,1,sizeof(frame),f);bool bad=ferror(f) || !feof(f);fclose(f);
+    if (bad) {ret=-EMSGSIZE;goto done;}
+    if (radiotap) {ret=strip_radiotap(frame,&n);if (ret) goto done;}
+    ret=injection_packet(packet,sizeof(packet),frame,n,mac,rewrite);if (ret<0) goto done;
+    struct sockaddr_ll target={.sll_family=AF_PACKET,.sll_protocol=htons(ETH_P_ALL),.sll_ifindex=(int)index};
+    ssize_t sent=sendto(fd,packet,(size_t)ret,0,(void *)&target,sizeof(target));
+    if (sent<0) ret=-errno;
+    else if (sent!=ret) ret=-EIO;
+    else {puts("{\"event\":\"injected_into_wonder\",\"radio_completion\":false}");ret=0;}
+done:
+    close(fd);return ret;
+}
 static void usage(void) {
-    puts("action-tx raw-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source]\n"
+    puts("action-tx inject --dev wonder0 --frame FILE [--radiotap] [--rewrite-source] (Action only; enqueue is not RF success)\n"
+         "action-tx raw-send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source]\n"
          "action-tx raw-relay --listen wonder0 --dev wlan0 --freq MHz [--rewrite-source] [--max-frames 1]\n"
          "RAW modes require patched WLAN loaded with mishare_raw_tx=1.\n"
          "action-tx send --dev wlan0 --freq MHz --frame FILE [--radiotap] [--rewrite-source] [--timeout-ms 3000]\n"
@@ -576,7 +612,8 @@ int main(int argc,char **argv) {
     if (!strcmp(mode,"--help") || !strcmp(mode,"help")) {usage();return 0;}
     bool raw=!strcmp(mode,"raw-send") || !strcmp(mode,"raw-relay");
     bool combined=!strcmp(mode,"relay-all");
-    if (!raw && !combined && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
+    bool inject=!strcmp(mode,"inject");
+    if (!raw && !combined && !inject && strcmp(mode,"send") && strcmp(mode,"relay")) {usage();return 2;}
     bool relay=!strcmp(mode,"relay") || !strcmp(mode,"raw-relay") || combined;
     for (int i=2;i<argc;i++) {
         const char *arg=argv[i];
@@ -596,6 +633,12 @@ int main(int argc,char **argv) {
             else if (!strcmp(arg,"--seconds")) {if (number(argv[i],1,86400,&seconds)) return 2;}
             else {usage();return 2;}
         }
+    }
+    if (inject) {
+        if (!dev || !file || freq || listen_dev || follow || feedback || monitor) {usage();return 2;}
+        int result=inject_action(dev,file,radiotap,rewrite);
+        if (result) fprintf(stderr,"Wonder injection: %s (%d)\n",strerror(-result),-result);
+        return result?1:0;
     }
     if (!dev || !freq || (relay?(!listen_dev || file || radiotap || !strcmp(dev,listen_dev)):(!file || listen_dev))) {usage();return 2;}
     if (follow?(!relay || !monitor || !strcmp(monitor,listen_dev) || !strcmp(monitor,dev)):monitor!=NULL) {usage();return 2;}

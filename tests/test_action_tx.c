@@ -97,6 +97,13 @@ int main(void) {
     assert(attr(attrs,NL80211_ATTR_VENDOR_DATA,&field)==1 && field.n==WONDER_FB_HEADER);
     assert(fb64(field.p+8)==owner && fb64(field.p+16)==9 && wonder_fb_word(field.p+24)==WONDER_FB_ACKED);
     unsigned char f[128];action(f);
+    unsigned char injected[FRAME_MAX+8];
+    assert(injection_packet(injected,sizeof(injected),f,25,mac,false)==33);
+    assert(injected[2]==8 && !memcmp(injected+8,f,25));
+    assert(injection_packet(injected,32,f,25,mac,false)==-EMSGSIZE);
+    f[10]++;assert(injection_packet(injected,sizeof(injected),f,25,mac,false)==-EADDRNOTAVAIL);
+    assert(injection_packet(injected,sizeof(injected),f,25,mac,true)==33 && !memcmp(injected+18,mac,6));
+    f[0]=8;assert(injection_packet(injected,sizeof(injected),f,25,mac,true)==-EOPNOTSUPP);action(f);
     assert(!prepare_frame(f,25,mac,false));
     assert(prepare_frame(f,24,mac,false)==-EMSGSIZE);
     f[0]=0x08;assert(prepare_frame(f,25,mac,false)==-EOPNOTSUPP);action(f);
