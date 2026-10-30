@@ -10,9 +10,9 @@ struct module;
  * provider installs these callbacks in 0066.
  */
 struct wondertap_managed_ops {
-    const struct wondertap_ops *ops;
-    struct module *owner;
-    int (*poll_start)(void *handle);
-    int (*retire)(void **handle);
+	const struct wondertap_ops *ops;
+	struct module *owner;
+	int (*poll_start)(void *handle);
+	int (*retire)(void **handle);
 };
 #endif

@@ -17,136 +17,136 @@ static const struct wondertap_ops *wondertap_ops = NULL;
  * still retain native parents; module refs protect text, not HDD/psoc memory.
  */
 int wondertap_bind_managed(struct wondertap_data *w,
-                          const struct wondertap_managed_ops *managed)
+						  const struct wondertap_managed_ops *managed)
 {
-    int ret = 0;
-    if (!w || !managed || !managed->ops || !managed->ops->init ||
-        !managed->owner || !managed->poll_start || !managed->retire)
-        return -EINVAL;
-    mutex_lock(&w->lock);
-    if (w->managed_bound || w->state != WONDERTAP_STATE_DOWN || w->vendor_handle)
-        ret = -EBUSY;
-    else if (managed->ops != wondertap_ops)
-        ret = -ENODEV;
-    else if (!try_module_get(managed->owner))
-        ret = -ENODEV;
-    else {
-        w->managed = *managed;
-        w->managed_bound = true;
-        w->managed_caps_valid = false;
-        w->managed_error = 0;
-    }
-    mutex_unlock(&w->lock);
-    return ret;
+	int ret = 0;
+	if (!w || !managed || !managed->ops || !managed->ops->init ||
+		!managed->owner || !managed->poll_start || !managed->retire)
+		return -EINVAL;
+	mutex_lock(&w->lock);
+	if (w->managed_bound || w->state != WONDERTAP_STATE_DOWN || w->vendor_handle)
+		ret = -EBUSY;
+	else if (managed->ops != wondertap_ops)
+		ret = -ENODEV;
+	else if (!try_module_get(managed->owner))
+		ret = -ENODEV;
+	else {
+		w->managed = *managed;
+		w->managed_bound = true;
+		w->managed_caps_valid = false;
+		w->managed_error = 0;
+	}
+	mutex_unlock(&w->lock);
+	return ret;
 }
 
 int wondertap_unbind_managed(struct wondertap_data *w)
 {
-    struct module *owner = NULL;
-    int ret = 0;
-    if (!w)
-        return -EINVAL;
-    mutex_lock(&w->lock);
-    if (w->managed_bound) {
-        if (w->state != WONDERTAP_STATE_DOWN || w->vendor_handle ||
-            w->managed_instance_pin)
-            ret = -EBUSY;
-        else {
-            owner = w->managed.owner;
-            memset(&w->managed, 0, sizeof(w->managed));
-            w->managed_bound = false;
-            w->managed_caps_valid = false;
-            w->managed_error = 0;
-        }
-    }
-    mutex_unlock(&w->lock);
-    if (owner)
-        module_put(owner);
-    return ret;
+	struct module *owner = NULL;
+	int ret = 0;
+	if (!w)
+		return -EINVAL;
+	mutex_lock(&w->lock);
+	if (w->managed_bound) {
+		if (w->state != WONDERTAP_STATE_DOWN || w->vendor_handle ||
+			w->managed_instance_pin)
+			ret = -EBUSY;
+		else {
+			owner = w->managed.owner;
+			memset(&w->managed, 0, sizeof(w->managed));
+			w->managed_bound = false;
+			w->managed_caps_valid = false;
+			w->managed_error = 0;
+		}
+	}
+	mutex_unlock(&w->lock);
+	if (owner)
+		module_put(owner);
+	return ret;
 }
 
 static bool wondertap_transition_pending(struct wondertap_data *w)
 {
-    return w->state == WONDERTAP_STATE_STARTING ||
-           w->state == WONDERTAP_STATE_DRAINING ||
-           w->state == WONDERTAP_STATE_BLOCKED;
+	return w->state == WONDERTAP_STATE_STARTING ||
+		   w->state == WONDERTAP_STATE_DRAINING ||
+		   w->state == WONDERTAP_STATE_BLOCKED;
 }
 
 static void wondertap_managed_unpin(struct wondertap_data *w)
 {
-    if (w->managed_instance_pin) {
-        w->managed_instance_pin = false;
-        module_put(THIS_MODULE);
-    }
+	if (w->managed_instance_pin) {
+		w->managed_instance_pin = false;
+		module_put(THIS_MODULE);
+	}
 }
 
 /* Called after exactly one init/poll submission under the instance lock. */
 static int wondertap_managed_started(struct wondertap_data *w, int ret)
 {
-    if (ret == 0 || ret == -EINPROGRESS) {
-        if (!w->vendor_handle) {
-            w->state = WONDERTAP_STATE_BLOCKED;
-            w->managed_error = -EUCLEAN;
-            return -EUCLEAN;
-        }
-        w->state = ret ? WONDERTAP_STATE_STARTING : WONDERTAP_STATE_UP;
-        return ret;
-    }
-    w->managed_error = ret;
-    if (w->vendor_handle)
-        w->state = WONDERTAP_STATE_DRAINING;
-    else {
-        w->state = WONDERTAP_STATE_DOWN;
-        wondertap_managed_unpin(w);
-    }
-    return ret;
+	if (ret == 0 || ret == -EINPROGRESS) {
+		if (!w->vendor_handle) {
+			w->state = WONDERTAP_STATE_BLOCKED;
+			w->managed_error = -EUCLEAN;
+			return -EUCLEAN;
+		}
+		w->state = ret ? WONDERTAP_STATE_STARTING : WONDERTAP_STATE_UP;
+		return ret;
+	}
+	w->managed_error = ret;
+	if (w->vendor_handle)
+		w->state = WONDERTAP_STATE_DRAINING;
+	else {
+		w->state = WONDERTAP_STATE_DOWN;
+		wondertap_managed_unpin(w);
+	}
+	return ret;
 }
 
 static int wondertap_retire_locked(struct wondertap_data *w)
 {
-    void *next;
-    int ret;
-    if (!w->managed_bound)
-        return -EOPNOTSUPP;
-    if (w->state == WONDERTAP_STATE_BLOCKED)
-        return w->managed_error ? w->managed_error : -EUCLEAN;
-    if (w->state == WONDERTAP_STATE_DOWN && !w->vendor_handle)
-        return 0;
-    if (!w->vendor_handle) {
-        w->state = WONDERTAP_STATE_BLOCKED;
-        w->managed_error = -EUCLEAN;
-        return -EUCLEAN;
-    }
-    w->state = WONDERTAP_STATE_DRAINING;
-    next = w->vendor_handle;
-    ret = w->managed.retire(&next);
-    if (!ret && !next) {
-        w->vendor_handle = NULL;
-        w->state = WONDERTAP_STATE_DOWN;
-        w->managed_error = 0;
-        wondertap_managed_unpin(w);
-        return 0;
-    }
-    if (ret == -EINPROGRESS && next == w->vendor_handle)
-        return ret;
-    /* A changed pointer or false success cannot authorize another callback on
-     * possibly freed storage. Retain the original opaque token and pins; never
-     * dereference it on the blocked path. Parent teardown remains forbidden.
-     */
-    w->state = WONDERTAP_STATE_BLOCKED;
-    w->managed_error = next != w->vendor_handle || !ret ? -EUCLEAN : ret;
-    return w->managed_error;
+	void *next;
+	int ret;
+	if (!w->managed_bound)
+		return -EOPNOTSUPP;
+	if (w->state == WONDERTAP_STATE_BLOCKED)
+		return w->managed_error ? w->managed_error : -EUCLEAN;
+	if (w->state == WONDERTAP_STATE_DOWN && !w->vendor_handle)
+		return 0;
+	if (!w->vendor_handle) {
+		w->state = WONDERTAP_STATE_BLOCKED;
+		w->managed_error = -EUCLEAN;
+		return -EUCLEAN;
+	}
+	w->state = WONDERTAP_STATE_DRAINING;
+	next = w->vendor_handle;
+	ret = w->managed.retire(&next);
+	if (!ret && !next) {
+		w->vendor_handle = NULL;
+		w->state = WONDERTAP_STATE_DOWN;
+		w->managed_error = 0;
+		wondertap_managed_unpin(w);
+		return 0;
+	}
+	if (ret == -EINPROGRESS && next == w->vendor_handle)
+		return ret;
+	/* A changed pointer or false success cannot authorize another callback on
+	 * possibly freed storage. Retain the original opaque token and pins; never
+	 * dereference it on the blocked path. Parent teardown remains forbidden.
+	 */
+	w->state = WONDERTAP_STATE_BLOCKED;
+	w->managed_error = next != w->vendor_handle || !ret ? -EUCLEAN : ret;
+	return w->managed_error;
 }
 
 int wondertap_retire(struct wondertap_data *w)
 {
-    int ret;
-    if (!w)
-        return -EINVAL;
-    mutex_lock(&w->lock);
-    ret = wondertap_retire_locked(w);
-    mutex_unlock(&w->lock);
-    return ret;
+	int ret;
+	if (!w)
+		return -EINVAL;
+	mutex_lock(&w->lock);
+	ret = wondertap_retire_locked(w);
+	mutex_unlock(&w->lock);
+	return ret;
 }
 
 static bool wondertap_is_up(struct wondertap_data *wondertap)
@@ -210,27 +210,27 @@ int wondertap_init(struct wondertap_data *wondertap, const struct wondertap_init
 {
 	struct wondertap_init_params params = {};
 	int ret = -EOPNOTSUPP;
-    const struct wondertap_ops *ops;
+	const struct wondertap_ops *ops;
 
-    if (!wondertap || !_params)
-        return -EINVAL;
+	if (!wondertap || !_params)
+		return -EINVAL;
 	mutex_lock(&wondertap->lock);
-    ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
-    if (wondertap->managed_bound) {
-        if (wondertap->managed.ops != wondertap_ops) {
-            ret = -ENODEV;
-            goto out;
-        }
-        if (wondertap->state == WONDERTAP_STATE_STARTING) {
-            ret = wondertap_managed_started(wondertap,
-                wondertap->managed.poll_start(wondertap->vendor_handle));
-            goto out;
-        }
-        if (wondertap_transition_pending(wondertap)) {
-            ret = -EBUSY;
-            goto out;
-        }
-    }
+	ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
+	if (wondertap->managed_bound) {
+		if (wondertap->managed.ops != wondertap_ops) {
+			ret = -ENODEV;
+			goto out;
+		}
+		if (wondertap->state == WONDERTAP_STATE_STARTING) {
+			ret = wondertap_managed_started(wondertap,
+				wondertap->managed.poll_start(wondertap->vendor_handle));
+			goto out;
+		}
+		if (wondertap_transition_pending(wondertap)) {
+			ret = -EBUSY;
+			goto out;
+		}
+	}
 	if (wondertap_is_up(wondertap)) {
 		wonder_warn("Already initialized\n");
 		ret = -EBUSY;
@@ -269,19 +269,19 @@ int wondertap_init(struct wondertap_data *wondertap, const struct wondertap_init
 
 		wondertap_dump_init_params(&params);
 		/* Initialization failure is returned; no blind hardware retries. */
-        if (wondertap->managed_bound) {
-            if (!try_module_get(THIS_MODULE)) {
-                ret = -ENODEV;
-                goto out;
-            }
-            wondertap->managed_instance_pin = true;
-            wondertap->managed_error = 0;
-        }
+		if (wondertap->managed_bound) {
+			if (!try_module_get(THIS_MODULE)) {
+				ret = -ENODEV;
+				goto out;
+			}
+			wondertap->managed_instance_pin = true;
+			wondertap->managed_error = 0;
+		}
 		ret = ops->init(&wondertap->vendor_handle, &params);
-        if (wondertap->managed_bound) {
-            ret = wondertap_managed_started(wondertap, ret);
-            goto out;
-        }
+		if (wondertap->managed_bound) {
+			ret = wondertap_managed_started(wondertap, ret);
+			goto out;
+		}
 		if (ret == 0) {
 			wondertap->state = WONDERTAP_STATE_UP;
 			wonder_info("Vendor init successful. State set to UP.\n");
@@ -304,13 +304,13 @@ void wondertap_deinit(struct wondertap_data *wondertap)
 	struct wondertap_deinit_params params;
 
 	mutex_lock(&wondertap->lock);
-    if (wondertap->managed_bound) {
-        int ret = wondertap_retire_locked(wondertap);
-        if (ret)
-            wonder_error("Managed retirement retained instance: %d\n", ret);
-        mutex_unlock(&wondertap->lock);
-        return;
-    }
+	if (wondertap->managed_bound) {
+		int ret = wondertap_retire_locked(wondertap);
+		if (ret)
+			wonder_error("Managed retirement retained instance: %d\n", ret);
+		mutex_unlock(&wondertap->lock);
+		return;
+	}
 	if (wondertap_ops && wondertap_ops->deinit) {
 		memset(&params, 0, sizeof(params));
 		memcpy(params.country_code, wondertap->cached_country_code, sizeof(wondertap->cached_country_code));
@@ -328,17 +328,17 @@ void wondertap_deinit(struct wondertap_data *wondertap)
 int wondertap_set_freq(struct wondertap_data *wondertap, const struct wondertap_set_freq_params *params)
 {
 	int ret = -EOPNOTSUPP;
-    const struct wondertap_ops *ops;
+	const struct wondertap_ops *ops;
 
 	if (wonder_external_monitor)
 		return -EOPNOTSUPP;
 
 	mutex_lock(&wondertap->lock);
-    ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
-    if (wondertap_transition_pending(wondertap)) {
-        mutex_unlock(&wondertap->lock);
-        return -EBUSY;
-    }
+	ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
+	if (wondertap_transition_pending(wondertap)) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 
 	if (wondertap_is_up(wondertap)) {
 		if (wondertap->cached_freq.freq == params->freq &&
@@ -367,7 +367,7 @@ int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter
 			 const void *params)
 {
 	int ret = -EOPNOTSUPP;
-    const struct wondertap_ops *ops;
+	const struct wondertap_ops *ops;
 
 	if (wonder_external_monitor) {
 		const struct wondertap_frame_filter_params *filter = params;
@@ -390,7 +390,7 @@ int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter
 	}
 
 	mutex_lock(&wondertap->lock);
-    ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
+	ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
 	if (wondertap_is_up(wondertap)) {
 		if (ops && ops->set_filter) {
 			ret = ops->set_filter(wondertap->vendor_handle,
@@ -411,17 +411,17 @@ int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter
 int wondertap_set_fixed_tx_rate(struct wondertap_data *wondertap, const struct wondertap_fixed_tx_rate_params *params)
 {
 	int ret = -EOPNOTSUPP;
-    const struct wondertap_ops *ops;
+	const struct wondertap_ops *ops;
 
 	if (wonder_external_monitor)
 		return -EOPNOTSUPP;
 
 	mutex_lock(&wondertap->lock);
-    ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
-    if (wondertap_transition_pending(wondertap)) {
-        mutex_unlock(&wondertap->lock);
-        return -EBUSY;
-    }
+	ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
+	if (wondertap_transition_pending(wondertap)) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 
 	wondertap->cached_tx_rate = *params;
 	wondertap->cache_flags |= WONDERTAP_CACHE_TX_RATE_SET;
@@ -444,17 +444,17 @@ int wondertap_set_fixed_tx_rate(struct wondertap_data *wondertap, const struct w
 int wondertap_set_tx_rate_mask(struct wondertap_data *wondertap, const struct wondertap_tx_rate_mask_params *params)
 {
 	int ret = -EOPNOTSUPP;
-    const struct wondertap_ops *ops;
+	const struct wondertap_ops *ops;
 
 	if (wonder_external_monitor)
 		return -EOPNOTSUPP;
 
 	mutex_lock(&wondertap->lock);
-    ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
-    if (wondertap_transition_pending(wondertap)) {
-        mutex_unlock(&wondertap->lock);
-        return -EBUSY;
-    }
+	ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
+	if (wondertap_transition_pending(wondertap)) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 
 	wondertap->cached_tx_rate.preamble = params->max_preamble;
 	wondertap->cached_tx_rate.mcs = params->max_mcs;
@@ -481,10 +481,10 @@ int wondertap_set_tx_rate_mask(struct wondertap_data *wondertap, const struct wo
 int wondertap_set_reg(struct wondertap_data *wondertap, const char *country_code)
 {
 	mutex_lock(&wondertap->lock);
-    if (wondertap_transition_pending(wondertap)) {
-        mutex_unlock(&wondertap->lock);
-        return -EBUSY;
-    }
+	if (wondertap_transition_pending(wondertap)) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 
 
 	memcpy(wondertap->cached_country_code, country_code, sizeof(wondertap->cached_country_code));
@@ -499,8 +499,8 @@ int wondertap_set_reg(struct wondertap_data *wondertap, const char *country_code
 
 int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wondertap_capability *features)
 {
-    if (!features)
-        return -EINVAL;
+	if (!features)
+		return -EINVAL;
 	if (wonder_external_monitor) {
 		if (!features)
 			return -EINVAL;
@@ -508,30 +508,30 @@ int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wonderta
 		features->bits.frame_type_filter = 1;
 		return 0;
 	}
-    mutex_lock(&wondertap->lock);
-    if (wondertap->managed_bound) {
-        const struct wondertap_ops *ops = wondertap->managed.ops;
-        int ret;
-        if (wondertap->state == WONDERTAP_STATE_STARTING &&
-            wondertap->managed_caps_valid) {
-            *features = wondertap->managed_caps;
-            mutex_unlock(&wondertap->lock);
-            return 0;
-        }
-        if (wondertap_transition_pending(wondertap)) {
-            mutex_unlock(&wondertap->lock);
-            return -EBUSY;
-        }
-        ret = ops->get_capabilities ?
-            ops->get_capabilities(wondertap->vendor_handle, features) : -EOPNOTSUPP;
-        if (!ret) {
-            wondertap->managed_caps = *features;
-            wondertap->managed_caps_valid = true;
-        }
-        mutex_unlock(&wondertap->lock);
-        return ret;
-    }
-    mutex_unlock(&wondertap->lock);
+	mutex_lock(&wondertap->lock);
+	if (wondertap->managed_bound) {
+		const struct wondertap_ops *ops = wondertap->managed.ops;
+		int ret;
+		if (wondertap->state == WONDERTAP_STATE_STARTING &&
+			wondertap->managed_caps_valid) {
+			*features = wondertap->managed_caps;
+			mutex_unlock(&wondertap->lock);
+			return 0;
+		}
+		if (wondertap_transition_pending(wondertap)) {
+			mutex_unlock(&wondertap->lock);
+			return -EBUSY;
+		}
+		ret = ops->get_capabilities ?
+			ops->get_capabilities(wondertap->vendor_handle, features) : -EOPNOTSUPP;
+		if (!ret) {
+			wondertap->managed_caps = *features;
+			wondertap->managed_caps_valid = true;
+		}
+		mutex_unlock(&wondertap->lock);
+		return ret;
+	}
+	mutex_unlock(&wondertap->lock);
 	if (wondertap_ops && wondertap_ops->get_capabilities) {
 		return wondertap_ops->get_capabilities(wondertap->vendor_handle, features);
 	}
@@ -560,10 +560,10 @@ int wondertap_get_interface_mac_address(struct wondertap_data *wondertap, u8 (*m
 int wondertap_set_bssid_filter(struct wondertap_data *wondertap, const u8 *bssid)
 {
 	mutex_lock(&wondertap->lock);
-    if (wondertap_transition_pending(wondertap)) {
-        mutex_unlock(&wondertap->lock);
-        return -EBUSY;
-    }
+	if (wondertap_transition_pending(wondertap)) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 
 	memcpy(wondertap->cached_bssid, bssid, sizeof(u8) * ETH_ALEN);
 	wondertap->cache_flags |= WONDERTAP_CACHE_BSSID_SET;

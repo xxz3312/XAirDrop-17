@@ -8,11 +8,11 @@
 extern bool wonder_external_monitor;
 
 enum wondertap_state {
-    WONDERTAP_STATE_DOWN,
-    WONDERTAP_STATE_UP,
-    WONDERTAP_STATE_STARTING,
-    WONDERTAP_STATE_DRAINING,
-    WONDERTAP_STATE_BLOCKED,
+	WONDERTAP_STATE_DOWN,
+	WONDERTAP_STATE_UP,
+	WONDERTAP_STATE_STARTING,
+	WONDERTAP_STATE_DRAINING,
+	WONDERTAP_STATE_BLOCKED,
 };
 
 /*
@@ -31,8 +31,8 @@ struct wondertap_data {
 	struct wondertap_managed_ops managed;
 	bool managed_bound;
 	bool managed_instance_pin;
-    bool managed_caps_valid;
-    struct wondertap_capability managed_caps;
+	bool managed_caps_valid;
+	struct wondertap_capability managed_caps;
 	int managed_error;
 	u8 mac_addr[ETH_ALEN];
 	u32 cache_flags;
@@ -58,12 +58,12 @@ struct wondertap_data {
 static inline void wondertap_prep(struct wondertap_data *wondertap)
 {
 	wondertap->state = WONDERTAP_STATE_DOWN;
-    wondertap->vendor_handle = NULL;
-    wondertap->managed = (struct wondertap_managed_ops){0};
-    wondertap->managed_bound = false;
-    wondertap->managed_instance_pin = false;
-    wondertap->managed_caps_valid = false;
-    wondertap->managed_error = 0;
+	wondertap->vendor_handle = NULL;
+	wondertap->managed = (struct wondertap_managed_ops){0};
+	wondertap->managed_bound = false;
+	wondertap->managed_instance_pin = false;
+	wondertap->managed_caps_valid = false;
+	wondertap->managed_error = 0;
 	mutex_init(&wondertap->lock);
 }
 
@@ -100,7 +100,7 @@ void wondertap_deinit(struct wondertap_data *wondertap);
  * to free parents. Explicit polling only; no sleep, worker or blind retries.
  */
 int wondertap_bind_managed(struct wondertap_data *wondertap,
-                          const struct wondertap_managed_ops *managed);
+						  const struct wondertap_managed_ops *managed);
 int wondertap_unbind_managed(struct wondertap_data *wondertap);
 int wondertap_retire(struct wondertap_data *wondertap);
 
@@ -135,7 +135,7 @@ int wondertap_set_freq(struct wondertap_data *wondertap, const struct wondertap_
  * Return: 0 on success, or a negative errno code on failure.
  */
 int wondertap_set_filter(struct wondertap_data *wondertap, enum wondertap_filter_type filter_type,
-                    const void *params);
+					const void *params);
 
 /**
  * @brief Sets a fixed transmission rate for the hardware.
