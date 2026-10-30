@@ -31,7 +31,7 @@ struct peer_delete_cmd_params {uint8_t vdev_id;bool is_mlo_link_switch;};
 static unsigned reset_peer_ops,reset_force_detaches,reset_obj_deletes,reset_wmi_calls;
 static bool reset_obj_failure,reset_slot_drift;
 static void *reset_peer_get_context(int id) {assert(id==3);return wma_context.psoc;}
-static void wma_peer_tbl_trans_add_entry(struct wlan_objmgr_peer *p,bool add,void *ctx) {assert(p==&ctx_peer && !add && !ctx && !reset_peer_ops);reset_peer_ops++;}
+static void wma_peer_tbl_trans_add_entry(struct wlan_objmgr_peer *p,bool add,void *ctx) {assert(p==&ctx_peer && !add && !ctx && !reset_peer_ops && !timers_live);reset_peer_ops++;}
 static void cdp_peer_teardown(void *s,uint8_t id,uint8_t *mac) {assert(s==wma_context.psoc && id==7 && mac && reset_peer_ops==1);reset_peer_ops++;}
 static void cdp_peer_detach_force_delete(void *s,uint8_t id,uint8_t *mac) {assert(s==wma_context.psoc && id==7 && mac && reset_peer_ops==2 && !timers_live);reset_peer_ops++;reset_force_detaches++;}
 static void wma_peer_unmap_conf_cb(void) {assert(0);}
@@ -69,6 +69,12 @@ int main(void) {
   if(!inline_cb) {assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS && reset_force_detaches==1);finish_dp();}
   assert(!mishare_runtime_reclaim_ndi(&o) && !o && !objects_live && !allocations && !dp_objects);
  }
+ /* The actual batch dispatcher must admit the same qualified prepared owner. */
+ reset_prepared_test();o=prepared();stop_recovery(o);
+ struct mishare_runtime_reclaim_item item={o,77};o=NULL;
+ assert(mishare_runtime_reclaim_batch(&psoc,&item,1)==-EINPROGRESS && item.owner && item.result==-EINPROGRESS);
+ assert(reset_force_detaches==1 && state(item.owner).recovery_context_released);finish_dp();
+ assert(!mishare_runtime_reclaim_batch(&psoc,&item,1) && !item.owner && !item.result && !allocations && !objects_live);
  /* A real outstanding final-free reference keeps the original handle alive. */
  reset_prepared_test();o=prepared();struct wlan_objmgr_vdev *held=last_vdev;
  assert(!wlan_objmgr_vdev_try_get_ref(held,1));stop_recovery(o);
@@ -172,7 +178,7 @@ def audit(root):
             'native_sha256':{WMA:hashlib.sha256((root/WMA).read_bytes()).hexdigest()},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h']},
             'negative_control_no_fw_false_attempts_wmi_and_is_rejected':True,
-            'checks':['actual native wma_remove_peer no-FW force-detach branch and native object-peer remove execute', 'inline and deferred DP completion precede actual object final-free', 'external final-free reference retains owner beyond native window closure', '15 capability/identity/state/history/timer preflight failures retain all owned context', 'partial native failure publishes resource facts, sticks error and never retries', 'PE/START/UP owners remain unsupported', 'no peer/VDEV firmware delete or ordinary DELETE ACK flag fabricated'],
+            'checks':['actual native wma_remove_peer no-FW force-detach branch and native object-peer remove execute', 'actual batch dispatch accepts the qualified prepared owner', 'inline and deferred DP completion precede actual object final-free', 'external final-free reference retains owner beyond native window closure', '15 capability/identity/state/history/timer preflight failures retain all owned context', 'partial native failure publishes resource facts, sticks error and never retries', 'PE/START/UP owners remain unsupported', 'no peer/VDEV firmware delete or ordinary DELETE ACK flag fabricated'],
             'limitations':'Production runtime and native WMA removal/helper code with modeled DP force detach, object-peer deletion, native synchronization, WMI transports and physical parents. Existing native timer/DP wrapper and object-manager final-free are included; actual peer/vdev hardware refcounts and kernel races are not certified. Only fully prepared pre-PE INIT is added. No automatic shutdown coordinator, parent lease, PE/UP reset recovery or phone/RF certification; backend stays disabled.'}
 
 
