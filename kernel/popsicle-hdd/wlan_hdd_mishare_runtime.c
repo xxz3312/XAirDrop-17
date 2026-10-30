@@ -449,6 +449,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
            !n->completion_error && !entry->state.recovery_window_closed &&
            !entry->state.ndi_reclaim_started && !entry->state.ndi_reclaim_ready &&
            !entry->state.recovery_context_attempted && !entry->state.recovery_context_released &&
+           !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
            !entry->state.recovery_timer_attempted && !entry->state.recovery_timer_released &&
            !entry->state.ndi_completed_reclaim && !entry->state.recovery_dp_attempted &&
            !entry->state.recovery_dp_freed && !entry->state.host_reclaim &&
@@ -494,6 +495,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            n->create.wire_attempted && n->create.wire_accepted &&
            n->create.dp_attempted && n->create.dp_attached && n->create.dp_cookie &&
            n->create.stats_owned && !n->context_error && (early || prepared) &&
+           !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
            !n->peer_delete_pending && !n->peer_delete_submitted && !n->peer_delete_replied &&
            !n->pe_requested && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
            !n->pe_submitted && !n->pe_completed && !n->pe_ready &&
@@ -593,7 +595,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     struct mishare_vdev_txn txn;
     struct vdev_mlme_obj *m;
     unsigned long flags;
-    bool started, timer_done, dp_attempted, dp_freed;
+    bool started, timer_done, dp_attempted, dp_freed, context_live;
     int ret = 0;
     if (!owner)
         return -EINVAL;
@@ -655,20 +657,25 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                                                  entry->state.ndi.create.dp_cookie,
                                                  &result);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.recovery_peer_released = result.peer_released;
         if (result.peer_released)
             entry->state.ndi.peer_created = false;
-        if (result.wma_unbound)
-            entry->state.ndi.wma_bound = false;
-        if (result.legacy_released)
-            entry->state.ndi.legacy_ready = false;
-        entry->state.recovery_context_released = !ret && result.peer_released &&
-                                                  result.wma_unbound && result.legacy_released;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-        if (ret || !entry->state.recovery_context_released)
+        if (ret || !entry->state.recovery_peer_released)
             return mishare_runtime_recovery_error(entry, ret);
     }
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    context_live = entry->state.recovery_context_attempted &&
+                   entry->state.recovery_peer_released &&
+                   !entry->state.recovery_context_released;
+    if (context_live && (!entry->state.ndi.legacy_ready ||
+        !entry->state.ndi.wma_bound || entry->state.ndi.peer_created))
+        ret = -EUCLEAN;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret && ret != 2)
+        return mishare_runtime_recovery_error(entry, ret);
     m = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
-    if (!m || m->vdev != entry->vdev || m->ext_vdev_ptr ||
+    if (!m || m->vdev != entry->vdev || (!!m->ext_vdev_ptr != context_live) ||
         wlan_vdev_mlme_get_opmode(entry->vdev) != QDF_PASSTHRU_MODE ||
         m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI || m->mgmt.generic.subtype ||
         wlan_vdev_mlme_get_state(entry->vdev) != WLAN_VDEV_S_INIT)
@@ -724,8 +731,11 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.recovery_dp_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-        ret = mishare_ndi_recovery_dp_detach(entry->vdev, entry->state.ndi.create.dp_cookie,
-                                            mishare_runtime_recovery_dp_freed, entry);
+        ret = context_live ?
+              mishare_ndi_reset_prepared_dp_detach(entry->vdev, entry->state.ndi.create.dp_cookie,
+                                                    mishare_runtime_recovery_dp_freed, entry) :
+              mishare_ndi_recovery_dp_detach(entry->vdev, entry->state.ndi.create.dp_cookie,
+                                              mishare_runtime_recovery_dp_freed, entry);
         if (ret)
             return mishare_runtime_recovery_error(entry, ret);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
@@ -735,6 +745,28 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     }
     if (!dp_freed)
         return -EINPROGRESS;
+    if (context_live) {
+        struct mishare_ndi_reset_context_result result = {0};
+
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        if (entry->state.recovery_context_finish_attempted) {
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            return mishare_runtime_recovery_error(entry, -EUCLEAN);
+        }
+        entry->state.recovery_context_finish_attempted = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_reset_context_finish(entry->vdev,
+                                                entry->state.ndi.create.dp_cookie, &result);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        if (result.wma_unbound)
+            entry->state.ndi.wma_bound = false;
+        if (result.legacy_released)
+            entry->state.ndi.legacy_ready = false;
+        entry->state.recovery_context_released = !ret && result.wma_unbound && result.legacy_released;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        if (ret || !entry->state.recovery_context_released)
+            return mishare_runtime_recovery_error(entry, ret);
+    }
     /* INIT was observed, never manufactured. No DELETE ACK flags are written. */
     m->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
     m->proto.generic.nss_2g = 0;
@@ -752,7 +784,10 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
-    return entry->state.host_delete_accepted && entry->state.draining &&
+    return (!entry->state.recovery_context_attempted ||
+            (entry->state.recovery_peer_released && entry->state.recovery_context_finish_attempted &&
+             entry->state.recovery_context_released)) &&
+           entry->state.host_delete_accepted && entry->state.draining &&
            entry->state.allocated && !entry->vdev && !entry->referenced &&
            !entry->events && !entry->radio && !entry->pe_cookie && !n->active &&
            !n->legacy_ready && !n->wma_bound && !n->create.timer_ready &&

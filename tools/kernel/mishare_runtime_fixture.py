@@ -84,6 +84,8 @@ static struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(struct wlan_objmgr_p
 #include "wlan_hdd_mishare_txn.c"
 #include "wlan_hdd_mishare_events.c"
 /* RECOVERY_TRANSPORT_STUBS */
+int mishare_ndi_reset_context_finish(struct wlan_objmgr_vdev *v,unsigned long c,struct mishare_ndi_reset_context_result *r) { (void)v;(void)c;memset(r,0,sizeof(*r));return -EOPNOTSUPP; }
+int mishare_ndi_reset_prepared_dp_detach(struct wlan_objmgr_vdev *v,unsigned long c,void (*cb)(void*),void *x) { (void)v;(void)c;(void)cb;(void)x;assert(0);return -EIO; }
 int mishare_ndi_reset_context_check(struct wlan_objmgr_vdev *v,unsigned long c) { (void)v;(void)c;return -EOPNOTSUPP; }
 int mishare_ndi_reset_prepared_timer_deinit(struct wlan_objmgr_vdev *v) { (void)v;assert(0);return -EIO; }
 int mishare_ndi_reset_context_release(struct wlan_objmgr_vdev *v,unsigned long c,struct mishare_ndi_reset_context_result *r) { (void)v;(void)c;memset(r,0,sizeof(*r));return -EOPNOTSUPP; }

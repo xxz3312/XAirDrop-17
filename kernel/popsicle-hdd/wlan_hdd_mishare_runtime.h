@@ -34,6 +34,8 @@ struct mishare_runtime_status {
     bool recovery_window_closed;
     bool ndi_reclaim_started;
     bool recovery_context_attempted;
+    bool recovery_peer_released;
+    bool recovery_context_finish_attempted;
     bool recovery_context_released;
     bool recovery_timer_attempted;
     bool recovery_timer_released;

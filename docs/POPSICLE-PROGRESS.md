@@ -1,6 +1,6 @@
 ## 最新阶段 0070
 
-新增 pre-PE prepared NDI reset 回收：能力/归属预检 → 同步关闭响应定时器 → 原生 no-FW force peer detach/object-peer 删除 → WMA/legacy 释放 → 既有 DP 与对象实际 final-free。完整 prepare 成功、从未请求 PE/START 的 INIT 才可进入；PE/UP 状态仍不支持。新增完整 native WMA 分支 C 模型与 no_fw=false 负对照，完整构建待 CI。见[0070](POPSICLE-PREPARED-RESET-0070.md)。
+新增 pre-PE prepared NDI reset 回收：能力/归属预检 → 同步关闭响应定时器 → 原生 no-FW force peer detach/object-peer 组件析构 → 实际 DP final-free → WMA/legacy 释放 → 对象实际 final-free。完整 prepare 成功、从未请求 PE/START 的 INIT 才可进入；PE/UP 状态仍不支持。新增完整 native WMA 分支 C 模型与 no_fw=false 负对照，完整构建待 CI。见[0070](POPSICLE-PREPARED-RESET-0070.md)。
 
 native shutdown 自动协调与父资源租约、PE/UP 回收和完整 monitor 仍未完成；无线 init 保持关闭，无新手机测试。
 

@@ -62,20 +62,20 @@ int main(void) {
  for(int inline_cb=0;inline_cb<2;inline_cb++) {
   reset_prepared_test();o=prepared();stop_recovery(o);early_dp=inline_cb;
   assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS && o);
-  assert(state(o).recovery_context_attempted && state(o).recovery_context_released);
-  assert(!state(o).ndi.legacy_ready && !state(o).ndi.wma_bound && !state(o).ndi.peer_created);
+  assert(state(o).recovery_context_attempted && state(o).recovery_peer_released && !state(o).recovery_context_released);
+  assert(state(o).ndi.legacy_ready && state(o).ndi.wma_bound && !state(o).ndi.peer_created);
   assert(state(o).ndi.peer_create_attempted && !state(o).ndi.peer_delete_pending && !state(o).ndi.peer_delete_submitted && !state(o).ndi.peer_delete_replied);
-  assert(!ctx_peer_present && !ctx_locks && !wma_context.interfaces[7].vdev);
+  assert(!ctx_peer_present && ctx_locks && wma_context.interfaces[7].vdev);
   assert(reset_peer_ops==5 && reset_force_detaches==1 && reset_obj_deletes==1 && !reset_wmi_calls && !ctx_requests && !ctx_delete_calls);
   assert(dp_detaches==1 && !wire_deletes && !timers_live);
   if(!inline_cb) {assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS && reset_force_detaches==1);finish_dp();}
-  assert(!mishare_runtime_reclaim_ndi(&o) && !o && !objects_live && !allocations && !dp_objects);
+  assert(!mishare_runtime_reclaim_ndi(&o) && !o && !objects_live && !allocations && !dp_objects && !ctx_locks && !wma_context.interfaces[7].vdev);
  }
  /* The actual batch dispatcher must admit the same qualified prepared owner. */
  reset_prepared_test();o=prepared();stop_recovery(o);
  struct mishare_runtime_reclaim_item item={o,77};o=NULL;
  assert(mishare_runtime_reclaim_batch(&psoc,&item,1)==-EINPROGRESS && item.owner && item.result==-EINPROGRESS);
- assert(reset_force_detaches==1 && state(item.owner).recovery_context_released);finish_dp();
+ assert(reset_force_detaches==1 && state(item.owner).recovery_peer_released && !state(item.owner).recovery_context_released);finish_dp();
  assert(!mishare_runtime_reclaim_batch(&psoc,&item,1) && !item.owner && !item.result && !allocations && !objects_live);
  /* A real outstanding final-free reference keeps the original handle alive. */
  reset_prepared_test();o=prepared();struct wlan_objmgr_vdev *held=last_vdev;
@@ -124,6 +124,16 @@ int main(void) {
   }
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
+ /* A final-stage rejection after actual DP free retains the live context. */
+ reset_prepared_test();pid_t finish_child=fork();assert(finish_child>=0);
+ if(!finish_child) {
+  o=prepared();stop_recovery(o);assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS);finish_dp();
+  wma_context.interfaces[7].bss_status=99;
+  assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o && !dp_objects && state(o).recovery_dp_freed);
+  assert(state(o).ndi.legacy_ready && state(o).ndi.wma_bound && ctx_locks && state(o).recovery_error);
+  assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && reset_force_detaches==1);_Exit(0);
+ }
+ int finish_status;assert(waitpid(finish_child,&finish_status,0)==finish_child && WIFEXITED(finish_status) && !WEXITSTATUS(finish_status));
  /* Completed-context markers cannot masquerade as a fresh timer-owned candidate. */
  reset_prepared_test();pid_t marker_child=fork();assert(marker_child>=0);
  if(!marker_child) {
@@ -158,6 +168,10 @@ def fixture(root):
     old = recovery.function(src, 'wma_remove_peer')
     model = MODELS.replace('NATIVE_OBJ_PEER_REMOVE', native['wma_remove_objmgr_peer']).replace('NATIVE_PEER_REMOVE', native['wma_remove_peer'])
     src = src.replace(old, model, 1)
+    finish = recovery.function(src, 'mishare_ndi_reset_context_finish')
+    checked = finish.replace(' ret = mishare_ndi_wma_unbind(vdev);', ' assert(!dp_objects && !pending_dp_cb);\n ret = mishare_ndi_wma_unbind(vdev);')
+    assert finish != checked
+    src = src.replace(finish, checked, 1)
     return src[:src.index('int main(void) {')]+HARNESS
 
 
@@ -190,7 +204,7 @@ def audit(root):
             'native_sha256':{WMA:hashlib.sha256((root/WMA).read_bytes()).hexdigest()},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h']},
             'negative_control_no_fw_false_attempts_wmi_and_is_rejected':True,
-            'checks':['actual native wma_remove_peer no-FW force-detach branch and native object-peer remove execute', 'actual batch dispatch accepts the qualified prepared owner', 'inline and deferred DP completion precede actual object final-free', 'external final-free reference retains owner beyond native window closure', '16 capability/identity/state/history/timer/physical-peer-count preflight failures retain all owned context', 'delayed physical peer destruction retains WMA/legacy context', 'partial native failure publishes resource facts, sticks error and never retries', 'PE/START/UP owners remain unsupported', 'no peer/VDEV firmware delete or ordinary DELETE ACK flag fabricated'],
+            'checks':['actual native wma_remove_peer no-FW force-detach branch and native object-peer remove execute', 'actual batch dispatch accepts the qualified prepared owner', 'inline and deferred DP completion precede actual object final-free', 'external final-free reference retains owner beyond native window closure', '16 capability/identity/state/history/timer/physical-peer-count preflight failures retain all owned context', 'delayed physical peer destruction retains WMA/legacy context', 'WMA/legacy finish executes only after DP final-free and submit return', 'final-stage rejection after DP free retains context and error', 'partial native failure publishes resource facts, sticks error and never retries', 'PE/START/UP owners remain unsupported', 'no peer/VDEV firmware delete or ordinary DELETE ACK flag fabricated'],
             'limitations':'Production runtime and native WMA removal/helper code with modeled DP force detach, object-peer deletion, native synchronization, WMI transports and physical parents. Existing native timer/DP wrapper and object-manager final-free are included; actual peer/vdev hardware refcounts and kernel races are not certified. Only fully prepared pre-PE INIT is added. No automatic shutdown coordinator, parent lease, PE/UP reset recovery or phone/RF certification; backend stays disabled.'}
 
 

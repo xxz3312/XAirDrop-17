@@ -1,6 +1,6 @@
 --- a/qcacld-3.0/core/wma/src/wma_dev_if.c
 +++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
-@@ -7802,3 +7802,112 @@
+@@ -7802,3 +7802,156 @@
   return 0;
  }
  /* MISHARE_END:radio_wma */
@@ -102,6 +102,50 @@
 + wlan_vdev_obj_unlock(vdev);
 + if (peers)
 +  return -EUCLEAN;
++ if (iface->vdev != vdev || iface->peer_count ||
++     qdf_atomic_read(&iface->bss_status) != WMA_BSS_STATUS_STOPPED)
++  return -EUCLEAN;
++ return 0;
++}
++
++int mishare_ndi_reset_context_finish(struct wlan_objmgr_vdev *vdev,
++                                    unsigned long dp_cookie,
++                                    struct mishare_ndi_reset_context_result *result)
++{
++ tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++ struct vdev_mlme_obj *m;
++ struct wma_txrx_node *iface;
++ struct wlan_objmgr_psoc *psoc;
++ void *soc = cds_get_context(QDF_MODULE_ID_SOC);
++ uint16_t peers;
++ uint8_t id;
++ int ret;
++ if (!result)
++  return -EINVAL;
++ qdf_mem_zero(result, sizeof(*result));
++ if (!vdev || !wma || !cds_is_driver_recovering() ||
++     wmi_validate_handle(wma->wmi_handle) || !wmi_is_blocked(wma->wmi_handle))
++  return -EUCLEAN;
++ psoc = wlan_vdev_get_psoc(vdev);
++ id = wlan_vdev_get_id(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ if (!psoc || psoc != wma->psoc || id >= wma->max_bssid ||
++     !soc || (unsigned long)soc != dp_cookie || wlan_psoc_get_dp_handle(psoc) != soc ||
++     !m || m->vdev != vdev || !m->ext_vdev_ptr ||
++     !wma_mishare_pas_ndi(vdev, m->mgmt.generic.type) || m->mgmt.generic.subtype ||
++     wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT)
++  return -EUCLEAN;
++ iface = &wma->interfaces[id];
++ if (iface->vdev != vdev || !iface->vdev_active ||
++     !wma_mishare_pas_ndi(vdev, iface->type) || iface->sub_type ||
++     iface->peer_count || iface->del_staself_req || iface->is_del_sta_deferred ||
++     qdf_atomic_read(&iface->bss_status) != WMA_BSS_STATUS_STOPPED)
++  return -EUCLEAN;
++ wlan_vdev_obj_lock(vdev);
++ peers = wlan_vdev_get_peer_count(vdev);
++ wlan_vdev_obj_unlock(vdev);
++ if (peers)
++  return -EUCLEAN;
 + ret = mishare_ndi_wma_unbind(vdev);
 + if (ret)
 +  return ret;
@@ -156,3 +200,39 @@
 + return 0;
 +}
 +/* MISHARE_RESET_CONTEXT_END:timer */
+--- a/qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_tgt_if_tx_api.c
++++ b/qca-wifi-host-cmn/umac/mlme/vdev_mgr/dispatcher/src/wlan_vdev_mgr_tgt_if_tx_api.c
+@@ -940,3 +940,33 @@
+  return mishare_ndi_native_dp_detach(vdev, callback, context);
+ }
+ /* MISHARE_RECOVERY_END:dp_detach */
++
++/* MISHARE_RESET_CONTEXT_BEGIN:dp */
++int mishare_ndi_reset_prepared_dp_detach(struct wlan_objmgr_vdev *vdev,
++                                   unsigned long dp_cookie,
++                                   void (*callback)(void *), void *context)
++{
++ struct wlan_objmgr_psoc *psoc;
++ struct vdev_mlme_obj *m;
++ ol_txrx_soc_handle soc;
++ unsigned int peers;
++ if (!vdev || !dp_cookie || !callback || !context ||
++     wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++  return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
++ psoc = wlan_vdev_get_psoc(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ if (!psoc || !m || m->vdev != vdev || !m->ext_vdev_ptr ||
++     m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI || m->mgmt.generic.subtype ||
++     wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT)
++  return qdf_status_to_os_return(QDF_STATUS_E_INVAL);
++ wlan_vdev_obj_lock(vdev);
++ peers = wlan_vdev_get_peer_count(vdev);
++ wlan_vdev_obj_unlock(vdev);
++ if (peers)
++  return -EUCLEAN;
++ soc = wlan_psoc_get_dp_handle(psoc);
++ if (!soc || (unsigned long)soc != dp_cookie)
++  return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
++ return mishare_ndi_native_dp_detach(vdev, callback, context);
++}
++/* MISHARE_RESET_CONTEXT_END:dp */

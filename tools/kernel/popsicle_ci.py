@@ -217,7 +217,8 @@ def check_mishare_host_symbols(work, module, report_name):
     names += ['mishare_runtime_reclaim_batch', 'mishare_wonder_host_psoc_busy',
               'mishare_wonder_host_reclaim_ssr_locked',
               'mishare_ndi_reset_context_release', 'mishare_ndi_reset_context_check',
-              'mishare_ndi_reset_prepared_timer_deinit']
+              'mishare_ndi_reset_prepared_timer_deinit', 'mishare_ndi_reset_context_finish',
+              'mishare_ndi_reset_prepared_dp_detach']
     names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync',
               'mishare_action_tx_sync']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),

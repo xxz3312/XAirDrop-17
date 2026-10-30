@@ -3,9 +3,9 @@ import re
 
 
 def remove_reset_context_additions(text):
-    pattern = (r'\n/\* MISHARE_RESET_CONTEXT_BEGIN:(?:release|timer) \*/\n.*?'
-               r'/\* MISHARE_RESET_CONTEXT_END:(?:release|timer) \*/\n')
+    pattern = (r'\n/\* MISHARE_RESET_CONTEXT_BEGIN:(?:release|timer|dp) \*/\n.*?'
+               r'/\* MISHARE_RESET_CONTEXT_END:(?:release|timer|dp) \*/\n')
     text, count = re.subn(pattern, '', text, flags=re.S)
-    if count > 2 or 'MISHARE_RESET_CONTEXT_' in text:
+    if count > 3 or 'MISHARE_RESET_CONTEXT_' in text:
         raise ValueError('Unknown or duplicate reset context helper')
     return text

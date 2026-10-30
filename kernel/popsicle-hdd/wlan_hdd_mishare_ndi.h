@@ -54,6 +54,14 @@ int mishare_ndi_reset_prepared_timer_deinit(struct wlan_objmgr_vdev *vdev);
 /* SSR-only, never-PE/STARTed context retirement. Caller holds the qualified
  * reset window and exact parents; partial facts survive errors, never retry.
  */
+/* Final stage: owner has observed actual DP final-free and submit return. */
+int mishare_ndi_reset_context_finish(struct wlan_objmgr_vdev *vdev,
+                                      unsigned long dp_cookie,
+                                      struct mishare_ndi_reset_context_result *result);
+int mishare_ndi_reset_prepared_dp_detach(struct wlan_objmgr_vdev *vdev,
+                                          unsigned long dp_cookie,
+                                          void (*callback)(void *), void *context);
+/* First stage releases only the peer; WMA/legacy remain until DP final-free. */
 int mishare_ndi_reset_context_release(struct wlan_objmgr_vdev *vdev,
                                        unsigned long dp_cookie,
                                        struct mishare_ndi_reset_context_result *result);
