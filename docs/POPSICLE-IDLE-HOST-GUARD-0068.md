@@ -16,4 +16,4 @@
 
 扩展既有 Actions C 模型，执行完整生产 host helper 与完整原生 `__hdd_psoc_idle_shutdown`。测试无 owner、不同 psoc、纯 host、异步 runtime drain、sync 错配、创建失败回滚、transition 失败、普通接口打开和 module stop 原样返回错误；在 sync 创建、adapter 关闭、sync 销毁的模型调用点检查登记仍存在。QDF/native synchronization、module stop 和网卡操作仍为模型；完整原生 idle 函数新增段可精确移除并恢复原函数 SHA256，较早源审计保持原基线。
 
-本地 53 项 Python 检查、无 fuzz 补丁应用、原生 idle 完整源码精确还原、既有 parent 源审计还原以及调用顺序检查通过。GitHub 上 11 个改动文件与本地 blob 一致。[CI 41101029685](https://github.com/xxz3312/XAirDrop-17/actions/runs/41101029685)已触发，记录时仍在等待运行器，尚未执行 C 模型或完整编译；严格链接和选定布局检查亦未完成。见[验证状态](research/popsicle-idle-host-0068-validation.json)。HDD backend init 仍返回 `EOPNOTSUPP`，无手机执行、无固件启动或 AWDL 认证。本轮不发手机测试包。
+本地 53 项 Python 检查、无 fuzz 补丁应用、原生 idle 完整源码精确还原、既有 parent 源审计还原以及调用顺序检查通过。GitHub 上 11 个改动文件与本地 blob 一致。[CI 41101029685](https://github.com/xxz3312/XAirDrop-17/actions/runs/41101029685)成功：生产 host 与完整原生 idle 函数 C 模型、完整 WLAN 编译、严格链接和 7 项选定布局检查通过。下载的 compact validation 产物 SHA256 与 GitHub digest 一致，host 模型生产文件 SHA256 已逐一复核。见[验证记录](research/popsicle-idle-host-0068-validation.json)。HDD backend init 仍返回 `EOPNOTSUPP`，无手机执行、无固件启动或 AWDL 认证。本轮不发手机测试包。

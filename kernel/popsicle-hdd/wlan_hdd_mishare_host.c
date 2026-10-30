@@ -5,6 +5,7 @@
 #include <linux/rtnetlink.h>
 #include <linux/slab.h>
 #include <linux/spinlock.h>
+#include <cds_api.h>
 #include "wlan_hdd_main.h"
 #include "osif_psoc_sync.h"
 #include "osif_vdev_sync.h"
@@ -219,4 +220,48 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
     kfree(host);
     *owner = NULL;
     return 0;
+}
+
+int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner)
+{
+    struct mishare_runtime_reclaim_item item = {0};
+    struct mishare_wonder_host *host;
+    struct hdd_adapter *adapter;
+    int ret;
+
+    if (!owner)
+        return -EINVAL;
+    host = *owner;
+    if (!host)
+        return 0;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    if (!cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    if (host->psoc != host->hdd->psoc)
+        return -EUCLEAN;
+    adapter = host->adapter;
+    if (netif_running(adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, adapter->deflink->link_flags))
+        return -EBUSY;
+    host->session.closing = true;
+    /* Transfer the authoritative token only for this serialized call. Native
+     * completions own runtime tokens, never a pointer to this host slot.
+     * Restore the result on EVERY return, including partial/error progress.
+     */
+    item.owner = host->runtime;
+    host->runtime = NULL;
+    ret = mishare_runtime_reclaim_batch(host->psoc,
+                                       item.owner ? &item : NULL,
+                                       item.owner ? 1 : 0);
+    host->runtime = item.owner;
+    if (ret)
+        return ret;
+    if (host->runtime)
+        return -EUCLEAN;
+    /* Batch success includes exact-psoc registry emptiness and real final-free.
+     * Ordinary host close now has no runtime/firmware cleanup to submit.
+     */
+    return mishare_wonder_host_destroy_locked(owner);
 }

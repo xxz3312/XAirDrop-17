@@ -1,6 +1,12 @@
-## 最新阶段 0068
+## 最新阶段 0069
 
-原生空闲关机增加专用 DOWN host 生命周期检查：在独占 psoc transition 和 operations 排空后，有 host 即返回 EAGAIN，不进入 module stop。登记覆盖 runtime 创建前、异步清理以及 adapter/sync 最终释放；创建失败撤销登记。完整生产 host + 原生 idle 函数 C 模型已扩展；53 项 Python 检查和精确源审计通过。CI 41101029685 仍排队，C 模型与完整编译/链接/布局结果待运行。见[0068](POPSICLE-IDLE-HOST-GUARD-0068.md)。
+新增显式 SSR host 回收入口：完整 registry coverage、owned MC、合法恢复策略和实际 final-free 由既有 runtime batch 执行，成功后才关闭 adapter/sync；每次返回恢复最新 runtime 句柄，等待与错误均保留 host 和 idle inhibition。已扩展 Actions host 模型，完整构建待 CI。见[0069](POPSICLE-HOST-SSR-RETIRE-0069.md)。
+
+这尚无自动 native shutdown caller，不构成 SSR/remove 父资源租约，也未新增 prepared/UP 回收。无线 init 和完整 monitor 仍未启用，无新手机测试。
+
+## 阶段 0068
+
+原生空闲关机增加专用 DOWN host 生命周期检查：在独占 psoc transition 和 operations 排空后，有 host 即返回 EAGAIN，不进入 module stop。登记覆盖 runtime 创建前、异步清理以及 adapter/sync 最终释放；创建失败撤销登记。完整生产 host + 原生 idle 函数 C 模型已扩展；53 项 Python 检查和精确源审计通过。CI 41101029685 已成功，C 模型、完整编译、严格链接及 7 项选定布局检查通过。见[0068](POPSICLE-IDLE-HOST-GUARD-0068.md)。
 
 这仅保护普通 idle shutdown，不代表 SSR/remove 父资源租约完成。prepared/UP SSR 回收、完整 monitor 和实际无线初始化仍未启用，无新手机测试。
 

@@ -20,6 +20,19 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
                                     struct mishare_wonder_host **owner);
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
+/* Explicit SSR-only retirement bridge; no automatic shutdown caller. Same
+ * RTNL/exclusive psoc serialization as create/destroy. Retain exact parents
+ * and serialize teardown through EVERY asynchronous poll. Requires native
+ * SSR qualification; a recovering flag alone is not an IRQ/MC/DP barrier.
+ * The single runtime token must cover the complete exact-psoc registry; extra
+ * owners return EBUSY. Batch enforces original SSR fence, MC drain, supported
+ * recovery policy and real final-free before adapter/sync close. Prepared/UP
+ * recovery stays unsupported unless ordinary cleanup already completed.
+ * Errors retain host and the updated runtime token; EINPROGRESS needs polling
+ * after releasing locks. This permanently closes the session on admission.
+ * This does not hold parents, reset quarantine or authorize physical remove.
+ */
+int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner);
 /* Optional host vdev attachment. Retain host/adapter on EINPROGRESS/EUCLEAN;
  * destroy_locked also drains this attachment before freeing the netdev.
  * No SME session, firmware CREATE/DELETE, START/STOP or radio operation.
