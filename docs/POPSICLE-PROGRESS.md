@@ -1,4 +1,8 @@
-## 最新阶段 0070
+## 最新阶段 0071
+
+新增执行原生完整 PE 析构的 Actions 模型：生产 owner/MC 请求回归复用真实 `pe_delete_session`，检查全部可选分配、DPH 借用数组、确认定时器、MAC VDEV 引用释放顺序，并以删除引用释放的负对照验证。53 项 Python 检查通过，C 模型和完整 CI 待验证。本轮补齐验证，不扩大 SSR 准入；手机无需操作。见[0071](POPSICLE-NATIVE-PE-DESTRUCTOR-0071.md)。
+
+## 阶段 0070
 
 新增 pre-PE prepared NDI reset 回收：能力/归属预检 → 同步关闭响应定时器 → 原生 no-FW force peer detach/object-peer 组件析构 → 实际 DP final-free → WMA/legacy 释放 → 对象实际 final-free。完整 prepare 成功、从未请求 PE/START 的 INIT 才可进入；PE/UP 状态仍不支持。CI 41118167241 已通过 53 项 Python 检查、native WMA 分支/两阶段回收 C 模型与 no_fw=false 负对照、完整 WLAN/Wonder/provider 编译、严格链接及 7 项选定布局。5 个新增入口实际链接与生产源码/native 源码哈希已复核。见[0070](POPSICLE-PREPARED-RESET-0070.md)。
 

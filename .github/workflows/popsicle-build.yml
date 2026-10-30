@@ -41,6 +41,7 @@ on:
       - tools/kernel/mishare_batch_previous.py
       - tools/kernel/mishare_mgmt_rx_fixture.py
       - tools/kernel/mishare_session_fixture.py
+      - tools/kernel/mishare_pe_destructor_fixture.py
       - tools/kernel/mishare_context_fixture.py
       - tools/kernel/mishare_firmware_fixture.py
       - tools/kernel/mishare_ndi_origins.py
