@@ -52,6 +52,7 @@ on:
       - tools/kernel/mishare_host_fixture.py
       - tools/kernel/mishare_session_driver_fixture.py
       - tools/kernel/wonder_managed_fixture.py
+      - tools/kernel/wonder_provider_fixture.py
       - tools/kernel/mishare_backend_fixture.py
       - tools/kernel/test_*.py
       - tools/kernel/module_*.py
@@ -92,6 +93,7 @@ jobs:
           python3 tools/kernel/mishare_mgmt_rx_fixture.py
           python3 tools/kernel/mishare_session_driver_fixture.py
           python3 tools/kernel/wonder_managed_fixture.py
+          python3 tools/kernel/wonder_provider_fixture.py
       - name: Install host build dependencies
         run: |
           # Only Ubuntu packages are needed. Unrelated runner repositories can

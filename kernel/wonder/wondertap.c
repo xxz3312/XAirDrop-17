@@ -16,8 +16,8 @@ static const struct wondertap_ops *wondertap_ops = NULL;
 /* Per-instance lock protects these explicit managed bindings. The caller must
  * still retain native parents; module refs protect text, not HDD/psoc memory.
  */
-int wondertap_bind_managed(struct wondertap_data *w,
-						  const struct wondertap_managed_ops *managed)
+static int wondertap_bind_managed_mode(struct wondertap_data *w,
+				const struct wondertap_managed_ops *managed, bool staged)
 {
 	int ret = 0;
 	if (!w || !managed || !managed->ops || !managed->ops->init ||
@@ -35,11 +35,73 @@ int wondertap_bind_managed(struct wondertap_data *w,
 	else {
 		w->managed = *managed;
 		w->managed_bound = true;
+		w->managed_quiescing = staged;
+		w->managed_activation_pending = staged;
 		w->managed_caps_valid = false;
 		w->managed_error = 0;
 	}
 	mutex_unlock(&w->lock);
 	return ret;
+}
+
+int wondertap_provider_prepare(struct wondertap_data *w)
+{
+	int ret = 0;
+	mutex_lock(&w->lock);
+	if (w->managed_bound || w->managed_provider_control ||
+		w->state != WONDERTAP_STATE_DOWN || w->vendor_handle ||
+		w->managed_instance_pin)
+		ret = -EBUSY;
+	else
+		w->managed_quiescing = true;
+	mutex_unlock(&w->lock);
+	return ret;
+}
+int wondertap_activate_legacy(struct wondertap_data *w)
+{
+	int ret = 0;
+	mutex_lock(&w->lock);
+	if (w->managed_bound || w->vendor_handle || w->managed_instance_pin ||
+		w->state != WONDERTAP_STATE_DOWN)
+		ret = -EBUSY;
+	else
+		w->managed_quiescing = false;
+	mutex_unlock(&w->lock);
+	return ret;
+}
+
+int wondertap_bind_managed(struct wondertap_data *w,
+						  const struct wondertap_managed_ops *managed)
+{
+	return wondertap_bind_managed_mode(w, managed, false);
+}
+int wondertap_bind_managed_staged(struct wondertap_data *w,
+								 const struct wondertap_managed_ops *managed)
+{
+	return wondertap_bind_managed_mode(w, managed, true);
+}
+int wondertap_activate_managed(struct wondertap_data *w)
+{
+	int ret = 0;
+	mutex_lock(&w->lock);
+	if (!w->managed_bound || !w->managed_activation_pending ||
+		w->state != WONDERTAP_STATE_DOWN ||
+		w->vendor_handle || w->managed_instance_pin)
+		ret = -EBUSY;
+	else {
+		w->managed_quiescing = false;
+		w->managed_activation_pending = false;
+	}
+	mutex_unlock(&w->lock);
+	return ret;
+}
+int wondertap_quiesce_managed(struct wondertap_data *w)
+{
+	mutex_lock(&w->lock);
+	w->managed_quiescing = true;
+	w->managed_activation_pending = false;
+	mutex_unlock(&w->lock);
+	return wondertap_unbind_managed(w);
 }
 
 int wondertap_unbind_managed(struct wondertap_data *w)
@@ -69,7 +131,7 @@ int wondertap_unbind_managed(struct wondertap_data *w)
 
 static bool wondertap_transition_pending(struct wondertap_data *w)
 {
-	return w->state == WONDERTAP_STATE_STARTING ||
+	return w->managed_quiescing || w->state == WONDERTAP_STATE_STARTING ||
 		   w->state == WONDERTAP_STATE_DRAINING ||
 		   w->state == WONDERTAP_STATE_BLOCKED ||
 		   (w->managed_bound && w->state == WONDERTAP_STATE_DOWN &&
@@ -219,6 +281,10 @@ int wondertap_init(struct wondertap_data *wondertap, const struct wondertap_init
 	if (!wondertap || !_params)
 		return -EINVAL;
 	mutex_lock(&wondertap->lock);
+	if (wondertap->managed_quiescing) {
+		mutex_unlock(&wondertap->lock);
+		return -ESHUTDOWN;
+	}
 	ops = wondertap->managed_bound ? wondertap->managed.ops : wondertap_ops;
 	if (wondertap->managed_bound) {
 		if (wondertap->managed.ops != wondertap_ops) {
@@ -308,6 +374,10 @@ void wondertap_deinit(struct wondertap_data *wondertap)
 	struct wondertap_deinit_params params;
 
 	mutex_lock(&wondertap->lock);
+	if (wondertap->managed_quiescing && !wondertap->managed_bound) {
+		mutex_unlock(&wondertap->lock);
+		return;
+	}
 	if (wondertap->managed_bound) {
 		int ret = wondertap_retire_locked(wondertap);
 		if (ret)
@@ -513,6 +583,10 @@ int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wonderta
 		return 0;
 	}
 	mutex_lock(&wondertap->lock);
+	if (wondertap->managed_quiescing) {
+		mutex_unlock(&wondertap->lock);
+		return -ESHUTDOWN;
+	}
 	if (wondertap->managed_bound) {
 		const struct wondertap_ops *ops = wondertap->managed.ops;
 		int ret;

@@ -30,6 +30,10 @@ struct wondertap_data {
 	struct mutex lock;
 	struct wondertap_managed_ops managed;
 	bool managed_bound;
+	bool managed_quiescing;
+	bool managed_activation_pending;
+	wondertap_provider_control_fn managed_provider_control;
+	const void *managed_provider_priv;
 	bool managed_instance_pin;
 	bool managed_caps_valid;
 	struct wondertap_capability managed_caps;
@@ -61,6 +65,10 @@ static inline void wondertap_prep(struct wondertap_data *wondertap)
 	wondertap->vendor_handle = NULL;
 	wondertap->managed = (struct wondertap_managed_ops){0};
 	wondertap->managed_bound = false;
+	wondertap->managed_quiescing = false;
+	wondertap->managed_activation_pending = false;
+	wondertap->managed_provider_control = NULL;
+	wondertap->managed_provider_priv = NULL;
 	wondertap->managed_instance_pin = false;
 	wondertap->managed_caps_valid = false;
 	wondertap->managed_error = 0;
@@ -103,6 +111,14 @@ int wondertap_bind_managed(struct wondertap_data *wondertap,
 						  const struct wondertap_managed_ops *managed);
 int wondertap_unbind_managed(struct wondertap_data *wondertap);
 int wondertap_retire(struct wondertap_data *wondertap);
+int wondertap_bind_managed_staged(struct wondertap_data *wondertap,
+				 const struct wondertap_managed_ops *managed);
+int wondertap_activate_managed(struct wondertap_data *wondertap);
+int wondertap_quiesce_managed(struct wondertap_data *wondertap);
+int wondertap_provider_bind(struct wondertap_data *wondertap, const void *priv);
+int wondertap_provider_unbind(struct wondertap_data *wondertap);
+int wondertap_provider_prepare(struct wondertap_data *wondertap);
+int wondertap_activate_legacy(struct wondertap_data *wondertap);
 
 /**
  * @brief Sets the hardware operating channel and bandwidth.

@@ -115,6 +115,9 @@ def setup(work):
     shutil.copy2(REPO / 'kernel/provider/wondertap.h',
                  work / 'wlan/qcacld-3.0/core/hdd/inc/wlan_hdd_mishare_wonder_api.h')
 
+    shutil.copy2(REPO / 'kernel/wonder/wondertap_managed.h',
+                 work / 'wlan/qcacld-3.0/core/hdd/inc/wlan_hdd_mishare_managed.h')
+
     tools = lock['toolchain_record']
     for key, folder in [('clang', 'clang-r536225'), ('rust', 'rust-1.82.0.p2')]:
         url = (f"{tools[key + '_repository']}/+archive/"

@@ -28,16 +28,22 @@ typedef uint32_t u32;
 static void mutex_lock(int *p) { assert(!*p);*p=1; }
 static void mutex_unlock(int *p) { assert(*p);*p=0; }
 struct hdd_context { int identity; };
+struct module { int dummy; };
+static struct module backend_module;
+#define THIS_MODULE (&backend_module)
 '''
 HARNESS=r'''
 static const struct wondertap_priv *bound;
 static int provider_error,registrations,removals,queries;
-int opairshare_set_wonder_priv_data(const void *p)
+int opairshare_set_wonder_managed_priv_data(const void *p,const struct wondertap_managed_ops *managed)
 {
  assert(mishare_backend_lock==1);
  if(provider_error)return provider_error;
  const struct wondertap_priv *priv=p;
  if(priv) {
+  assert(managed && managed->ops==priv->wonder_ops && managed->owner==THIS_MODULE);
+  assert(managed->poll_start(NULL)==-EINVAL);
+  void *none=NULL;assert(managed->retire(&none)==0 && !none);
   assert(!bound && priv->ver==WONDER_VERSION_1_4_1);bound=priv;registrations++;
  } else { assert(bound);removals++; }
  /* Component bind/unbind can synchronously invoke callbacks under owner lock. */
@@ -71,6 +77,10 @@ int main(void)
  assert(ops->set_fixed_tx_rate(NULL,NULL)==-EOPNOTSUPP);
  assert(ops->set_tx_rate_mask(NULL,NULL)==-EOPNOTSUPP);
  ops->deinit(NULL,NULL);
+ provider_error=-EBUSY;
+ assert(mishare_wonder_backend_unregister(&a)==-EBUSY && bound && mishare_backend_owner==&a);
+ assert(mishare_wonder_backend_register(&a)==-ESHUTDOWN);
+ provider_error=0;
  mishare_wonder_backend_unregister(&a);assert(!bound && !mishare_backend_owner && removals==1);
  mishare_wonder_backend_unregister(&a);assert(removals==1);
  assert(mishare_wonder_backend_register(&b)==0 && mishare_backend_owner==&b);
@@ -90,13 +100,14 @@ def run(output):
         for name in ['linux/module.h','linux/mutex.h','linux/string.h','linux/if_ether.h','wlan_hdd_main.h','wlan_hdd_trace.h']:
             p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('/* fixture declarations */\n')
         (d/'wlan_hdd_mishare_wonder_api.h').write_bytes(api.read_bytes())
+        (d/'wlan_hdd_mishare_managed.h').write_bytes((ROOT/'kernel/wonder/wondertap_managed.h').read_bytes())
         code='#include "wlan_hdd_mishare_backend.c"\n'+HARNESS
         (d/'test.c').write_text(code)
         exe=d/'test'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer',
                         '-include',str(d/'fixture.h'),'-I'+str(d),'-I'+str(production),str(d/'test.c'),'-o',str(exe)],check=True)
         stdout=subprocess.check_output([exe],text=True,timeout=10,env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',UBSAN_OPTIONS='halt_on_error=1'))
-    inputs={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [production/'wlan_hdd_mishare_backend.c',production/'wlan_hdd_mishare_backend.h',api]}
+    inputs={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in [production/'wlan_hdd_mishare_backend.c',production/'wlan_hdd_mishare_backend.h',api,ROOT/'kernel/wonder/wondertap_managed.h']}
     report={'status':'MISHARE_BACKEND_TABLE_FIXTURE_PASS_ONLY','production_sha256':inputs,
             'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
             'checks':['default-disabled','registration failure rollback','duplicate registration','conflicting HDD owner','wrong-owner detach','synchronous capability/init queries during bind/unbind without recursive lock','init never publishes a handle','zero capabilities','all radio methods unsupported','repeat detach','re-registration'],

@@ -1,4 +1,10 @@
-## 最新阶段 0066
+## 最新阶段 0067
+
+默认关闭的HDD元数据绑定通过私有provider传递managed companion，component master实际安装/解除绑定。发布ops前关闭准入，CLAIM成功后开放；清除前quiesce，有归属时保留component/descriptor/claim，显式retire后才解绑，最终free拒绝仍有归属的实例。公开ops/priv ABI不变。
+
+HDD init仍返回EOPNOTSUPP，不创建固件会话。目标remove是void，native caller尚不能以EBUSY阻止父资源拆除；创建/启动接线仍须等父资源租约和prepared/UP SSR恢复完成。完整monitor未接通，无新手机测试。见[0067](POPSICLE-MANAGED-BINDING-0067.md)。
+
+## 阶段 0066
 
 Wonder入口新增显式managed生命周期：启动一次后poll，部分失败保留句柄，retire实际完成才DOWN，错误/虚假成功隔离，待完成阶段冻结配置；绑定/实例分别保持回调模块/Wonder模块引用。上游ops/priv ABI和默认同步路径不变。CI 41065931217的53项Python检查、生产入口C模型、完整编译/严格链接和7项选定布局检查通过。
 

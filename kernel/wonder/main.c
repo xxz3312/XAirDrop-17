@@ -189,10 +189,18 @@ static int wonder_master_bind(struct device *dev)
 			__func__, wlan_priv->ver, wondertap->ver);
 		goto err;
 	}
-	/* All matched, hook the ops to wondertap interface. */
+	/* Keep admission closed until the private provider claim is installed. */
+	ret = wondertap_provider_prepare(wondertap);
+	if (ret)
+		goto err;
 	ret = wondertap_register_ops(wlan_priv->wonder_ops);
 	if (ret)
 		goto err;
+	ret = wondertap_provider_bind(wondertap, wlan_priv);
+	if (ret) {
+		wondertap_unregister_ops(wlan_priv->wonder_ops);
+		goto err;
+	}
 	wondertap->wonder_ops = wlan_priv->wonder_ops;
 	put_device(&wlan_pdev->dev);
 	dev_info(dev, "%s(): Connected to wlan ver %d (cur: wonder ver %d)!\n",
@@ -211,6 +219,10 @@ static void wonder_master_unbind(struct device *dev)
 
 	dev_info(dev, "%s(): Unbinding...\n", __func__);
 
+	if (wondertap_provider_unbind(wondertap)) {
+		dev_err(dev, "Managed binding still owns resources; retaining callbacks\n");
+		return;
+	}
 	wondertap_unregister_ops(wondertap->wonder_ops);
 	wondertap->wonder_ops = NULL;
 	component_unbind_all(dev, NULL);

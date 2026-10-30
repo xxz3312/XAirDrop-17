@@ -1272,6 +1272,15 @@ void wonder_mac80211_exit(void)
 	if (!unlikely(wonder)) {
 		return;
 	}
+	mutex_lock(&wonder->wondertap_data.lock);
+	if (wonder->wondertap_data.managed_bound ||
+		wonder->wondertap_data.managed_provider_control ||
+		wonder->wondertap_data.managed_instance_pin) {
+		mutex_unlock(&wonder->wondertap_data.lock);
+		wonder_error("Managed binding still owns instance; refusing final free\n");
+		return;
+	}
+	mutex_unlock(&wonder->wondertap_data.lock);
 	wonder_ssr_exit(wonder);
 	wonder_features_exit(wonder);
 	ieee80211_free_hw(wonder->hw);
