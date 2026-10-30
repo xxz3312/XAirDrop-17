@@ -215,7 +215,7 @@ def audit(root):
         assert destructor.count(needle) == 1
         # Keep the model callback referenced so -Werror cannot turn the
         # deliberate lost release into an unrelated unused-function failure.
-        lost_ref = destructor.replace(needle, '(void)pe_native_release_ref; (void)vdev; /* negative: lost native MAC ref */', 1)
+        lost_ref = destructor.replace(needle, '{ (void)pe_native_release_ref; (void)vdev; } /* negative: lost native MAC ref */', 1)
         c.write_text(source.replace(destructor,lost_ref,1))
         subprocess.run(command,check=True)
         bad = subprocess.run([exe],capture_output=True,text=True,timeout=45,env=env)
