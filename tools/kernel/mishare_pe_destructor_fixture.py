@@ -41,6 +41,8 @@ struct {void *probeRespData_buff,*assocRespData_buff,*probeRespBCNData_buff;
 unsigned probeRespDataLen,assocRespDataLen,probeRespBCNDataLen;} add_ie_params;
 '''
 MODELS = r'''
+/* The shared context model defines this after the PE transport block. */
+static void qdf_mem_zero(void *p,size_t n);
 #define pe_debug(...) ((void)0)
 #define pe_err(...) ((void)0)
 #define CFG_AUTH_FAILURE_TIMEOUT 1
