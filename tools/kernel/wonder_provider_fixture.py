@@ -14,6 +14,7 @@ import wonder_managed_fixture as lifecycle
 ROOT = Path(__file__).resolve().parents[2]
 COMMON = lifecycle.COMMON + r'''
 #include <stdlib.h>
+#include <stddef.h>
 #define DEFINE_MUTEX(n) struct mutex n={0}
 #define WARN_ON(x) (x)
 #define __init
@@ -30,6 +31,18 @@ COMMON = lifecycle.COMMON + r'''
 #define dev_info(d,...) do {(void)(d);wonder_info(__VA_ARGS__);}while(0)
 #define dev_err(d,...) dev_info(d,__VA_ARGS__)
 #define PLATFORM_DEVID_NONE (-1)
+#define NETDEV_DOWN 1
+#define NETDEV_UNREGISTER 2
+#define NOTIFY_DONE 0
+#define NOTIFY_OK 1
+#define container_of(p,t,m) ((t *)((char *)(p)-offsetof(t,m)))
+struct work_struct { int dummy; };
+struct notifier_block { int dummy; };
+struct net_device { const char *name; };
+static int scheduled,queue_stops;
+static struct net_device *netdev_notifier_info_to_dev(void *p) {return p;}
+static void netif_stop_queue(struct net_device *d) {assert(d);queue_stops++;}
+static void schedule_work(struct work_struct *w) {(void)w;scheduled++;}
 #define unlikely(x) (x)
 #define WONDER_PROVIDER_DEV_NAME "qcom,cnss-vendor-wlan-wonder"
 struct device { void *drvdata;const char *name; };
@@ -70,11 +83,17 @@ HARNESS = r'''
 #include "wonder/wondertap.c"
 #include "wonder/wondertap_provider_binding.c"
 bool wonder_external_monitor;
-struct wonder_data { struct wondertap_data wondertap_data;void *hw; };
+struct wonder_data {
+ struct wondertap_data wondertap_data;void *hw;
+ struct net_device *pdev,*vdev;struct work_struct pdev_down_work;
+ struct notifier_block netdev_notifier;
+};
 static struct wonder_data instance,*g_wonder;
-static int ssr_exits,feature_exits,hw_frees;
+static int ssr_exits,feature_exits,feature_inits,hw_frees;
 static void wonder_ssr_exit(struct wonder_data *w) {assert(w==&instance);ssr_exits++;}
 static void wonder_features_exit(struct wonder_data *w) {assert(w==&instance);feature_exits++;}
+static int wonder_features_init(struct wonder_data *w) {assert(w==&instance);feature_inits++;return 0;}
+static void wonder_external_monitor_detach(struct wonder_data *w) {(void)w;}
 static void ieee80211_free_hw(void *hw) {assert(hw==instance.hw);hw_frees++;}
 static struct platform_device *wonder_find_provider_by_name(const char *name)
 {assert(!strcmp(name,WONDER_PROVIDER_DEV_NAME));return lookup_missing?NULL:provider;}
@@ -85,6 +104,8 @@ static bool wonder_ver_can_support(enum wondertap_ver slave,enum wondertap_ver m
 MASTER_BIND
 MASTER_UNBIND
 MAC_EXIT
+SSR_WORK
+SSR_EVENT
 
 static int component_bind_all(struct device *dev,void *data)
 {return provider_ops.bind(&provider->dev,dev,data);}
@@ -119,7 +140,7 @@ static void prepare(void)
  w->cache_flags=WONDERTAP_CACHE_FREQ_SET|WONDERTAP_CACHE_TX_RATE_SET|
                 WONDERTAP_CACHE_BSSID_SET|WONDERTAP_CACHE_COUNTRY_CODE_SET;
  w->cached_freq.freq=5240;w->cached_tx_rate.nss=1;memcpy(w->cached_country_code,"CN",3);
- master_dev.drvdata=w;ssr_exits=feature_exits=hw_frees=0;
+ master_dev.drvdata=w;ssr_exits=feature_exits=feature_inits=hw_frees=scheduled=queue_stops=0;
 }
 static int token, start_calls, stop_calls, poll_calls, stop_pending;
 static int fake_start(void **h,const struct wondertap_init_params *p)
@@ -168,6 +189,12 @@ int main(void)
  prepare();assert(opairshare_set_wonder_managed_priv_data(&fake_priv,&fake_managed)==0);
  assert(wondertap_init(w,&params)==-EINPROGRESS && start_calls==1 && self_module.refs==1);
  assert(wondertap_init(w,&params)==0 && poll_calls==1);
+ struct net_device physical={.name="misharewt0"},virtual={.name="wonder0"};
+ instance.pdev=&physical;instance.vdev=&virtual;
+ assert(wonder_netdev_event(&instance.netdev_notifier,NETDEV_DOWN,&physical)==NOTIFY_OK);
+ assert(queue_stops==1 && !scheduled && w->managed_quiescing && w->vendor_handle==&token);
+ wonder_pdev_down_work_handler(&instance.pdev_down_work);
+ assert(!feature_exits && !feature_inits && w->managed_bound && self_module.refs==1);
  int dels=component_dels;
  assert(opairshare_set_wonder_priv_data(NULL)==-EBUSY && component_dels==dels && component_live);
  assert(active_priv==&fake_priv && claim_cookie==w && provider_closing);
@@ -186,6 +213,11 @@ int main(void)
  prepare();symbol_available=0;
  assert(opairshare_set_wonder_priv_data(&mishare_backend_priv)==0 && !w->managed_bound);
  assert(opairshare_set_wonder_priv_data(NULL)==0);symbol_available=1;
+ instance.pdev=&physical;instance.vdev=&virtual;
+ assert(wonder_netdev_event(&instance.netdev_notifier,NETDEV_DOWN,&physical)==NOTIFY_DONE);
+ assert(scheduled==1 && queue_stops==1);
+ wonder_pdev_down_work_handler(&instance.pdev_down_work);
+ assert(feature_exits==1 && feature_inits==1);
  provider_exit();assert(!provider);
  puts("WONDER_PROVIDER_BINDING_FIXTURE_PASS_ONLY");return 0;
 }
@@ -205,6 +237,8 @@ def main():
         'MASTER_BIND': extract(main_source, 'wonder_master_bind', 'static int'),
         'MASTER_UNBIND': extract(main_source, 'wonder_master_unbind', 'static void'),
         'MAC_EXIT': extract((ROOT/'kernel/wonder/mac80211.c').read_text(), 'wonder_mac80211_exit', 'void'),
+        'SSR_WORK': extract((ROOT/'kernel/wonder/ssr.c').read_text(), 'wonder_pdev_down_work_handler', 'static void'),
+        'SSR_EVENT': extract((ROOT/'kernel/wonder/ssr.c').read_text(), 'wonder_netdev_event', 'static int'),
     }
     harness = HARNESS
     for key, value in fragments.items():

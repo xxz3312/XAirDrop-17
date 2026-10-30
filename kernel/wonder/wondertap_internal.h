@@ -119,6 +119,7 @@ int wondertap_provider_bind(struct wondertap_data *wondertap, const void *priv);
 int wondertap_provider_unbind(struct wondertap_data *wondertap);
 int wondertap_provider_prepare(struct wondertap_data *wondertap);
 int wondertap_activate_legacy(struct wondertap_data *wondertap);
+bool wondertap_fence_managed(struct wondertap_data *wondertap);
 
 /**
  * @brief Sets the hardware operating channel and bandwidth.

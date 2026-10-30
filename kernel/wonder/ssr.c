@@ -19,6 +19,9 @@ static void wonder_pdev_down_work_handler(struct work_struct *work)
 {
 	struct wonder_data *wonder = container_of(work, struct wonder_data, pdev_down_work);
 
+	/* Reinitialization calls wondertap_prep and would erase retained ownership. */
+	if (wondertap_fence_managed(&wonder->wondertap_data))
+		return;
 	wonder_features_exit(wonder);
 	wonder_features_init(wonder);
 }
@@ -40,10 +43,18 @@ static int wonder_netdev_event(struct notifier_block *nb, unsigned long event, v
 		return NOTIFY_OK;
 	}
 
+	if ((event == NETDEV_DOWN || event == NETDEV_UNREGISTER) &&
+	    wondertap_fence_managed(&wonder->wondertap_data)) {
+		if (wonder->vdev)
+			netif_stop_queue(wonder->vdev);
+		wonder_info("Managed instance fenced; native retirement is still required\n");
+		return NOTIFY_OK;
+	}
 	switch (event) {
 	case NETDEV_DOWN:
 		wonder_info("Physical device %s is down. Triggering recovery.\n", dev->name);
-		netif_stop_queue(wonder->vdev);
+		if (wonder->vdev)
+			netif_stop_queue(wonder->vdev);
 		schedule_work(&wonder->pdev_down_work);
 		break;
 	default:

@@ -44,6 +44,20 @@ static int wondertap_bind_managed_mode(struct wondertap_data *w,
 	return ret;
 }
 
+bool wondertap_fence_managed(struct wondertap_data *w)
+{
+	bool held;
+	mutex_lock(&w->lock);
+	held = w->managed_bound || w->managed_provider_control ||
+	       w->managed_instance_pin || w->managed_quiescing;
+	if (held) {
+		w->managed_quiescing = true;
+		w->managed_activation_pending = false;
+	}
+	mutex_unlock(&w->lock);
+	return held;
+}
+
 int wondertap_provider_prepare(struct wondertap_data *w)
 {
 	int ret = 0;
