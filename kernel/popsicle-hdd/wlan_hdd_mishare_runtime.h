@@ -88,8 +88,9 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * Caller retains RTNL/exclusive psoc and exact DP/timer parents throughout all
  * polls; stop CDS parent destruction until completion. No automatic caller.
  * A fully prepared INIT context may use qualified no-FW force peer detach,
- * response-timer drain and WMA/legacy release before the same DP/final-free
- * path. PE/radio, partial prepare/attach and incomplete DELETE stay held.
+ * response-timer drain before prepared DP detach. WMA/legacy stay alive until
+ * actual DP final-free. PE/radio, partial prepare/attach and incomplete DELETE
+ * stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
 /* SSR-only owner bookkeeping after host deletion already succeeded and all
