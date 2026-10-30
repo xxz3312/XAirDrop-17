@@ -1,0 +1,37 @@
+{
+  "source_commit": "02ae39c89cf3dbd365e0409c1d6994e8c0d7f412",
+  "workflow_run": 41101029685,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41101029685",
+  "workflow_observed_status": "queued",
+  "status_observed_at_utc": "2026-10-30T17:50:32.590697+00:00",
+  "local_checks": {
+    "python_regressions_passed": 53,
+    "new_patch_applies_without_fuzz": true,
+    "native_idle_exact_source_restoration": true,
+    "earlier_parent_audit_restoration": true,
+    "native_idle_transition_and_drain_before_guard": true,
+    "guard_before_module_stop_and_transition_release": true,
+    "github_blob_matches_local_files": 11
+  },
+  "native_idle_restored_sha256": "0d61f49fb96d09d35afb587284e02951aaeb996620ae669cfbacb756f63c6b54",
+  "source_sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.c": "f4c2fa78af9d252575b860d6610bf307ced6470e3057af94ff29822253e84a93",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "eee59eab3d01df8bf733c17828fdcbf9d5bb12161f71a7a589b8db7c03161cec",
+    "kernel/patches/popsicle/0031-mishare-idle-host-lifetime-guard.patch": "37d6a84e4f1f2bbe7bdcc466c48b133c9727d3cd4de5e2e0bbde611495855942",
+    "tools/kernel/mishare_host_fixture.py": "9a30b38d7c3498c24e7523415a0ba5de68f12991706b541ceb4c1cd802bda3cc",
+    "tools/kernel/mishare_idle_origins.py": "6d1ace4e67ecb03b469d02a9fb929b76f19cb088a4558a2e88e8833a69cca482",
+    "tools/kernel/mishare_parent_origins.py": "e691e49da62e35fe8c783fe5666b1c53afedf7389820ee7ff612674b8624f5c4",
+    "tools/kernel/popsicle_ci.py": "cc3bdf077f9cf6922ee9690c5eb882b574edeceefef51191b0a12f87f7dae0c4"
+  },
+  "actions_c_model_executed": false,
+  "full_kernel_compile_passed": false,
+  "strict_link_passed": false,
+  "selected_layout_checks_passed": false,
+  "idle_route_guard_implemented": true,
+  "native_ssr_remove_parent_lease_implemented": false,
+  "prepared_up_ssr_recovery_implemented": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Local Python and exact source/patch audits only. C models and full kernel checks remain pending GitHub runner scheduling. The new guard covers the ordinary native idle shutdown under its exclusive psoc transition; mode-change/SSR/remove and other stop paths remain unqualified. Backend remains disabled."
+}
