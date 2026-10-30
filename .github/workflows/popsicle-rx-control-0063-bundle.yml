@@ -1,0 +1,41 @@
+name: Popsicle RX control observation 0063
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-rx-control-0063-bundle.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Exercise controlled radio observation and recovery models
+        run: |
+          sh -n tools/device/popsicle-rx-control-0063.sh
+          python3 -m unittest discover -s tests -p test_rx_control_0063.py
+          python3 -m unittest discover -s tests -p test_popsicle_wlan_trial.py
+          mkdir -p out
+          cc -std=c11 -Wall -Wextra -Werror -Wno-unused-function -fsanitize=address,undefined tests/test_mgmt_cli_0060.c -o out/cli-bounds
+          out/cli-bounds
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-wma-rx-0062-41020576709
+          run-id: 41020576709
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: base
+      - name: Assemble unchanged driver and tool with current controller source
+        run: python3 tools/kernel/package_rx_control_0063.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-rx-control-0063-${{ github.run_id }}
+          path: |
+            out/XAirDrop-17-RX-Control-0063.zip
+            out/XAirDrop-17-RX-Control-0063/BUILD.json
+          if-no-files-found: error
