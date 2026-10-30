@@ -392,6 +392,8 @@ void wondertap_deinit(struct wondertap_data *wondertap)
 		wonder_info("    Country: %.2s\n", params.country_code);
 		wonder_info("=================================================\n");
 		wondertap_ops->deinit(wondertap->vendor_handle, &params);
+		/* Legacy deinit is synchronous: do not leave a retired token behind. */
+		wondertap->vendor_handle = NULL;
 	} else {
 		wonder_error("Vendor operation 'deinit' is not implemented\n");
 	}

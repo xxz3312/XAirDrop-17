@@ -162,7 +162,7 @@ int main(void)
  assert(self_module.refs==7 && backend_module.refs==7);
  /* Legacy synchronous ops and external monitor keep their original contract. */
  prepare(&w,false);init_result=0;assert(wondertap_init(&w,&params)==0);
- wondertap_deinit(&w);assert(legacy_stops==1 && w.state==WONDERTAP_STATE_DOWN);
+ wondertap_deinit(&w);assert(legacy_stops==1 && w.state==WONDERTAP_STATE_DOWN && !w.vendor_handle);
  wonder_external_monitor=true;assert(wondertap_set_freq(&w,&freq)==-EOPNOTSUPP);
  assert(wondertap_get_capabilities(&w,&caps)==0 && caps.bits.frame_type_filter);
  puts("WONDER_MANAGED_LIFECYCLE_FIXTURE_PASS_ONLY");return 0;
