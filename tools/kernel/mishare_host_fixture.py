@@ -73,6 +73,13 @@ struct mishare_runtime_owner { int dummy; };
 static int runtime_busy,runtime_closed;
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev,const u8 *address,void *osif,struct wireless_dev *wdev,struct mishare_runtime_owner **owner) { assert(pdev && address && osif && wdev);if(*owner)return -EBUSY;*owner=calloc(1,sizeof(**owner));return 0; }
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner) { if(!*owner)return 0;if(runtime_busy)return -EINPROGRESS;free(*owner);*owner=NULL;runtime_closed++;return 0; }
+int mishare_runtime_snapshot(struct mishare_runtime_owner *o,struct mishare_runtime_status *s) { (void)o;(void)s;return -EOPNOTSUPP; }
+int mishare_runtime_ndi_create(struct mishare_runtime_owner *o,u8 a,u8 b) { (void)o;(void)a;(void)b;return -EOPNOTSUPP; }
+int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *o) { (void)o;return -EOPNOTSUPP; }
+int mishare_runtime_ndi_session(struct mishare_runtime_owner *o) { (void)o;return -EOPNOTSUPP; }
+int mishare_runtime_ndi_channel(struct mishare_runtime_owner *o,u32 f) { (void)o;(void)f;return -EOPNOTSUPP; }
+int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *o) { (void)o;return -EOPNOTSUPP; }
+int mishare_runtime_ndi_start(struct mishare_runtime_owner *o) { (void)o;return -EOPNOTSUPP; }
 static struct hdd_adapter *__hdd_open_adapter(struct hdd_context *,uint8_t,const char *,tSirMacAddr,unsigned char,bool,struct hdd_adapter_create_param *,bool);
 #endif
 '''
@@ -108,11 +115,13 @@ int main(void)
  active->dev->running=true;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->dev->running=false;
  active->event_flags=1UL<<DEVICE_IFACE_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->event_flags=0;
  active->deflink->link_flags[0]=1UL<<SME_SESSION_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->deflink->link_flags[0]=0;
- struct osif_vdev_sync *original=registered, foreign={0};registered=&foreign;
- assert(mishare_wonder_host_destroy_locked(&owner)==-EIO && owner && active && registered==&foreign);registered=original;
  active->dev->ieee80211_ptr=&wdev;
  assert(!mishare_wonder_host_vdev_create_locked(owner));
  assert(mishare_wonder_host_vdev_create_locked(owner)==-EBUSY);
+ struct osif_vdev_sync *original=registered, foreign={0};registered=&foreign;
+ assert(mishare_wonder_host_destroy_locked(&owner)==-EIO && owner && active && registered==&foreign);registered=original;
+ assert(mishare_wonder_host_vdev_create_locked(owner)==-ESHUTDOWN);
+ assert(mishare_wonder_host_session_step_locked(owner,5240,1,2)==-ESHUTDOWN);
  runtime_busy=1;
  assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS && owner && active && registered);
  assert(mishare_wonder_host_vdev_destroy_locked(owner)==-EINPROGRESS);

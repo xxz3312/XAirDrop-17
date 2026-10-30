@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Host allocation/lifetime only. No module init, firmware, channel or TX/RX. */
+/* Owned host lifetime and explicit NDI session progression. No auto caller. */
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>
@@ -9,12 +9,14 @@
 #include "osif_vdev_sync.h"
 #include "wlan_hdd_mishare_host.h"
 #include "wlan_hdd_mishare_runtime.h"
+#include "wlan_hdd_mishare_session.h"
 
 struct mishare_wonder_host {
     struct hdd_context *hdd;
     struct hdd_adapter *adapter;
     struct osif_vdev_sync *sync;
     struct mishare_runtime_owner *runtime;
+    struct mishare_session session;
 };
 
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
@@ -71,6 +73,8 @@ int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host)
     ret = wlan_hdd_validate_context(host->hdd);
     if (ret)
         return ret;
+    if (host->session.closing)
+        return -ESHUTDOWN;
     adapter = host->adapter;
     if (netif_running(adapter->dev) ||
         test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
@@ -91,7 +95,28 @@ int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host)
         test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
         test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
         return -EBUSY;
+    host->session.closing = true;
     return mishare_runtime_destroy(&host->runtime);
+}
+
+int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
+                                            u32 freq, u8 nss_2g, u8 nss_5g)
+{
+    int ret;
+
+    if (!host)
+        return -EINVAL;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    return mishare_session_step(&host->session, host->runtime,
+                                 freq, nss_2g, nss_5g);
 }
 
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
@@ -114,6 +139,7 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
         test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
         test_bit(SME_SESSION_OPENED, adapter->deflink->link_flags))
         return -EBUSY;
+    host->session.closing = true;
     ret = mishare_runtime_destroy(&host->runtime);
     if (ret)
         return ret;

@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新测试：[0054 AWDL 接收过滤定位](docs/POPSICLE-AWDL-RX-0054.md)。0053 已实机接收 1043 包，但兼容 AWDL 观察数为 0；0054 细分过滤原因，等待实机结果。完整状态见 [进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0065 专用会话调用流程](docs/POPSICLE-UPSTREAM-SESSION-0065.md)。0064已确认普通管理帧计数路径活跃，AWDL仍未收到；0065新增host拥有的NDI会话推进代码，尚未接通Wonder完整后端，无需手机重跑。完整状态见 [进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)

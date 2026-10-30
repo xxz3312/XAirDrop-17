@@ -1,4 +1,10 @@
-## 最新阶段 0058
+## 最新阶段 0065
+
+0064普通管理帧路径活跃：静置WMA +2，扫描窗口WMA/分发 +34、PE入口 +15；AWDL事件0。监听时断网，手动阶段未进入，已恢复原厂。无需重跑。
+
+0065新增生产专用会话controller和host显式入口，将已有NDI创建、准备、PE、频道、START计划、radio启动按实际完成状态推进。固定配置、单次提交、错误保留及销毁后禁止重启。Wonder入口、完整monitor、地址过滤与native RAW仍未接通，无手机入口、无AirDrop成功证明。详见[0065](POPSICLE-UPSTREAM-SESSION-0065.md)。
+
+## 历史阶段 0058
 
 新增默认关闭的单STA完整管理帧实验路径、标准nl80211接收工具和一键60秒观察脚本，不依赖monitor/LPC。仅显式run-mgmt-rx启用；加入MAC上下文消失时关闭路由且不调用SME的停机保护。修正版内核[40926997789](https://github.com/xxz3312/XAirDrop-17/actions/runs/40926997789)、工具[40927043957](https://github.com/xxz3312/XAirDrop-17/actions/runs/40927043957)、打包[40927044125](https://github.com/xxz3312/XAirDrop-17/actions/runs/40927044125)均通过。53项内核host Python检查、生产owner helper模型、15项切换脚本与4项观察脚本测试通过，严格链接无未解决依赖，7项选定布局匹配；这些不认证完整私有ABI或固件。
 

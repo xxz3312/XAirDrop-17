@@ -18,6 +18,17 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  */
 int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host);
 int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host);
+/* Progress the existing host-owned runtime through NDI CREATE, self-peer, PE,
+ * channel, START plan and radio START. Same RTNL/exclusive psoc contract.
+ * One submission per call, no waiting. EINPROGRESS requires releasing caller
+ * locks before polling; 0 requires observed radio UP + host_up, not RX ready.
+ * NSS must come from platform validation, freq from the intended session.
+ * Config is fixed at first call. Errors are sticky; drain via existing destroy
+ * APIs while retaining parents. Destroy permanently closes this host session.
+ * No automatic Wonder/backend caller is installed by this API.
+ */
+int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
+                                            u32 freq, u8 nss_2g, u8 nss_5g);
 /* Internal HDD factory, also requires RTNL and the parent transition. */
 struct hdd_adapter *hdd_mishare_host_adapter_open(struct hdd_context *hdd, u8 *mac);
 #endif
