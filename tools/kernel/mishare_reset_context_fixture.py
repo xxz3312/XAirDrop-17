@@ -12,6 +12,8 @@ import mishare_recovery_fixture as recovery
 ROOT = recovery.ROOT
 WMA = recovery.work.shutdown.radio.plan.channel.pe.ctx.WMA
 MODELS = r'''
+static bool is_cdp_peer_detach_force_delete_supported(void *s);
+static bool cdp_cfg_get_peer_unmap_conf_support(void *s);
 #define WLAN_MAX_VDEVS 32
 #define CDP_PEER_DELETE_NO_SPECIAL 0
 #define CDP_PEER_DO_NOT_START_UNMAP_TIMER 1

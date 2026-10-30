@@ -58,8 +58,6 @@ static struct wma_target_req *ctx_pending;
 static int ctx_stage,ctx_fail_at,ctx_locks,ctx_requests,ctx_create_calls,ctx_delete_calls,ctx_dp_acks,ctx_recoveries;
 static bool ctx_alloc_fail,ctx_peer_present,ctx_queue_fail,ctx_early_reply,ctx_early_timeout,ctx_send_error,ctx_create_error;
 static bool ctx_reset_force_supported,ctx_reset_unmap_conf;
-static bool is_cdp_peer_detach_force_delete_supported(void *s) {assert(s==wma_context.psoc);return ctx_reset_force_supported;}
-static bool cdp_cfg_get_peer_unmap_conf_support(void *s) {assert(s==wma_context.psoc);return ctx_reset_unmap_conf;}
 static void ctx_fw_origin(struct wma_target_req *);
 static void ctx_timeout_origin(struct wma_target_req *);
 static QDF_STATUS ctx_step(void) {return ++ctx_stage==ctx_fail_at?QDF_STATUS_E_FAILURE:QDF_STATUS_SUCCESS;}
