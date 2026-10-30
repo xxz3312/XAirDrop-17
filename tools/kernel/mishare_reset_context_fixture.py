@@ -47,6 +47,7 @@ static QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *p) {asser
 #define cds_get_context reset_peer_get_context
 NATIVE_OBJ_PEER_REMOVE
 NATIVE_PEER_REMOVE
+#undef QDF_BUG
 #undef cds_get_context
 '''
 HARNESS = r'''
