@@ -19,11 +19,12 @@ static void wonder_pdev_down_work_handler(struct work_struct *work)
 {
 	struct wonder_data *wonder = container_of(work, struct wonder_data, pdev_down_work);
 
-	/* Reinitialization calls wondertap_prep and would erase retained ownership. */
-	if (wondertap_fence_managed(&wonder->wondertap_data))
+	/* Exclude both retained ownership and a binding admitted during recovery. */
+	if (!wondertap_recovery_begin(&wonder->wondertap_data))
 		return;
 	wonder_features_exit(wonder);
 	wonder_features_init(wonder);
+	wondertap_recovery_end(&wonder->wondertap_data);
 }
 
 static int wonder_netdev_event(struct notifier_block *nb, unsigned long event, void *ptr)

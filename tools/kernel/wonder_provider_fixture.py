@@ -89,10 +89,20 @@ struct wonder_data {
  struct notifier_block netdev_notifier;
 };
 static struct wonder_data instance,*g_wonder;
-static int ssr_exits,feature_exits,feature_inits,hw_frees;
+static int ssr_exits,feature_exits,feature_inits,hw_frees,recovery_probe,recovery_rejects;
+static void probe_recovery(struct wonder_data *w)
+{
+ if(recovery_probe) {
+  struct wondertap_init_params p={0};
+  assert(w->wondertap_data.recovery_in_progress);
+  assert(wondertap_provider_prepare(&w->wondertap_data)==-EBUSY);
+  assert(wondertap_init(&w->wondertap_data,&p)==-EBUSY);
+  recovery_rejects++;
+ }
+}
 static void wonder_ssr_exit(struct wonder_data *w) {assert(w==&instance);ssr_exits++;}
-static void wonder_features_exit(struct wonder_data *w) {assert(w==&instance);feature_exits++;}
-static int wonder_features_init(struct wonder_data *w) {assert(w==&instance);feature_inits++;return 0;}
+static void wonder_features_exit(struct wonder_data *w) {assert(w==&instance);probe_recovery(w);feature_exits++;}
+static int wonder_features_init(struct wonder_data *w) {assert(w==&instance);probe_recovery(w);feature_inits++;return 0;}
 static void wonder_external_monitor_detach(struct wonder_data *w) {(void)w;}
 static void ieee80211_free_hw(void *hw) {assert(hw==instance.hw);hw_frees++;}
 static struct platform_device *wonder_find_provider_by_name(const char *name)
@@ -140,7 +150,7 @@ static void prepare(void)
  w->cache_flags=WONDERTAP_CACHE_FREQ_SET|WONDERTAP_CACHE_TX_RATE_SET|
                 WONDERTAP_CACHE_BSSID_SET|WONDERTAP_CACHE_COUNTRY_CODE_SET;
  w->cached_freq.freq=5240;w->cached_tx_rate.nss=1;memcpy(w->cached_country_code,"CN",3);
- master_dev.drvdata=w;ssr_exits=feature_exits=feature_inits=hw_frees=scheduled=queue_stops=0;
+ master_dev.drvdata=w;ssr_exits=feature_exits=feature_inits=hw_frees=scheduled=queue_stops=recovery_probe=recovery_rejects=0;
 }
 static int token, start_calls, stop_calls, poll_calls, stop_pending;
 static int fake_start(void **h,const struct wondertap_init_params *p)
@@ -216,8 +226,10 @@ int main(void)
  instance.pdev=&physical;instance.vdev=&virtual;
  assert(wonder_netdev_event(&instance.netdev_notifier,NETDEV_DOWN,&physical)==NOTIFY_DONE);
  assert(scheduled==1 && queue_stops==1);
+ recovery_probe=1;
  wonder_pdev_down_work_handler(&instance.pdev_down_work);
- assert(feature_exits==1 && feature_inits==1);
+ assert(feature_exits==1 && feature_inits==1 && recovery_rejects==2);
+ assert(!w->recovery_in_progress);
  provider_exit();assert(!provider);
  puts("WONDER_PROVIDER_BINDING_FIXTURE_PASS_ONLY");return 0;
 }

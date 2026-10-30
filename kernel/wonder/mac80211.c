@@ -1152,8 +1152,6 @@ int wonder_features_init(struct wonder_data *wonder)
 	wonder_get_regulator_domain(hw);
 	/* Initial tx status queue */
 	wonder_txs_queue_init();
-	/* Prepare wondertap structure */
-	wondertap_prep(&wonder->wondertap_data);
 	wonder_info("Wonder Virtual Soft-MAC Driver loaded successfully.\n");
 	return 0;
 }
@@ -1187,6 +1185,8 @@ void *wonder_mac80211_init(void)
 	/* Initialize private data */
 	wonder = hw->priv;
 	wonder->hw = hw;
+	/* Construct once, before register_hw publishes any callbacks. */
+	wondertap_prep(&wonder->wondertap_data);
 	wonder->pdev = NULL;
 	wonder->data_version = WONDER_DATA_80211_RADIOTAP;
 	wonder->iftype = NL80211_IFTYPE_MONITOR;

@@ -9,7 +9,7 @@
 - provider清除前先quiesce消费者。有句柄、异步回收或隔离状态时返回错误，保留component、descriptor和claim；拒绝新QUERY/CLAIM/重复注册。消费者显式完成retire后可重试清除。
 - RELEASE与quiesce共用claim mutex，RELEASE返回前cookie必须保持存活。quiesce仅关闭准入/检查本地归属，不能递归调用provider/component或提交无线清理。
 - component master实际调用managed绑定/解绑。provider符号引用保持到RELEASE，旧provider和旧setter走原同步路径。解绑后准入保持关闭，下一次绑定重新分阶段开放。
-- managed绑定收到NETDEV_DOWN/UNREGISTER时关闭准入并停止队列，保留句柄/引用；SSR worker拒绝自动features_exit/init，避免wondertap_prep清掉归属。这只是本地fence，不是native恢复或父资源租约。
+- managed绑定收到NETDEV_DOWN/UNREGISTER时关闭准入并停止队列，保留句柄/引用；SSR worker拒绝自动features_exit/init；旧同步恢复与新绑定共用恢复准入门，恢复期间拒绝bind/init，避免检查后绑定穿入。wondertap_prep移至对象创建、register_hw之前，仅构造一次。这只是本地fence，不是native恢复或父资源租约。
 - 最终free发现仍有managed binding、provider引用或实例引用时保留Wonder内存。HDD unregister返回错误并保留owner/closing状态，不把失败当作解除成功。
 
 ## 未完成且不能混淆的部分

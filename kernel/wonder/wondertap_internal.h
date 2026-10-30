@@ -32,6 +32,7 @@ struct wondertap_data {
 	bool managed_bound;
 	bool managed_quiescing;
 	bool managed_activation_pending;
+	bool recovery_in_progress;
 	wondertap_provider_control_fn managed_provider_control;
 	const void *managed_provider_priv;
 	bool managed_instance_pin;
@@ -67,6 +68,7 @@ static inline void wondertap_prep(struct wondertap_data *wondertap)
 	wondertap->managed_bound = false;
 	wondertap->managed_quiescing = false;
 	wondertap->managed_activation_pending = false;
+	wondertap->recovery_in_progress = false;
 	wondertap->managed_provider_control = NULL;
 	wondertap->managed_provider_priv = NULL;
 	wondertap->managed_instance_pin = false;
@@ -120,6 +122,8 @@ int wondertap_provider_unbind(struct wondertap_data *wondertap);
 int wondertap_provider_prepare(struct wondertap_data *wondertap);
 int wondertap_activate_legacy(struct wondertap_data *wondertap);
 bool wondertap_fence_managed(struct wondertap_data *wondertap);
+bool wondertap_recovery_begin(struct wondertap_data *wondertap);
+void wondertap_recovery_end(struct wondertap_data *wondertap);
 
 /**
  * @brief Sets the hardware operating channel and bandwidth.

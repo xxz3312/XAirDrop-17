@@ -26,7 +26,8 @@ static int wondertap_bind_managed_mode(struct wondertap_data *w,
 	if (wonder_external_monitor)
 		return -EOPNOTSUPP;
 	mutex_lock(&w->lock);
-	if (w->managed_bound || w->state != WONDERTAP_STATE_DOWN || w->vendor_handle)
+	if (w->managed_bound || w->recovery_in_progress ||
+		w->state != WONDERTAP_STATE_DOWN || w->vendor_handle)
 		ret = -EBUSY;
 	else if (managed->ops != wondertap_ops)
 		ret = -ENODEV;
@@ -58,11 +59,33 @@ bool wondertap_fence_managed(struct wondertap_data *w)
 	return held;
 }
 
+bool wondertap_recovery_begin(struct wondertap_data *w)
+{
+	bool admitted = false;
+	mutex_lock(&w->lock);
+	if (w->managed_bound || w->managed_provider_control ||
+	    w->managed_instance_pin || w->managed_quiescing) {
+		w->managed_quiescing = true;
+		w->managed_activation_pending = false;
+	} else if (!w->recovery_in_progress) {
+		w->recovery_in_progress = true;
+		admitted = true;
+	}
+	mutex_unlock(&w->lock);
+	return admitted;
+}
+void wondertap_recovery_end(struct wondertap_data *w)
+{
+	mutex_lock(&w->lock);
+	w->recovery_in_progress = false;
+	mutex_unlock(&w->lock);
+}
+
 int wondertap_provider_prepare(struct wondertap_data *w)
 {
 	int ret = 0;
 	mutex_lock(&w->lock);
-	if (w->managed_bound || w->managed_provider_control ||
+	if (w->managed_bound || w->managed_provider_control || w->recovery_in_progress ||
 		w->state != WONDERTAP_STATE_DOWN || w->vendor_handle ||
 		w->managed_instance_pin)
 		ret = -EBUSY;
@@ -145,7 +168,7 @@ int wondertap_unbind_managed(struct wondertap_data *w)
 
 static bool wondertap_transition_pending(struct wondertap_data *w)
 {
-	return w->managed_quiescing || w->state == WONDERTAP_STATE_STARTING ||
+	return w->recovery_in_progress || w->managed_quiescing || w->state == WONDERTAP_STATE_STARTING ||
 		   w->state == WONDERTAP_STATE_DRAINING ||
 		   w->state == WONDERTAP_STATE_BLOCKED ||
 		   (w->managed_bound && w->state == WONDERTAP_STATE_DOWN &&
@@ -295,6 +318,10 @@ int wondertap_init(struct wondertap_data *wondertap, const struct wondertap_init
 	if (!wondertap || !_params)
 		return -EINVAL;
 	mutex_lock(&wondertap->lock);
+	if (wondertap->recovery_in_progress) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 	if (wondertap->managed_quiescing) {
 		mutex_unlock(&wondertap->lock);
 		return -ESHUTDOWN;
@@ -599,6 +626,10 @@ int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wonderta
 		return 0;
 	}
 	mutex_lock(&wondertap->lock);
+	if (wondertap->recovery_in_progress) {
+		mutex_unlock(&wondertap->lock);
+		return -EBUSY;
+	}
 	if (wondertap->managed_quiescing) {
 		mutex_unlock(&wondertap->lock);
 		return -ESHUTDOWN;
