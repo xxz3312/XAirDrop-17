@@ -1,0 +1,89 @@
+name: Popsicle ML default-link RX trial 0061
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-ml-rx-0061-bundle.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      NDK_VERSION: 27.2.12479018
+      KERNEL_RUN: '41015145867'
+      KERNEL_COMMIT: 'b43b7cb9c0e12fa82f7e50f58666f7da3ccc0274'
+      TOOL_RUN: '40932441205'
+      TOOL_COMMIT: '54a8ddcf233f7eb15ff14b6f5901ae0ed3c1bd1a'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Controller regression and actual CLI parameter boundaries
+        run: |
+          sh -n tools/device/popsicle-mgmt-diag-0061.sh
+          sh -n tools/device/popsicle-wlan-trial.sh
+          python3 -m unittest discover -s tests -p test_mgmt_diag_0061.py
+          python3 -m unittest discover -s tests -p test_popsicle_wlan_trial.py
+          mkdir -p out
+          cc -std=c11 -Wall -Wextra -Werror -Wno-unused-function -fsanitize=address,undefined tests/test_mgmt_cli_0060.c -o out/cli-bounds
+          out/cli-bounds
+      - name: Require pinned successful driver and tool inputs
+        id: inputs
+        env:
+          GH_READ_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python3 - <<'CHECK'
+          import json,os,time,urllib.request
+          base='https://api.github.com/repos/'+os.environ['GITHUB_REPOSITORY']+'/actions/runs/'
+          def get(run):
+            req=urllib.request.Request(base+run,headers={'Authorization':'Bearer '+os.environ['GH_READ_TOKEN'],'Accept':'application/vnd.github+json'})
+            with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
+          tool=get(os.environ['TOOL_RUN'])
+          assert tool['head_sha']==os.environ['TOOL_COMMIT'] and tool['conclusion']=='success'
+          for _ in range(240):
+            kernel=get(os.environ['KERNEL_RUN'])
+            assert kernel['head_sha']==os.environ['KERNEL_COMMIT']
+            if kernel['status']=='completed':
+              if kernel['conclusion']!='success':raise RuntimeError('Driver build failed; no package')
+              break
+            print('Waiting for driver validation',flush=True);time.sleep(20)
+          else:raise RuntimeError('Driver validation timeout')
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:out.write('attempt='+str(kernel['run_attempt'])+'\n')
+          CHECK
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-diagnostics-41015145867-${{ steps.inputs.outputs.attempt }}
+          run-id: 41015145867
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: diagnostic
+      - uses: actions/download-artifact@v4
+        with:
+          name: popsicle-action-tx-40932441205
+          run-id: 40932441205
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: tool
+      - uses: actions/cache/restore@v4
+        with:
+          path: .xos-ndk
+          key: xos-loader-ndk-${{ runner.os }}-27.2.12479018-v1
+      - name: Strip and package recorded modules with source and licenses
+        run: |
+          mkdir -p .xos-ndk extracted
+          if [ ! -x ".xos-ndk/ndk/$NDK_VERSION/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip" ]; then
+            cp -a "$ANDROID_HOME/licenses" .xos-ndk/
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --sdk_root="$PWD/.xos-ndk" "ndk;$NDK_VERSION"
+          fi
+          tar -xzf diagnostic/diagnostic-modules-not-for-install.tar.gz -C extracted qca_cld3_peach_v2.ko opairshare_wonder_provider.ko
+          python3 tools/kernel/package_mgmt_rx_0061.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-ml-default-rx-0061-${{ github.run_id }}
+          path: |
+            out/XAirDrop-17-Mgmt-RX-0061.zip
+            out/XAirDrop-17-Mgmt-RX-0061/BUILD.json
+            out/module-info.txt
+          if-no-files-found: error
