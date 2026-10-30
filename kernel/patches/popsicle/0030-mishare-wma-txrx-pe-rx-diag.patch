@@ -1,0 +1,284 @@
+--- a/qca-wifi-host-cmn/umac/cmn_services/mgmt_txrx/dispatcher/src/wlan_mgmt_txrx_tgt_api.c
++++ b/qca-wifi-host-cmn/umac/cmn_services/mgmt_txrx/dispatcher/src/wlan_mgmt_txrx_tgt_api.c
+@@ -1363,6 +1363,8 @@
+ 	return true;
+ }
+ 
++#include "wlan_mishare_mgmt_diag.h"
++
+ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
+ 			struct wlan_objmgr_psoc *psoc,
+ 			qdf_nbuf_t buf,
+@@ -1382,6 +1384,9 @@
+ 	uint16_t len = 0;
+ 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+ 	bool is_from_addr_valid, is_bssid_valid;
++	unsigned int mishare_class = 0;
++
++	mishare_mgmt_diag_count(MDIAG_TXRX_ENTERED);
+ 
+ 	if (!buf) {
+ 		mgmt_txrx_err("buffer passed is NULL");
+@@ -1397,6 +1402,9 @@
+ 	data = (uint8_t *)qdf_nbuf_data(buf);
+ 	wh = (struct ieee80211_frame *)data;
+ 	buflen = qdf_nbuf_len(buf);
++	mishare_class = mishare_mgmt_frame_class(data, buflen);
++	if (mishare_class & MDIAG_CLASS_APPLE)
++		mishare_mgmt_diag_count(MDIAG_TXRX_APPLE);
+ 
+ 	/**
+ 	 * TO DO (calculate pdev)
+@@ -1408,6 +1416,7 @@
+ 
+ 	if (mgmt_type != IEEE80211_FC0_TYPE_MGT &&
+ 	    mgmt_type != IEEE80211_FC0_TYPE_CTL) {
++		mishare_mgmt_diag_count(MDIAG_TXRX_BAD_TYPE);
+ 		mgmt_txrx_err("Rx event doesn't contain a mgmt/ctrl packet, %d",
+ 			      mgmt_type);
+ 		qdf_nbuf_free(buf);
+@@ -1420,6 +1429,9 @@
+ 							      wh->i_addr3);
+ 
+ 	if (!is_from_addr_valid && !is_bssid_valid) {
++		mishare_mgmt_diag_count(MDIAG_TXRX_BAD_ADDR);
++		if (mishare_class & MDIAG_CLASS_APPLE)
++			mishare_mgmt_diag_count(MDIAG_TXRX_APPLE_BAD_ADDR);
+ 		mgmt_txrx_debug_rl("from addr "QDF_MAC_ADDR_FMT" bssid addr "QDF_MAC_ADDR_FMT" both not valid, dropping them",
+ 				   QDF_MAC_ADDR_REF(wh->i_addr2),
+ 				   QDF_MAC_ADDR_REF(wh->i_addr3));
+@@ -1472,6 +1484,7 @@
+ 		if (ivp && (ivp[WLAN_HDR_IV_LEN] & WLAN_HDR_EXT_IV_BIT)) {
+ 			if (buflen <= (sizeof(struct ieee80211_frame)
+ 					+ IEEE80211_CCMP_HEADERLEN)) {
++				mishare_mgmt_diag_count(MDIAG_TXRX_PROTECTED_SHORT);
+ 				qdf_nbuf_free(buf);
+ 				return QDF_STATUS_E_FAILURE;
+ 			}
+@@ -1479,6 +1492,7 @@
+ 		} else {
+ 			if (buflen <= (sizeof(struct ieee80211_frame)
+ 					+ WLAN_HDR_EXT_IV_LEN)) {
++				mishare_mgmt_diag_count(MDIAG_TXRX_PROTECTED_SHORT);
+ 				qdf_nbuf_free(buf);
+ 				return QDF_STATUS_E_FAILURE;
+ 			}
+@@ -1489,6 +1503,9 @@
+ 	if (mgmt_type == IEEE80211_FC0_TYPE_MGT) {
+ 		frm_type = mgmt_txrx_get_frm_type(mgmt_subtype, mpdu_data_ptr);
+ 		if (frm_type == MGMT_FRM_UNSPECIFIED) {
++			mishare_mgmt_diag_count(MDIAG_TXRX_UNSPECIFIED);
++			if (mishare_class & MDIAG_CLASS_APPLE)
++				mishare_mgmt_diag_count(MDIAG_TXRX_APPLE_UNSPECIFIED);
+ 			mgmt_txrx_debug_rl(
+ 			"Unspecified mgmt frame type fc: %x %x", wh->i_fc[0],
+ 								wh->i_fc[1]);
+@@ -1532,8 +1549,10 @@
+ 				   QDF_TRACE_LEVEL_DEBUG, data, buflen);
+ 	}
+ 
+-	if (simulation_frame_update(psoc, buf, mgmt_rx_params))
++	if (simulation_frame_update(psoc, buf, mgmt_rx_params)) {
++		mishare_mgmt_diag_count(MDIAG_TXRX_SIM_DROP);
+ 		return QDF_STATUS_E_FAILURE;
++	}
+ 
+ 	mgmt_txrx_psoc_ctx = (struct mgmt_txrx_priv_psoc_context *)
+ 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
+@@ -1545,6 +1564,7 @@
+ 		status = wlan_mgmt_txrx_rx_handler_list_copy(rx_handler,
+ 				&rx_handler_head, &rx_handler_tail);
+ 		if (status != QDF_STATUS_SUCCESS) {
++			mishare_mgmt_diag_count(MDIAG_TXRX_HANDLER_ALLOC_FAIL);
+ 			qdf_spin_unlock_bh(&mgmt_txrx_psoc_ctx->mgmt_txrx_psoc_ctx_lock);
+ 			qdf_nbuf_free(buf);
+ 			goto rx_handler_mem_free;
+@@ -1558,6 +1578,7 @@
+ 			status = wlan_mgmt_txrx_rx_handler_list_copy(
+ 				rx_handler, &rx_handler_head, &rx_handler_tail);
+ 			if (status != QDF_STATUS_SUCCESS) {
++				mishare_mgmt_diag_count(MDIAG_TXRX_HANDLER_ALLOC_FAIL);
+ 				qdf_spin_unlock_bh(
+ 				  &mgmt_txrx_psoc_ctx->mgmt_txrx_psoc_ctx_lock);
+ 				qdf_nbuf_free(buf);
+@@ -1567,6 +1588,9 @@
+ 	}
+ 
+ 	if (!rx_handler_head) {
++		mishare_mgmt_diag_count(MDIAG_TXRX_NO_CALLBACK);
++		if (mishare_class & MDIAG_CLASS_APPLE)
++			mishare_mgmt_diag_count(MDIAG_TXRX_APPLE_NO_CALLBACK);
+ 		qdf_spin_unlock_bh(&mgmt_txrx_psoc_ctx->mgmt_txrx_psoc_ctx_lock);
+ 		mgmt_txrx_debug("No rx callback registered for frm_type: %d",
+ 				frm_type);
+@@ -1579,6 +1603,7 @@
+ 	    mgmt_rx_params->is_conn_ap.is_conn_ap_frm == 0) {
+ 		status = wlan_mgmt_rx_beacon_rate_limit(psoc, mgmt_rx_params);
+ 		if (QDF_IS_STATUS_ERROR(status)) {
++			mishare_mgmt_diag_count(MDIAG_TXRX_BEACON_LIMITED);
+ 			qdf_nbuf_free(buf);
+ 			goto rx_handler_mem_free;
+ 		}
+@@ -1610,14 +1635,19 @@
+ 		copy_buf = qdf_nbuf_clone(buf);
+ 
+ 		if (!copy_buf) {
++			mishare_mgmt_diag_count(MDIAG_TXRX_CLONE_FAIL);
+ 			rx_handler = rx_handler->next;
+ 			continue;
+ 		}
+ 
++		if (mishare_class & MDIAG_CLASS_APPLE)
++			mishare_mgmt_diag_count(MDIAG_TXRX_APPLE_CB_ATTEMPTS);
+ 		rx_handler->rx_cb(psoc, peer, copy_buf,
+ 					mgmt_rx_params, frm_type);
+ 		rx_handler = rx_handler->next;
+ 	}
++	if (mishare_class & MDIAG_CLASS_APPLE)
++		mishare_mgmt_diag_count(MDIAG_TXRX_APPLE_CB_ATTEMPTS);
+ 	rx_handler->rx_cb(psoc, peer, buf,
+ 				mgmt_rx_params, frm_type);
+ 
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_process_message_queue.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_process_message_queue.c
+@@ -1367,6 +1367,9 @@
+ 	isFrmFt = WMA_GET_RX_FT_DONE(pRxPacketInfo);
+ 	frequency = WMA_GET_RX_FREQ(pRxPacketInfo);
+ 	fc = pHdr->fc;
++	mishare_mgmt_diag_count(MDIAG_PE_ENTERED);
++	mishare_mgmt_diag_frame(MDIAG_PE_ENTRY_APPLE, (uint8_t *)pHdr,
++				WMA_GET_RX_MPDU_LEN(pRxPacketInfo));
+ 
+ 	is_hw_sbs_capable =
+ 		policy_mgr_is_hw_sbs_capable(mac->psoc);
+@@ -1379,6 +1382,9 @@
+ 					pHdr->bssId, &sessionId);
+ 		if (pe_session &&
+ 		    (QDF_SAP_MODE == pe_session->opmode)) {
++			mishare_mgmt_diag_count(MDIAG_PE_CAC_DROP);
++			mishare_mgmt_diag_frame(MDIAG_PE_APPLE_CAC_DROP,
++				(uint8_t *)pHdr, WMA_GET_RX_MPDU_LEN(pRxPacketInfo));
+ 			pe_debug("CAC timer running - drop the frame");
+ 			goto end;
+ 		}
+@@ -1416,6 +1422,9 @@
+ 				fc.type, fc.subType,
+ 				WMA_GET_SCAN_SRC(pRxPacketInfo));
+ 		}
++		mishare_mgmt_diag_count(MDIAG_PE_EXTSCAN_DROP);
++		mishare_mgmt_diag_frame(MDIAG_PE_APPLE_EXTSCAN_DROP,
++			(uint8_t *)pHdr, WMA_GET_RX_MPDU_LEN(pRxPacketInfo));
+ 		goto end;
+ 	}
+ #endif
+@@ -1443,6 +1452,9 @@
+ 			pe_session = pe_find_session_by_peer_sta(mac,
+ 						pHdr->sa, &sessionId);
+ 			if (!pe_session) {
++				mishare_mgmt_diag_count(MDIAG_PE_NO_SESSION_DROP);
++				mishare_mgmt_diag_frame(MDIAG_PE_APPLE_NO_SESSION_DROP,
++					(uint8_t *)pHdr, WMA_GET_RX_MPDU_LEN(pRxPacketInfo));
+ 				pe_debug("session does not exist for bssId: "QDF_MAC_ADDR_FMT,
+ 					 QDF_MAC_ADDR_REF(pHdr->sa));
+ 				goto end;
+@@ -1798,6 +1810,7 @@
+ 						   (void **) &new_msg.bodyptr);
+ 
+ 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
++			mishare_mgmt_diag_count(MDIAG_PE_BAD_PACKET);
+ 			lim_decrement_pending_mgmt_count(mac_ctx);
+ 			cds_pkt_return_packet(body_ptr);
+ 			break;
+--- a/qcacld-3.0/core/wma/src/wma_mgmt.c
++++ b/qcacld-3.0/core/wma/src/wma_mgmt.c
+@@ -4418,6 +4418,8 @@
+ }
+ #endif
+ 
++#include "wlan_mishare_mgmt_diag.h"
++
+ #define RESERVE_BYTES                   100
+ /**
+  * wma_mgmt_rx_process() - process management rx frame.
+@@ -4436,17 +4438,23 @@
+ 	uint8_t *bufp;
+ 	qdf_nbuf_t wbuf;
+ 	QDF_STATUS status;
+-
+-	if (wma_validate_handle(wma_handle))
++	unsigned int mishare_class = 0;
++
++	mishare_mgmt_diag_count(MDIAG_WMA_EVENTS);
++	if (wma_validate_handle(wma_handle)) {
++		mishare_mgmt_diag_count(MDIAG_WMA_BAD_HANDLE);
+ 		return -EINVAL;
++	}
+ 
+ 	mgmt_rx_params = qdf_mem_malloc(sizeof(*mgmt_rx_params));
+ 	if (!mgmt_rx_params) {
++		mishare_mgmt_diag_count(MDIAG_WMA_PARAMS_ALLOC_FAIL);
+ 		return -ENOMEM;
+ 	}
+ 
+ 	if (wmi_extract_mgmt_rx_params(wma_handle->wmi_handle,
+ 			data, mgmt_rx_params, &bufp) != QDF_STATUS_SUCCESS) {
++		mishare_mgmt_diag_count(MDIAG_WMA_EXTRACT_FAIL);
+ 		wma_err_rl("Extraction of mgmt rx params failed");
+ 		qdf_mem_free(mgmt_rx_params);
+ 		return -EINVAL;
+@@ -4455,6 +4463,7 @@
+ 	if (mgmt_rx_params->buf_len > data_len ||
+ 	    !mgmt_rx_params->buf_len ||
+ 	    !bufp) {
++		mishare_mgmt_diag_count(MDIAG_WMA_INVALID_BUFFER);
+ 		wma_err_rl("Invalid data_len %u, buf_len %u bufp %pK",
+ 			   data_len, mgmt_rx_params->buf_len, bufp);
+ 		qdf_mem_free(mgmt_rx_params);
+@@ -4500,6 +4509,7 @@
+ 							RESERVE_BYTES,
+ 							4), 0, 4, false);
+ 	if (!wbuf) {
++		mishare_mgmt_diag_count(MDIAG_WMA_NBUF_ALLOC_FAIL);
+ 		qdf_mem_free(mgmt_rx_params);
+ 		return -ENOMEM;
+ 	}
+@@ -4513,10 +4523,24 @@
+ 
+ 	wma_mem_endianness_based_copy(qdf_nbuf_data(wbuf),
+ 			bufp, mgmt_rx_params->buf_len);
++	mishare_mgmt_diag_count(MDIAG_WMA_PREPARED);
++	mishare_class = mishare_mgmt_frame_class(qdf_nbuf_data(wbuf),
++					       mgmt_rx_params->buf_len);
++	if (mishare_class & MDIAG_CLASS_ACTION)
++		mishare_mgmt_diag_count(MDIAG_WMA_ACTION);
++	if (mishare_class & MDIAG_CLASS_VENDOR127)
++		mishare_mgmt_diag_count(MDIAG_WMA_VENDOR127);
++	if (mishare_class & MDIAG_CLASS_APPLE) {
++		mishare_mgmt_diag_count(MDIAG_WMA_APPLE);
++		if (mgmt_rx_params->buf_len > 256)
++			mishare_mgmt_diag_count(MDIAG_WMA_APPLE_OVER256);
++	}
++
+ 
+ 	psoc = (struct wlan_objmgr_psoc *)
+ 				wma_handle->psoc;
+ 	if (!psoc) {
++		mishare_mgmt_diag_count(MDIAG_WMA_NO_PSOC);
+ 		wma_err("psoc ctx is NULL");
+ 		qdf_nbuf_free(wbuf);
+ 		qdf_mem_free(mgmt_rx_params);
+@@ -4525,10 +4549,14 @@
+ 
+ 	status = mgmt_txrx_rx_handler(psoc, wbuf, mgmt_rx_params);
+ 	if (status != QDF_STATUS_SUCCESS) {
++		mishare_mgmt_diag_count(MDIAG_WMA_DISPATCH_FAIL);
++		if (mishare_class & MDIAG_CLASS_APPLE)
++			mishare_mgmt_diag_count(MDIAG_WMA_APPLE_DISPATCH_FAIL);
+ 		qdf_mem_free(mgmt_rx_params);
+ 		return -EINVAL;
+ 	}
+ 
++	mishare_mgmt_diag_count(MDIAG_WMA_DISPATCH_OK);
+ 	qdf_mem_free(mgmt_rx_params);
+ 	return 0;
+ }

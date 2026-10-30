@@ -39,8 +39,67 @@ enum mishare_mgmt_diag_stage {
     MDIAG_HDD_MISSING_VDEV,
     MDIAG_HDD_LINK_SWITCH,
     MDIAG_HDD_MLO_CONNECTION,
+    MDIAG_WMA_EVENTS,
+    MDIAG_WMA_BAD_HANDLE,
+    MDIAG_WMA_PARAMS_ALLOC_FAIL,
+    MDIAG_WMA_EXTRACT_FAIL,
+    MDIAG_WMA_INVALID_BUFFER,
+    MDIAG_WMA_NBUF_ALLOC_FAIL,
+    MDIAG_WMA_PREPARED,
+    MDIAG_WMA_ACTION,
+    MDIAG_WMA_VENDOR127,
+    MDIAG_WMA_APPLE,
+    MDIAG_WMA_APPLE_OVER256,
+    MDIAG_WMA_NO_PSOC,
+    MDIAG_WMA_DISPATCH_OK,
+    MDIAG_WMA_DISPATCH_FAIL,
+    MDIAG_WMA_APPLE_DISPATCH_FAIL,
+    MDIAG_TXRX_ENTERED,
+    MDIAG_TXRX_APPLE,
+    MDIAG_TXRX_BAD_TYPE,
+    MDIAG_TXRX_BAD_ADDR,
+    MDIAG_TXRX_APPLE_BAD_ADDR,
+    MDIAG_TXRX_PROTECTED_SHORT,
+    MDIAG_TXRX_UNSPECIFIED,
+    MDIAG_TXRX_APPLE_UNSPECIFIED,
+    MDIAG_TXRX_SIM_DROP,
+    MDIAG_TXRX_HANDLER_ALLOC_FAIL,
+    MDIAG_TXRX_NO_CALLBACK,
+    MDIAG_TXRX_APPLE_NO_CALLBACK,
+    MDIAG_TXRX_BEACON_LIMITED,
+    MDIAG_TXRX_CLONE_FAIL,
+    MDIAG_TXRX_APPLE_CB_ATTEMPTS,
+    MDIAG_PE_ENTERED,
+    MDIAG_PE_ENTRY_APPLE,
+    MDIAG_PE_CAC_DROP,
+    MDIAG_PE_APPLE_CAC_DROP,
+    MDIAG_PE_EXTSCAN_DROP,
+    MDIAG_PE_APPLE_EXTSCAN_DROP,
+    MDIAG_PE_NO_SESSION_DROP,
+    MDIAG_PE_APPLE_NO_SESSION_DROP,
+    MDIAG_PE_BAD_PACKET,
     MDIAG_COUNT
 };
+/* Numeric prefix classification only; no identity/TLV validation.
+ * Length supplied by the native owning buffer, at most the supported 2304. */
+#define MDIAG_CLASS_ACTION 1U
+#define MDIAG_CLASS_VENDOR127 2U
+#define MDIAG_CLASS_APPLE 4U
+static inline unsigned int
+mishare_mgmt_frame_class(const unsigned char *f, unsigned int length)
+{
+    unsigned int result;
+    if (!f || length < 24 || length > 2304 || f[0] != 0xd0)
+        return 0;
+    result = MDIAG_CLASS_ACTION;
+    if (length >= 25 && f[24] == 127) {
+        result |= MDIAG_CLASS_VENDOR127;
+        if (length >= 29 && !f[25] && f[26] == 0x17 &&
+            f[27] == 0xf2 && f[28] == 8)
+            result |= MDIAG_CLASS_APPLE;
+    }
+    return result;
+}
 void mishare_mgmt_diag_count(enum mishare_mgmt_diag_stage stage);
 void mishare_mgmt_diag_frame(enum mishare_mgmt_diag_stage stage,
                             const unsigned char *frame, unsigned int length);

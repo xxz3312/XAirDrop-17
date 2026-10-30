@@ -88,6 +88,12 @@ def setup(work):
     shutil.copy2(REPO / 'kernel/popsicle-hdd/wlan_mishare_mgmt_diag.h',
                  work / 'wlan/qcacld-3.0/core/mac/inc/wlan_mishare_mgmt_diag.h')
 
+    # Numeric-only cross-layer diagnostics; no HDD types in this shared header.
+    for directory in ['qcacld-3.0/core/wma/src',
+                      'qca-wifi-host-cmn/umac/cmn_services/mgmt_txrx/dispatcher/src']:
+        shutil.copy2(REPO / 'kernel/popsicle-hdd/wlan_mishare_mgmt_diag.h',
+                     work / 'wlan' / directory / 'wlan_mishare_mgmt_diag.h')
+
     # Dormant host helper is compiled into the real target WLAN, not a new module.
     for source, destination in [
         ('wlan_hdd_mishare_host.c', 'src'), ('wlan_hdd_mishare_host.h', 'inc'),

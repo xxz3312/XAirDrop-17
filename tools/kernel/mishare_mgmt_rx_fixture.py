@@ -126,6 +126,27 @@ int main(void){
  assert(atomic64_read(&mishare_mgmt_counts[MDIAG_HDD_STALE_IDENTITY])==2);
  assert(atomic64_read(&mishare_mgmt_counts[MDIAG_HDD_MLO_CONNECTION])==1);
  assert(atomic64_read(&mishare_mgmt_counts[MDIAG_HDD_LINK_SWITCH])==1);
+ /* Actual shared classifier: exact-size allocations expose short reads. */
+ for (unsigned int size=0;size<=30;size++) {
+   unsigned char *short_frame=__builtin_alloca(size?size:1);
+   memset(short_frame,0,size?size:1);
+   if(size)short_frame[0]=0xd0;
+   if(size>=25)short_frame[24]=127;
+   if(size>=29){short_frame[26]=0x17;short_frame[27]=0xf2;short_frame[28]=8;}
+   unsigned int mask=mishare_mgmt_frame_class(short_frame,size);
+   assert(!!(mask&MDIAG_CLASS_ACTION)==(size>=24));
+   assert(!!(mask&MDIAG_CLASS_VENDOR127)==(size>=25));
+   assert(!!(mask&MDIAG_CLASS_APPLE)==(size>=29));
+ }
+ assert(!mishare_mgmt_frame_class(NULL,29));
+ assert(!mishare_mgmt_frame_class(frame,2305));
+ assert(mishare_mgmt_frame_class(frame,277)==7);
+ frame[28]=9;assert(mishare_mgmt_frame_class(frame,277)==3);frame[28]=8;
+ frame[24]=4;assert(mishare_mgmt_frame_class(frame,277)==1);frame[24]=127;
+ /* Worst-case signed counter widths must fit the real sysfs output page. */
+ for(unsigned int i=0;i<MDIAG_COUNT;i++)mishare_mgmt_counts[i].n=9223372036854775807LL;
+ size=mishare_mgmt_diag_get(dump,NULL);
+ assert(size>0 && size<PAGE_SIZE && strstr(dump,"pe_bad_packet=9223372036854775807\n"));
  puts("MISHARE_MGMT_RX_OWNER_MODEL_PASS_ONLY");return 0;
 }
 '''

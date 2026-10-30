@@ -90,6 +90,46 @@ static const char * const mishare_mgmt_names[MDIAG_COUNT] = {
     "hdd_missing_vdev",
     "hdd_link_switch",
     "hdd_mlo_connection",
+    "wma_events",
+    "wma_bad_handle",
+    "wma_params_alloc_fail",
+    "wma_extract_fail",
+    "wma_invalid_buffer",
+    "wma_nbuf_alloc_fail",
+    "wma_prepared",
+    "wma_action",
+    "wma_vendor127",
+    "wma_apple",
+    "wma_apple_over256",
+    "wma_no_psoc",
+    "wma_dispatch_ok",
+    "wma_dispatch_fail",
+    "wma_apple_dispatch_fail",
+    "txrx_entered",
+    "txrx_apple",
+    "txrx_bad_type",
+    "txrx_bad_addr",
+    "txrx_apple_bad_addr",
+    "txrx_protected_short",
+    "txrx_unspecified",
+    "txrx_apple_unspecified",
+    "txrx_sim_drop",
+    "txrx_handler_alloc_fail",
+    "txrx_no_callback",
+    "txrx_apple_no_callback",
+    "txrx_beacon_limited",
+    "txrx_clone_fail",
+    "txrx_apple_cb_attempts",
+    "pe_entered",
+    "pe_entry_apple",
+    "pe_cac_drop",
+    "pe_apple_cac_drop",
+    "pe_extscan_drop",
+    "pe_apple_extscan_drop",
+    "pe_no_session_drop",
+    "pe_apple_no_session_drop",
+    "pe_bad_packet",
+
 };
 void mishare_mgmt_diag_count(enum mishare_mgmt_diag_stage stage)
 {
@@ -107,8 +147,7 @@ void mishare_mgmt_diag_registration(enum mishare_mgmt_diag_stage stage,
 void mishare_mgmt_diag_frame(enum mishare_mgmt_diag_stage stage,
                             const unsigned char *frame, unsigned int length)
 {
-    if (frame && length >= 29 && length <= 2304 && frame[0] == 0xd0 &&
-        !memcmp(frame + 24, mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix)))
+    if (mishare_mgmt_frame_class(frame, length) & MDIAG_CLASS_APPLE)
         mishare_mgmt_diag_count(stage);
 }
 static int mishare_mgmt_diag_get(char *buffer, const struct kernel_param *kp)
