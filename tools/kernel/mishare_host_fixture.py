@@ -115,13 +115,15 @@ int main(void)
  active->dev->running=true;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->dev->running=false;
  active->event_flags=1UL<<DEVICE_IFACE_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->event_flags=0;
  active->deflink->link_flags[0]=1UL<<SME_SESSION_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->deflink->link_flags[0]=0;
- active->dev->ieee80211_ptr=&wdev;
- assert(!mishare_wonder_host_vdev_create_locked(owner));
- assert(mishare_wonder_host_vdev_create_locked(owner)==-EBUSY);
  struct osif_vdev_sync *original=registered, foreign={0};registered=&foreign;
  assert(mishare_wonder_host_destroy_locked(&owner)==-EIO && owner && active && registered==&foreign);registered=original;
  assert(mishare_wonder_host_vdev_create_locked(owner)==-ESHUTDOWN);
  assert(mishare_wonder_host_session_step_locked(owner,5240,1,2)==-ESHUTDOWN);
+ assert(mishare_wonder_host_destroy_locked(&owner)==0 && !owner && !active && !registered);
+ reset(0);assert(mishare_wonder_host_create_locked(&h,mac,&owner)==0);
+ active->dev->ieee80211_ptr=&wdev;
+ assert(!mishare_wonder_host_vdev_create_locked(owner));
+ assert(mishare_wonder_host_vdev_create_locked(owner)==-EBUSY);
  runtime_busy=1;
  assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS && owner && active && registered);
  assert(mishare_wonder_host_vdev_destroy_locked(owner)==-EINPROGRESS);
