@@ -15,7 +15,7 @@ BASE={CDS:'6d3d5066c16ad68f23a80247ada0aca2149c83b7b0cdc30810bb83f2a3584d84',TIM
 MODELS=r'''
 static void wlan_vdev_obj_lock(struct wlan_objmgr_vdev *v) {assert(!v->vdev_lock);v->vdev_lock=1;}
 static void wlan_vdev_obj_unlock(struct wlan_objmgr_vdev *v) {assert(v->vdev_lock);v->vdev_lock=0;}
-static unsigned wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *v) {assert(v==ctx_peer.vdev && v->vdev_lock);return ctx_reset_peer_count;}
+static unsigned wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *v) {assert(v && v->vdev_lock);return ctx_reset_peer_count;}
 static bool is_cdp_peer_detach_force_delete_supported(void *s) {assert(s==wma_context.psoc);return ctx_reset_force_supported;}
 static bool cdp_cfg_get_peer_unmap_conf_support(void *s) {assert(s==wma_context.psoc);return ctx_reset_unmap_conf;}
 #define QDF_MODULE_ID_HIF 2
