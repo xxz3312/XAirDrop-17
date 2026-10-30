@@ -34,6 +34,11 @@ enum mishare_mgmt_diag_stage {
     MDIAG_HDD_OTHER_PREFIX,
     MDIAG_HDD_FOREIGN_DA,
     MDIAG_HDD_APPLE,
+    MDIAG_REGISTER_ML_DEFAULT,
+    MDIAG_HDD_STALE_IDENTITY,
+    MDIAG_HDD_MISSING_VDEV,
+    MDIAG_HDD_LINK_SWITCH,
+    MDIAG_HDD_MLO_CONNECTION,
     MDIAG_COUNT
 };
 void mishare_mgmt_diag_count(enum mishare_mgmt_diag_stage stage);

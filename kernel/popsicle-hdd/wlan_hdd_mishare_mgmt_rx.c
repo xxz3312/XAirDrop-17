@@ -5,6 +5,7 @@
 #include <linux/errno.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
+#include <linux/spinlock.h>
 #include <linux/etherdevice.h>
 #include "wlan_hdd_main.h"
 #include "sme_api.h"
@@ -18,6 +19,25 @@ static DEFINE_MUTEX(mishare_mgmt_lock);
  * Use one STA owner globally rather than pretending filters are per-vdev. */
 static struct hdd_adapter *mishare_mgmt_owner;
 static struct hdd_adapter *mishare_mgmt_reserved;
+/* Registration identity is pinned, even if adapter->deflink later changes.
+ * All writes to published owner fields and route snapshots share this lock.
+ * Never hold it across SME calls or vdev ref acquisition. */
+static DEFINE_SPINLOCK(mishare_mgmt_owner_lock);
+static struct wlan_hdd_link_info *mishare_mgmt_owner_link;
+static unsigned int mishare_mgmt_owner_vdev = WLAN_UMAC_VDEV_ID_MAX;
+static unsigned int mishare_mgmt_reserved_vdev = WLAN_UMAC_VDEV_ID_MAX;
+
+static void mishare_mgmt_publish(struct hdd_adapter *adapter,
+                                 struct wlan_hdd_link_info *link,
+                                 unsigned int vdev_id)
+{
+    spin_lock_bh(&mishare_mgmt_owner_lock);
+    mishare_mgmt_owner_link = link;
+    mishare_mgmt_owner_vdev = vdev_id;
+    smp_store_release(&mishare_mgmt_owner, adapter);
+    spin_unlock_bh(&mishare_mgmt_owner_lock);
+}
+
 static bool mishare_mgmt_fault;
 static unsigned char mishare_mgmt_prefix[] = {127, 0x00, 0x17, 0xf2, 8};
 static atomic64_t mishare_mgmt_routed = ATOMIC64_INIT(0);
@@ -65,6 +85,11 @@ static const char * const mishare_mgmt_names[MDIAG_COUNT] = {
     "hdd_other_prefix",
     "hdd_foreign_da",
     "hdd_apple",
+    "register_ml_default",
+    "hdd_stale_identity",
+    "hdd_missing_vdev",
+    "hdd_link_switch",
+    "hdd_mlo_connection",
 };
 void mishare_mgmt_diag_count(enum mishare_mgmt_diag_stage stage)
 {
@@ -108,7 +133,6 @@ static bool mishare_mgmt_sta(struct hdd_adapter *adapter)
 {
     return adapter && adapter->deflink && adapter->dev &&
            adapter->device_mode == QDF_STA_MODE &&
-           !hdd_adapter_is_ml_adapter(adapter) &&
            !hdd_adapter_is_link_adapter(adapter) &&
            adapter->deflink->vdev_id != WLAN_UMAC_VDEV_ID_MAX;
 }
@@ -118,6 +142,8 @@ int mishare_mgmt_rx_register(struct hdd_adapter *adapter)
     QDF_STATUS status;
     int ret = 0;
     bool previous;
+    struct wlan_hdd_link_info *registered_link;
+    unsigned int registered_vdev;
 
     if (!mishare_mgmt_rx)
         return 0;
@@ -131,14 +157,14 @@ int mishare_mgmt_rx_register(struct hdd_adapter *adapter)
         mishare_mgmt_diag_count(MDIAG_SKIP_MODE);
         return 0;
     }
-    if (hdd_adapter_is_ml_adapter(adapter)) {
-        mishare_mgmt_diag_count(MDIAG_SKIP_ML_ADAPTER);
-        return 0;
-    }
     if (hdd_adapter_is_link_adapter(adapter)) {
         mishare_mgmt_diag_count(MDIAG_SKIP_LINK_ADAPTER);
         return 0;
     }
+    /* Native callers register the STA default vdev before association.
+     * ML-capable netdev alone does not imply a multi-link connection. */
+    registered_link = adapter->deflink;
+    registered_vdev = registered_link->vdev_id;
     mutex_lock(&mishare_mgmt_lock);
     if (mishare_mgmt_fault) {
         mishare_mgmt_diag_count(MDIAG_REGISTER_FAULT);
@@ -154,16 +180,19 @@ int mishare_mgmt_rx_register(struct hdd_adapter *adapter)
      * Clear routing before posting; never retain prior success on a failure. */
     previous = mishare_mgmt_reserved == adapter;
     mishare_mgmt_reserved = adapter;
-    smp_store_release(&mishare_mgmt_owner, NULL);
+    mishare_mgmt_publish(NULL, NULL, WLAN_UMAC_VDEV_ID_MAX);
     status = sme_register_mgmt_frame(hdd_adapter_get_mac_handle(adapter),
-              adapter->deflink->vdev_id, 0x00d0,
+              registered_vdev, 0x00d0,
               mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix));
     ret = qdf_status_to_os_return(status);
     mishare_mgmt_diag_count(ret ? MDIAG_REGISTER_FAILED : MDIAG_REGISTER_SUBMITTED);
     if (ret && !previous)
         mishare_mgmt_reserved = NULL;
     if (!ret) {
-        smp_store_release(&mishare_mgmt_owner, adapter);
+        mishare_mgmt_reserved_vdev = registered_vdev;
+        mishare_mgmt_publish(adapter, registered_link, registered_vdev);
+        if (hdd_adapter_is_ml_adapter(adapter))
+            mishare_mgmt_diag_count(MDIAG_REGISTER_ML_DEFAULT);
         hdd_info("mishare mgmt RX host registration submitted; full firmware RX unverified");
     }
 unlock:
@@ -181,7 +210,7 @@ void mishare_mgmt_rx_unregister(struct hdd_adapter *adapter)
     mutex_lock(&mishare_mgmt_lock);
     if (mishare_mgmt_reserved != adapter)
         goto unlock;
-    smp_store_release(&mishare_mgmt_owner, NULL);
+    mishare_mgmt_publish(NULL, NULL, WLAN_UMAC_VDEV_ID_MAX);
     /* Native deregister_frames may run after MAC teardown. Close this helper
      * without calling SME with a vanished context; do not permit adoption. */
     if (!hdd_adapter_get_mac_handle(adapter)) {
@@ -192,7 +221,7 @@ void mishare_mgmt_rx_unregister(struct hdd_adapter *adapter)
         goto unlock;
     }
     status = sme_deregister_mgmt_frame(hdd_adapter_get_mac_handle(adapter),
-              adapter->deflink->vdev_id, 0x00d0,
+              mishare_mgmt_reserved_vdev, 0x00d0,
               mishare_mgmt_prefix, sizeof(mishare_mgmt_prefix));
     if (QDF_IS_STATUS_ERROR(status)) {
         mishare_mgmt_fault = true;
@@ -208,6 +237,7 @@ bool mishare_mgmt_rx_route(struct wlan_hdd_link_info *link,
 {
     struct hdd_adapter *adapter;
     long long count;
+    bool owner_matches, identity_matches;
 
     if (!mishare_mgmt_rx)
         return false;
@@ -226,8 +256,29 @@ bool mishare_mgmt_rx_route(struct wlan_hdd_link_info *link,
         mishare_mgmt_diag_count(MDIAG_HDD_WRONG_LINK);
         return false;
     }
-    if (smp_load_acquire(&mishare_mgmt_owner) != adapter) {
+    spin_lock_bh(&mishare_mgmt_owner_lock);
+    owner_matches = mishare_mgmt_owner == adapter;
+    identity_matches = mishare_mgmt_owner_link == link &&
+                       mishare_mgmt_owner_vdev == link->vdev_id;
+    spin_unlock_bh(&mishare_mgmt_owner_lock);
+    if (!owner_matches) {
         mishare_mgmt_diag_count(MDIAG_HDD_NO_OWNER);
+        return false;
+    }
+    if (!identity_matches) {
+        mishare_mgmt_diag_count(MDIAG_HDD_STALE_IDENTITY);
+        return false;
+    }
+    if (!link->vdev) {
+        mishare_mgmt_diag_count(MDIAG_HDD_MISSING_VDEV);
+        return false;
+    }
+    if (wlan_hdd_is_link_switch_in_progress(link)) {
+        mishare_mgmt_diag_count(MDIAG_HDD_LINK_SWITCH);
+        return false;
+    }
+    if (wlan_hdd_is_mlo_connection(link)) {
+        mishare_mgmt_diag_count(MDIAG_HDD_MLO_CONNECTION);
         return false;
     }
     if (frame[0] != 0xd0 || (frame[1] & 0xc7) || (frame[22] & 15)) {

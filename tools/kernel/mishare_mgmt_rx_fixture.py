@@ -18,6 +18,9 @@ ENV=r'''
 #define PAGE_SIZE 4096
 #define scnprintf snprintf
 #define DEFINE_MUTEX(x) int x
+#define DEFINE_SPINLOCK(x) int x
+#define spin_lock_bh(x) ((void)(x))
+#define spin_unlock_bh(x) ((void)(x))
 #define mutex_lock(x) ((void)(x))
 #define mutex_unlock(x) ((void)(x))
 #define smp_load_acquire(x) (*(x))
@@ -39,7 +42,9 @@ struct kernel_param {};
 struct kernel_param_ops {int (*get)(char *,const struct kernel_param *);};
 struct net_device {unsigned char dev_addr[6];};
 struct hdd_adapter;
-struct wlan_hdd_link_info {struct hdd_adapter *adapter;unsigned char vdev_id;};
+struct wlan_hdd_link_info {struct hdd_adapter *adapter;unsigned char vdev_id;void *vdev;bool switching,mlo;};
+static bool wlan_hdd_is_link_switch_in_progress(struct wlan_hdd_link_info *l){return l->switching;}
+static bool wlan_hdd_is_mlo_connection(struct wlan_hdd_link_info *l){return l->mlo;}
 struct hdd_adapter {struct wlan_hdd_link_info *deflink;struct net_device *dev;int device_mode;bool ml,link;};
 #define hdd_adapter_is_ml_adapter(a) ((a)->ml)
 #define hdd_adapter_is_link_adapter(a) ((a)->link)
@@ -48,26 +53,40 @@ static bool ether_addr_equal(const unsigned char *a,const unsigned char *b){retu
 static bool mac_alive=true;
 static void *hdd_adapter_get_mac_handle(struct hdd_adapter *a){(void)a;return mac_alive?(void *)1:NULL;}
 static int qdf_status_to_os_return(int n){return n?-5:0;}
-static int reg_calls,unreg_calls,reg_fail,unreg_fail;
+static int reg_calls,unreg_calls,reg_fail,unreg_fail,last_unreg_vdev;
 static int sme_register_mgmt_frame(void *m,unsigned char id,unsigned short type,unsigned char *p,unsigned short len){
  assert(m && id<255 && type==0xd0 && len==5 && !memcmp(p,"\x7f\x00\x17\xf2\x08",5));reg_calls++;return reg_fail;
 }
 static int sme_deregister_mgmt_frame(void *m,unsigned char id,unsigned short type,unsigned char *p,unsigned short len){
- assert(m && id<255 && type==0xd0 && len==5 && !memcmp(p,"\x7f\x00\x17\xf2\x08",5));unreg_calls++;return unreg_fail;
+ assert(m && id<255 && type==0xd0 && len==5 && !memcmp(p,"\x7f\x00\x17\xf2\x08",5));unreg_calls++;last_unreg_vdev=id;return unreg_fail;
 }
 '''
 TEST=r'''
 int main(void){
  struct net_device dev={{2,1,2,3,4,5}},dev2={{2,2,3,4,5,6}};
  struct hdd_adapter a={.dev=&dev},b={.dev=&dev2};
- struct wlan_hdd_link_info la={.adapter=&a,.vdev_id=1},lb={.adapter=&b,.vdev_id=2};
+ struct wlan_hdd_link_info la={.adapter=&a,.vdev_id=1,.vdev=(void *)1},lb={.adapter=&b,.vdev_id=2,.vdev=(void *)1};
  a.deflink=&la;b.deflink=&lb;
  unsigned char frame[400]={0xd0};frame[4]=0xff;memcpy(frame+24,"\x7f\x00\x17\xf2\x08",5);
  assert(!mishare_mgmt_rx_register(&a) && !reg_calls);
  assert(!atomic64_read(&mishare_mgmt_counts[MDIAG_REGISTER_CALLS]));
  assert(!mishare_mgmt_rx_route(&la,frame,277));
  mishare_mgmt_rx=true;a.device_mode=1;assert(!mishare_mgmt_rx_register(&a) && !reg_calls);a.device_mode=0;
- a.ml=true;assert(!mishare_mgmt_rx_register(&a) && !reg_calls);a.ml=false;
+ a.link=true;assert(!mishare_mgmt_rx_register(&a) && !reg_calls);a.link=false;
+ /* ML-capable default link on a legacy connection is accepted. */
+ a.ml=true;
+ assert(!mishare_mgmt_rx_register(&a) && reg_calls==1);
+ assert(mishare_mgmt_rx_route(&la,frame,277));
+ la.mlo=true;assert(!mishare_mgmt_rx_route(&la,frame,277));la.mlo=false;
+ la.switching=true;assert(!mishare_mgmt_rx_route(&la,frame,277));la.switching=false;
+ la.vdev=NULL;assert(!mishare_mgmt_rx_route(&la,frame,277));la.vdev=(void *)1;
+ /* A changed default link or reused vdev must not inherit registration. */
+ struct wlan_hdd_link_info replacement={.adapter=&a,.vdev_id=4,.vdev=(void *)1};
+ a.deflink=&replacement;assert(!mishare_mgmt_rx_route(&replacement,frame,277));
+ a.deflink=&la;la.vdev_id=5;assert(!mishare_mgmt_rx_route(&la,frame,277));
+ mishare_mgmt_rx_unregister(&a);assert(last_unreg_vdev==1);
+ la.vdev_id=1;a.ml=false;reg_calls=0;unreg_calls=0;
+
  reg_fail=1;assert(mishare_mgmt_rx_register(&a)<0 && !mishare_mgmt_owner && !mishare_mgmt_reserved);reg_fail=0;
  assert(!mishare_mgmt_rx_register(&a) && mishare_mgmt_owner==&a);
  assert(mishare_mgmt_rx_route(&la,frame,277));
@@ -91,7 +110,7 @@ int main(void){
  int before=unreg_calls;mac_alive=false;mishare_mgmt_rx_unregister(&a);
  assert(unreg_calls==before && mishare_mgmt_fault && !mishare_mgmt_owner && !mishare_mgmt_reserved);
  assert(atomic64_read(&mishare_mgmt_counts[MDIAG_SKIP_MODE])==1);
- assert(atomic64_read(&mishare_mgmt_counts[MDIAG_SKIP_ML_ADAPTER])==1);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_SKIP_ML_ADAPTER])==0);
  assert(atomic64_read(&mishare_mgmt_counts[MDIAG_MAC_GONE])==1);
  mishare_mgmt_diag_frame(MDIAG_PE_APPLE,frame,28);
  assert(!atomic64_read(&mishare_mgmt_counts[MDIAG_PE_APPLE]));
@@ -103,21 +122,23 @@ int main(void){
  assert(atomic64_read(&mishare_mgmt_counts[MDIAG_PE_INSERTED])==1);
  char dump[PAGE_SIZE];int size=mishare_mgmt_diag_get(dump,NULL);
  assert(size>0 && size<PAGE_SIZE && strstr(dump,"pe_inserted=1\n") && strstr(dump,"owner_active=0\n"));
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_REGISTER_ML_DEFAULT])==1);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_HDD_STALE_IDENTITY])==2);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_HDD_MLO_CONNECTION])==1);
+ assert(atomic64_read(&mishare_mgmt_counts[MDIAG_HDD_LINK_SWITCH])==1);
  puts("MISHARE_MGMT_RX_OWNER_MODEL_PASS_ONLY");return 0;
 }
 '''
 
 def main():
-    if os.environ.get('GITHUB_ACTIONS')!='true':
-        raise RuntimeError('C fixture compilation is CI-only')
     with tempfile.TemporaryDirectory() as tmp:
         p=Path(tmp)
-        for name in ['linux/errno.h','linux/module.h','linux/mutex.h','linux/etherdevice.h','wlan_hdd_main.h','sme_api.h']:
+        for name in ['linux/errno.h','linux/module.h','linux/mutex.h','linux/spinlock.h','linux/etherdevice.h','wlan_hdd_main.h','sme_api.h']:
             f=p/name;f.parent.mkdir(parents=True,exist_ok=True);f.write_text('')
         source=p/'test.c'
         source.write_text(ENV+'\n#include "'+str(ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_mgmt_rx.c')+'"\n'+TEST)
         exe=p/'test'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-variable','-g','-fsanitize=address,undefined','-I'+str(p),str(source),'-o',str(exe)],check=True)
-        subprocess.run([str(exe)],check=True,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})
+        subprocess.run([str(exe)],check=True,env={**os.environ,'ASAN_OPTIONS':os.environ.get('ASAN_OPTIONS','detect_leaks=1:abort_on_error=1'),'UBSAN_OPTIONS':'halt_on_error=1'})
 
 if __name__=='__main__':main()
