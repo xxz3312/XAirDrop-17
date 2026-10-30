@@ -4,6 +4,7 @@
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/slab.h>
+#include <linux/spinlock.h>
 #include "wlan_hdd_main.h"
 #include "osif_psoc_sync.h"
 #include "osif_vdev_sync.h"
@@ -12,12 +13,68 @@
 #include "wlan_hdd_mishare_session.h"
 
 struct mishare_wonder_host {
+    struct mishare_wonder_host *next;
+    struct wlan_objmgr_psoc *psoc;
     struct hdd_context *hdd;
     struct hdd_adapter *adapter;
     struct osif_vdev_sync *sync;
     struct mishare_runtime_owner *runtime;
     struct mishare_session session;
 };
+
+/* The psoc transition serializes allocation/retirement against idle shutdown.
+ * This small registry covers host allocations even before a runtime exists.
+ * Never hold its lock across native allocation, adapter close or a callback.
+ */
+static DEFINE_SPINLOCK(mishare_host_lock);
+static struct mishare_wonder_host *mishare_hosts;
+
+bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+    bool busy = false;
+
+    if (!psoc)
+        return false;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->psoc == psoc) {
+            busy = true;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return busy;
+}
+
+static void mishare_host_track(struct mishare_wonder_host *host,
+                                struct hdd_context *hdd)
+{
+    unsigned long flags;
+
+    host->hdd = hdd;
+    host->psoc = hdd->psoc;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    host->next = mishare_hosts;
+    mishare_hosts = host;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+}
+
+static void mishare_host_untrack(struct mishare_wonder_host *host)
+{
+    struct mishare_wonder_host **link;
+    unsigned long flags;
+
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (link = &mishare_hosts; *link; link = &(*link)->next) {
+        if (*link == host) {
+            *link = host->next;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+}
 
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
                                     struct mishare_wonder_host **owner)
@@ -26,7 +83,8 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
     u8 address[ETH_ALEN];
     int ret;
 
-    if (!owner || !hdd || !hdd->parent_dev || !mac || !is_valid_ether_addr(mac))
+    if (!owner || !hdd || !hdd->parent_dev || !hdd->psoc ||
+        !mac || !is_valid_ether_addr(mac))
         return -EINVAL;
     if (*owner)
         return -EBUSY;
@@ -40,6 +98,7 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
     host = kzalloc(sizeof(*host), GFP_KERNEL);
     if (!host)
         return -ENOMEM;
+    mishare_host_track(host, hdd);
     ret = osif_vdev_sync_create(hdd->parent_dev, &host->sync);
     if (ret)
         goto free_host;
@@ -50,13 +109,13 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
         goto destroy_sync;
     }
     osif_vdev_sync_register(host->adapter->dev, host->sync);
-    host->hdd = hdd;
     *owner = host;
     return 0;
 
 destroy_sync:
     osif_vdev_sync_destroy(host->sync);
 free_host:
+    mishare_host_untrack(host);
     kfree(host);
     return ret;
 }
@@ -156,6 +215,7 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
     /* Closing reclaims adapter/netdev: do not dereference either afterwards. */
     hdd_close_adapter(host->hdd, adapter, true);
     osif_vdev_sync_destroy(sync);
+    mishare_host_untrack(host);
     kfree(host);
     *owner = NULL;
     return 0;

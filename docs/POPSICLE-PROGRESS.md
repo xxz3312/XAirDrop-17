@@ -1,4 +1,10 @@
-## 最新阶段 0067
+## 最新阶段 0068
+
+原生空闲关机增加专用 DOWN host 生命周期检查：在独占 psoc transition 和 operations 排空后，有 host 即返回 EAGAIN，不进入 module stop。登记覆盖 runtime 创建前、异步清理以及 adapter/sync 最终释放；创建失败撤销登记。完整生产 host + 原生 idle 函数 C 模型已扩展，完整构建验证待 CI。见[0068](POPSICLE-IDLE-HOST-GUARD-0068.md)。
+
+这仅保护普通 idle shutdown，不代表 SSR/remove 父资源租约完成。prepared/UP SSR 回收、完整 monitor 和实际无线初始化仍未启用，无新手机测试。
+
+## 阶段 0067
 
 默认关闭的HDD元数据绑定通过私有provider传递managed companion，component master实际安装/解除绑定。发布ops前关闭准入，CLAIM成功后开放；清除前quiesce，有归属时保留component/descriptor/claim，显式retire后才解绑，最终free拒绝仍有归属的实例。公开ops/priv ABI不变。CI 41089242566已通过完整编译、严格链接、3个provider导出、6个Wonder入口和7项选定布局检查；私有/通用两模式C模型通过。
 

@@ -5,6 +5,14 @@
 struct hdd_context;
 struct hdd_adapter;
 struct mishare_wonder_host;
+struct wlan_objmgr_psoc;
+/* Host lifetime observation for the native idle-shutdown path. The caller must
+ * hold the exclusive psoc transition after draining operations, through its
+ * decision and module stop. Creation/retirement use that same transition.
+ * Covers allocation before runtime creation, asynchronous drain and close.
+ * Not a reference, SSR/remove barrier, firmware or radio readiness predicate.
+ */
+bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Success means a DOWN host adapter only, never Wonder/radio initialization.

@@ -8,6 +8,7 @@ from pathlib import Path
 import re
 import subprocess
 import tempfile
+from mishare_idle_origins import remove_idle_additions
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMON = r'''
@@ -20,6 +21,7 @@ COMMON = r'''
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 typedef uint8_t u8;
 typedef uint32_t u32;
 typedef u8 tSirMacAddr[6];
@@ -32,24 +34,34 @@ typedef u8 tSirMacAddr[6];
 #define ASSERT_RTNL() assert(rtnl_owned)
 #define WARN_ON(x) (x)
 #define hdd_err(...) ((void)0)
+#define hdd_info(...) ((void)0)
+#define hdd_err_rl(...) ((void)0)
+#define hdd_enter() ((void)0)
+#define hdd_exit() ((void)0)
+#define DEFINE_SPINLOCK(n) pthread_mutex_t n = PTHREAD_MUTEX_INITIALIZER
+#define spin_lock_irqsave(n, f) do { (f)=0;assert(!pthread_mutex_lock(n)); } while(0)
+#define spin_unlock_irqrestore(n, f) do { (void)(f);assert(!pthread_mutex_unlock(n)); } while(0)
 struct device { int dummy; };
+struct wlan_objmgr_psoc { int dummy; };
 struct wireless_dev { int dummy; };
 struct net_device { bool running; struct wireless_dev *ieee80211_ptr; };
 struct link_info { unsigned long link_flags[1]; };
 struct qdf_mac_addr { u8 bytes[6]; };
 struct wlan_objmgr_pdev { int dummy; };
-struct hdd_context { struct device *parent_dev; void *psoc; struct wlan_objmgr_pdev *pdev; };
+struct hdd_context { struct device *parent_dev; struct wlan_objmgr_psoc *psoc; struct wlan_objmgr_pdev *pdev; };
+bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; };
 struct hdd_adapter_create_param { int num_sessions; };
 struct osif_vdev_sync { int id; };
 static bool rtnl_owned=true, parent_owned=true;
+static struct wlan_objmgr_psoc *expected_psoc;
 static int failure, validations, closed, dp_destroyed;
 static char trace[256];
 static struct hdd_adapter *active;
 static struct osif_vdev_sync *registered;
 static const u8 mac[6]={2,3,4,5,6,7};
 static void event(char c) { size_t n=strlen(trace);assert(n+1<sizeof(trace));trace[n]=c;trace[n+1]=0; }
-static void reset(int fail) { assert(!active && !registered);failure=fail;trace[0]=0; }
+static void reset(int fail) { assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
 static bool is_valid_ether_addr(const u8 *a) { u8 v=0;for(int i=0;i<6;i++)v|=a[i];return v && !(a[0]&1); }
 static void ether_addr_copy(u8 *d,const u8 *s) { memcpy(d,s,6); }
 static void *kzalloc(size_t n,int flags) { (void)flags;event('A');return failure==1?NULL:calloc(1,n); }
@@ -59,12 +71,12 @@ static bool netif_running(struct net_device *d) { return d->running; }
 static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && rtnl_owned && parent_owned);event('P'); }
 static int wlan_hdd_validate_context(struct hdd_context *h) { assert(h);validations++;event('V');return failure==4?-ENODEV:0; }
 static struct hdd_adapter *hdd_get_adapter(struct hdd_context *h,int mode) { assert(h && mode==17);event('L');return failure==5?(struct hdd_adapter*)1:active; }
-static int osif_vdev_sync_create(struct device *d,struct osif_vdev_sync **s) { assert(d && parent_owned);event('S');if(failure==2)return -ENOMEM;*s=calloc(1,sizeof(**s));return 0; }
-static void osif_vdev_sync_destroy(struct osif_vdev_sync *s) { assert(s && s!=registered);event('D');free(s); }
+static int osif_vdev_sync_create(struct device *d,struct osif_vdev_sync **s) { assert(d && parent_owned && mishare_wonder_host_psoc_busy(expected_psoc));event('S');if(failure==2)return -ENOMEM;*s=calloc(1,sizeof(**s));return 0; }
+static void osif_vdev_sync_destroy(struct osif_vdev_sync *s) { assert(s && s!=registered && mishare_wonder_host_psoc_busy(expected_psoc));event('D');free(s); }
 static void osif_vdev_sync_register(struct net_device *d,struct osif_vdev_sync *s) { assert(d && s && !registered);registered=s;event('R'); }
 static struct osif_vdev_sync *osif_vdev_sync_unregister(struct net_device *d) { assert(d);struct osif_vdev_sync *s=registered;registered=NULL;event('U');return s; }
 static void osif_vdev_sync_wait_for_ops(struct osif_vdev_sync *s) { assert(s && !registered);event('W'); }
-static void hdd_close_adapter(struct hdd_context *h,struct hdd_adapter *a,bool locked) { assert(h && a==active && locked && rtnl_owned);event('C');free(a->dev);free(a->deflink);free(a);active=NULL;closed++; }
+static void hdd_close_adapter(struct hdd_context *h,struct hdd_adapter *a,bool locked) { assert(h && a==active && locked && rtnl_owned);assert(!expected_psoc || mishare_wonder_host_psoc_busy(h->psoc));event('C');free(a->dev);free(a->deflink);free(a);active=NULL;closed++; }
 static void hdd_cleanup_adapter(struct hdd_context *h,struct hdd_adapter *a,bool locked) { hdd_close_adapter(h,a,locked); }
 static void qdf_copy_macaddr(struct qdf_mac_addr *d,const struct qdf_mac_addr *s) { memcpy(d,s,sizeof(*d)); }
 static void ucfg_dp_destroy_intf(void *p,struct qdf_mac_addr *a) { assert(p && !memcmp(a->bytes,mac,6));event('X');dp_destroyed++; }
@@ -83,6 +95,30 @@ int mishare_runtime_ndi_start(struct mishare_runtime_owner *o) { (void)o;return 
 static struct hdd_adapter *__hdd_open_adapter(struct hdd_context *,uint8_t,const char *,tSirMacAddr,unsigned char,bool,struct hdd_adapter_create_param *,bool);
 #endif
 '''
+IDLE_MODELS = r'''
+struct osif_psoc_sync { int dummy; };
+static struct osif_psoc_sync idle_sync;
+static char idle_trace[64];
+static bool idle_trans_failure, idle_open;
+static int idle_stop_result;
+#define QCA_WLAN_IDLE_SHUTDOWN_STARTED 1
+#define QCA_WLAN_IDLE_SHUTDOWN_COMPLETED 2
+static void idle_event(char c) {size_t n=strlen(idle_trace);assert(n+1<sizeof(idle_trace));idle_trace[n]=c;idle_trace[n+1]=0;}
+static void hdd_reg_wait_for_country_change(struct hdd_context *h) {assert(h);idle_event('C');}
+static void wlan_hdd_send_idle_shutdown_event(struct hdd_context *h,int e) {assert(h);idle_event(e==1?'B':'E');}
+static int osif_psoc_sync_trans_start(struct device *d,struct osif_psoc_sync **s) {assert(d && !parent_owned);idle_event('S');if(idle_trans_failure)return -EBUSY;parent_owned=true;*s=&idle_sync;return 0;}
+static void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *s) {assert(s==&idle_sync && parent_owned);idle_event('W');}
+static void osif_psoc_sync_trans_stop(struct osif_psoc_sync *s) {assert(s==&idle_sync && parent_owned);idle_event('T');parent_owned=false;}
+static bool hdd_is_any_interface_open(struct hdd_context *h) {assert(h && parent_owned);idle_event('I');return idle_open;}
+static int hdd_wlan_stop_modules(struct hdd_context *h,bool ftm) {assert(h && parent_owned && !ftm && !mishare_wonder_host_psoc_busy(h->psoc));idle_event('M');return idle_stop_result;}
+NATIVE_IDLE
+static void idle_check(struct hdd_context *h,int rc,const char *trace) {
+ assert(parent_owned && rtnl_owned);parent_owned=false;rtnl_owned=false;idle_trace[0]=0;
+ assert(__hdd_psoc_idle_shutdown(h)==rc && !parent_owned && !strcmp(idle_trace,trace));
+ parent_owned=true;rtnl_owned=true;
+}
+'''
+
 HARNESS = r'''
 static struct hdd_adapter *__hdd_open_adapter(struct hdd_context *h,uint8_t session_type,const char *name,tSirMacAddr address,unsigned char assign,bool locked,struct hdd_adapter_create_param *params,bool mishare_host_only)
 {
@@ -100,7 +136,12 @@ static struct hdd_adapter *factory_rollback(struct hdd_context *hdd_ctx,struct h
 }
 int main(void)
 {
- struct device dev={0};struct wlan_objmgr_pdev pdev={0};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&dev,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;
+ struct device dev={0};struct wlan_objmgr_psoc psoc={0},other_psoc={0};struct wlan_objmgr_pdev pdev={0};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&psoc,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;expected_psoc=&psoc;
+ assert(!mishare_wonder_host_psoc_busy(NULL) && !mishare_wonder_host_psoc_busy(&psoc));
+ idle_check(&h,0,"CBSWIMTE");
+ idle_stop_result=-EIO;idle_check(&h,-EIO,"CBSWIMTE");idle_stop_result=0;
+ idle_open=true;idle_check(&h,-EAGAIN,"CBSWITE");idle_open=false;
+ idle_trans_failure=true;idle_check(&h,-EAGAIN,"CBSE");idle_trans_failure=false;
  assert(mishare_wonder_host_create_locked(&h,mac,NULL)==-EINVAL);
  u8 invalid[6]={1,2,3,4,5,6};assert(mishare_wonder_host_create_locked(&h,invalid,&owner)==-EINVAL);
  assert(mishare_wonder_host_destroy_locked(NULL)==-EINVAL);
@@ -110,13 +151,17 @@ int main(void)
  reset(3);assert(mishare_wonder_host_create_locked(&h,mac,&owner)==-ENODEV && !owner);assert(!strcmp(trace,"PVLASHDF"));
  reset(4);assert(mishare_wonder_host_create_locked(&h,mac,&owner)==-ENODEV && !owner);assert(!strcmp(trace,"PV"));
  reset(5);assert(mishare_wonder_host_create_locked(&h,mac,&owner)==-EBUSY && !owner);assert(!strcmp(trace,"PVL"));
+ assert(!mishare_wonder_host_psoc_busy(&psoc));idle_check(&h,0,"CBSWIMTE");
  reset(0);assert(mishare_wonder_host_create_locked(&h,mac,&owner)==0 && owner && active && registered);assert(!strcmp(trace,"PVLASHR"));
+ assert(mishare_wonder_host_psoc_busy(&psoc) && !mishare_wonder_host_psoc_busy(&other_psoc));
+ idle_check(&h,-EAGAIN,"CBSWTE");
+ struct hdd_context foreign_hdd=h;foreign_hdd.psoc=&other_psoc;idle_check(&foreign_hdd,0,"CBSWIMTE");
  trace[0]=0;assert(mishare_wonder_host_create_locked(&h,mac,&owner)==-EBUSY && trace[0]==0);
  active->dev->running=true;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->dev->running=false;
  active->event_flags=1UL<<DEVICE_IFACE_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->event_flags=0;
  active->deflink->link_flags[0]=1UL<<SME_SESSION_OPENED;assert(mishare_wonder_host_destroy_locked(&owner)==-EBUSY && owner && registered);active->deflink->link_flags[0]=0;
  struct osif_vdev_sync *original=registered, foreign={0};registered=&foreign;
- assert(mishare_wonder_host_destroy_locked(&owner)==-EIO && owner && active && registered==&foreign);registered=original;
+ assert(mishare_wonder_host_destroy_locked(&owner)==-EIO && owner && active && registered==&foreign);idle_check(&h,-EAGAIN,"CBSWTE");registered=original;
  assert(mishare_wonder_host_vdev_create_locked(owner)==-ESHUTDOWN);
  assert(mishare_wonder_host_session_step_locked(owner,5240,1,2)==-ESHUTDOWN);
  assert(mishare_wonder_host_destroy_locked(&owner)==0 && !owner && !active && !registered);
@@ -125,7 +170,7 @@ int main(void)
  assert(!mishare_wonder_host_vdev_create_locked(owner));
  assert(mishare_wonder_host_vdev_create_locked(owner)==-EBUSY);
  runtime_busy=1;
- assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS && owner && active && registered);
+ assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS && owner && active && registered);idle_check(&h,-EAGAIN,"CBSWTE");
  assert(mishare_wonder_host_vdev_destroy_locked(owner)==-EINPROGRESS);
  runtime_busy=0;
  assert(mishare_wonder_host_vdev_destroy_locked(owner)==0);
@@ -133,11 +178,12 @@ int main(void)
  assert(mishare_wonder_host_vdev_create_locked(owner)==-ESHUTDOWN);
  trace[0]=0;assert(mishare_wonder_host_destroy_locked(&owner)==0 && !owner && !active && !registered);assert(!strcmp(trace,"PUWCDF"));
  assert(mishare_wonder_host_destroy_locked(&owner)==0 && runtime_closed==1);
+ assert(!mishare_wonder_host_psoc_busy(&psoc));idle_check(&h,0,"CBSWIMTE");
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
  assert(hdd_mishare_host_only_open(NULL)==-EOPNOTSUPP);
- reset(0);struct hdd_adapter *a=hdd_mishare_host_adapter_open(&h,(u8*)mac);assert(a && active);
+ expected_psoc=NULL;reset(0);struct hdd_adapter *a=hdd_mishare_host_adapter_open(&h,(u8*)mac);assert(a && active);
  trace[0]=0;assert(factory_rollback(&h,a,true,true)==NULL && !active);assert(!strcmp(trace,"CX") && dp_destroyed==1);
  puts("MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY");return 0;
 }
@@ -163,23 +209,28 @@ def run(wlan, output):
         r'^static int hdd_mishare_host_only_open\([^;{]+?\)\s*\{.*?^\}',
     ])
     # Function bodies contain semicolons; match through column-zero closing braces.
-    code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + HARNESS.replace('GUARD',guard).replace('ROLLBACK',rollback)
+    idle = extract(main, r'^static int __hdd_psoc_idle_shutdown\([^;{]+?\)\s*\{.*?^\}')
+    if hashlib.sha256(remove_idle_additions(idle).encode()).hexdigest() != '0d61f49fb96d09d35afb587284e02951aaeb996620ae669cfbacb756f63c6b54':
+        raise ValueError('Unbounded native idle shutdown delta')
+    assert idle.index('osif_psoc_sync_wait_for_ops(') < idle.index('mishare_wonder_host_psoc_busy(') < idle.index('hdd_wlan_stop_modules(') < idle.index('osif_psoc_sync_trans_stop(')
+    code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle) + HARNESS.replace('GUARD',guard).replace('ROLLBACK',rollback)
     production = ROOT/'kernel/popsicle-hdd'
     hashes = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in production.glob('*') if p.is_file()}
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp)
         (d/'fixture.h').write_text(COMMON)
-        for name in ['linux/types.h','linux/etherdevice.h','linux/rtnetlink.h','linux/slab.h','wlan_hdd_main.h','osif_psoc_sync.h','osif_vdev_sync.h']:
+        for name in ['linux/types.h','linux/etherdevice.h','linux/rtnetlink.h','linux/slab.h','linux/spinlock.h','wlan_hdd_main.h','osif_psoc_sync.h','osif_vdev_sync.h']:
             p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('/* declarations supplied by fixture.h */\n')
         source=d/'test.c';source.write_text(code)
         exe=d/'test'
-        subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer',
+        subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-pthread',
                         '-include',str(d/'fixture.h'),'-I'+str(d),'-I'+str(production),str(source),'-o',str(exe)],check=True)
         env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',UBSAN_OPTIONS='halt_on_error=1')
         stdout=subprocess.check_output([exe],text=True,env=env,timeout=10)
     report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
-            'checks':['invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
-            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Not native kernel locking, netdev registration, teardown or radio validation.'}
+            'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),
+            'checks':['complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
+            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. Registry mutexes model spinlocks. This guards only the native idle route under its exclusive transition; it is not an SSR/remove parent lease, native kernel locking, teardown or radio validation.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(stdout,end='')
 
 

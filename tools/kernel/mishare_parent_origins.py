@@ -6,6 +6,8 @@ TAGS = ('cds_dp_close', 'hdd_pdev_close', 'dispatcher_include',
 
 
 def remove_parent_additions(text):
+    from mishare_idle_origins import remove_idle_additions
+    text = remove_idle_additions(text)
     for tag in TAGS:
         pattern = (r'\n/\* MISHARE_PARENT_BEGIN:' + tag +
                    r' \*/\n.*?/\* MISHARE_PARENT_END:' + tag + r' \*/\n')
