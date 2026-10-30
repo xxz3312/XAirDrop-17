@@ -1,6 +1,6 @@
 --- a/qcacld-3.0/core/wma/src/wma_dev_if.c
 +++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
-@@ -7802,3 +7802,156 @@
+@@ -7802,3 +7802,154 @@
   return 0;
  }
  /* MISHARE_END:radio_wma */
@@ -65,7 +65,6 @@
 +                                     struct mishare_ndi_reset_context_result *result)
 +{
 + tp_wma_handle wma;
-+ struct vdev_mlme_obj *m;
 + struct wma_txrx_node *iface;
 + struct wlan_objmgr_psoc *psoc;
 + struct wlan_objmgr_peer *peer;
@@ -80,7 +79,6 @@
 +  return ret;
 + wma = cds_get_context(QDF_MODULE_ID_WMA);
 + psoc = wlan_vdev_get_psoc(vdev);
-+ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
 + id = wlan_vdev_get_id(vdev);
 + mac = wlan_vdev_mlme_get_macaddr(vdev);
 + iface = &wma->interfaces[id];
