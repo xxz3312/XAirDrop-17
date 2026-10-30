@@ -1,6 +1,6 @@
 --- a/qcacld-3.0/core/wma/src/wma_dev_if.c
 +++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
-@@ -7802,3 +7802,98 @@
+@@ -7802,3 +7802,112 @@
   return 0;
  }
  /* MISHARE_END:radio_wma */
@@ -16,6 +16,7 @@
 + struct wlan_objmgr_peer *peer;
 + void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 + uint8_t id, *mac;
++ uint16_t peers;
 + bool same;
 +
 + if (!vdev || !wma || !dp_cookie || !cds_is_driver_recovering() ||
@@ -37,6 +38,11 @@
 +     !wma_mishare_pas_ndi(vdev, iface->type) || iface->sub_type ||
 +     iface->peer_count != 1 || iface->del_staself_req || iface->is_del_sta_deferred ||
 +     qdf_atomic_read(&iface->bss_status) != WMA_BSS_STATUS_STOPPED)
++  return -EUCLEAN;
++ wlan_vdev_obj_lock(vdev);
++ peers = wlan_vdev_get_peer_count(vdev);
++ wlan_vdev_obj_unlock(vdev);
++ if (peers != 1)
 +  return -EUCLEAN;
 + /* no_fw alone may take an asynchronous unmap-confirm path. Only the
 +  * native force-detach branch without WMI confirmation is admitted here. */
@@ -64,6 +70,7 @@
 + struct wlan_objmgr_psoc *psoc;
 + struct wlan_objmgr_peer *peer;
 + uint8_t id, *mac;
++ uint16_t peers;
 + int ret;
 + if (!result)
 +  return -EINVAL;
@@ -88,6 +95,13 @@
 + /* Logical peer delete is observed, not physical final-free. The DP and
 +  * object-manager VDEV final-free callbacks still gate host retirement. */
 + result->peer_released = true;
++ /* Component destructors run at physical peer destruction, not logical
++  * delete. A delayed peer remains on the VDEV list: retain its context. */
++ wlan_vdev_obj_lock(vdev);
++ peers = wlan_vdev_get_peer_count(vdev);
++ wlan_vdev_obj_unlock(vdev);
++ if (peers)
++  return -EUCLEAN;
 + ret = mishare_ndi_wma_unbind(vdev);
 + if (ret)
 +  return ret;

@@ -31,7 +31,7 @@ static bool cdp_cfg_get_peer_unmap_conf_support(void *s);
 struct peer_flush_params {uint32_t peer_tid_bitmap;uint8_t vdev_id;};
 struct peer_delete_cmd_params {uint8_t vdev_id;bool is_mlo_link_switch;};
 static unsigned reset_peer_ops,reset_force_detaches,reset_obj_deletes,reset_wmi_calls;
-static bool reset_obj_failure,reset_slot_drift;
+static bool reset_obj_failure,reset_slot_drift,reset_peer_delayed;
 static void *reset_peer_get_context(int id) {assert(id==3);return wma_context.psoc;}
 static void wma_peer_tbl_trans_add_entry(struct wlan_objmgr_peer *p,bool add,void *ctx) {assert(p==&ctx_peer && !add && !ctx && !reset_peer_ops && !timers_live);reset_peer_ops++;}
 static void cdp_peer_teardown(void *s,uint8_t id,uint8_t *mac) {assert(s==wma_context.psoc && id==7 && mac && reset_peer_ops==1);reset_peer_ops++;}
@@ -45,7 +45,7 @@ static QDF_STATUS wmi_unified_peer_flush_tids_send(void *w,uint8_t *mac,struct p
 static QDF_STATUS wmi_unified_peer_delete_send(void *w,uint8_t *mac,struct peer_delete_cmd_params *p) {(void)w;(void)mac;(void)p;reset_wmi_calls++;assert(!"WMI_ON_RESET_PATH");return QDF_STATUS_E_FAILURE;}
 static void wlan_release_peer_key_wakelock(struct wlan_objmgr_vdev *v,uint8_t *mac) {assert(v==ctx_peer.vdev && mac && v->mlme->ext_vdev_ptr && reset_peer_ops==3);reset_peer_ops++;}
 static struct wlan_objmgr_peer *wlan_objmgr_get_peer(struct wlan_objmgr_psoc *p,uint8_t id,uint8_t *mac,int ref) {assert(p==wma_context.psoc && !id && mac && ref==3);return ctx_peer_present?&ctx_peer:NULL;}
-static QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *p) {assert(p==&ctx_peer && reset_peer_ops==4);reset_peer_ops++;reset_obj_deletes++;if(reset_obj_failure)return QDF_STATUS_E_FAILURE;ctx_peer_present=false;if(reset_slot_drift)wma_context.interfaces[7].bss_status=99;return QDF_STATUS_SUCCESS;}
+static QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *p) {assert(p==&ctx_peer && reset_peer_ops==4);reset_peer_ops++;reset_obj_deletes++;if(reset_obj_failure)return QDF_STATUS_E_FAILURE;ctx_peer_present=false;if(!reset_peer_delayed)ctx_reset_peer_count--;if(reset_slot_drift)wma_context.interfaces[7].bss_status=99;return QDF_STATUS_SUCCESS;}
 #define cds_get_context reset_peer_get_context
 NATIVE_OBJ_PEER_REMOVE
 NATIVE_PEER_REMOVE
@@ -55,7 +55,7 @@ NATIVE_PEER_REMOVE
 HARNESS = r'''
 static void reset_prepared_test(void) {
  reset_recovery();reset_peer_ops=reset_force_detaches=reset_obj_deletes=reset_wmi_calls=0;
- reset_obj_failure=reset_slot_drift=false;ctx_reset_force_supported=true;ctx_reset_unmap_conf=false;
+ reset_obj_failure=reset_slot_drift=reset_peer_delayed=false;ctx_reset_force_supported=true;ctx_reset_unmap_conf=false;
 }
 int main(void) {
  struct mishare_runtime_owner *o=NULL;
@@ -85,7 +85,7 @@ int main(void) {
  native_recovery_close();wlan_objmgr_vdev_release_ref(held,1);
  assert(!mishare_runtime_reclaim_ndi(&o) && !o && !allocations && !ctx_locks);
  /* Preflight failures never enter native teardown; all cases stay held. */
- for(int fault=0;fault<15;fault++) {
+ for(int fault=0;fault<16;fault++) {
   reset_prepared_test();pid_t child=fork();assert(child>=0);
   if(!child) {
    o=prepared();stop_recovery(o);
@@ -105,6 +105,7 @@ int main(void) {
    if(fault==12)recovery_cancel_drift=true;
    if(fault==13)recovery_missing_timer=true;
    if(fault==14)response_timer.rt_lock.is_lock_acquired=true;
+   if(fault==15)ctx_reset_peer_count=2;
    assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o && !reset_peer_ops && !reset_force_detaches && !dp_detaches && !recovery_timer_frees);
    assert(state(o).ndi.legacy_ready && state(o).ndi.wma_bound && state(o).ndi.peer_created);
    assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_peer_ops && !reset_wmi_calls);_Exit(0);
@@ -112,10 +113,10 @@ int main(void) {
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
  /* After native mutation, an error is sticky and partial facts survive. */
- for(int fault=0;fault<2;fault++) {
+ for(int fault=0;fault<3;fault++) {
   reset_prepared_test();pid_t child=fork();assert(child>=0);
   if(!child) {
-   o=prepared();stop_recovery(o);reset_obj_failure=fault==0;reset_slot_drift=fault==1;
+   o=prepared();stop_recovery(o);reset_obj_failure=fault==0;reset_slot_drift=fault==1;reset_peer_delayed=fault==2;
    assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o && state(o).recovery_error);
    assert(reset_force_detaches==1 && reset_obj_deletes==1 && !reset_wmi_calls &&  !dp_detaches && recovery_timer_frees==1);
    assert(state(o).ndi.peer_created==(fault==0) && state(o).ndi.wma_bound && state(o).ndi.legacy_ready);
@@ -189,7 +190,7 @@ def audit(root):
             'native_sha256':{WMA:hashlib.sha256((root/WMA).read_bytes()).hexdigest()},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h']},
             'negative_control_no_fw_false_attempts_wmi_and_is_rejected':True,
-            'checks':['actual native wma_remove_peer no-FW force-detach branch and native object-peer remove execute', 'actual batch dispatch accepts the qualified prepared owner', 'inline and deferred DP completion precede actual object final-free', 'external final-free reference retains owner beyond native window closure', '15 capability/identity/state/history/timer preflight failures retain all owned context', 'partial native failure publishes resource facts, sticks error and never retries', 'PE/START/UP owners remain unsupported', 'no peer/VDEV firmware delete or ordinary DELETE ACK flag fabricated'],
+            'checks':['actual native wma_remove_peer no-FW force-detach branch and native object-peer remove execute', 'actual batch dispatch accepts the qualified prepared owner', 'inline and deferred DP completion precede actual object final-free', 'external final-free reference retains owner beyond native window closure', '16 capability/identity/state/history/timer/physical-peer-count preflight failures retain all owned context', 'delayed physical peer destruction retains WMA/legacy context', 'partial native failure publishes resource facts, sticks error and never retries', 'PE/START/UP owners remain unsupported', 'no peer/VDEV firmware delete or ordinary DELETE ACK flag fabricated'],
             'limitations':'Production runtime and native WMA removal/helper code with modeled DP force detach, object-peer deletion, native synchronization, WMI transports and physical parents. Existing native timer/DP wrapper and object-manager final-free are included; actual peer/vdev hardware refcounts and kernel races are not certified. Only fully prepared pre-PE INIT is added. No automatic shutdown coordinator, parent lease, PE/UP reset recovery or phone/RF certification; backend stays disabled.'}
 
 

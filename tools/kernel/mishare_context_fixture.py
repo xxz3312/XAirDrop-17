@@ -58,6 +58,7 @@ static struct wma_target_req *ctx_pending;
 static int ctx_stage,ctx_fail_at,ctx_locks,ctx_requests,ctx_create_calls,ctx_delete_calls,ctx_dp_acks,ctx_recoveries;
 static bool ctx_alloc_fail,ctx_peer_present,ctx_queue_fail,ctx_early_reply,ctx_early_timeout,ctx_send_error,ctx_create_error;
 static bool ctx_reset_force_supported,ctx_reset_unmap_conf;
+static unsigned ctx_reset_peer_count;
 static void ctx_fw_origin(struct wma_target_req *);
 static void ctx_timeout_origin(struct wma_target_req *);
 static QDF_STATUS ctx_step(void) {return ++ctx_stage==ctx_fail_at?QDF_STATUS_E_FAILURE:QDF_STATUS_SUCCESS;}
@@ -91,7 +92,7 @@ static struct wlan_objmgr_vdev *wlan_peer_get_vdev(struct wlan_objmgr_peer *p) {
 static void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *p,int id) {assert(p && id==3);}
 static QDF_STATUS wma_create_peer(tp_wma_handle w,u8 *mac,void *unused,int type,u8 id,void *mld,bool assoc) {
  assert(w==&wma_context && mac && !unused && !type && id==7 && !mld && !assoc);ctx_create_calls++;
- ctx_peer_present=true;ctx_peer.vdev=w->interfaces[id].vdev;w->interfaces[id].peer_count++;
+ ctx_peer_present=true;ctx_peer.vdev=w->interfaces[id].vdev;w->interfaces[id].peer_count++;ctx_reset_peer_count++;
  return ctx_create_error?QDF_STATUS_E_FAILURE:QDF_STATUS_SUCCESS;
 }
 static void wma_acquire_wakelock(int *p,int time) {assert(time==30 && !*p);*p=1;}
@@ -120,7 +121,7 @@ static void reset_context(void) {
  memset(&wma_context,0,sizeof(wma_context));wma_context.psoc=&psoc;wma_context.max_bssid=32;wma_context.wmi_handle=&wmi;
  ctx_stage=ctx_fail_at=ctx_create_calls=ctx_delete_calls=ctx_dp_acks=ctx_recoveries=0;
  ctx_alloc_fail=ctx_peer_present=ctx_queue_fail=ctx_early_reply=ctx_early_timeout=ctx_send_error=ctx_create_error=false;
- ctx_reset_force_supported=ctx_reset_unmap_conf=false;
+ ctx_reset_force_supported=ctx_reset_unmap_conf=false;ctx_reset_peer_count=0;
 }
 static void context_end(struct mishare_runtime_owner **o) {
  assert(mishare_runtime_destroy(o)==-EINPROGRESS && ctx_delete_calls==1 && !wire_deletes && !dp_detaches);

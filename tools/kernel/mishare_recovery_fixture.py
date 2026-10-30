@@ -13,6 +13,9 @@ WMI='qca-wifi-host-cmn/wmi/src/wmi_unified.c'
 DP='qca-wifi-host-cmn/dp/wifi3.0/dp_main.c'
 BASE={CDS:'6d3d5066c16ad68f23a80247ada0aca2149c83b7b0cdc30810bb83f2a3584d84',TIMER:'de9ae1bee934653e908c504b57b9e5a94da37e0b1b6f5fbee03b92c1834b86a0',DISP:'5eb7b61812b8f4f4a4977691b6b433ff953cb47fba74291498d3848d52b10079'}
 MODELS=r'''
+static void wlan_vdev_obj_lock(struct wlan_objmgr_vdev *v) {assert(!v->vdev_lock);v->vdev_lock=1;}
+static void wlan_vdev_obj_unlock(struct wlan_objmgr_vdev *v) {assert(v->vdev_lock);v->vdev_lock=0;}
+static unsigned wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *v) {assert(v==ctx_peer.vdev && v->vdev_lock);return ctx_reset_peer_count;}
 static bool is_cdp_peer_detach_force_delete_supported(void *s) {assert(s==wma_context.psoc);return ctx_reset_force_supported;}
 static bool cdp_cfg_get_peer_unmap_conf_support(void *s) {assert(s==wma_context.psoc);return ctx_reset_unmap_conf;}
 #define QDF_MODULE_ID_HIF 2
