@@ -126,6 +126,9 @@ int main(void)
  assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS && owner && active && registered);
  assert(mishare_wonder_host_vdev_destroy_locked(owner)==-EINPROGRESS);
  runtime_busy=0;
+ assert(mishare_wonder_host_vdev_destroy_locked(owner)==0);
+ assert(mishare_wonder_host_session_step_locked(owner,5240,1,2)==-ESHUTDOWN);
+ assert(mishare_wonder_host_vdev_create_locked(owner)==-ESHUTDOWN);
  trace[0]=0;assert(mishare_wonder_host_destroy_locked(&owner)==0 && !owner && !active && !registered);assert(!strcmp(trace,"PUWCDF"));
  assert(mishare_wonder_host_destroy_locked(&owner)==0 && runtime_closed==1);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */

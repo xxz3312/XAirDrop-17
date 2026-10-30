@@ -108,6 +108,8 @@ int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
         return -EINVAL;
     ASSERT_RTNL();
     osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    if (host->session.closing)
+        return -ESHUTDOWN;
     ret = wlan_hdd_validate_context(host->hdd);
     if (ret)
         return ret;

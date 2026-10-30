@@ -172,6 +172,7 @@ def setup(work):
 
 def check_mishare_host_symbols(work, module, report_name):
     names = ['mishare_wonder_host_create_locked', 'mishare_wonder_host_destroy_locked',
+             'mishare_wonder_host_session_step_locked',
              'hdd_mishare_host_adapter_open', 'mishare_wonder_backend_register',
              'mishare_wonder_backend_unregister', 'mishare_vdev_txn_init',
              'mishare_vdev_txn_begin', 'mishare_vdev_txn_submitted',
