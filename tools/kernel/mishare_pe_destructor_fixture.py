@@ -17,6 +17,7 @@ from mishare_recovery_fixture import function
 
 ROOT = pe.ROOT
 UTILS = 'qcacld-3.0/core/mac/src/pe/lim/lim_utils.c'
+AUTH = 'qcacld-3.0/core/mac/src/pe/lim/lim_process_auth_frame.c'
 FIELDS = r'''
 struct sDphHashNode {unsigned payload;};
 typedef void *tpSirAssocReq;
@@ -43,6 +44,7 @@ unsigned probeRespDataLen,assocRespDataLen,probeRespBCNDataLen;} add_ie_params;
 MODELS = r'''
 /* The shared context model defines this after the PE transport block. */
 static void qdf_mem_zero(void *p,size_t n);
+static void mlme_free_sae_auth_retry(struct wlan_objmgr_vdev *v);
 #define pe_debug(...) ((void)0)
 #define pe_err(...) ((void)0)
 #define CFG_AUTH_FAILURE_TIMEOUT 1
@@ -71,7 +73,8 @@ static bool cfg_in_range(int cfg,unsigned n) {assert(cfg==1);return n<=100;}
 static unsigned cfg_default(int cfg) {assert(cfg==1);return 50;}
 static bool tx_timer_running(TX_TIMER *t) {return t->running;}
 static void tx_timer_deactivate(TX_TIMER *t) {assert(t->running);t->running=false;pe_timer_stops++;}
-static void lim_sae_auth_cleanup_retry(struct mac_context *m,unsigned id) {assert(m==&pe_mac && id==7);pe_cleanup_calls++;}
+#define eLIM_AUTH_RETRY_TIMER 1
+static void lim_deactivate_and_change_timer(struct mac_context *m,unsigned timer) {(void)m;(void)timer;assert(!"FOREIGN_AUTH_TIMER_MUTATION");}
 static struct pe_session *lim_get_concurrent_session(struct mac_context *m,unsigned id,unsigned mode) {(void)m;(void)id;(void)mode;assert(!"OTHER_SESSION_LOOKUP_ON_PAS");return NULL;}
 static void wlan_set_tpc_update_required_for_sta(struct wlan_objmgr_vdev *v,bool b) {(void)v;(void)b;assert(!"OTHER_SESSION_TPC_WRITE_ON_PAS");}
 static void mlme_set_mbssid_info(struct wlan_objmgr_vdev *v,struct scan_mbssid_info *info,unsigned chan) {assert(v==last_vdev && info && !chan && v->mlme->ext_vdev_ptr);pe_mbssid_calls++;}
@@ -103,6 +106,7 @@ NATIVE_MBSSID
 NATIVE_PMF
 NATIVE_FILTER
 NATIVE_POWER
+NATIVE_SAE
 #define qdf_mem_free pe_heap_free
 #define wlan_objmgr_vdev_release_ref pe_native_release_ref
 NATIVE_DELETE
@@ -176,6 +180,7 @@ def fixture(root):
     old = function(src, 'pe_delete_session')
     model = MODELS.replace('NATIVE_MBSSID', function(native, 'lim_clear_mbssid_info')).replace('NATIVE_PMF', function(native, 'lim_clear_pmfcomeback_timer'))
     model = model.replace('NATIVE_FILTER', function(native, 'lim_reset_bcn_probe_filter')).replace('NATIVE_POWER', function((root/UTILS).read_text(), 'lim_cleanup_power_change'))
+    model = model.replace('NATIVE_SAE', function((root/AUTH).read_text(), 'lim_sae_auth_cleanup_retry'))
     model = model.replace('NATIVE_DELETE', function(native, 'pe_delete_session').replace('void pe_delete_session(', 'static void native_pe_delete_session(', 1))
     src = src.replace(old, model, 1)
     # Creation is still modeled. Initialize the real destructor's required
@@ -206,27 +211,36 @@ def audit(root):
         env = {**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'}
         out = subprocess.check_output([exe],text=True,timeout=45,env=env)
         needle = 'wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);'
-        assert source.count(needle) == 1
+        destructor = function(source,'native_pe_delete_session')
+        assert destructor.count(needle) == 1
         # Keep the model callback referenced so -Werror cannot turn the
         # deliberate lost release into an unrelated unused-function failure.
-        c.write_text(source.replace(needle, '(void)pe_native_release_ref; (void)vdev; /* negative: lost native MAC ref */', 1))
+        lost_ref = destructor.replace(needle, '(void)pe_native_release_ref; (void)vdev; /* negative: lost native MAC ref */', 1)
+        c.write_text(source.replace(destructor,lost_ref,1))
         subprocess.run(command,check=True)
         bad = subprocess.run([exe],capture_output=True,text=True,timeout=45,env=env)
         assert bad.returncode == -6 and 'pe_heap_release_probe' in bad.stderr
+        guard = 'if (session->bssType != eSIR_MISHARE_PAS_MODE)'
+        assert source.count(guard) == 1
+        c.write_text(source.replace(guard, 'if (true) /* negative: ordinary shared auth cleanup on PAS */', 1))
+        subprocess.run(command,check=True)
+        bad = subprocess.run([exe],capture_output=True,text=True,timeout=45,env=env)
+        assert bad.returncode == -6 and 'FOREIGN_AUTH_TIMER_MUTATION' in bad.stderr
     assert out.strip() == 'MISHARE_NATIVE_PAS_PE_DESTRUCTOR_FIXTURE_PASS_ONLY'
     native = (root/pe.SESSION).read_text()
     return {'status':out.strip(),'source_commit':pe.PIN,
             'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),
-            'native_sha256':{path:hashlib.sha256((root/path).read_bytes()).hexdigest() for path in [pe.SESSION,UTILS]},
-            'native_function_sha256':{name:hashlib.sha256(function((root/path).read_text(),name).encode()).hexdigest() for path,names in [(pe.SESSION,['pe_delete_session','lim_clear_mbssid_info','lim_clear_pmfcomeback_timer','lim_reset_bcn_probe_filter']),(UTILS,['lim_cleanup_power_change'])] for name in names},
+            'native_sha256':{path:hashlib.sha256((root/path).read_bytes()).hexdigest() for path in [pe.SESSION,UTILS,AUTH]},
+            'native_function_sha256':{name:hashlib.sha256(function((root/path).read_text(),name).encode()).hexdigest() for path,names in [(pe.SESSION,['pe_delete_session','lim_clear_mbssid_info','lim_clear_pmfcomeback_timer','lim_reset_bcn_probe_filter']),(UTILS,['lim_cleanup_power_change']),(AUTH,['lim_sae_auth_cleanup_retry'])] for name in names},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h']},
             'negative_control_missing_MAC_ref_release_rejected':True,
+            'negative_control_PAS_shared_auth_cleanup_rejected':True,
             'checks':['existing production owner PE queue/flush/identity regressions execute native destructor',
                       'all modeled optional session allocations released exactly once; borrowed DPH array zeroed without free',
                       'native session invalidation and memory cleanup precede final MAC VDEV ref release',
                       'only matching running confirmation timers stopped; timeout zero/in-range/default branches',
                       'PAS avoids AP/STA timers, preserves STA/SAP filters and never looks up or mutates concurrent power state; invalid and NULL sessions are no-ops'],
-            'limitations':'Actual native destructor, MBSSID, PMF, beacon filter and power cleanup dispatch execute with production runtime and owned MC helpers. PE allocation, remaining destructor cleanup callees, timer operations, scheduler, synchronization and object parents remain modeled. Ordinary live-MC cleanup only; no PE SSR/reset authorization, native parent lease, backend activation, phone/firmware/RF or AirDrop proof.'}
+            'limitations':'Actual patched native destructor, SAE, MBSSID, PMF, beacon filter and power cleanup dispatch execute with production runtime and owned MC helpers. PE allocation, remaining destructor cleanup callees, timer operations, scheduler, synchronization and object parents remain modeled. Ordinary live-MC cleanup only; no PE SSR/reset authorization, native parent lease, backend activation, phone/firmware/RF or AirDrop proof.'}
 
 
 if __name__ == '__main__':

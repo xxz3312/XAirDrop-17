@@ -1,0 +1,15 @@
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_session.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_session.c
+@@ -863,7 +863,11 @@
+ 		 QDF_MAC_ADDR_REF(session->bssId));
+ 
+ 	lim_reset_bcn_probe_filter(mac_ctx, session);
+-	lim_sae_auth_cleanup_retry(mac_ctx, session->vdev_id);
++/* MISHARE_BEGIN:pe_sae_guard */
++	/* Private PAS never authenticates; leave the shared STA auth timer alone. */
++	if (session->bssType != eSIR_MISHARE_PAS_MODE)
++		lim_sae_auth_cleanup_retry(mac_ctx, session->vdev_id);
++/* MISHARE_END:pe_sae_guard */
+ 	lim_cleanup_power_change(mac_ctx, session);
+ 	lim_clear_mbssid_info(session->vdev);
+ 

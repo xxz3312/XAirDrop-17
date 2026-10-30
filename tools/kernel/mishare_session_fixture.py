@@ -13,12 +13,21 @@ from popsicle_backend_audit import PIN
 ROOT=Path(__file__).resolve().parents[2]
 API='qcacld-3.0/core/mac/src/pe/lim/lim_api.c'
 SESSION='qcacld-3.0/core/mac/src/pe/lim/lim_session.c'
+PE_SAE_GUARD = '''/* MISHARE_BEGIN:pe_sae_guard */
+\t/* Private PAS never authenticates; leave the shared STA auth timer alone. */
+\tif (session->bssType != eSIR_MISHARE_PAS_MODE)
+\t\tlim_sae_auth_cleanup_retry(mac_ctx, session->vdev_id);
+/* MISHARE_END:pe_sae_guard */'''
 BASE={'qcacld-3.0/core/mac/inc/sir_api.h': '9fb44b38354e76b381684dd4c58a59b65512cba78b1b9a0e6f717cc814173534', 'qcacld-3.0/core/mac/src/pe/include/lim_global.h': '0bcd7f9f7c0a08ef2f882e838d0f24a05a73b222991529565e9bfebd55636256', 'qcacld-3.0/core/mac/src/pe/include/lim_session.h': 'dca4ab4eb5403f4e1c92e899eb05ffd26f283a799f99c8025414075b8a99765c', 'qcacld-3.0/core/mac/src/pe/lim/lim_session.c': 'c9f55bb5ffd34a6d1259c2a920efab9c2c2ee10bd7b7d005e58b5eda8bd958be', 'qcacld-3.0/core/mac/src/pe/lim/lim_api.c': 'a197a9fa7b615060d16a1c89319c0f023cef6adb8504e0533ff4449589310fb9'}
 
 def source_guard(root):
     from mishare_shutdown_origins import remove_shutdown_additions
     for name,h in BASE.items():
         s=remove_shutdown_additions((root/name).read_text())
+        if name==SESSION:
+            if s.count(PE_SAE_GUARD)!=1:
+                raise ValueError('Private PAS SAE guard changed or missing')
+            s=s.replace(PE_SAE_GUARD,'\tlim_sae_auth_cleanup_retry(mac_ctx, session->vdev_id);',1)
         s=re.sub(r'\n/\* MISHARE_BEGIN:\w+ \*/\n.*?/\* MISHARE_END:\w+ \*/\n','',s,flags=re.S)
         if name==API:
             s=s.replace('#include "wlan_hdd_mishare_ndi.h"\n#include <linux/errno.h>\n#include "scheduler_api.h"\n','')

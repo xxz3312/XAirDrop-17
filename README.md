@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0071 原生 PE 析构验证](docs/POPSICLE-NATIVE-PE-DESTRUCTOR-0071.md)。补齐既有 PE 测试简化析构的缺口，执行原生完整析构并检查内存、定时器和 MAC VDEV 引用顺序，C 模型与完整 CI 待验证。0070 的显式 SSR 回收仍只覆盖 pre-PE INIT；自动 shutdown 协调、PE/UP 回收与完整 monitor 仍未完成，无线 init 未启用，手机无需操作。完整状态见 [进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0071 PAS 认证定时器隔离与原生 PE 析构验证](docs/POPSICLE-NATIVE-PE-DESTRUCTOR-0071.md)。修复私有 PAS 删除触及共享 SAE 认证定时器的问题，并补齐既有 PE 测试简化析构的缺口，执行原生完整析构并检查内存、定时器和 MAC VDEV 引用顺序，C 模型与完整 CI 待验证。0070 的显式 SSR 回收仍只覆盖 pre-PE INIT；自动 shutdown 协调、PE/UP 回收与完整 monitor 仍未完成，无线 init 未启用，手机无需操作。完整状态见 [进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
