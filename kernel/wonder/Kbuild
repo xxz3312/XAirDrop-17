@@ -11,7 +11,7 @@ obj-m += wonder.o
 # The GKI /proc/config.gz has CFG80211 disabled and omits these ABI switches.
 # Keep the override local to Wonder; never rewrite the running kernel config.
 ifeq ($(POPSICLE_STOCK_MAC80211_ABI),1)
-ccflags-y += -DCONFIG_NL80211_TESTMODE=1
+ccflags-y += -DCONFIG_NL80211_TESTMODE=1 -DWONDER_PRIVATE_MANAGED_PROVIDER=1
 ccflags-y += -include $(src)/popsicle_mac80211_abi.h
 endif
 

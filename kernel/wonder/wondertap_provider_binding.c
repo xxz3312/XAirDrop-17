@@ -3,7 +3,18 @@
 #include <linux/module.h>
 #include "wondertap_internal.h"
 
-#define MANAGED_CONTROL_SYMBOL "opairshare_wonder_managed_control"
+/* Target GKI does not export __symbol_get/put. The popsicle build uses a
+ * normal module dependency on the private provider; generic builds keep the
+ * original synchronous interface with no provider dependency.
+ */
+static wondertap_provider_control_fn wondertap_control_get(void)
+{
+#ifdef WONDER_PRIVATE_MANAGED_PROVIDER
+	return opairshare_wonder_managed_control;
+#else
+	return NULL;
+#endif
+}
 
 static int wondertap_provider_quiesce(void *cookie)
 {
@@ -17,12 +28,11 @@ int wondertap_provider_bind(struct wondertap_data *w, const void *priv)
 	const struct wondertap_managed_ops *managed = NULL;
 	int ret;
 
-	control = (wondertap_provider_control_fn)__symbol_get(MANAGED_CONTROL_SYMBOL);
+	control = wondertap_control_get();
 	if (!control)
 		return wondertap_activate_legacy(w);
 	ret = control(WONDERTAP_PROVIDER_QUERY, priv, NULL, NULL, &managed);
 	if (ret == -EOPNOTSUPP) {
-		__symbol_put(MANAGED_CONTROL_SYMBOL);
 		return wondertap_activate_legacy(w);
 	}
 	if (ret)
@@ -44,9 +54,8 @@ int wondertap_provider_bind(struct wondertap_data *w, const void *priv)
 	}
 	w->managed_provider_control = control;
 	w->managed_provider_priv = priv;
-	return 0; /* Retain the provider symbol/module reference until RELEASE. */
+	return 0; /* The loader holds the strong private provider dependency. */
 put:
-	__symbol_put(MANAGED_CONTROL_SYMBOL);
 	return ret;
 }
 
@@ -66,6 +75,5 @@ int wondertap_provider_unbind(struct wondertap_data *w)
 		return ret;
 	w->managed_provider_control = NULL;
 	w->managed_provider_priv = NULL;
-	__symbol_put(MANAGED_CONTROL_SYMBOL);
 	return 0;
 }

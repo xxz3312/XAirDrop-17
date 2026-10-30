@@ -53,8 +53,7 @@ struct component_ops {
  void (*unbind)(struct device *,struct device *,void *);
 };
 static int component_error, master_bound, component_live, component_adds, component_dels;
-static int symbol_available=1, lookup_missing;
-static struct module provider_module;
+static int lookup_missing;
 static struct device master_dev={.name="wonder"};
 static void *dev_get_drvdata(struct device *d) {return d->drvdata;}
 static const char *dev_name(struct device *d) {return d->name;}
@@ -70,8 +69,6 @@ static int component_add(struct device *,const struct component_ops *);
 static void component_del(struct device *,const struct component_ops *);
 static int component_bind_all(struct device *,void *);
 static void component_unbind_all(struct device *,void *);
-void *__symbol_get(const char *);
-void __symbol_put(const char *);
 '''
 HARNESS = r'''
 #include "provider/provider.c"
@@ -137,13 +134,9 @@ static void component_del(struct device *dev,const struct component_ops *ops)
  if(master_bound){wonder_master_unbind(&master_dev);master_bound=0;}
  component_live=0;
 }
-void *__symbol_get(const char *name)
-{assert(!strcmp(name,MANAGED_CONTROL_SYMBOL));if(!symbol_available)return NULL;provider_module.refs++;return (void *)opairshare_wonder_managed_control;}
-void __symbol_put(const char *name)
-{assert(!strcmp(name,MANAGED_CONTROL_SYMBOL) && provider_module.refs>0);provider_module.refs--;}
 static void prepare(void)
 {
- assert(!provider_module.refs && !backend_module.refs && !self_module.refs);
+ assert(!backend_module.refs && !self_module.refs);
  memset(&instance,0,sizeof(instance));g_wonder=&instance;instance.hw=&instance;
  struct wondertap_data *w=&instance.wondertap_data;wondertap_prep(w);
  w->ver=WONDER_VERSION_1_5_1;
@@ -175,10 +168,10 @@ int main(void)
  assert(mishare_wonder_backend_register(&h)==-ENODEV && !active_priv && !w->managed_bound);
  lookup_missing=0;
  backend_module.deny=true;
- assert(mishare_wonder_backend_register(&h)!=0 && !active_priv && !provider_module.refs);
+ assert(mishare_wonder_backend_register(&h)!=0 && !active_priv);
  backend_module.deny=false;
  assert(mishare_wonder_backend_register(&h)==0 && w->managed_bound && !w->managed_quiescing);
- assert(claim_cookie==w && claim_quiesce && provider_module.refs==1 && backend_module.refs==1);
+ assert(claim_cookie==w && claim_quiesce && backend_module.refs==1);
  assert(w->managed.ops==&mishare_backend_ops && w->managed.owner==&backend_module);
  assert(wondertap_init(w,&params)==-EOPNOTSUPP && !w->vendor_handle && !self_module.refs);
  assert(mishare_wonder_backend_register(&h)==0);
@@ -186,14 +179,14 @@ int main(void)
  assert(mishare_wonder_backend_unregister(&wrong)==0 && active_priv);
  assert(opairshare_wonder_managed_control(WONDERTAP_PROVIDER_RELEASE,active_priv,&wrong,NULL,NULL)==-ENOENT);
  assert(mishare_wonder_backend_unregister(&h)==0 && !active_priv && !active_managed && !claim_cookie);
- assert(!w->managed_bound && !w->managed_provider_control && !provider_module.refs && !backend_module.refs);
+ assert(!w->managed_bound && !w->managed_provider_control && !backend_module.refs);
  assert(wondertap_init(w,&params)==-ESHUTDOWN); /* No reopen between preflight and component detach. */
  /* Rebinding opens only after the new claim has been accepted. */
  assert(mishare_wonder_backend_register(&h)==0 && !w->managed_quiescing);
  assert(mishare_wonder_backend_unregister(&h)==0);
  /* Legacy descriptor uses the unchanged registration API and no module pin. */
  prepare();assert(opairshare_set_wonder_priv_data(&mishare_backend_priv)==0);
- assert(!w->managed_bound && !w->managed_quiescing && !provider_module.refs);
+ assert(!w->managed_bound && !w->managed_quiescing);
  assert(opairshare_set_wonder_priv_data(NULL)==0);
  /* Busy fake radio owns the same real transport/core, never a firmware fake. */
  prepare();assert(opairshare_set_wonder_managed_priv_data(&fake_priv,&fake_managed)==0);
@@ -217,12 +210,11 @@ int main(void)
  assert(opairshare_set_wonder_priv_data(NULL)==-EBUSY && component_dels==dels);
  stop_pending=0;assert(wondertap_retire(w)==0 && !self_module.refs);
  assert(opairshare_set_wonder_priv_data(NULL)==0 && component_dels==dels+1 && !claim_cookie);
- assert(!provider_module.refs && !backend_module.refs);
+ assert(!backend_module.refs);
  wonder_mac80211_exit();assert(!g_wonder && ssr_exits==1 && feature_exits==1 && hw_frees==1);
- /* Old providers without the private symbol remain usable. */
- prepare();symbol_available=0;
- assert(opairshare_set_wonder_priv_data(&mishare_backend_priv)==0 && !w->managed_bound);
- assert(opairshare_set_wonder_priv_data(NULL)==0);symbol_available=1;
+ /* Legacy recovery excludes a new binding for the whole exit/init window. */
+ prepare();assert(opairshare_set_wonder_priv_data(&mishare_backend_priv)==0);
+ assert(opairshare_set_wonder_priv_data(NULL)==0);
  instance.pdev=&physical;instance.vdev=&virtual;
  assert(wonder_netdev_event(&instance.netdev_notifier,NETDEV_DOWN,&physical)==NOTIFY_DONE);
  assert(scheduled==1 && queue_stops==1);
@@ -232,6 +224,34 @@ int main(void)
  assert(!w->recovery_in_progress);
  provider_exit();assert(!provider);
  puts("WONDER_PROVIDER_BINDING_FIXTURE_PASS_ONLY");return 0;
+}
+'''
+
+GENERIC_HARNESS = r'''
+#include "wonder/wondertap.c"
+#include "wonder/wondertap_provider_binding.c"
+bool wonder_external_monitor;
+static int token, starts, stops;
+static int legacy_init(void **h,const struct wondertap_init_params *p)
+{assert(!*h && p);*h=&token;starts++;return 0;}
+static void legacy_stop(void *h,const struct wondertap_deinit_params *p)
+{assert(h==&token && p);stops++;}
+static const struct wondertap_ops legacy_ops={.init=legacy_init,.deinit=legacy_stop};
+static const struct wondertap_priv legacy_priv={.ver=WONDER_VERSION_1_4_1,.wonder_ops=&legacy_ops};
+int main(void)
+{
+ struct wondertap_data w={0};struct wondertap_init_params p={0};wondertap_prep(&w);
+ w.cache_flags=WONDERTAP_CACHE_FREQ_SET|WONDERTAP_CACHE_TX_RATE_SET|
+               WONDERTAP_CACHE_BSSID_SET|WONDERTAP_CACHE_COUNTRY_CODE_SET;
+ w.cached_freq.freq=5240;w.cached_tx_rate.nss=1;memcpy(w.cached_country_code,"CN",3);
+ assert(wondertap_register_ops(&legacy_ops)==0);
+ assert(wondertap_provider_prepare(&w)==0);
+ assert(wondertap_provider_bind(&w,&legacy_priv)==0 && !w.managed_bound && !w.managed_quiescing);
+ assert(wondertap_init(&w,&p)==0 && starts==1);
+ wondertap_deinit(&w);assert(stops==1 && !w.vendor_handle);
+ assert(wondertap_provider_unbind(&w)==0);
+ assert(!backend_module.refs && !self_module.refs);
+ puts("WONDER_GENERIC_LEGACY_FIXTURE_PASS_ONLY");return 0;
 }
 '''
 
@@ -280,16 +300,26 @@ def main():
         (d/'test.c').write_text(harness)
         exe = d/'test'
         subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror',
-                        '-Wno-unused-parameter', '-fsanitize=address,undefined',
+                        '-Wno-unused-parameter', '-DWONDER_PRIVATE_MANAGED_PROVIDER=1',
+                        '-fsanitize=address,undefined',
                         '-fno-omit-frame-pointer', '-include', str(d/'fixture.h'),
                         '-I'+str(d), '-I'+str(d/'hdd'), str(d/'test.c'), '-o', str(exe)], check=True)
         subprocess.run([exe], check=True, timeout=10,
+                       env=dict(os.environ, ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',
+                                UBSAN_OPTIONS='halt_on_error=1'))
+        (d/'generic.c').write_text(lifecycle.COMMON+GENERIC_HARNESS)
+        generic = d/'generic'
+        subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror',
+                        '-fsanitize=address,undefined', '-fno-omit-frame-pointer',
+                        '-I'+str(d), str(d/'generic.c'), '-o', str(generic)], check=True)
+        subprocess.run([generic], check=True, timeout=10,
                        env=dict(os.environ, ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',
                                 UBSAN_OPTIONS='halt_on_error=1'))
     output = ROOT/'.popsicle-ci/artifacts/reports/wonder-provider-fixture.json'
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps({
         'status': 'WONDER_PROVIDER_BINDING_FIXTURE_PASS_ONLY',
+        'build_modes': ['private provider with loader dependency', 'generic legacy without private import'],
         'production_sha256': {n: hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in names},
         'production_fragment_sha256': {k: hashlib.sha256(v.encode()).hexdigest() for k, v in fragments.items()},
         'limitations': 'Production provider/core/HDD metadata and extracted master/free callbacks with modeled modules, mutexes, platform/component services and version acceptance. Not native races, teardown leases, firmware or RF proof.'

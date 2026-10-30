@@ -514,6 +514,10 @@ def modules(work, link_only=False):
         ]:
             args = make + [f'M={REPO}/kernel/{directory}', f'KBUILD_EXTRA_SYMBOLS={vendor}']
             if directory == 'wonder':
+                # Use the real private exports, not unavailable GKI symbol_get.
+                provider_exports = REPO / 'kernel/provider/Module.symvers'
+                args = [a for a in args if not str(a).startswith('KBUILD_EXTRA_SYMBOLS=')]
+                args += [f'KBUILD_EXTRA_SYMBOLS={vendor} {provider_exports}']
                 args += ['POPSICLE_STOCK_MAC80211_ABI=1',
                          f'EXTRA_CFLAGS=-I{REPO}/kernel/wonder/include/wonder']
             command(args + ['modules'], f'modpost-{directory}.log')
@@ -556,6 +560,11 @@ def modules(work, link_only=False):
                     (reports / 'wonder-managed-module.json').write_text(json.dumps(contract, indent=2) + '\n')
                     if missing:
                         raise ValueError('Missing linked managed Wonder entries: ' + ', '.join(missing))
+                    dependencies = inspect(path)['modinfo'].get('depends', [])
+                    if not any('opairshare_wonder_provider' in d.split(',') for d in dependencies):
+                        raise ValueError('Wonder lacks the private provider module dependency')
+                    contract['dependencies'] = dependencies
+                    (reports / 'wonder-managed-module.json').write_text(json.dumps(contract, indent=2) + '\n')
                 result['modules'][name] = module_report(path, expected, known)
                 if result['modules'][name]['status'] == 'REJECT':
                     result['status'] = 'REJECT_MODULE_RECORDS_OR_HEADER'
