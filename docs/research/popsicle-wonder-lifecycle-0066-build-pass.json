@@ -1,0 +1,50 @@
+{
+  "source_commit": "b8974a5f65fd181c8e50e4fbdd67424a56589757",
+  "run": 41065931217,
+  "workflow_conclusion": "success",
+  "python_checks": 53,
+  "managed_entry_model": {
+    "status": "WONDER_MANAGED_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "production_sha256": {
+      "wondertap.c": "d5741da09aeae51b3e8b968ab41a1fc16450295e00ff29ff49ecf6470990b495",
+      "wondertap_internal.h": "9094a60c4e3f6416cb1563b73a4c4181cdc4bc23793d539c565c467e0f186797",
+      "wondertap_managed.h": "fffa0daf0263129ead689b12eb0142ac1c8a4e1262c1fe825aaad3deb3cff6d4",
+      "include/wonder/wondertap.h": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546"
+    },
+    "limitations": "Complete production WonderTap entry points with modeled modules, mutexes and vendor ops; not native locking, parent lifetime, firmware or RF proof."
+  },
+  "modules": {
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "d8aceb67033022fe31c166b1ca07cd99a667f42a7f3c251580fc4e53a5e2cc02",
+      "version_records": 109,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "570d78497c78c01b488893102903550e1ddf01e9f76aae3201b9264b346997f3",
+      "version_records": 585,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "wlan_unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "validation_artifact_sha256": "06202fd4d4a9059d8aceb47d56c999ca353dfc38533914231f75dddd8e9a6d68",
+  "public_wonder_api_changed": false,
+  "managed_binding_caller_installed": false,
+  "native_session_bound": false,
+  "full_monitor_rx_verified": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Internal managed lifecycle only. Native binding, parent lease, teardown/polling integration and full monitor RX are not implemented; full module build and selected loader/layout checks do not certify all private ABI, firmware or RF."
+}

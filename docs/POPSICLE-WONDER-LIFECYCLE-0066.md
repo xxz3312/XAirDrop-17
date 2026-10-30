@@ -24,3 +24,7 @@
 ## 验证
 
 新增fixture逐字节复制并编译完整生产wondertap.c和对应头文件，以模块引用、互斥锁和vendor回调模型执行真实init/poll/deinit/retire/config入口。覆盖异步顺序、MAC稳定、配置冻结、部分失败、正常回收、全局ops替换、错误指针/虚假成功隔离、模块拒绝与同步legacy/external兼容。ASan/UBSan只验证这些模型，不认证内核并发、父资源、固件或空口。
+
+## 已完成构建
+
+[CI 41065931217](https://github.com/xxz3312/XAirDrop-17/actions/runs/41065931217)成功：53项Python检查、生产Wonder入口ASan/UBSan模型、既有native模型、完整WLAN/Wonder编译、严格链接和7项选定布局检查通过。紧凑报告SHA256及生产源码哈希已复核。Wonder新增2条版本导入，109条版本记录无不匹配、无缺失版本；WLAN二进制哈希与0065一致。本轮未新增手机可用的无线后端。见[验证记录](research/popsicle-wonder-lifecycle-0066-build-pass.json)。

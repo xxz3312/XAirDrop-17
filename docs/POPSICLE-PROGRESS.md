@@ -1,6 +1,6 @@
 ## 最新阶段 0066
 
-Wonder入口新增显式managed生命周期：启动一次后poll，部分失败保留句柄，retire实际完成才DOWN，错误/虚假成功隔离，待完成阶段冻结配置；绑定/实例分别保持回调模块/Wonder模块引用。上游ops/priv ABI和默认同步路径不变。
+Wonder入口新增显式managed生命周期：启动一次后poll，部分失败保留句柄，retire实际完成才DOWN，错误/虚假成功隔离，待完成阶段冻结配置；绑定/实例分别保持回调模块/Wonder模块引用。上游ops/priv ABI和默认同步路径不变。CI 41065931217的53项Python检查、生产入口C模型、完整编译/严格链接和7项选定布局检查通过。
 
 尚未安装managed绑定调用方，host glue、父资源/SSR/remove/实例释放与完整monitor仍未接通，无新手机入口或AWDL成功证明。见[0066](POPSICLE-WONDER-LIFECYCLE-0066.md)。
 
