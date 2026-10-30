@@ -26,8 +26,8 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * SSR qualification; a recovering flag alone is not an IRQ/MC/DP barrier.
  * The single runtime token must cover the complete exact-psoc registry; extra
  * owners return EBUSY. Batch enforces original SSR fence, MC drain, supported
- * recovery policy and real final-free before adapter/sync close. Prepared/UP
- * recovery stays unsupported unless ordinary cleanup already completed.
+ * recovery policy and real final-free before adapter/sync close. Fully prepared pre-PE INIT
+ * may use qualified reset cleanup; PE/UP reset recovery stays unsupported.
  * Errors retain host and the updated runtime token; EINPROGRESS needs polling
  * after releasing locks. This permanently closes the session on admission.
  * This does not hold parents, reset quarantine or authorize physical remove.

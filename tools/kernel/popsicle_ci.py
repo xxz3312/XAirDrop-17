@@ -215,7 +215,9 @@ def check_mishare_host_symbols(work, module, report_name):
               'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
               'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
     names += ['mishare_runtime_reclaim_batch', 'mishare_wonder_host_psoc_busy',
-              'mishare_wonder_host_reclaim_ssr_locked']
+              'mishare_wonder_host_reclaim_ssr_locked',
+              'mishare_ndi_reset_context_release', 'mishare_ndi_reset_context_check',
+              'mishare_ndi_reset_prepared_timer_deinit']
     names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync',
               'mishare_action_tx_sync']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
@@ -274,6 +276,9 @@ def build(work, phase):
         logged(['python3', REPO / 'tools/kernel/mishare_parent_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-parent-fixture.json'],
                'mishare-parent-fixture.log')
+        logged(['python3', REPO / 'tools/kernel/mishare_reset_context_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-reset-context-fixture.json'],
+               'mishare-reset-context-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_recovery_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-recovery-fixture.json'],
                'mishare-recovery-fixture.log')

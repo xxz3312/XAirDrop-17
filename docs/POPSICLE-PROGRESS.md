@@ -1,4 +1,10 @@
-## 最新阶段 0069
+## 最新阶段 0070
+
+新增 pre-PE prepared NDI reset 回收：能力/归属预检 → 同步关闭响应定时器 → 原生 no-FW force peer detach/object-peer 删除 → WMA/legacy 释放 → 既有 DP 与对象实际 final-free。完整 prepare 成功、从未请求 PE/START 的 INIT 才可进入；PE/UP 状态仍不支持。新增完整 native WMA 分支 C 模型与 no_fw=false 负对照，完整构建待 CI。见[0070](POPSICLE-PREPARED-RESET-0070.md)。
+
+native shutdown 自动协调与父资源租约、PE/UP 回收和完整 monitor 仍未完成；无线 init 保持关闭，无新手机测试。
+
+## 阶段 0069
 
 新增显式 SSR host 回收入口：完整 registry coverage、owned MC、合法恢复策略和实际 final-free 由既有 runtime batch 执行，成功后才关闭 adapter/sync；每次返回恢复最新 runtime 句柄，等待与错误均保留 host 和 idle inhibition。CI 41110041682 已通过 53 项 Python 检查、host 与既有 runtime C 模型、完整 WLAN/Wonder/provider 编译、严格链接及 7 项选定布局；新增入口实际链接、生产源码和重建 C 模型输入哈希已复核。见[0069](POPSICLE-HOST-SSR-RETIRE-0069.md)。
 

@@ -63,6 +63,8 @@ NATIVE_WMI_REMOVE
 NATIVE_WMI_STOP
 NATIVE_WMI_BLOCKED
 #define cds_get_context recovery_get_context
+NATIVE_RESET_CHECK
+NATIVE_RESET_CONTEXT
 NATIVE_WMA_STOP
 NATIVE_WMA_WORK_CLOSE
 NATIVE_CDS_HELPER
@@ -77,6 +79,7 @@ static void recovery_runtime_deinit(int *lock) {assert(lock==&response_timer.rt_
 #define qdf_runtime_lock_deinit recovery_runtime_deinit
 NATIVE_TIMER_DEINIT
 NATIVE_TIMER_HELPER
+NATIVE_PREPARED_TIMER
 #undef qdf_runtime_lock_deinit
 #undef target_if_vdev_mgr_get_rx_ops
 NATIVE_DP_HELPER
@@ -171,7 +174,7 @@ int main(void) {
    else {o=early_ndi();if(fault==3)o->state.ndi.delete_pending=true;if(fault==4)o->state.ndi.create.dp_attached=false;if(fault==5)o->state.ndi.context_error=-EIO;}
    if(fault<=5) {
     mark_closed(o);health_recovering=true;assert(!cds_post_disable());
-    assert(!state(o).recovery_window && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !dp_detaches && !recovery_timer_frees);
+    assert(state(o).recovery_window==(fault==0) && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !dp_detaches && !recovery_timer_frees);
    } else {
     stop_recovery(o);assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS);finish_dp();
     if(fault==6) {mishare_runtime_recovery_dp_freed(o);assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && state(o).recovery_error);}
@@ -202,7 +205,7 @@ def fixture(root):
     src=src.replace('struct wmi_unified {int dummy;};','struct wmi_unified {int dummy,wmi_stopinprogress,wmi_rx_work_queue,wmi_rx_diag_work_queue,eventq_lock,diag_eventq_lock;unsigned event_queue,diag_event_queue;};',1)
     src=src.replace('struct vdev_response_timer {int expire_time,timer_status;};','struct vdev_response_timer {int expire_time,timer_status,rsp_timer,rsp_timer_inuse;unsigned long rsp_status;struct wlan_objmgr_psoc *psoc;u8 vdev_id;struct {bool is_lock_acquired;int vdev_cmd_rt_lock;} rt_lock;};',1)
     needle='assert(!timers_live);timers_live++;';assert src.count(needle)==1;src=src.replace(needle,needle+'response_timer.psoc=p;response_timer.vdev_id=id;response_timer.rsp_timer=1;response_timer.rsp_timer_inuse=1;response_timer.rsp_status=0;response_timer.rt_lock.is_lock_acquired=false;response_timer.rt_lock.vdev_cmd_rt_lock=1;',1)
-    replacements={'NATIVE_WMI_REMOVE':function((root/WMI).read_text(),'wmi_unified_remove_work'),'NATIVE_WMI_STOP':function((root/WMI).read_text(),'wmi_stop'),'NATIVE_WMI_BLOCKED':function((root/WMI).read_text(),'wmi_is_blocked'),'NATIVE_WMA_STOP':function((root/WMA).read_text(),'wma_wmi_stop'),'NATIVE_WMA_WORK_CLOSE':function((root/WMA).read_text(),'wma_wmi_work_close'),'NATIVE_CDS_HELPER':bounded(cds,'cds_helper').replace('#include "wmi_unified_api.h"\n',''),'NATIVE_CDS_POST':post,'NATIVE_CDS_CLOSE':bounded(cds,'cds_close'),'NATIVE_TIMER_DEINIT':function((root/TIMER).read_text(),'target_if_psoc_vdev_rsp_timer_deinit'),'NATIVE_TIMER_HELPER':function((root/TIMER).read_text(),'mishare_ndi_recovery_timer_deinit'),'NATIVE_DP_HELPER':function((root/DISP).read_text(),'mishare_ndi_recovery_dp_detach')}
+    replacements={'NATIVE_PREPARED_TIMER':function((root/TIMER).read_text(),'mishare_ndi_reset_prepared_timer_deinit'),'NATIVE_RESET_CHECK':function((root/work.shutdown.radio.plan.channel.pe.ctx.WMA).read_text(),'mishare_ndi_reset_context_check'),'NATIVE_RESET_CONTEXT':function((root/work.shutdown.radio.plan.channel.pe.ctx.WMA).read_text(),'mishare_ndi_reset_context_release'),'NATIVE_WMI_REMOVE':function((root/WMI).read_text(),'wmi_unified_remove_work'),'NATIVE_WMI_STOP':function((root/WMI).read_text(),'wmi_stop'),'NATIVE_WMI_BLOCKED':function((root/WMI).read_text(),'wmi_is_blocked'),'NATIVE_WMA_STOP':function((root/WMA).read_text(),'wma_wmi_stop'),'NATIVE_WMA_WORK_CLOSE':function((root/WMA).read_text(),'wma_wmi_work_close'),'NATIVE_CDS_HELPER':bounded(cds,'cds_helper').replace('#include "wmi_unified_api.h"\n',''),'NATIVE_CDS_POST':post,'NATIVE_CDS_CLOSE':bounded(cds,'cds_close'),'NATIVE_TIMER_DEINIT':function((root/TIMER).read_text(),'target_if_psoc_vdev_rsp_timer_deinit'),'NATIVE_TIMER_HELPER':function((root/TIMER).read_text(),'mishare_ndi_recovery_timer_deinit'),'NATIVE_DP_HELPER':function((root/DISP).read_text(),'mishare_ndi_recovery_dp_detach')}
     model=MODELS
     for k,v in replacements.items():model=model.replace(k,v)
     return src[:src.index('int main(void) {')]+model+HARNESS

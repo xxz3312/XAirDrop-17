@@ -43,6 +43,20 @@ struct mishare_ndi_start_summary {
     u32 beacon_interval;
     u32 dtim_period;
 };
+struct mishare_ndi_reset_context_result {
+    bool peer_released;
+    bool wma_unbound;
+    bool legacy_released;
+};
+int mishare_ndi_reset_context_check(struct wlan_objmgr_vdev *vdev,
+                                     unsigned long dp_cookie);
+int mishare_ndi_reset_prepared_timer_deinit(struct wlan_objmgr_vdev *vdev);
+/* SSR-only, never-PE/STARTed context retirement. Caller holds the qualified
+ * reset window and exact parents; partial facts survive errors, never retry.
+ */
+int mishare_ndi_reset_context_release(struct wlan_objmgr_vdev *vdev,
+                                       unsigned long dp_cookie,
+                                       struct mishare_ndi_reset_context_result *result);
 struct mishare_ndi_status {
     int completion_error; /* Sticky invalid/duplicate native completion. */
     bool active;

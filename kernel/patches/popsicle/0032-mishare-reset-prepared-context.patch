@@ -1,0 +1,144 @@
+--- a/qcacld-3.0/core/wma/src/wma_dev_if.c
++++ b/qcacld-3.0/core/wma/src/wma_dev_if.c
+@@ -7802,3 +7802,98 @@
+  return 0;
+ }
+ /* MISHARE_END:radio_wma */
++
++/* MISHARE_RESET_CONTEXT_BEGIN:release */
++int mishare_ndi_reset_context_check(struct wlan_objmgr_vdev *vdev,
++                                   unsigned long dp_cookie)
++{
++ tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
++ struct wlan_objmgr_psoc *psoc;
++ struct vdev_mlme_obj *m;
++ struct wma_txrx_node *iface;
++ struct wlan_objmgr_peer *peer;
++ void *soc = cds_get_context(QDF_MODULE_ID_SOC);
++ uint8_t id, *mac;
++ bool same;
++
++ if (!vdev || !wma || !dp_cookie || !cds_is_driver_recovering() ||
++     wmi_validate_handle(wma->wmi_handle) || !wmi_is_blocked(wma->wmi_handle))
++  return -EUCLEAN;
++ psoc = wlan_vdev_get_psoc(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ id = wlan_vdev_get_id(vdev);
++ if (!psoc || wma->psoc != psoc || id >= wma->max_bssid ||
++     !soc || (unsigned long)soc != dp_cookie ||
++     wlan_psoc_get_dp_handle(psoc) != soc ||
++     !m || m->vdev != vdev || !m->ext_vdev_ptr ||
++     !wma_mishare_pas_ndi(vdev, m->mgmt.generic.type) ||
++     m->mgmt.generic.subtype ||
++     wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT)
++  return -EUCLEAN;
++ iface = &wma->interfaces[id];
++ if (iface->vdev != vdev || !iface->vdev_active ||
++     !wma_mishare_pas_ndi(vdev, iface->type) || iface->sub_type ||
++     iface->peer_count != 1 || iface->del_staself_req || iface->is_del_sta_deferred ||
++     qdf_atomic_read(&iface->bss_status) != WMA_BSS_STATUS_STOPPED)
++  return -EUCLEAN;
++ /* no_fw alone may take an asynchronous unmap-confirm path. Only the
++  * native force-detach branch without WMI confirmation is admitted here. */
++ if (!is_cdp_peer_detach_force_delete_supported(soc) ||
++     cdp_cfg_get_peer_unmap_conf_support(soc))
++  return -EOPNOTSUPP;
++ mac = wlan_vdev_mlme_get_macaddr(vdev);
++ peer = wlan_objmgr_get_peer_by_mac(psoc, mac, WLAN_LEGACY_WMA_ID);
++ if (!peer)
++  return -EUCLEAN;
++ same = wlan_peer_get_vdev(peer) == vdev;
++ wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
++ if (!same)
++  return -EUCLEAN;
++ return 0;
++}
++
++int mishare_ndi_reset_context_release(struct wlan_objmgr_vdev *vdev,
++                                     unsigned long dp_cookie,
++                                     struct mishare_ndi_reset_context_result *result)
++{
++ tp_wma_handle wma;
++ struct vdev_mlme_obj *m;
++ struct wma_txrx_node *iface;
++ struct wlan_objmgr_psoc *psoc;
++ struct wlan_objmgr_peer *peer;
++ uint8_t id, *mac;
++ int ret;
++ if (!result)
++  return -EINVAL;
++ qdf_mem_zero(result, sizeof(*result));
++ ret = mishare_ndi_reset_context_check(vdev, dp_cookie);
++ if (ret)
++  return ret;
++ wma = cds_get_context(QDF_MODULE_ID_WMA);
++ psoc = wlan_vdev_get_psoc(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ id = wlan_vdev_get_id(vdev);
++ mac = wlan_vdev_mlme_get_macaddr(vdev);
++ iface = &wma->interfaces[id];
++ ret = qdf_status_to_os_return(wma_remove_peer(wma, mac, id, true));
++ if (ret || iface->peer_count)
++  return ret ? ret : -EUCLEAN;
++ peer = wlan_objmgr_get_peer_by_mac(psoc, mac, WLAN_LEGACY_WMA_ID);
++ if (peer) {
++  wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
++  return -EUCLEAN;
++ }
++ /* Logical peer delete is observed, not physical final-free. The DP and
++  * object-manager VDEV final-free callbacks still gate host retirement. */
++ result->peer_released = true;
++ ret = mishare_ndi_wma_unbind(vdev);
++ if (ret)
++  return ret;
++ result->wma_unbound = true;
++ ret = mishare_ndi_legacy_release(m);
++ if (ret)
++  return ret;
++ result->legacy_released = true;
++ return 0;
++}
++/* MISHARE_RESET_CONTEXT_END:release */
+--- a/qca-wifi-host-cmn/target_if/mlme/psoc/src/target_if_psoc_timer_tx_ops.c
++++ b/qca-wifi-host-cmn/target_if/mlme/psoc/src/target_if_psoc_timer_tx_ops.c
+@@ -272,3 +272,40 @@
+  return 0;
+ }
+ /* MISHARE_RECOVERY_END:timer */
++
++/* MISHARE_RESET_CONTEXT_BEGIN:timer */
++int mishare_ndi_reset_prepared_timer_deinit(struct wlan_objmgr_vdev *vdev)
++{
++ struct wlan_objmgr_psoc *psoc;
++ struct wlan_lmac_if_mlme_rx_ops *rx;
++ struct vdev_response_timer *r;
++ struct vdev_mlme_obj *m;
++ uint8_t id;
++ if (!vdev || wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE)
++  return -EUCLEAN;
++ psoc = wlan_vdev_get_psoc(vdev);
++ id = wlan_vdev_get_id(vdev);
++ m = wlan_vdev_mlme_get_cmpt_obj(vdev);
++ if (!psoc || id >= WLAN_UMAC_PSOC_MAX_VDEVS || !m || m->vdev != vdev ||
++     !m->ext_vdev_ptr || m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI ||
++     m->mgmt.generic.subtype || wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT)
++  return -EUCLEAN;
++ rx = target_if_vdev_mgr_get_rx_ops(psoc);
++ if (!rx || !rx->psoc_get_vdev_response_timer_info)
++  return -EUCLEAN;
++ r = rx->psoc_get_vdev_response_timer_info(psoc, id);
++ if (!r || r->psoc != psoc || r->vdev_id != id ||
++     qdf_atomic_read(&r->rsp_timer_inuse) != 1 || r->rsp_status ||
++     r->rt_lock.is_lock_acquired)
++  return -EUCLEAN;
++ /* Even an inactive timer is synchronously excluded before native free. */
++ qdf_timer_sync_cancel(&r->rsp_timer);
++ if (r->psoc != psoc || r->vdev_id != id || r->rsp_status ||
++     qdf_atomic_read(&r->rsp_timer_inuse) != 1 || r->rt_lock.is_lock_acquired)
++  return -EUCLEAN;
++ target_if_psoc_vdev_rsp_timer_deinit(psoc, id);
++ if (r->psoc || qdf_atomic_read(&r->rsp_timer_inuse) || r->rt_lock.is_lock_acquired)
++  return -EUCLEAN;
++ return 0;
++}
++/* MISHARE_RESET_CONTEXT_END:timer */

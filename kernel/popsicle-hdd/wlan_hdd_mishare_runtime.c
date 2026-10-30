@@ -448,6 +448,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
            !n->completion_error && !entry->state.recovery_window_closed &&
            !entry->state.ndi_reclaim_started && !entry->state.ndi_reclaim_ready &&
+           !entry->state.recovery_context_attempted && !entry->state.recovery_context_released &&
            !entry->state.recovery_timer_attempted && !entry->state.recovery_timer_released &&
            !entry->state.ndi_completed_reclaim && !entry->state.recovery_dp_attempted &&
            !entry->state.recovery_dp_freed && !entry->state.host_reclaim &&
@@ -473,6 +474,17 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
 static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner *entry)
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
+    bool early, prepared, released;
+
+    early = !entry->state.recovery_context_attempted &&
+            !entry->state.recovery_context_released && !n->legacy_ready &&
+            !n->wma_bound && !n->peer_create_attempted && !n->peer_created;
+    prepared = !entry->state.recovery_context_attempted &&
+               !entry->state.recovery_context_released && n->legacy_ready &&
+               n->wma_bound && n->peer_create_attempted && n->peer_created;
+    released = entry->state.recovery_context_attempted &&
+               entry->state.recovery_context_released && !n->legacy_ready &&
+               !n->wma_bound && n->peer_create_attempted && !n->peer_created;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
@@ -484,9 +496,13 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            n->active && !n->create_error && n->create.timer_ready &&
            n->create.wire_attempted && n->create.wire_accepted &&
            n->create.dp_attempted && n->create.dp_attached && n->create.dp_cookie &&
-           n->create.stats_owned && !n->legacy_ready && !n->wma_bound && !n->context_error &&
-           !n->peer_create_attempted && !n->peer_created && !n->peer_delete_pending &&
+           n->create.stats_owned && !n->context_error && (early || prepared || released) &&
+           !n->peer_delete_pending && !n->peer_delete_submitted && !n->peer_delete_replied &&
            !n->pe_requested && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
+           !n->pe_submitted && !n->pe_completed && !n->pe_ready &&
+           !n->pe_delete_requested && !n->pe_delete_submitted && !n->pe_delete_completed &&
+           !n->channel_submitted && !n->channel_completed && !n->channel_prepared &&
+           !n->start_plan_submitted && !n->start_plan_completed && !n->start_plan_ready &&
            !n->delete_pending && !n->delete_submitted && !n->delete_replied &&
            !n->dp_detaching && !n->dp_detach_submitted && !n->dp_freed;
 }
@@ -613,6 +629,47 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         return mishare_runtime_host_destroy(owner, true);
     if (ret && ret != 2)
         return ret;
+    if (!started && ret != 2 && entry->state.ndi.legacy_ready) {
+        struct mishare_ndi_reset_context_result result = {0};
+
+        if (mishare_events_snapshot(entry->events, &txn) ||
+            txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
+            txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+            return mishare_runtime_recovery_error(entry, -EUCLEAN);
+        ret = mishare_ndi_reset_context_check(entry->vdev,
+                                               entry->state.ndi.create.dp_cookie);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.recovery_timer_attempted = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_reset_prepared_timer_deinit(entry->vdev);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.recovery_timer_released = true;
+        entry->state.ndi.create.timer_ready = false;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        timer_done = true;
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.recovery_context_attempted = true;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        ret = mishare_ndi_reset_context_release(entry->vdev,
+                                                 entry->state.ndi.create.dp_cookie,
+                                                 &result);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        if (result.peer_released)
+            entry->state.ndi.peer_created = false;
+        if (result.wma_unbound)
+            entry->state.ndi.wma_bound = false;
+        if (result.legacy_released)
+            entry->state.ndi.legacy_ready = false;
+        entry->state.recovery_context_released = !ret && result.peer_released &&
+                                                  result.wma_unbound && result.legacy_released;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        if (ret || !entry->state.recovery_context_released)
+            return mishare_runtime_recovery_error(entry, ret);
+    }
     m = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
     if (!m || m->vdev != entry->vdev || m->ext_vdev_ptr ||
         wlan_vdev_mlme_get_opmode(entry->vdev) != QDF_PASSTHRU_MODE ||
@@ -649,16 +706,20 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
             return mishare_runtime_recovery_error(entry, -EUCLEAN);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.ndi_reclaim_started = true;
-        entry->state.recovery_timer_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-        ret = mishare_ndi_recovery_timer_deinit(entry->vdev);
-        if (ret)
-            return mishare_runtime_recovery_error(entry, ret);
-        spin_lock_irqsave(&mishare_runtime_lock, flags);
-        entry->state.recovery_timer_released = true;
-        entry->state.ndi.create.timer_ready = false;
-        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-        timer_done = true;
+        if (!timer_done) {
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.recovery_timer_attempted = true;
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            ret = mishare_ndi_recovery_timer_deinit(entry->vdev);
+            if (ret)
+                return mishare_runtime_recovery_error(entry, ret);
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.recovery_timer_released = true;
+            entry->state.ndi.create.timer_ready = false;
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            timer_done = true;
+        }
     }
     if (!timer_done)
         return mishare_runtime_recovery_error(entry, -EUCLEAN);

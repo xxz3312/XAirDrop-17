@@ -33,6 +33,8 @@ struct mishare_runtime_status {
     bool recovery_window;
     bool recovery_window_closed;
     bool ndi_reclaim_started;
+    bool recovery_context_attempted;
+    bool recovery_context_released;
     bool recovery_timer_attempted;
     bool recovery_timer_released;
     bool recovery_dp_attempted;
@@ -76,14 +78,16 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner);
 unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
-/* Explicit serialized recovery of never-prepared NDI only: either early
+/* Explicit serialized recovery of pre-PE NDI only: either early
  * CREATE/DP state, or ordinary DELETE + DP final-free already completed.
  * Both routes require the qualified SSR/WMI window before parent teardown.
  * The completed route submits no firmware/DP/timer operations and preserves
  * ordinary completion history; it only starts host deletion/final-free wait.
  * Caller retains RTNL/exclusive psoc and exact DP/timer parents throughout all
  * polls; stop CDS parent destruction until completion. No automatic caller.
- * Partial attach, peer/PE/radio and incomplete DELETE history stay held.
+ * A fully prepared INIT context may use qualified no-FW force peer detach,
+ * response-timer drain and WMA/legacy release before the same DP/final-free
+ * path. PE/radio, partial prepare/attach and incomplete DELETE stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
 /* SSR-only owner bookkeeping after host deletion already succeeded and all
