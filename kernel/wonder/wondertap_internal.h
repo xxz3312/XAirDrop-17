@@ -3,12 +3,16 @@
 #define __WONDERTAP_INTERNAL_H__
 
 #include "include/wonder/wondertap.h"
+#include "wondertap_managed.h"
 
 extern bool wonder_external_monitor;
 
 enum wondertap_state {
     WONDERTAP_STATE_DOWN,
     WONDERTAP_STATE_UP,
+    WONDERTAP_STATE_STARTING,
+    WONDERTAP_STATE_DRAINING,
+    WONDERTAP_STATE_BLOCKED,
 };
 
 /*
@@ -24,6 +28,10 @@ struct wondertap_data {
 	void *vendor_handle;
 	enum wondertap_state state;
 	struct mutex lock;
+	struct wondertap_managed_ops managed;
+	bool managed_bound;
+	bool managed_instance_pin;
+	int managed_error;
 	u8 mac_addr[ETH_ALEN];
 	u32 cache_flags;
 	u32 rx_frame_filter; /* bit 31 enables exact frame type/subtype matching. */
@@ -48,6 +56,11 @@ struct wondertap_data {
 static inline void wondertap_prep(struct wondertap_data *wondertap)
 {
 	wondertap->state = WONDERTAP_STATE_DOWN;
+    wondertap->vendor_handle = NULL;
+    wondertap->managed = (struct wondertap_managed_ops){0};
+    wondertap->managed_bound = false;
+    wondertap->managed_instance_pin = false;
+    wondertap->managed_error = 0;
 	mutex_init(&wondertap->lock);
 }
 
@@ -76,6 +89,17 @@ int wondertap_init(struct wondertap_data *wondertap, const struct wondertap_init
  * @param wondertap A pointer to the wondertap instance data.
  */
 void wondertap_deinit(struct wondertap_data *wondertap);
+
+/* Internal owned-lifecycle API. Caller retains the instance memory and native
+ * parent lease throughout binding and every asynchronous retirement poll.
+ * No provider/SSR/remove caller is installed here. The binding must be retired
+ * and unbound before component/HDD/instance teardown; EBUSY is not permission
+ * to free parents. Explicit polling only; no sleep, worker or blind retries.
+ */
+int wondertap_bind_managed(struct wondertap_data *wondertap,
+                          const struct wondertap_managed_ops *managed);
+int wondertap_unbind_managed(struct wondertap_data *wondertap);
+int wondertap_retire(struct wondertap_data *wondertap);
 
 /**
  * @brief Sets the hardware operating channel and bandwidth.
