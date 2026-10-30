@@ -101,6 +101,7 @@ int main(void)
  assert(wondertap_unbind_managed(NULL)==-EINVAL && wondertap_retire(NULL)==-EINVAL);
  prepare(&w,false);
  assert(wondertap_bind_managed(&w,NULL)==-EINVAL);
+ wonder_external_monitor=true;assert(wondertap_bind_managed(&w,&managed)==-EOPNOTSUPP);wonder_external_monitor=false;
  backend_module.deny=true;assert(wondertap_bind_managed(&w,&managed)==-ENODEV);backend_module.deny=false;
  wondertap_register_ops(&foreign_ops);assert(wondertap_bind_managed(&w,&managed)==-ENODEV);
  wondertap_register_ops(&ops);assert(wondertap_bind_managed(&w,&managed)==0 && backend_module.refs==1);
@@ -139,6 +140,12 @@ int main(void)
  assert(wondertap_unbind_managed(&w)==0);
  prepare(&w,true);assert(wondertap_init(&w,&params)==-EINPROGRESS);poll_result=-EIO;
  assert(wondertap_init(&w,&params)==-EIO && w.state==WONDERTAP_STATE_DRAINING);finish(&w);
+ /* A native reset of the visible state cannot authorize overwriting ownership. */
+ prepare(&w,true);assert(wondertap_init(&w,&params)==-EINPROGRESS);
+ w.state=WONDERTAP_STATE_DOWN;
+ assert(wondertap_init(&w,&params)==-EBUSY && init_calls==1);
+ assert(wondertap_set_freq(&w,&freq)==-EBUSY);
+ assert(wondertap_get_capabilities(&w,&caps)==-EBUSY);finish(&w);
  /* Protocol failures retain tokens/pins; production never retries their stop. */
  for(int i=0;i<7;i++) {
   struct wondertap_data *q=&quarantined[i];prepare(q,true);

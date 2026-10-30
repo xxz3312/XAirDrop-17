@@ -23,6 +23,8 @@ int wondertap_bind_managed(struct wondertap_data *w,
 	if (!w || !managed || !managed->ops || !managed->ops->init ||
 		!managed->owner || !managed->poll_start || !managed->retire)
 		return -EINVAL;
+	if (wonder_external_monitor)
+		return -EOPNOTSUPP;
 	mutex_lock(&w->lock);
 	if (w->managed_bound || w->state != WONDERTAP_STATE_DOWN || w->vendor_handle)
 		ret = -EBUSY;
@@ -69,7 +71,9 @@ static bool wondertap_transition_pending(struct wondertap_data *w)
 {
 	return w->state == WONDERTAP_STATE_STARTING ||
 		   w->state == WONDERTAP_STATE_DRAINING ||
-		   w->state == WONDERTAP_STATE_BLOCKED;
+		   w->state == WONDERTAP_STATE_BLOCKED ||
+		   (w->managed_bound && w->state == WONDERTAP_STATE_DOWN &&
+			(w->vendor_handle || w->managed_instance_pin));
 }
 
 static void wondertap_managed_unpin(struct wondertap_data *w)
