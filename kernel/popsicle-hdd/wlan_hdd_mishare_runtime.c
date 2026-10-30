@@ -474,7 +474,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
 static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner *entry)
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
-    bool early, prepared, released;
+    bool early, prepared;
 
     early = !entry->state.recovery_context_attempted &&
             !entry->state.recovery_context_released && !n->legacy_ready &&
@@ -482,9 +482,6 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
     prepared = !entry->state.recovery_context_attempted &&
                !entry->state.recovery_context_released && n->legacy_ready &&
                n->wma_bound && n->peer_create_attempted && n->peer_created;
-    released = entry->state.recovery_context_attempted &&
-               entry->state.recovery_context_released && !n->legacy_ready &&
-               !n->wma_bound && n->peer_create_attempted && !n->peer_created;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
@@ -496,7 +493,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            n->active && !n->create_error && n->create.timer_ready &&
            n->create.wire_attempted && n->create.wire_accepted &&
            n->create.dp_attempted && n->create.dp_attached && n->create.dp_cookie &&
-           n->create.stats_owned && !n->context_error && (early || prepared || released) &&
+           n->create.stats_owned && !n->context_error && (early || prepared) &&
            !n->peer_delete_pending && !n->peer_delete_submitted && !n->peer_delete_replied &&
            !n->pe_requested && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
            !n->pe_submitted && !n->pe_completed && !n->pe_ready &&

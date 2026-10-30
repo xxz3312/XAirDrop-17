@@ -121,6 +121,15 @@ int main(void) {
   }
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
+ /* Completed-context markers cannot masquerade as a fresh timer-owned candidate. */
+ reset_prepared_test();pid_t marker_child=fork();assert(marker_child>=0);
+ if(!marker_child) {
+  o=prepared();o->state.recovery_context_attempted=true;o->state.recovery_context_released=true;
+  o->state.ndi.legacy_ready=o->state.ndi.wma_bound=o->state.ndi.peer_created=false;
+  mark_closed(o);health_recovering=true;assert(!cds_post_disable());
+  assert(!state(o).recovery_window && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_force_detaches && !recovery_timer_frees);_Exit(0);
+ }
+ int marker_status;assert(waitpid(marker_child,&marker_status,0)==marker_child && WIFEXITED(marker_status) && !WEXITSTATUS(marker_status));
  /* PE/radio history is outside the reset route even with force capability. */
  for(int phase=0;phase<3;phase++) {
   reset_prepared_test();pid_t child=fork();assert(child>=0);
