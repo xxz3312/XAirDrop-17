@@ -22,6 +22,8 @@ COMMON = r'''
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+/* Kernel sources use errno as a local variable, unlike libc. */
+#undef errno
 typedef uint8_t u8;
 typedef uint32_t u32;
 typedef u8 tSirMacAddr[6];
