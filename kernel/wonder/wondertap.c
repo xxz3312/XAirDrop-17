@@ -33,6 +33,7 @@ int wondertap_bind_managed(struct wondertap_data *w,
     else {
         w->managed = *managed;
         w->managed_bound = true;
+        w->managed_caps_valid = false;
         w->managed_error = 0;
     }
     mutex_unlock(&w->lock);
@@ -54,6 +55,7 @@ int wondertap_unbind_managed(struct wondertap_data *w)
             owner = w->managed.owner;
             memset(&w->managed, 0, sizeof(w->managed));
             w->managed_bound = false;
+            w->managed_caps_valid = false;
             w->managed_error = 0;
         }
     }
@@ -497,6 +499,8 @@ int wondertap_set_reg(struct wondertap_data *wondertap, const char *country_code
 
 int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wondertap_capability *features)
 {
+    if (!features)
+        return -EINVAL;
 	if (wonder_external_monitor) {
 		if (!features)
 			return -EINVAL;
@@ -508,12 +512,22 @@ int wondertap_get_capabilities(struct wondertap_data *wondertap, struct wonderta
     if (wondertap->managed_bound) {
         const struct wondertap_ops *ops = wondertap->managed.ops;
         int ret;
+        if (wondertap->state == WONDERTAP_STATE_STARTING &&
+            wondertap->managed_caps_valid) {
+            *features = wondertap->managed_caps;
+            mutex_unlock(&wondertap->lock);
+            return 0;
+        }
         if (wondertap_transition_pending(wondertap)) {
             mutex_unlock(&wondertap->lock);
             return -EBUSY;
         }
         ret = ops->get_capabilities ?
             ops->get_capabilities(wondertap->vendor_handle, features) : -EOPNOTSUPP;
+        if (!ret) {
+            wondertap->managed_caps = *features;
+            wondertap->managed_caps_valid = true;
+        }
         mutex_unlock(&wondertap->lock);
         return ret;
     }

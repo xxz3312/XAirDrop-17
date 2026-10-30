@@ -10,7 +10,7 @@
 - 部分失败仍有句柄时进入DRAINING，不允许新init覆盖。没有句柄的明确失败返回DOWN并释放实例引用。
 - retire只在返回0且句柄已清空时确认DOWN。EINPROGRESS保留句柄和引用；失败、虚假成功或指针改变进入BLOCKED，禁止继续调用可能无效的句柄。
 - 原有void deinit在managed模式只发起一次retire，不再无条件置DOWN；后续回收须显式调用有返回值的wondertap_retire。
-- STARTING/DRAINING/BLOCKED期间禁止改频道、速率、国家码和BSSID，能力查询也不访问隔离句柄。
+- STARTING/DRAINING/BLOCKED期间禁止改频道、速率、国家码和BSSID，能力查询不访问隔离句柄；STARTING阶段只返回启动前已成功查询的能力缓存，避免mac80211再次start时在能力查询处阻断poll。
 - 活动managed实例使用自己的回调，避免全局ops解绑/替换后把旧句柄交给新回调。尚有资源或处于隔离状态时拒绝managed unbind。
 
 未启用managed的同步provider和external monitor保留原有行为。

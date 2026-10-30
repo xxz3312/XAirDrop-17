@@ -31,6 +31,8 @@ struct wondertap_data {
 	struct wondertap_managed_ops managed;
 	bool managed_bound;
 	bool managed_instance_pin;
+    bool managed_caps_valid;
+    struct wondertap_capability managed_caps;
 	int managed_error;
 	u8 mac_addr[ETH_ALEN];
 	u32 cache_flags;
@@ -60,6 +62,7 @@ static inline void wondertap_prep(struct wondertap_data *wondertap)
     wondertap->managed = (struct wondertap_managed_ops){0};
     wondertap->managed_bound = false;
     wondertap->managed_instance_pin = false;
+    wondertap->managed_caps_valid = false;
     wondertap->managed_error = 0;
 	mutex_init(&wondertap->lock);
 }

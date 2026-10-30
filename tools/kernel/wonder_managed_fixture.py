@@ -67,7 +67,7 @@ static void cb_legacy_stop(void *h,const struct wondertap_deinit_params *p)
 static int cb_freq(void *h,const struct wondertap_set_freq_params *p)
 { assert(h==&token && p);config_calls++;return 0; }
 static int cb_caps(void *h,struct wondertap_capability *p)
-{ assert((!h || h==&token) && p);caps_calls++;memset(p,0,sizeof(*p));return 0; }
+{ assert((!h || h==&token) && p);caps_calls++;memset(p,0,sizeof(*p));p->bits.frame_type_filter=1;return 0; }
 static const struct wondertap_ops ops={.init=cb_init,.deinit=cb_legacy_stop,.set_freq=cb_freq,.get_capabilities=cb_caps};
 static const struct wondertap_ops foreign_ops={0};
 static const struct wondertap_managed_ops managed={.ops=&ops,.owner=&backend_module,.poll_start=cb_poll,.retire=cb_retire};
@@ -80,7 +80,7 @@ static void prepare(struct wondertap_data *w,bool bind)
  w->cached_freq.freq=5240;w->cached_tx_rate.nss=1;
  memcpy(w->cached_country_code,"CN",3);
  init_result=-EINPROGRESS;poll_result=-EINPROGRESS;retire_mode=1;publish_handle=true;
- init_calls=poll_calls=retire_calls=legacy_stops=0;
+ init_calls=poll_calls=retire_calls=legacy_stops=config_calls=caps_calls=0;
  wondertap_register_ops(&ops);
  if(bind)assert(wondertap_bind_managed(w,&managed)==0);
 }
@@ -105,6 +105,7 @@ int main(void)
  wondertap_register_ops(&foreign_ops);assert(wondertap_bind_managed(&w,&managed)==-ENODEV);
  wondertap_register_ops(&ops);assert(wondertap_bind_managed(&w,&managed)==0 && backend_module.refs==1);
  assert(wondertap_bind_managed(&w,&managed)==-EBUSY);
+ assert(wondertap_get_capabilities(&w,&caps)==0 && caps_calls==1);
  assert(wondertap_init(NULL,&params)==-EINVAL && wondertap_init(&w,NULL)==-EINVAL);
  self_module.deny=true;assert(wondertap_init(&w,&params)==-ENODEV && !init_calls);self_module.deny=false;
  assert(wondertap_init(&w,&params)==-EINPROGRESS && init_calls==1 && self_module.refs==1);
@@ -116,14 +117,14 @@ int main(void)
  assert(wondertap_set_tx_rate_mask(&w,&mask)==-EBUSY && w.cached_tx_rate.nss==1);
  assert(wondertap_set_reg(&w,"US")==-EBUSY && !memcmp(w.cached_country_code,"CN",3));
  assert(wondertap_set_bssid_filter(&w,bssid)==-EBUSY);
- assert(wondertap_get_capabilities(&w,&caps)==-EBUSY);
+ assert(wondertap_get_capabilities(&w,&caps)==0 && caps.bits.frame_type_filter && caps_calls==1);
  assert(wondertap_unbind_managed(&w)==-EBUSY && backend_module.refs==1);
  poll_result=0;assert(wondertap_init(&w,&params)==0 && w.state==WONDERTAP_STATE_UP);
  assert(wondertap_init(&w,&params)==-EBUSY);
  /* Active instance uses its pinned callbacks after global replacement/detach. */
  wondertap_register_ops(&foreign_ops);
  assert(wondertap_set_freq(&w,&freq)==0 && config_calls==1);
- assert(wondertap_get_capabilities(&w,&caps)==0 && caps_calls==1);
+ assert(wondertap_get_capabilities(&w,&caps)==0 && caps_calls==2);
  wondertap_unregister_ops(&foreign_ops);
  wondertap_deinit(&w);
  assert(w.state==WONDERTAP_STATE_DRAINING && w.vendor_handle==&token && retire_calls==1 && !legacy_stops);
