@@ -520,6 +520,18 @@ def modules(work, link_only=False):
             generated = REPO / 'kernel' / directory / 'Module.symvers'
             if generated.stat().st_size:
                 merge_generated_exports(known, symvers([generated]))
+            if directory == 'provider':
+                required = ['opairshare_set_wonder_priv_data',
+                            'opairshare_set_wonder_managed_priv_data',
+                            'opairshare_wonder_managed_control']
+                missing = sorted(set(required) - set(symvers([generated])))
+                contract = {'status': 'PROVIDER_MANAGED_EXPORTS_PRESENT_ONLY' if not missing else 'REJECT',
+                            'required': required, 'missing': missing,
+                            'symvers_sha256': hashlib.sha256(generated.read_bytes()).hexdigest(),
+                            'limitations': 'Export names only; no runtime binding, native parent or RF certification.'}
+                (reports / 'wonder-managed-exports.json').write_text(json.dumps(contract, indent=2) + '\n')
+                if missing:
+                    raise ValueError('Missing private managed provider exports: ' + ', '.join(missing))
             for name in names:
                 path = REPO / 'kernel' / directory / (name + '.ko')
                 produced.append(path)
@@ -530,6 +542,20 @@ def modules(work, link_only=False):
                     (reports / 'wonder-allocator-table.json').write_text(
                         json.dumps(ops_report, indent=2) + '\n')
                     print('Wonder ELF allocator callback slots verified.', flush=True)
+                    required = ['wondertap_provider_bind', 'wondertap_provider_unbind',
+                                'wondertap_bind_managed_staged', 'wondertap_activate_managed',
+                                'wondertap_quiesce_managed', 'wondertap_retire']
+                    output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
+                                                      '--defined-only', str(path)], text=True)
+                    defined = {line.split()[-1] for line in output.splitlines() if line.split()}
+                    missing = sorted(set(required) - defined)
+                    contract = {'status': 'WONDER_MANAGED_ENTRIES_PRESENT_ONLY' if not missing else 'REJECT',
+                                'required': required, 'missing': missing,
+                                'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+                                'limitations': 'Linked entry names only; not active session, native teardown or RF proof.'}
+                    (reports / 'wonder-managed-module.json').write_text(json.dumps(contract, indent=2) + '\n')
+                    if missing:
+                        raise ValueError('Missing linked managed Wonder entries: ' + ', '.join(missing))
                 result['modules'][name] = module_report(path, expected, known)
                 if result['modules'][name]['status'] == 'REJECT':
                     result['status'] = 'REJECT_MODULE_RECORDS_OR_HEADER'
