@@ -1,0 +1,121 @@
+{
+  "source_commit": "ed7a54671abd9df9910889d6ebee13c2f556b30d",
+  "workflow_run": 41123670326,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41123670326",
+  "workflow_conclusion": "success",
+  "required_steps_conclusion": "success",
+  "python_regression_checks": 53,
+  "source_sha256": {
+    "kernel/patches/popsicle/0033-mishare-pas-pe-auth-isolation.patch": "3d6faa416822295bdce43fea9ffa2daf4c607de6707597cfa73d5a74792bc482",
+    "tools/kernel/mishare_pe_destructor_fixture.py": "27065bd878ef473091565a22ea31c9e57895b38c39bb3887ad87c14bd13edbba",
+    "tools/kernel/mishare_session_fixture.py": "85f841edfa18968d5b4347d1f4a6763498451d28dad76c75e9fa195f28323bc0",
+    "tools/kernel/popsicle_ci.py": "e6a5b35cdb4445bf8a452f5def0de78c7c278b396f736f49578da4a004bbb0e6"
+  },
+  "source_and_doc_blobs_verified": 8,
+  "native_SAE_guard_restored_exactly_to_pinned_session_baseline": true,
+  "native_auth_timer_source_order_audit": {
+    "pin": "36df473046706a5259942e1bf7222108dbbb860f",
+    "path": "qcacld-3.0/core/mac/src/pe/lim/lim_timer_utils.c",
+    "function_sha256": "9326888b2d35c52dc26735d6f8c1f9de3490853bf9ede9d48c7907e0c3644765",
+    "auth_branch_sha256": "ceed0f6b0fc35234cd5b152660db9385e6842579e0019481aab80d780a4be1b8",
+    "shared_timer_stopped_before_any_session_lookup": true,
+    "caller_vdev_or_owner_not_checked": true,
+    "source_order_review_only": true
+  },
+  "native_pe_model": {
+    "status": "MISHARE_NATIVE_PAS_PE_DESTRUCTOR_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "f61d6655ed48b240283655dd44a547348b6b22d4ee986ed3e5be316cfeefb0f2",
+    "native_sha256": {
+      "qcacld-3.0/core/mac/src/pe/lim/lim_session.c": "90a188007fae29f2a8dce3cb7ad1df441e4400c8ee9993477fb86591e6e97015",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_utils.c": "f8aa1667c04984a453681eda8f511c3c80093a94b85bc8f7dc0447eeac42b2cd",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_process_auth_frame.c": "a538baabf2725d7f7466c791e2d9281167ae788e6e492c9cd28cab40b760fb68"
+    },
+    "native_function_sha256": {
+      "pe_delete_session": "7902854b1ad358879b6b602b3e61a6cb5a5689dd41769dca9bdd80cf8b9d32e8",
+      "lim_clear_mbssid_info": "81c641ae86447d6602dbadee93c0eaa54b2a48550e0b1810d380fbc65ee68c78",
+      "lim_clear_pmfcomeback_timer": "12d05854ba1f4f7e4a9c62b535b5e3925d56612d5ecd8b4783d7414ce56bff9e",
+      "lim_reset_bcn_probe_filter": "cd5ef32039677be8edd531058a056fe47eacb0fd6b02a059ffd8e669bbabed3c",
+      "lim_cleanup_power_change": "7a6d225fb3daf7e4fd9d41bdb2d7ff60a077824865810bd8041bdebc765bf8ae",
+      "lim_sae_auth_cleanup_retry": "d847c61982c135adf735385ae5402a18018263d6cd58281916efe8e6cd098083"
+    },
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "9003b33f198c991e509e7e41bd3cf31c7e9e5185c594d0dcd1817abe2cd2cb23",
+      "wlan_hdd_mishare_runtime.h": "e315e9ceccf3f24b395eb07d3ad3b36c009f4ddcb9453a3a89904ec240de1482",
+      "wlan_hdd_mishare_ndi.h": "4e05cb510c573f51dededd736d8ca0de38c1025e81400875d300ece97c84dff7"
+    },
+    "negative_control_missing_MAC_ref_release_rejected": true,
+    "negative_control_PAS_shared_auth_cleanup_rejected": true,
+    "checks": [
+      "existing production owner PE queue/flush/identity regressions execute native destructor",
+      "all modeled optional session allocations released exactly once; borrowed DPH array zeroed without free",
+      "native session invalidation and memory cleanup precede final MAC VDEV ref release",
+      "only matching running confirmation timers stopped; timeout zero/in-range/default branches",
+      "PAS avoids AP/STA timers, preserves STA/SAP filters and never looks up or mutates concurrent power state; invalid and NULL sessions are no-ops"
+    ],
+    "limitations": "Actual patched native destructor, SAE, MBSSID, PMF, beacon filter and power cleanup dispatch execute with production runtime and owned MC helpers. PE allocation, remaining destructor cleanup callees, timer operations, scheduler, synchronization and object parents remain modeled. Ordinary live-MC cleanup only; no PE SSR/reset authorization, native parent lease, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "six_native_function_hashes_independently_verified": true,
+  "three_native_file_hashes_independently_verified": true,
+  "production_hashes_verified": true,
+  "full_target_wlan_wonder_provider_compile": "passed",
+  "strict_link": "passed",
+  "wlan_unresolved": [],
+  "modules": {
+    "wonder_sysctl": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_records": 6,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+      "version_records": 11,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_route_b_probe": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "version_records": 3,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "version_records": 110,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "d8d12febee8734d5a4f6f317cdc90d976ec10c6410b2716fcd65b7442c518f73",
+      "version_records": 585,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "host_module_sha256_crossmatched": "d8d12febee8734d5a4f6f317cdc90d976ec10c6410b2716fcd65b7442c518f73",
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "validation_artifact_id": 13009747651,
+  "validation_artifact_sha256": "4bbe6ddcb793b564b1f184bb19b13ac0465848dff28c9d172945832e3ee2620b",
+  "private_PAS_shared_SAE_cleanup_isolation_implemented": true,
+  "PE_SSR_reset_recovery_implemented": false,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "complete_monitor_rx_connected": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "One private PAS BSS-type dispatch guard in native PE deletion. Native PE destructor/SAE/MBSSID/PMF/filter/power dispatch plus production owner run in C models. Remaining cleanup callees, full PE allocation, timer/lock/scheduler and physical parent primitives remain modeled; timer-helper source order separately reviewed. Ordinary live-MC cleanup only. No PE/UP SSR permission, parent lifetime coordination, firmware/RF, loading or end-to-end AirDrop certification."
+}

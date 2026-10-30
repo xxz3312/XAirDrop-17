@@ -8,6 +8,8 @@
 
 模型额外填充析构函数中直接处理的可选字段，跟踪每块分配并拒绝重复/外来 free；借用的 DPH node array 必须归零且不能 free。MAC VDEV 引用释放时检查会话已经失效、vdev/mac_ctx 清空、所有模型分配释放。覆盖匹配/不匹配/未运行确认定时器、默认认证超时的三个分支，以及重复/NULL 删除。PAS 路径若执行 AP/STA 专用定时器操作即失败；原生分派还必须保留其他 STA/SAP 的 beacon filter，并且不查询/修改并发会话功率状态。两个负对照分别去掉原生 MAC 引用释放，以及移除 PAS 的 SAE 隔离；前者必须触发引用释放断言，后者必须执行实际 SAE helper 并触发共享认证定时器断言。
 
-本地 53 项 Python 检查通过。新增原生 C 模型、负对照和完整编译验证待 CI。
+[CI 41123670326](https://github.com/xxz3312/XAirDrop-17/actions/runs/41123670326)成功：53 项 Python 检查、新增原生 PE 析构模型与两个负对照、既有 C 模型、完整 WLAN/Wonder/provider 编译、严格模块链接和七项布局检查通过。下载报告的 ZIP SHA256 与 GitHub digest 一致；生产 runtime/header、三个 native 文件和六段函数哈希已独立核对，8 个提交文件与本地 blob 一致。见[验证记录](research/popsicle-native-pe-destructor-0071-validation.json)。
 
-这里的“执行原生析构”不等于真实 PE 组件和内核定时器都已执行：PE 分配、析构调用的 cleanup primitives、调度器、锁及物理父对象仍为模型。普通 live-MC 删除验证不能直接授权 MC 停止后的 SSR 删除。下一步仍需核对这些 cleanup callees 在停机窗口的约束，接入 PE/UP 回收与原生父资源协调；完整 monitor 也尚未完成。手机无需操作，没有新测试包。
+共享定时器的源码顺序也已核对：`lim_deactivate_and_change_timer` 的 AUTH_RETRY 分支先停用全局 `g_lim_periodic_auth_retry_timer`，之后才按该定时器保存的 sessionId 查找会话并修改周期；没有检查本次删除的 PAS owner。这是源码调用顺序审计，实际内核定时器仍未在手机上执行。
+
+这里的“执行原生析构”不等于真实 PE 组件和内核定时器都已执行：PE 分配、其余 cleanup primitives、实际定时器操作、调度器、锁及物理父对象仍为模型。普通 live-MC 删除验证不能直接授权 MC 停止后的 SSR 删除。下一步仍需核对这些 cleanup callees 在停机窗口的约束，接入 PE/UP 回收与原生父资源协调；完整 monitor 也尚未完成。手机无需操作，没有新测试包。
