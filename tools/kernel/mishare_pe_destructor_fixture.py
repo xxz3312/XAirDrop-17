@@ -16,12 +16,16 @@ import mishare_session_fixture as pe
 from mishare_recovery_fixture import function
 
 ROOT = pe.ROOT
+UTILS = 'qcacld-3.0/core/mac/src/pe/lim/lim_utils.c'
 FIELDS = r'''
 struct sDphHashNode {unsigned payload;};
 typedef void *tpSirAssocReq;
 typedef struct {struct {void *gtk,*igtk;} sha384_ft_subelem;} *tpSirAssocRsp;
 typedef struct {unsigned sessionId;bool running;} TX_TIMER;
 struct pe_timeout_config {struct {unsigned auth_failure_timeout;} timeouts;};
+typedef u8 tSirMacAddr[6];
+enum bss_type {eSIR_INFRASTRUCTURE_MODE=1,eSIR_INFRA_AP_MODE=2};
+struct mgmt_beacon_probe_filter {unsigned num_sta_sessions,num_sap_sessions;tSirMacAddr sta_bssid[32];unsigned sap_channel[32];};
 '''
 SESSION_FIELDS = r'''
 unsigned peSessionId,vdev_id,opmode,defaultAuthFailureTimeout;
@@ -38,8 +42,11 @@ unsigned probeRespDataLen,assocRespDataLen,probeRespBCNDataLen;} add_ie_params;
 '''
 MODELS = r'''
 #define pe_debug(...) ((void)0)
+#define pe_err(...) ((void)0)
 #define CFG_AUTH_FAILURE_TIMEOUT 1
 #define QDF_STA_MODE 0
+#define QDF_P2P_CLIENT_MODE 3
+#define WLAN_MAX_VDEVS 32
 #define QDF_TIMER_STATE_RUNNING 1
 #define LIM_IS_AP_ROLE(s) ((s)->limSystemRole == 99)
 #define INVALID_CHANNEL_NUM 0
@@ -62,9 +69,9 @@ static bool cfg_in_range(int cfg,unsigned n) {assert(cfg==1);return n<=100;}
 static unsigned cfg_default(int cfg) {assert(cfg==1);return 50;}
 static bool tx_timer_running(TX_TIMER *t) {return t->running;}
 static void tx_timer_deactivate(TX_TIMER *t) {assert(t->running);t->running=false;pe_timer_stops++;}
-static void lim_reset_bcn_probe_filter(struct mac_context *m,struct pe_session *s) {assert(m==&pe_mac && s==&pe_slot && s->valid);pe_cleanup_calls++;}
 static void lim_sae_auth_cleanup_retry(struct mac_context *m,unsigned id) {assert(m==&pe_mac && id==7);pe_cleanup_calls++;}
-static void lim_cleanup_power_change(struct mac_context *m,struct pe_session *s) {assert(m==&pe_mac && s==&pe_slot && s->vdev->mlme->ext_vdev_ptr);pe_cleanup_calls++;}
+static struct pe_session *lim_get_concurrent_session(struct mac_context *m,unsigned id,unsigned mode) {(void)m;(void)id;(void)mode;assert(!"OTHER_SESSION_LOOKUP_ON_PAS");return NULL;}
+static void wlan_set_tpc_update_required_for_sta(struct wlan_objmgr_vdev *v,bool b) {(void)v;(void)b;assert(!"OTHER_SESSION_TPC_WRITE_ON_PAS");}
 static void mlme_set_mbssid_info(struct wlan_objmgr_vdev *v,struct scan_mbssid_info *info,unsigned chan) {assert(v==last_vdev && info && !chan && v->mlme->ext_vdev_ptr);pe_mbssid_calls++;}
 static void lim_ft_cleanup(struct mac_context *m,struct pe_session *s) {assert(m==&pe_mac && s==&pe_slot);pe_cleanup_calls++;}
 static void lim_free_peer_idxpool(struct pe_session *s) {pe_heap_free(s->model_idxpool);s->model_idxpool=NULL;}
@@ -92,6 +99,8 @@ static void pe_native_release_ref(struct wlan_objmgr_vdev *v,int id) {
 #define qdf_mc_timer_destroy pe_only_mc_timer_destroy
 NATIVE_MBSSID
 NATIVE_PMF
+NATIVE_FILTER
+NATIVE_POWER
 #define qdf_mem_free pe_heap_free
 #define wlan_objmgr_vdev_release_ref pe_native_release_ref
 NATIVE_DELETE
@@ -133,12 +142,15 @@ int main(void) {
   assert(mishare_runtime_ndi_session(o)==-EINPROGRESS);run_pe(false);
   fill_pe_allocations();pe_slot.defaultAuthFailureTimeout=timeout==0?0:timeout==1?60:101;
   TX_TIMER timers[3]={{.sessionId=0,.running=true},{.sessionId=1,.running=true},{.sessionId=0,.running=false}};
+  memset(&pe_mac.bcn_filter,0x5a,sizeof(pe_mac.bcn_filter));
+  struct mgmt_beacon_probe_filter saved_filter=pe_mac.bcn_filter;
   pe_mac.lim.maxStation=2;pe_mac.lim.lim_timers.gpLimCnfWaitTimer=timers;
   unsigned live=pe_heap_live,frees=pe_heap_frees,refs=last_vdev->refs,stops=pe_timer_stops;
   assert(mishare_runtime_destroy(&o)==-EINPROGRESS && pe_pending.bodyptr && pe_heap_live==live);
   run_pe(false);
   assert(!pe_heap_live && pe_heap_frees-frees==live && !pe_slot.valid && !pe_slot.vdev && !pe_slot.mac_ctx);
   assert(last_vdev->refs==(int)refs-1 && pe_timer_stops==stops+1 && !timers[0].running && timers[1].running);
+  assert(!memcmp(&saved_filter,&pe_mac.bcn_filter,sizeof(saved_filter)));
   assert(!pe_slot.bcnLen && !pe_slot.assocReqLen && !pe_slot.assocRspLen && !pe_slot.user_edca_set);
   assert(!pe_slot.add_ie_params.probeRespDataLen && !pe_slot.add_ie_params.assocRespDataLen && !pe_slot.add_ie_params.probeRespBCNDataLen);
   for(unsigned i=0;i<33;i++)assert(!pe_nodes[i].payload);
@@ -157,10 +169,11 @@ def fixture(root):
     native = (root/pe.SESSION).read_text()
     src = pe.fixture(root)
     src = src.replace('struct pe_session {', FIELDS+'\nstruct pe_session {'+SESSION_FIELDS, 1)
-    src = src.replace('struct mac_context {', 'struct mac_context {struct pe_timeout_config *mlme_cfg;', 1)
+    src = src.replace('struct mac_context {', 'struct mac_context {struct mgmt_beacon_probe_filter bcn_filter;struct pe_timeout_config *mlme_cfg;', 1)
     src = src.replace('unsigned maxBssId,max_sta_of_pe_session;', 'unsigned maxBssId,max_sta_of_pe_session,maxStation;struct {TX_TIMER *gpLimCnfWaitTimer;} lim_timers;', 1)
     old = function(src, 'pe_delete_session')
     model = MODELS.replace('NATIVE_MBSSID', function(native, 'lim_clear_mbssid_info')).replace('NATIVE_PMF', function(native, 'lim_clear_pmfcomeback_timer'))
+    model = model.replace('NATIVE_FILTER', function(native, 'lim_reset_bcn_probe_filter')).replace('NATIVE_POWER', function((root/UTILS).read_text(), 'lim_cleanup_power_change'))
     model = model.replace('NATIVE_DELETE', function(native, 'pe_delete_session').replace('void pe_delete_session(', 'static void native_pe_delete_session(', 1))
     src = src.replace(old, model, 1)
     # Creation is still modeled. Initialize the real destructor's required
@@ -200,16 +213,16 @@ def audit(root):
     native = (root/pe.SESSION).read_text()
     return {'status':out.strip(),'source_commit':pe.PIN,
             'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),
-            'native_sha256':{pe.SESSION:hashlib.sha256(native.encode()).hexdigest()},
-            'native_function_sha256':{name:hashlib.sha256(function(native,name).encode()).hexdigest() for name in ['pe_delete_session','lim_clear_mbssid_info','lim_clear_pmfcomeback_timer']},
+            'native_sha256':{path:hashlib.sha256((root/path).read_bytes()).hexdigest() for path in [pe.SESSION,UTILS]},
+            'native_function_sha256':{name:hashlib.sha256(function((root/path).read_text(),name).encode()).hexdigest() for path,names in [(pe.SESSION,['pe_delete_session','lim_clear_mbssid_info','lim_clear_pmfcomeback_timer','lim_reset_bcn_probe_filter']),(UTILS,['lim_cleanup_power_change'])] for name in names},
             'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h']},
             'negative_control_missing_MAC_ref_release_rejected':True,
             'checks':['existing production owner PE queue/flush/identity regressions execute native destructor',
                       'all modeled optional session allocations released exactly once; borrowed DPH array zeroed without free',
                       'native session invalidation and memory cleanup precede final MAC VDEV ref release',
                       'only matching running confirmation timers stopped; timeout zero/in-range/default branches',
-                      'PAS avoids AP/STA timer primitives; invalid and NULL sessions are no-ops'],
-            'limitations':'Actual native destructor, MBSSID and PMF dispatch execute with production runtime and owned MC helpers. PE allocation, destructor cleanup callees, timer operations, scheduler, synchronization and object parents remain modeled. Ordinary live-MC cleanup only; no PE SSR/reset authorization, native parent lease, backend activation, phone/firmware/RF or AirDrop proof.'}
+                      'PAS avoids AP/STA timers, preserves STA/SAP filters and never looks up or mutates concurrent power state; invalid and NULL sessions are no-ops'],
+            'limitations':'Actual native destructor, MBSSID, PMF, beacon filter and power cleanup dispatch execute with production runtime and owned MC helpers. PE allocation, remaining destructor cleanup callees, timer operations, scheduler, synchronization and object parents remain modeled. Ordinary live-MC cleanup only; no PE SSR/reset authorization, native parent lease, backend activation, phone/firmware/RF or AirDrop proof.'}
 
 
 if __name__ == '__main__':
