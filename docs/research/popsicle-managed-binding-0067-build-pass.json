@@ -1,0 +1,116 @@
+{
+  "source_commit": "6400014ac08b9a9994094a8aa24a856205dab569",
+  "run": 41089242566,
+  "workflow_conclusion": "success",
+  "python_checks": 53,
+  "integration_model": {
+    "status": "WONDER_PROVIDER_BINDING_FIXTURE_PASS_ONLY",
+    "build_modes": [
+      "private provider with loader dependency",
+      "generic legacy without private import"
+    ],
+    "production_sha256": {
+      "kernel/provider/provider.c": "982b0d8e3b7b3d93b4bab641d61e1a19dbd2331f4cc3af6fabf3717f38a3a5e7",
+      "kernel/provider/wondertap.h": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+      "kernel/wonder/wondertap.c": "e817a3d5bb3d6792dbc479667f5320155677f3eecbc469691f2b33197cbcd113",
+      "kernel/wonder/wondertap_internal.h": "4ee5b0f0308e5271ac5bd24f0689183b1ea6174828f9abfda1b5c7268570b09f",
+      "kernel/wonder/wondertap_managed.h": "c28ae1bdc6a86cf1574ac9a8f81d063d92a8dba58c7916c1fcd14a9d040077a2",
+      "kernel/wonder/wondertap_provider_binding.c": "906c1127e0254c671290636d12b50857073e8f7721fdb432aba05eea83a852e6",
+      "kernel/wonder/include/wonder/wondertap.h": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9"
+    },
+    "production_fragment_sha256": {
+      "MASTER_BIND": "516724e00b106c203241b35f41e21cdeb206f9e72005dc07366e1ca3e5c9baa2",
+      "MASTER_UNBIND": "887575ad95b26bb377a1b28e7da88c2bf88c5d969daf3b253318051ad1735b76",
+      "MAC_EXIT": "584165bd92a208f309f135ad45c6918ccf639129cf498e38b399c066f4a437f3",
+      "SSR_WORK": "a097ff33d73d62dccc045a5f6d402b6bfc46ee14676195feaccba9155b8c5f4b",
+      "SSR_EVENT": "ed334054442bba9d2994c48716f2cec84199f94cc0319f013dd0cd7d17aaafe7"
+    },
+    "limitations": "Production provider/core/HDD metadata and extracted master/free callbacks with modeled modules, mutexes, platform/component services and version acceptance. Not native races, teardown leases, firmware or RF proof."
+  },
+  "managed_model": {
+    "status": "WONDER_MANAGED_LIFECYCLE_FIXTURE_PASS_ONLY",
+    "production_sha256": {
+      "wondertap.c": "e817a3d5bb3d6792dbc479667f5320155677f3eecbc469691f2b33197cbcd113",
+      "wondertap_internal.h": "4ee5b0f0308e5271ac5bd24f0689183b1ea6174828f9abfda1b5c7268570b09f",
+      "wondertap_managed.h": "c28ae1bdc6a86cf1574ac9a8f81d063d92a8dba58c7916c1fcd14a9d040077a2",
+      "include/wonder/wondertap.h": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546"
+    },
+    "limitations": "Complete production WonderTap entry points with modeled modules, mutexes and vendor ops; not native locking, parent lifetime, firmware or RF proof."
+  },
+  "provider_exports": {
+    "status": "PROVIDER_MANAGED_EXPORTS_PRESENT_ONLY",
+    "required": [
+      "opairshare_set_wonder_priv_data",
+      "opairshare_set_wonder_managed_priv_data",
+      "opairshare_wonder_managed_control"
+    ],
+    "missing": [],
+    "symvers_sha256": "19d3b5bfa24ecfd2d6ef3ae6bc76aedba14a0267d45ec90877f67799deca7545",
+    "limitations": "Export names only; no runtime binding, native parent or RF certification."
+  },
+  "wonder_entries": {
+    "status": "WONDER_MANAGED_ENTRIES_PRESENT_ONLY",
+    "required": [
+      "wondertap_provider_bind",
+      "wondertap_provider_unbind",
+      "wondertap_bind_managed_staged",
+      "wondertap_activate_managed",
+      "wondertap_quiesce_managed",
+      "wondertap_retire"
+    ],
+    "missing": [],
+    "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+    "limitations": "Linked entry names only; not active session, native teardown or RF proof.",
+    "dependencies": [
+      "cfg80211,mac80211,opairshare_wonder_provider"
+    ]
+  },
+  "modules": {
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "version_records": 110,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "79a0f1ed64bd0439cdbe9cadf11c368475a65d43254cf610bbea2451ad1d2c03",
+      "version_records": 585,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+      "version_records": 11,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "wlan_unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "validation_artifact_sha256": "f28d1ac1d754db874ffc39137812c2df204a9d4d8c776e15fe5533be55da67eb",
+  "constructor_once_before_register_hw_source_check": true,
+  "managed_recovery_and_binding_exclusion_model": true,
+  "managed_component_binding_installed": true,
+  "target_uses_strong_private_provider_dependency": true,
+  "public_ops_priv_headers_changed": false,
+  "native_parent_lease_implemented": false,
+  "prepared_up_ssr_recovery_implemented": false,
+  "radio_session_activation_enabled": false,
+  "complete_monitor_rx_verified": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Production binding/retirement preflight and local SSR fencing with C models plus full compilation/link/export/dependency/selected-layout checks only. No active native radio session, parent teardown guarantee, complete private ABI, native concurrency, firmware or RF certification."
+}

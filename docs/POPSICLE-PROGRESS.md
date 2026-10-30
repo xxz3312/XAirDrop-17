@@ -1,6 +1,6 @@
 ## 最新阶段 0067
 
-默认关闭的HDD元数据绑定通过私有provider传递managed companion，component master实际安装/解除绑定。发布ops前关闭准入，CLAIM成功后开放；清除前quiesce，有归属时保留component/descriptor/claim，显式retire后才解绑，最终free拒绝仍有归属的实例。公开ops/priv ABI不变。
+默认关闭的HDD元数据绑定通过私有provider传递managed companion，component master实际安装/解除绑定。发布ops前关闭准入，CLAIM成功后开放；清除前quiesce，有归属时保留component/descriptor/claim，显式retire后才解绑，最终free拒绝仍有归属的实例。公开ops/priv ABI不变。CI 41089242566已通过完整编译、严格链接、3个provider导出、6个Wonder入口和7项选定布局检查；私有/通用两模式C模型通过。
 
 HDD init仍返回EOPNOTSUPP，不创建固件会话。目标remove是void，native caller尚不能以EBUSY阻止父资源拆除；创建/启动接线仍须等父资源租约和prepared/UP SSR恢复完成。完整monitor未接通，无新手机测试。见[0067](POPSICLE-MANAGED-BINDING-0067.md)。
 

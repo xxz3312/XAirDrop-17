@@ -27,3 +27,7 @@
 测试中的可启动假后端仅用于制造busy/retire条件，不代表目标固件会话。模型不证明真实锁并发、component框架、物理remove、SSR父资源或空口。完整内核构建与严格链接单独记录。
 
 严格modpost确认目标GKI不提供__symbol_get/__symbol_put，因此没有使用动态查询或绕过符号检查。POPSICLE_STOCK_MAC80211_ABI构建显式启用私有provider导入，Wonder modpost使用本轮真实provider Module.symvers；其他构建不导入该私有符号。
+
+## 已通过构建
+
+[CI 41089242566](https://github.com/xxz3312/XAirDrop-17/actions/runs/41089242566)成功：53项Python检查、生产provider/core/HDD与component/free/SSR片段的ASan/UBSan模型、私有/通用两模式C模型、既有native模型、完整WLAN/Wonder/provider编译、严格链接、3个真实provider导出、6个Wonder入口、真实模块依赖及7项选定布局检查通过。下载报告SHA256、生产源码/函数片段哈希已复核，构造仅一次且在register_hw前的源码顺序已核对。Wonder110条、WLAN585条、provider11条版本记录无不匹配/缺失版本依赖。见[验证记录](research/popsicle-managed-binding-0067-build-pass.json)。这些不证明 native父资源、真实并发、固件或AWDL收包。
