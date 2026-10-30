@@ -22,3 +22,7 @@ Wonder backend的init/set_freq/set_filter仍返回EOPNOTSUPP。已有host/runtim
 仍需实现Wonder调用方的同步、平台NSS、轮询/超时及SSR/remove前回收，再接辅助monitor创建/频道/停止、完整packet DMA、接收地址过滤和native RAW投递。当前256字节header capture不能冒充完整monitor。
 
 0065是调用流程代码增量，完整移植尚未完成；不发换壳手机包，无需手机操作。
+
+## 构建验证
+
+[CI 41057158186](https://github.com/xxz3312/XAirDrop-17/actions/runs/41057158186)已成功：53项Python检查、生产controller的ASan/UBSan模型、既有host/native模型、完整WLAN编译、严格链接与选定布局检查通过。下载的紧凑报告已核对SHA256、全部host生产源码哈希和新增入口符号；缺失必需符号与WLAN未解决依赖均为空。见[构建记录](research/popsicle-session-driver-0065-build-pass.json)。这不证明完整ABI、固件或空口收发。
