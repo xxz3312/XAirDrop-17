@@ -1,4 +1,8 @@
-## 最新阶段 0082（验收完成）
+## 最新阶段 0083（验证中）
+
+新增实际执行原生 MLME SM create/destroy wrapper 的模型：覆盖八种启动组合、分配失败、minidump/锁建立与析构顺序、三次配对释放及两个遗漏释放/错误返回负对照。锁和 minidump 原语仍是平台模型，真实 object-manager 调用方和 callback adapter 仍未覆盖。Python 语法检查通过，完整 CI 待验证。见[0083](POPSICLE-NATIVE-SM-OWNER-0083.md)。backend 关闭，手机无需操作。
+
+## 阶段 0082（验收完成）
 
 原生通用状态机引擎、完整原始状态/事件表及真实枚举已进入模型执行，原生 transition/deliver 桥接替代层级适配器。首次 START 允许匹配的 INIT/0 或 INIT/IDLE，初始子状态漂移拒绝；新建 INIT/0 遇 SSR 保留资源。CI [41244837690](https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690)（`005ee1b`）已全部通过：53 项 Python 检查、原生引擎八种启动组合、三项负对照、既有 C 回归、完整 WLAN/Wonder/provider 编译、CNSS 名称检查、严格模块链接、七项选定结构布局及最终模块记录检查。35 份模型报告的公共生产源码哈希已交叉匹配，五个生产文件与已验证源码独立核对；WLAN 未解决依赖为空，五个模块均无版本记录不匹配或缺版本依赖。报告 ZIP 的 SHA-256 已核对，布局候选模块哈希与实际链接 WLAN 模块一致。 详见[0082](POPSICLE-NATIVE-ENGINE-0082.md)和[验证记录](research/popsicle-native-engine-0082-validation.json)。
 
