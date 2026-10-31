@@ -8,6 +8,6 @@
 
 独立引擎契约用例验证默认 child entry、child→parent exit 顺序、未处理事件不向父状态回退、无效 event sentinel、状态表编号和父层级循环拒绝。三个负对照分别移除默认 child 选择、添加不存在的父状态回退、移除首次 START 的初始子状态匹配，必须均被捕获。该模型不调用 wlan_sm_reset 作为恢复手段。
 
-53 项 Python 检查通过，完整 CI 待验证。
+CI [41239617189](https://github.com/xxz3312/XAirDrop-17/actions/runs/41239617189)（`6aa5333`）已通过 53 项 Python 检查、原生引擎模型及三项负对照、旧回归、完整编译、CNSS 名称检查、严格模块链接、七项选定布局及最终模块记录检查。新旧模型的公共生产源码哈希已交叉核对，并与该提交的五个生产文件独立匹配；WLAN 未解决依赖为空。见[验证记录](research/popsicle-native-engine-0082-validation.json)。该已通过构建覆盖 INIT/0 的四种双频/响应组合；后续 `005ee1b` 扩展到 INIT/0 与 INIT/IDLE 的八种组合，CI [41244837690](https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690) 尚在运行，不能沿用前一提交的成功结论。
 
 历史记录、日志、分配、原子、锁和 MLME 对象字段仍有平台模型；native MLME callback adapter、完整 WMA 后处理、物理 DP/peer 生命周期及父资源自动协调未由此执行。完整表不等于所有 handler 都是原生或所有状态均已覆盖。没有生产功能激活或新 native patch；backend 关闭，无新手机包，没有固件/RF 或 AirDrop 成功证明。

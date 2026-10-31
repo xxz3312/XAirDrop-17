@@ -1,0 +1,233 @@
+{
+  "source_commit": "6aa533310a07aa0658c4632a7f50266cbc9b8ce4",
+  "workflow_run": 41239617189,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41239617189",
+  "workflow_conclusion": "success",
+  "required_steps_conclusion": "success",
+  "python_regression_checks": 53,
+  "models": {
+    "native-engine": {
+      "status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "b75f375a1e12d7c707d05e9aa2ed35d4f6cb79334bb3dd6c8b22fb822a1d4375",
+      "production_sha256": {
+        "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+        "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+        "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+        "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+        "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+      },
+      "native_sha256": {
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+        "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+        "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+      },
+      "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+      "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+      "native_bridge_sha256": {
+        "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+        "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+      },
+      "native_exit_sha256": {
+        "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+        "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+        "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+        "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+        "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+        "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+        "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+        "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+        "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+        "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+        "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+        "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+      },
+      "stubbed_unexercised_table_functions": [
+        "mlme_vdev_state_dfs_cac_wait_entry",
+        "mlme_vdev_state_dfs_cac_wait_event",
+        "mlme_vdev_state_dfs_cac_wait_exit",
+        "mlme_vdev_subst_mlo_sync_wait_entry",
+        "mlme_vdev_subst_mlo_sync_wait_event",
+        "mlme_vdev_subst_mlo_sync_wait_exit",
+        "mlme_vdev_subst_start_restart_progress_entry",
+        "mlme_vdev_subst_start_restart_progress_event",
+        "mlme_vdev_subst_start_restart_progress_exit",
+        "mlme_vdev_subst_suspend_csa_restart_entry",
+        "mlme_vdev_subst_suspend_csa_restart_event",
+        "mlme_vdev_subst_suspend_csa_restart_exit",
+        "mlme_vdev_subst_suspend_host_restart_entry",
+        "mlme_vdev_subst_suspend_host_restart_event",
+        "mlme_vdev_subst_suspend_host_restart_exit",
+        "mlme_vdev_subst_suspend_suspend_restart_entry",
+        "mlme_vdev_subst_suspend_suspend_restart_event",
+        "mlme_vdev_subst_suspend_suspend_restart_exit"
+      ],
+      "native_exit_callback_sha256": {
+        "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+        "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+      },
+      "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+      "PAS_exit_callback_binding_source_reviewed": true,
+      "negative_control_missing_initial_substate_recheck_rejected": true,
+      "negative_control_missing_default_child_rejected": true,
+      "negative_control_parent_fallback_rejected": true,
+      "checks": [
+        "complete pinned generic engine C file/header with original dense enum values, original state table and event-name array",
+        "unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions",
+        "real engine dispatch has no parent fallback; default child entry and child/parent exit order verified",
+        "real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected",
+        "2.4/5240 MHz ordinary/early response lifecycle reaches DOWN, retires controller and queues PE deletion with parents retained",
+        "fresh INIT/zero SSR rejection retains resources; it cannot substitute for native IDLE reclaim proof",
+        "engine allocations explicitly released in fixture; no synthetic native state reset"
+      ],
+      "limitations": "Generic engine history/logging/memory/atomic and QDF/SM locks/object state fields remain platform models. Actual driver SM create/destroy wrappers, native MLME callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator are not executed by this fixture. Full table is preserved; unused native handlers are aborting stubs, not full STA/MLO/DFS/restart support. Ordinary peer physical cleanup after queued PE deletion remains outside this composite. Initial zero substate is recorded and matched before first START; drift rejects. Fresh INIT/zero SSR stays held; existing qualified INIT/IDLE SSR scope only; no active START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof."
+    },
+    "native-lifecycle": {
+      "status": "MISHARE_SELECTED_NATIVE_LIFECYCLE_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "bef4b5daaf802c6c5fdf811313a15b0bf44d3ac962350c840edd5ac5d9d0b213",
+      "production_sha256": {
+        "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+        "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+        "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+        "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+        "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+      },
+      "native_SM_sha256": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64",
+      "native_handler_sha256": {
+        "mlme_vdev_state_init_entry": "2866eedfb2c18423dac50658fdca4dc409cd43e70a2755ee3e060ce5b2075a75",
+        "mlme_vdev_state_start_entry": "34d916c84d780f20e9ec4c6faf1b0021caf8d7561e71644f459870d851ca8ccd",
+        "mlme_vdev_state_up_entry": "b256f7d2bea5d1938f9a847094273c350de8a4d66c4dc5a13c8adf06f2337100",
+        "mlme_vdev_state_suspend_entry": "32033ffaefc8c8fd1defe9da53335279d609860631663f898b99c114435cbe97",
+        "mlme_vdev_state_stop_entry": "b4dc792eb8241760d69b214a484b1ec0b33e49495e766227d7bb031646a621cc",
+        "mlme_vdev_subst_start_start_progress_entry": "e869b1d5d09915207cbc8cacd0689f6c9f5f2b07df3a026ff10e62b47069a95d",
+        "mlme_vdev_subst_start_conn_progress_entry": "c4eb8867eaf9e492a3646eeec1e5fcb1d2355a5a0e32c73bd88a67f64e9c11ef",
+        "mlme_vdev_subst_start_disconn_progress_entry": "44f9a8851d87d39ab1389bc74dfac97edfc681b76465415243d2abbc7c9e6da2",
+        "mlme_vdev_subst_up_active_entry": "a8236835e74fc4e554ae4a244f76b5e0878610dbbf22a0aae6c93f41adc385ad",
+        "mlme_vdev_subst_suspend_suspend_down_entry": "f9c136bed76b02d253bb82ab7a56672561543945565b18bdc22fc636e2cc6565",
+        "mlme_vdev_subst_stop_stop_progress_entry": "4cbeb7cd4ecf4c9bfe0cfd6c3eabdd4dd3be87966727d210d68c2a5f6545a6f9",
+        "mlme_vdev_subst_stop_down_progress_entry": "df840d8bebe93711c1a741c17d357dbf35c4cacefb6b6d6ba14bb6b2b51f72b3",
+        "mlme_vdev_state_start_event": "4915a7e76964d9bf1cce117cd7ab50a72d7612105c03288c1ad72628361372c6",
+        "mlme_vdev_state_up_event": "fcc9a9bf4eed96d19a86b12cc02613b9182708988378dc39b874fe7f8b1f3480",
+        "mlme_vdev_state_suspend_event": "98bbe80c64f8f0e4ae52dfed1608333a50525d71c0f3464534ff80f75d5d7bf4",
+        "mlme_vdev_state_stop_event": "2b4b8adea86eddaa19f79cc348f37406284edd95f39af7bc5574e0532315e81c",
+        "mlme_vdev_subst_start_start_progress_event": "c68fa254f36d4e9d83b4f2476cc0e39dceacf7e8fc7243316f79a3d315f927b7",
+        "mlme_vdev_subst_start_conn_progress_event": "ce68de9b1dead6012afc85731186b5076470a5c322fe926e02a188f658fbdbd9",
+        "mlme_vdev_subst_start_disconn_progress_event": "e94c0c97bc7100609884a9f736da2277b41eb43838b939ee291537e605b055d3",
+        "mlme_vdev_subst_up_active_event": "18a7d40734f903bf6812b7b940f3c3bf154e5fc687fed8a462717a50e08f0fcb",
+        "mlme_vdev_subst_suspend_suspend_down_event": "86581ea5b9d0b4dae1705e4b133da7f60dea0b72c4097406cdca5cbda5350c2b",
+        "mlme_vdev_subst_stop_stop_progress_event": "d035ccdc42213e4b57f6edc9625663fb6c17ec9cfd5dfb652357671b23af3f3a",
+        "mlme_vdev_subst_stop_down_progress_event": "8339e2e0112f4681a249d1d6e9338ccc52973783c99a70c3f5b54fded5ef82e6"
+      },
+      "negative_control_missing_START_substate_gate_rejected": true,
+      "negative_control_missing_STOP_substate_gate_rejected": true,
+      "checks": [
+        "0080 regressions retained",
+        "2.4/5240 MHz normal and inline response complete native entry/event lifecycle with real production callbacks, native TX/RX and PM helpers",
+        "normal DOWN retires controller and queues PE deletion with PE/peer/VDEV/DP retained; reset-platform composite does not execute normal physical peer teardown",
+        "INIT/IDLE validation and exact START_START_PROGRESS/STOP_STOP_PROGRESS wire gates",
+        "native handled=true after failed callbacks still quarantines production controller",
+        "both missing wire-substate gate negative controls fail as expected"
+      ],
+      "limitations": "Selected unchanged native entry/event bodies and 0080 INIT/API execute; hierarchy dispatch, transitions/default-child selection and QDF/locks remain modeled. PAS non-MLO ordinary START-UP-DOWN-STOP-INIT only; restart/STA/MLO/DFS helpers deliberately abort if reached. Native target-if/PM and production lifecycle run with modeled transport, generic engine, transitive WMA postprocessing, allocation, DP/peer physical lifecycle and parents. Normal physical peer/PE teardown after queued deletion is not executed in this composite; it retains parent resources in child cases. No new SSR recovery scope, automatic shutdown/parent coordination, backend activation, phone/firmware/RF or AirDrop certification."
+    }
+  },
+  "production_source_sha256_independently_verified": true,
+  "production_hashes_crossmatched_reports": [
+    "mishare-aborted-start-reset-fixture.json",
+    "mishare-backend-fixture.json",
+    "mishare-batch-fixture.json",
+    "mishare-channel-fixture.json",
+    "mishare-commands-fixture.json",
+    "mishare-completed-fixture.json",
+    "mishare-completed-prepare-reset-fixture.json",
+    "mishare-completion-fixture.json",
+    "mishare-context-fixture.json",
+    "mishare-events-fixture.json",
+    "mishare-final-fixture.json",
+    "mishare-firmware-fixture.json",
+    "mishare-host-fixture.json",
+    "mishare-init-rejection-reset-fixture.json",
+    "mishare-native-engine-fixture.json",
+    "mishare-native-lifecycle-fixture.json",
+    "mishare-parent-fixture.json",
+    "mishare-pe-destructor-fixture.json",
+    "mishare-pe-reset-fixture.json",
+    "mishare-pre-radio-reset-fixture.json",
+    "mishare-queued-start-reset-fixture.json",
+    "mishare-radio-fixture.json",
+    "mishare-recovery-fixture.json",
+    "mishare-refused-start-reset-fixture.json",
+    "mishare-rejected-start-reset-fixture.json",
+    "mishare-reset-context-fixture.json",
+    "mishare-runtime-fixture.json",
+    "mishare-session-fixture.json",
+    "mishare-shutdown-fixture.json",
+    "mishare-sm-entry-reset-fixture.json",
+    "mishare-start-plan-fixture.json",
+    "mishare-txn-fixture.json",
+    "mishare-work-fixture.json",
+    "wonder-managed-fixture.json",
+    "wonder-provider-fixture.json"
+  ],
+  "strict_link": "passed",
+  "modules": {
+    "wonder_sysctl": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_route_b_probe": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "cffb05a881fa853de8d9607f2947f7c7405cba335bd694e3424d162c9ec4413d",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "wlan_unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "validation_artifact_id": 13056549600,
+  "validation_artifact_sha256": "43b9c5d1fb9f1806f75dafc965dc4707e04bc62c9f83a4dabb2a2329b93c8f45",
+  "tested_engine_initial_substates": [
+    0
+  ],
+  "tested_engine_lifecycle_cases": 4,
+  "radio_START_UP_reset_recovery_implemented": false,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "complete_monitor_rx_connected": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Generic engine history/logging/memory/atomic and QDF/SM locks/object state fields remain platform models. Actual driver SM create/destroy wrappers, native MLME callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator are not executed by this fixture. Full table is preserved; unused native handlers are aborting stubs, not full STA/MLO/DFS/restart support. Ordinary peer physical cleanup after queued PE deletion remains outside this composite. Initial zero substate is recorded and matched before first START; drift rejects. Fresh INIT/zero SSR stays held; existing qualified INIT/IDLE SSR scope only; no active START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.",
+  "subsequent_coverage_commit": {
+    "sha": "005ee1b62c632ea4a63f0b091757d3188ab1c77d",
+    "workflow_run": 41244837690,
+    "scope": "Eight lifecycle combinations: INIT/0 and INIT/IDLE, 2437/5240 MHz, ordinary/early response. This baseline report does not certify that later commit."
+  }
+}
