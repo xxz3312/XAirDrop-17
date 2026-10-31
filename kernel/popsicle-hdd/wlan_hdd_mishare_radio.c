@@ -23,6 +23,7 @@ struct mishare_radio {
     void *owner;
     unsigned long session_cookie;
     u32 freq;
+    u32 initial_native_substate;
     struct mishare_radio_status state;
     bool preflight;
     bool start_reply_queued;
@@ -389,7 +390,10 @@ QDF_STATUS mishare_radio_validate(struct vdev_mlme_obj *m, uint16_t len, void *d
         spin_lock_irqsave(&mishare_radio_lock, flags);
         ret = r->state.phase != MISHARE_RADIO_STARTING || !r->preflight ||
               !r->start_sm_committed || !r->start_sm_entered ||
-              !radio_init_idle(r) ? -EUCLEAN : 0;
+              wlan_vdev_mlme_get_state(r->vdev) != WLAN_VDEV_S_INIT ||
+              wlan_vdev_mlme_get_substate(r->vdev) != r->initial_native_substate ||
+              (r->initial_native_substate != 0 &&
+               r->initial_native_substate != WLAN_VDEV_SS_IDLE) ? -EUCLEAN : 0;
         if (ret && r->start_sm_call_active && radio_init_reject_context(r, 1, 1) &&
             !r->init_validate_rejected && !r->init_down_rejected && !r->init_native_notified)
             r->init_validate_rejected = true;
@@ -925,6 +929,9 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
     r->owner = owner;
     r->session_cookie = cookie;
     r->freq = freq;
+    /* Native creation does not run INIT entry: zero can precede IDLE.
+     * Admit only the initial observed substate; SSR still requires IDLE. */
+    r->initial_native_substate = wlan_vdev_mlme_get_substate(vdev);
     r->start_plan = *plan;
     spin_lock_irqsave(&mishare_radio_lock, flags);
     for (other = mishare_radios; other; other = other->next) {
