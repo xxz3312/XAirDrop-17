@@ -6,6 +6,6 @@
 
 原生函数正文保持原样，hash 与固定版本加已有补丁后的整个 SM 文件核对。层级分派、transition/default-child、锁与 QDF 平台、通用状态机引擎仍有模型，不能称为完整原生 SM 引擎运行。STA/MLO/restart/DFS 等非本轮路径的 helper 一旦到达即中止模型，不伪装通过。
 
-53 项 Python 检查通过，完整 CI 待验证。
+CI [41208058251](https://github.com/xxz3312/XAirDrop-17/actions/runs/41208058251) 已通过 53 项 Python 检查、新原生主流程模型及两个子状态负对照、既有全部 C 模型、完整编译、严格链接和七项布局检查；11 组模型公共生产哈希、23 段原生函数哈希、9 个 native 文件哈希、实际链接符号和模块记录已复核。测试源码为 `4fd043ad1d04e3e2a7c23a233681d4a3d6bf5281`。验证 ZIP SHA256 为 `10f9937a7bce4c952524a059d62f6e824e6ecda42ca87c93b3c7178c3c50c957`，详见[验证记录](research/popsicle-native-lifecycle-0081-validation.json)。生成模型整体哈希来自 CI，不在本地编译或独立重建；20 段普通路径函数来自已验证流程与源码调用关系复核，没有覆盖率插桩计数。
 
 无新 native patch，无新的 SSR 回收来源或范围；实际 START/UP 的 SSR 恢复、自动 shutdown/父资源协调、完整 monitor/RX 仍未完成。实际固件传输、完整 WMA 后处理、DP/peer 物理生命周期和父资源未由此认证。backend 关闭，不发新手机包，没有手机加载或 AirDrop 互传成功证明。

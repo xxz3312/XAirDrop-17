@@ -1,6 +1,6 @@
 ## 最新阶段 0081
 
-START/STOP 发送现在同时要求精确原生子状态，INIT 校验要求 INIT/IDLE。新增模型编入 23 段原生 entry/event 函数及原生 INIT/API，普通主流程经过其中 20 段，贯通 START→UP→DOWN→STOP→INIT、双频与提前响应，检查原生 handled=true 掩盖回调失败时 controller 仍隔离资源。两个负对照移除 START/STOP 子状态门槛，必须均被识别。53 项 Python 检查通过，完整 CI 待验证。通用状态机引擎/层级分派/transition 仍有模型，实机和固件未验证；不扩大 SSR 回收范围，backend 关闭，手机无需操作。见[0081](POPSICLE-NATIVE-LIFECYCLE-0081.md)。
+START/STOP 发送现在同时要求精确原生子状态，INIT 校验要求 INIT/IDLE。新增模型编入 23 段原生 entry/event 函数及原生 INIT/API，普通主流程经过其中 20 段，贯通 START→UP→DOWN→STOP→INIT、双频与提前响应，检查原生 handled=true 掩盖回调失败时 controller 仍隔离资源。两个负对照移除 START/STOP 子状态门槛，必须均被识别。CI [41208058251](https://github.com/xxz3312/XAirDrop-17/actions/runs/41208058251) 已通过 53 项 Python 检查、新原生主流程模型及两个子状态负对照、既有全部 C 模型、完整编译、严格链接和七项布局检查；11 组模型公共生产哈希、23 段原生函数哈希、9 个 native 文件哈希、实际链接符号和模块记录已复核。通用状态机引擎/层级分派/transition 仍有模型，实机和固件未验证；不扩大 SSR 回收范围，backend 关闭，手机无需操作。见[0081](POPSICLE-NATIVE-LIFECYCLE-0081.md)。
 
 ## 阶段 0080
 
