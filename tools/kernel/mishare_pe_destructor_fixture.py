@@ -116,6 +116,8 @@ NATIVE_DELETE
 #undef qdf_wake_lock_destroy
 #undef qdf_mc_timer_stop
 #undef qdf_mc_timer_destroy
+#undef QDF_STA_MODE
+#undef QDF_P2P_CLIENT_MODE
 static void pe_delete_session(struct mac_context *m,struct pe_session *s) {
  assert(!lock_depth && m==&pe_mac && s==&pe_slot && s->valid && s->vdev==last_vdev);pe_deletes++;
  pe_heap_release_probe=false;native_pe_delete_session(m,s);assert(pe_heap_release_probe);
