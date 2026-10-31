@@ -107,10 +107,10 @@ int main(void) {
  for(unsigned band=0;band<2;band++)for(unsigned early=0;early<2;early++)native_cycle(band?5240:2437,early);
  for(unsigned fault=0;fault<2;fault++) {pid_t child=fork();assert(child>=0);if(!child) {native_substate_fault(fault);_Exit(0);}int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));}
  /* Native handled=true does not propagate generic START-send failure. Controller must still quarantine. */
- for(unsigned fault=0;fault<3;fault++) {
+ for(unsigned fault=0;fault<4;fault++) {
   reset_pe_test();pid_t child=fork();assert(child>=0);if(!child) {
    native_full=true;struct mishare_runtime_owner *o=queued_start_owner(5240);radio_start_fail=fault==0;radio_run(false);
-   if(fault) {assert(radio_reply_start(0)==QDF_STATUS_SUCCESS);radio_apply_fail=fault==1;radio_run(false);if(fault==2) {assert(mishare_runtime_destroy(&o)==-EINPROGRESS);radio_stop_fail=true;radio_run(false);}}
+   if(fault) {assert(radio_reply_start(0)==QDF_STATUS_SUCCESS);radio_apply_fail=fault==1;if(fault==2)nan_cap=false;radio_run(false);if(fault==3) {assert(mishare_runtime_destroy(&o)==-EINPROGRESS);radio_stop_fail=true;radio_run(false);}}
    assert(state(o).radio.phase==MISHARE_RADIO_BLOCKED && mishare_runtime_destroy(&o)==-EUCLEAN && o->radio && !pe_deletes && !dp_detaches && !sm_depth);_Exit(0);
   }int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
@@ -124,13 +124,14 @@ int main(void) {native_substate_fault(NEGATIVE_STOP);_Exit(0);}
 def fixture(root):
     src=previous.fixture(root)
     handlers='\n'.join(function((root/SM).read_text(),n) for n in SELECTED)
+    wrapped_handlers='#pragma GCC diagnostic push\n#pragma GCC diagnostic ignored \"-Wunused-but-set-variable\"\n'+handlers+'\n#pragma GCC diagnostic pop\n'
     tokens=sorted(set(re.findall(r'\bWLAN_VDEV_(?:SM_EV|SS|S)_\w+',handlers)))
-    defines='\n'.join('#define '+n+' '+str(500+i) for i,n in enumerate(tokens) if not re.search(r'\b'+n+r'\b',src))+'\n#ifndef START_REQ\n#define START_REQ 1\n#endif\n#ifndef QDF_BUG\n#define QDF_BUG(x) assert(x)\n#endif\n'
+    defines='\n'.join('#define '+n+' '+str(500+i) for i,n in enumerate(tokens) if not re.search(r'\b'+n+r'\b',src))+'\n#ifndef START_REQ\n#define START_REQ 1\n#endif\n#pragma push_macro("QDF_BUG")\n#undef QDF_BUG\n#define QDF_BUG(x) assert(x)\n'
     head='static bool native_full,native_bad_start_substate,native_bad_stop_substate;\nstatic void native_full_transition(struct vdev_mlme_obj *,unsigned);\nstatic QDF_STATUS native_full_deliver(struct vdev_mlme_obj *,uint16_t,uint16_t,void *);\n'
     needle='static unsigned refused_prepare_calls,refused_sm_calls;';assert src.count(needle)==1;src=src.replace(needle,head+needle,1)
     needle='assert(m->vdev==last_vdev);ch_state=state;';assert src.count(needle)==1;src=src.replace(needle,'if(native_full) {native_full_transition(m,state);return;}'+needle,1)
     fn=function(src,'mlme_vdev_sm_deliver_event');needle='{';fnnew=fn.replace(needle,'{if(native_full)return native_full_deliver(m,e,n,p);',1);src=src.replace(fn,fnnew,1)
-    dispatcher=function(src,'radio_sm_dispatch');new=dispatcher.replace('{','{if(native_full)return native_full_deliver(v->mlme,e,0,NULL);',1);assert new!=dispatcher;src=src.replace(dispatcher,defines+GLUE.replace('NATIVE_HANDLERS',handlers)+'\n'+new,1)
+    dispatcher=function(src,'radio_sm_dispatch');new=dispatcher.replace('{','{if(native_full)return native_full_deliver(v->mlme,e,0,NULL);',1);assert new!=dispatcher;src=src.replace(dispatcher,defines+GLUE.replace('NATIVE_HANDLERS',wrapped_handlers)+'\n#pragma pop_macro("QDF_BUG")\n'+new,1)
     src=src.replace('int main(void) {','static int init_rejection_regressions(void) {',1).replace('puts("MISHARE_NATIVE_INIT_REJECTION_SSR_FIXTURE_PASS_ONLY");return 0;','return 0;',1)
     return src+HARNESS
 
