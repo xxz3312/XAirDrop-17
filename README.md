@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0083 原生 MLME 状态机创建／销毁](docs/POPSICLE-NATIVE-SM-OWNER-0083.md)进入验证。模型实际执行原生 create/destroy wrapper，覆盖分配失败、minidump/锁顺序、配对释放及八种启动组合，新增两个负对照；真实平台原语和 object-manager 调用方仍未执行。Python 语法检查通过，完整 CI 待验证。[0082](docs/POPSICLE-NATIVE-ENGINE-0082.md)离线验收已完成。实际 START/UP 的 SSR 恢复、父资源自动协调及完整 AWDL 收包尚未完成，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0083 原生 MLME 状态机创建／销毁](docs/POPSICLE-NATIVE-SM-OWNER-0083.md)已完成离线验收。[CI 41247250279](https://github.com/xxz3312/XAirDrop-17/actions/runs/41247250279) 通过八种启动组合、创建失败与配对释放检查、五项负对照、53 项 Python 检查、旧回归、完整编译、严格链接和七项选定布局；[验证记录](docs/research/popsicle-native-sm-owner-0083-validation.json)及原生函数/生产源码哈希已核对。锁/minidump 原语仍有平台模型，真实 object-manager 调用方和 MLME callback adapter 仍未执行。实际 START/UP 的 SSR 恢复、父资源自动协调及完整 AWDL 收包尚未完成，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
