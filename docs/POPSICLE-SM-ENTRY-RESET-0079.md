@@ -10,6 +10,6 @@
 
 新增 Actions 模型保留 0078 回归；支持分支的 native dispatch 和 INIT down-notice 计数都不能增长。覆盖双频、inline/deferred DP、batch、窗口关闭后的延迟 final-free、20 类拒绝、七项计划/当前参数与 timer 漂移、入口标记后的 INIT 拒绝、五类重复/混合来源。负对照分别移除私有 SM-entry-abort 检查，以及原生 INIT 验证失败的 down notification，必须均被发现。前者校验释放门槛，后者证明模型实际经过原生特殊分支。
 
-53 项 Python 检查通过，C 模型、完整编译、严格链接和七项布局检查待 CI。没有新增 native patch，不改变公开 Wonder ABI；新增内部 origin 编译进原 WLAN。
+CI [41197736928](https://github.com/xxz3312/XAirDrop-17/actions/runs/41197736928)（源码 `53dd9de3539d7cd029c19b514ccc08dc6e2e322c`）已通过 53 项 Python 检查、新 SM-entry 模型及私有准入/原生 INIT 失败通知两个负对照、既有全部 C 模型、完整 WLAN/Wonder/provider 编译、严格链接和七项布局检查。五项生产源码哈希、九组模型公共哈希、八个 native 文件哈希、原生 INIT 处理器函数哈希、新 origin 实际链接及模块依赖记录已复核。验证 ZIP SHA256 为 `e507360c6e8a017ea722cd15a9d934351d23adde2560a4c0320ed314e3c249a1`，详见[验证记录](research/popsicle-sm-entry-reset-0079-validation.json)。生成模型源码哈希记录自 CI，未在本地独立重建。没有新增 native patch，不改变公开 Wonder ABI；新增内部 origin 编译进原 WLAN。
 
 SM 入口标记是保守的不可回收边界，不是对完整 native dispatch 的原子中断。已进入 SM、已发 START、等待响应和 UP 的恢复、自动 shutdown/父资源协调、完整接收路径仍未完成。QDF/锁/定时器/完整 scheduler、SM 引擎/其余状态与完整 WMA 后处理、PE 分配及其余 cleanup、DP/peer 物理生命周期和父资源仍有模型。backend 关闭，无新手机包，不证明加载、固件/RF 或 AirDrop。
