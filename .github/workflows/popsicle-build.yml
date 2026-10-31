@@ -44,6 +44,7 @@ on:
       - tools/kernel/mishare_pe_destructor_fixture.py
       - tools/kernel/mishare_pe_reset_fixture.py
       - tools/kernel/mishare_pre_radio_reset_fixture.py
+      - tools/kernel/mishare_sm_entry_reset_fixture.py
       - tools/kernel/mishare_completed_prepare_reset_fixture.py
       - tools/kernel/mishare_aborted_start_reset_fixture.py
       - tools/kernel/mishare_refused_start_reset_fixture.py

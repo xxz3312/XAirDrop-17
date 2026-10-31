@@ -34,7 +34,8 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * SSR fence is also supported. Admitted work aborted before the serialized
  * preparation-entry gate can retire with its own provenance. Successful matching
  * preparation without any SM commitment has its own checked retirement route.
- * Failed/partial preparation and SM/START/UP
+ * Committed intent denied by the native-entry gate can also retire; marked
+ * native entry, failed/partial preparation and START/UP
  * stays unsupported.
  * Errors retain host and the updated runtime token; EINPROGRESS needs polling
  * after releasing locks. This permanently closes the session on admission.

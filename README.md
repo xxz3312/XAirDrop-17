@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0078 START 准备成功、尚未提交 SM 的 SSR 回收](docs/POPSICLE-COMPLETED-PREPARE-RESET-0078.md)。保存原计划的值拷贝，准备成功后比对原生七项编码器摘要，回收前和定时器关闭后重新核对；SM 入口一经提交即不进入该回收分支。CI [41193377121](https://github.com/xxz3312/XAirDrop-17/actions/runs/41193377121) 已通过 53 项 Python 检查、新模型及两个负对照、既有全部 C 模型、完整编译、严格链接和七项布局检查；生产/native 哈希、新 origin 实际链接及模块记录已复核。失败/部分准备、SM/START/UP 的 reset 回收、自动父资源协调和完整接收路径仍未完成，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0079 START 原生状态机入口门槛](docs/POPSICLE-SM-ENTRY-RESET-0079.md)。区分 SM 提交意图与实际入口标记；SSR 在入口前被观察到时禁止分派并允许显式回收，一旦入口标记成立即保留资源。模型新增固定版本原生 INIT START 处理器，验证 PAS 校验失败可能 handled=true 并通知 down-complete，不能据此推断 DOWN 或可回收。53 项 Python 检查通过，完整 CI 待验证。已进入原生 SM/START/UP 的回收、自动父资源协调及完整接收路径仍未完成，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)

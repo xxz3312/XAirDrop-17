@@ -28,7 +28,7 @@ static DEFINE_SPINLOCK(mishare_runtime_lock);
 static struct mishare_runtime_owner *mishare_runtime_owners;
 static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
 
-enum mishare_radio_cancel_origin { MISHARE_CANCEL_FLUSH, MISHARE_CANCEL_REFUSAL, MISHARE_CANCEL_BODY_ABORT, MISHARE_CANCEL_PREPARED_ABORT };
+enum mishare_radio_cancel_origin { MISHARE_CANCEL_FLUSH, MISHARE_CANCEL_REFUSAL, MISHARE_CANCEL_BODY_ABORT, MISHARE_CANCEL_PREPARED_ABORT, MISHARE_CANCEL_SM_ENTRY_ABORT };
 
 static void mishare_runtime_radio_cancel_origin(struct wlan_objmgr_psoc *psoc,
                                                 struct wlan_objmgr_vdev *vdev,
@@ -46,11 +46,14 @@ static void mishare_runtime_radio_cancel_origin(struct wlan_objmgr_psoc *psoc,
             !entry->state.ndi.radio_requested || entry->state.ndi.radio_submit_error ||
             entry->state.recovery_radio_start_flushed || entry->state.recovery_radio_start_refused ||
             entry->state.recovery_radio_start_aborted || entry->state.recovery_radio_prepared_aborted ||
+            entry->state.recovery_radio_sm_entry_aborted ||
             entry->state.recovery_radio_released || entry->state.ndi_reclaim_started) {
             if (!entry->state.ndi.completion_error)
                 entry->state.ndi.completion_error = -EUCLEAN;
         } else {
-            if (origin == MISHARE_CANCEL_REFUSAL)
+            if (origin == MISHARE_CANCEL_SM_ENTRY_ABORT)
+                entry->state.recovery_radio_sm_entry_aborted = true;
+            else if (origin == MISHARE_CANCEL_REFUSAL)
                 entry->state.recovery_radio_start_refused = true;
             else if (origin == MISHARE_CANCEL_PREPARED_ABORT)
                 entry->state.recovery_radio_prepared_aborted = true;
@@ -90,6 +93,13 @@ void mishare_runtime_radio_prepared_aborted(struct wlan_objmgr_psoc *psoc,
                                             void *owner, void *radio_token)
 {
     mishare_runtime_radio_cancel_origin(psoc, vdev, owner, radio_token, MISHARE_CANCEL_PREPARED_ABORT);
+}
+
+void mishare_runtime_radio_sm_entry_aborted(struct wlan_objmgr_psoc *psoc,
+                                            struct wlan_objmgr_vdev *vdev,
+                                            void *owner, void *radio_token)
+{
+    mishare_runtime_radio_cancel_origin(psoc, vdev, owner, radio_token, MISHARE_CANCEL_SM_ENTRY_ABORT);
 }
 
 unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
@@ -514,7 +524,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
            !entry->state.ndi_reclaim_started && !entry->state.ndi_reclaim_ready &&
            !entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
            !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
-           !entry->state.recovery_radio_released &&
+           !entry->state.recovery_radio_sm_entry_aborted && !entry->state.recovery_radio_released &&
            !entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released &&
            !entry->state.recovery_context_attempted && !entry->state.recovery_context_released &&
            !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
@@ -547,6 +557,7 @@ static bool mishare_runtime_radio_origin_valid(struct mishare_runtime_owner *ent
                          entry->state.recovery_radio_start_refused +
                          entry->state.recovery_radio_start_aborted +
                          entry->state.recovery_radio_prepared_aborted +
+                         entry->state.recovery_radio_sm_entry_aborted +
                          (entry->state.ndi.radio_submit_error != 0);
 
     return count == 1;
@@ -588,7 +599,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
     no_radio = !n->radio_requested && !n->radio_submit_error && !entry->radio &&
                !entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
                !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
-           !entry->state.recovery_radio_released;
+           !entry->state.recovery_radio_sm_entry_aborted && !entry->state.recovery_radio_released;
     cancelled_radio = ready_plan && n->radio_requested &&
                       mishare_runtime_radio_origin_valid(entry) &&
                       ((!entry->state.recovery_radio_released && entry->radio) ||
@@ -598,6 +609,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
                         entry->state.radio.ssr_start_callback_refused == entry->state.recovery_radio_start_refused &&
              entry->state.radio.ssr_start_body_aborted == entry->state.recovery_radio_start_aborted &&
              entry->state.radio.ssr_start_prepared_aborted == entry->state.recovery_radio_prepared_aborted &&
+             entry->state.radio.ssr_start_sm_entry_aborted == entry->state.recovery_radio_sm_entry_aborted &&
                         !entry->state.radio.start_attempted && !entry->state.radio.host_up &&
                         !entry->state.radio.stop_attempted && !entry->state.radio.down_attempted &&
                         !entry->state.radio.down_accepted));
@@ -769,7 +781,8 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                                                   entry, entry->pe_cookie, pe_freq);
             if (!ret)
                 ret = mishare_radio_snapshot(entry->radio, &radio_observed);
-            if (!ret && (radio_observed.ssr_start_prepared_aborted != entry->state.recovery_radio_prepared_aborted ||
+            if (!ret && (radio_observed.ssr_start_sm_entry_aborted != entry->state.recovery_radio_sm_entry_aborted ||
+                         radio_observed.ssr_start_prepared_aborted != entry->state.recovery_radio_prepared_aborted ||
                          radio_observed.ssr_start_body_aborted != entry->state.recovery_radio_start_aborted ||
                          radio_observed.ssr_start_callback_refused != entry->state.recovery_radio_start_refused ||
                          radio_observed.error != (entry->state.ndi.radio_submit_error ?
@@ -802,7 +815,8 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                 last.ssr_start_submit_error != entry->state.ndi.radio_submit_error ||
                 last.ssr_start_callback_refused != entry->state.recovery_radio_start_refused ||
                 last.ssr_start_body_aborted != entry->state.recovery_radio_start_aborted ||
-                last.ssr_start_prepared_aborted != entry->state.recovery_radio_prepared_aborted)
+                last.ssr_start_prepared_aborted != entry->state.recovery_radio_prepared_aborted ||
+                last.ssr_start_sm_entry_aborted != entry->state.recovery_radio_sm_entry_aborted)
                 return mishare_runtime_recovery_error(entry, ret);
             spin_lock_irqsave(&mishare_runtime_lock, flags);
             entry->state.radio = last;
@@ -964,7 +978,7 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 
     return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
              !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
-           !entry->state.recovery_radio_released) ||
+           !entry->state.recovery_radio_sm_entry_aborted && !entry->state.recovery_radio_released) ||
             (mishare_runtime_radio_origin_valid(entry) &&
              entry->state.recovery_radio_released &&
              n->radio_requested && entry->state.radio.ssr_cancelled_before_start &&
@@ -973,6 +987,7 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
              entry->state.radio.ssr_start_callback_refused == entry->state.recovery_radio_start_refused &&
              entry->state.radio.ssr_start_body_aborted == entry->state.recovery_radio_start_aborted &&
              entry->state.radio.ssr_start_prepared_aborted == entry->state.recovery_radio_prepared_aborted &&
+             entry->state.radio.ssr_start_sm_entry_aborted == entry->state.recovery_radio_sm_entry_aborted &&
              entry->state.radio.error == (n->radio_submit_error ? n->radio_submit_error : -ESHUTDOWN) &&
              !entry->state.radio.pending &&
              !entry->state.radio.users && !entry->state.radio.start_attempted &&
