@@ -1319,6 +1319,8 @@ void mishare_runtime_ndi_pe_event(struct wlan_objmgr_psoc *psoc, u8 id,
                        (!ndi->pe_ready || !ndi->pe_delete_requested ||
                         ndi->pe_delete_completed))) {
             ndi->blocked = true;
+            if (!ndi->completion_error)
+                ndi->completion_error = -EUCLEAN;
             break;
         }
         ndi->pe_error = result;
@@ -1329,11 +1331,16 @@ void mishare_runtime_ndi_pe_event(struct wlan_objmgr_psoc *psoc, u8 id,
                 ndi->pe_ready = true;
             } else if (!result || result == -EUCLEAN) {
                 ndi->blocked = true;
+                if (!ndi->completion_error)
+                    ndi->completion_error = -EUCLEAN;
             }
         } else {
             ndi->pe_delete_completed = true;
-            if (result || session_cookie)
+            if (result || session_cookie) {
                 ndi->blocked = true;
+                if (!ndi->completion_error)
+                    ndi->completion_error = -EUCLEAN;
+            }
             /* pe_ready stays true until post returns and drain consumes ACK. */
         }
         break;
@@ -1396,6 +1403,8 @@ void mishare_runtime_ndi_channel_event(struct wlan_objmgr_psoc *psoc, u8 id,
             ndi->channel_completed || ndi->channel_freq != freq ||
             ndi->pe_delete_requested) {
             ndi->blocked = true;
+            if (!ndi->completion_error)
+                ndi->completion_error = -EUCLEAN;
             break;
         }
         ndi->channel_error = result;
@@ -1470,6 +1479,8 @@ void mishare_runtime_ndi_start_plan_event(struct wlan_objmgr_psoc *psoc, u8 id,
                          !summary->tx_streams || summary->tx_streams > 2 ||
                          summary->rx_streams != summary->tx_streams))) {
             ndi->blocked = true;
+            if (!ndi->completion_error)
+                ndi->completion_error = -EUCLEAN;
             break;
         }
         ndi->start_plan_error = result;

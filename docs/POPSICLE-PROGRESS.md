@@ -1,6 +1,6 @@
 ## 最新阶段 0073
 
-显式 SSR 回收扩展到 channel 与可选 START plan 已完成、从未请求 radio START 的 INIT。捕获并复核 PE/desired HT20 几何后，沿用原生 PE 析构及分阶段资源释放；保留准备历史，不重跑准备或伪造 ACK。新增 2.4 GHz/5240 MHz、9 类原生拒绝、17 类失败/矛盾历史及频率检查负对照，并保留 0072 回归；53 项 Python 检查和原生 API 基线还原通过，完整 CI 待验证。radio START/UP 回收、自动父资源协调和完整 monitor 尚未完成，无线 init 关闭，手机无需操作。见[0073](POPSICLE-PRE-RADIO-RESET-0073.md)。
+显式 SSR 回收扩展到 channel 与可选 START plan 已完成、从未请求 radio START 的 INIT。捕获并复核 PE/desired HT20 几何后，沿用原生 PE 析构及分阶段资源释放；保留准备历史，不重跑准备或伪造 ACK；重复通知以独立 completion_error 保留，不能被 SSR 封锁标记掩盖。新增 2.4 GHz/5240 MHz、9 类原生拒绝、20 类失败/矛盾/重复通知历史及频率检查负对照，并保留 0072 回归；53 项 Python 检查和原生 API 基线还原通过，完整 CI 待验证。radio START/UP 回收、自动父资源协调和完整 monitor 尚未完成，无线 init 关闭，手机无需操作。见[0073](POPSICLE-PRE-RADIO-RESET-0073.md)。
 
 ## 阶段 0072
 

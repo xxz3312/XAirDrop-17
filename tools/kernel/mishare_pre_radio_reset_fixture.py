@@ -77,7 +77,7 @@ int main(void) {
  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  /* Pending or failed preparation, malformed completion summaries and any
   * radio START request never acquire reset admission. */
- for(int fault=0;fault<17;fault++) {
+ for(int fault=0;fault<20;fault++) {
   reset_pe_test();child=fork();assert(child>=0);
   if(!child) {
    if(fault<=3) {
@@ -100,12 +100,24 @@ int main(void) {
     if(fault==14)o->state.ndi.start_plan.tx_streams=0;
     if(fault==15)o->state.ndi.start_plan.rx_streams++;
     if(fault==16)o->state.ndi.radio_requested=true;
+    if(fault==17)mishare_runtime_ndi_channel_event(&psoc,7,o,5240,0);
+    if(fault==18) {struct mishare_ndi_start_summary copy=state(o).ndi.start_plan;mishare_runtime_ndi_start_plan_event(&psoc,7,o,5240,0,&copy);}
+    if(fault==19)mishare_runtime_ndi_pe_event(&psoc,7,o,true,o->pe_cookie,0);
+    if(fault>=17)assert(state(o).ndi.completion_error==-EUCLEAN);
    }
    mark_closed(o);health_recovering=true;assert(!cds_post_disable());
    assert(state(o).mc_drained && !state(o).recovery_window && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !pe_deletes && !recovery_timer_cancels && !dp_detaches);_Exit(0);
   }
   assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
+ /* A duplicate after admission is also fatal; the SSR fence cannot erase it. */
+ reset_pe_test();child=fork();assert(child>=0);
+ if(!child) {
+  o=ready_pre_radio(5240,true);stop_recovery(o);
+  mishare_runtime_ndi_channel_event(&psoc,7,o,5240,0);
+  assert(state(o).ndi.completion_error==-EUCLEAN && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !pe_deletes && !recovery_timer_cancels && !dp_detaches);_Exit(0);
+ }
+ assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  /* A real submitted radio request remains unsupported even after MC flush. */
  reset_pe_test();child=fork();assert(child>=0);
  if(!child) {
@@ -132,7 +144,7 @@ def fixture(root):
     src=src.replace('static bool reset_pe_drift;','static bool reset_pe_drift,reset_geometry_drift;',1)
     src=src.replace('reset_prepared_test();reset_pe_drift=false;','reset_prepared_test();reset_pe_drift=reset_geometry_drift=false;',1)
     needle='recovery_timer_cancels++;';assert src.count(needle)==1
-    src=src.replace(needle,needle+'if(reset_geometry_drift)last_vdev->vdev_mlme.des_chan->ch_cfreq1+=20;',1)
+    src=src.replace(needle,needle+'if(reset_geometry_drift)wlan_vdev_mlme_get_des_chan(last_vdev)->ch_cfreq1+=20;',1)
     src=src.replace('int main(void) {','static int pre_channel_regressions(void) {',1)
     src=src.replace('puts("MISHARE_PRE_CHANNEL_PE_RESET_FIXTURE_PASS_ONLY");return 0;','return 0;',1)
     return src+HARNESS
@@ -164,7 +176,8 @@ def audit(root):
                       '2.4 GHz and 48-channel 5240 MHz; channel-only and completed START plan; inline/deferred DP final-free',
                       'exact batch retirement and delayed object final-free after window closure',
                       'native PE/desired-channel geometry checked before and after timer drain',
-                      '9 native geometry faults and 17 incomplete/failed/malformed/radio histories reject without PE/DP cleanup',
+                      '9 native geometry faults and 20 incomplete/failed/malformed/radio/duplicate histories reject without PE/DP cleanup',
+                      'PE/channel/plan duplicate completion errors stay sticky across SSR; late duplicates after admission also block cleanup',
                       'actual posted radio request remains unsupported after MC flush',
                       'channel/plan completion flags and scalar summary retained; no preparation replay, MC post or firmware ACK fabricated'],
             'limitations':'Only completed channel and optional START-plan preparation before any radio START request. Production runtime, native request/check/release/destructor and native WMA peer/parameter builder code execute with modeled regulatory/lim_pre_vdev_start, PE allocation, remaining cleanup callees, timers/scheduler/locks, DP/object-peer physical lifecycle and parents. No automatic parent/shutdown coordinator, failed/pending preparation recovery, radio START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.'}
