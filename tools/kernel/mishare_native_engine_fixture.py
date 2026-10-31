@@ -9,6 +9,8 @@ SM=previous.SM
 ENGINE='qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c'
 HEADER='qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h'
 ENUMS='qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h'
+SMHEADER='qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.h'
+MLME='qcacld-3.0/components/mlme/core/src/wlan_mlme_vdev_mgr_interface.c'
 PLATFORM=r'''
 #pragma push_macro("QDF_BUG")
 #pragma push_macro("qdf_mem_malloc")
@@ -57,7 +59,7 @@ static void engine_contract(void) {
 static struct wlan_sm *attach_engine(struct mishare_runtime_owner *o) {
  struct vdev_mlme_obj *m=last_vdev->mlme;assert(o && !m->sm_hdl && ch_state==WLAN_VDEV_S_INIT && radio_native_substate==WLAN_VDEV_SS_IDLE);
  struct wlan_sm *s=wlan_sm_create("owned",m,WLAN_VDEV_S_INIT,sm_info,sizeof(sm_info)/sizeof(sm_info[0]),vdev_sm_event_names,sizeof(vdev_sm_event_names)/sizeof(vdev_sm_event_names[0]));assert(s);
- m->sm_hdl=s;native_full=true;return s;
+ m->sm_hdl=s;m->ops=&engine_exit_ops;native_full=true;return s;
 }
 static void engine_cycle(unsigned freq,bool early) {
  reset_pe_test();struct mishare_runtime_owner *o=queued_start_owner(freq);struct wlan_sm *s=attach_engine(o);
@@ -103,7 +105,7 @@ def fixture(root):
     # Enum definitions must precede modeled object field getters and reset helpers.
     a=src.index('enum wlan_vdev_state {');b=src.index('\n};',src.index('enum wlan_vdev_sm_evt {',a))+3
     block=src[a:b];src=src[:a]+src[b:];needle='typedef int QDF_STATUS;';assert src.count(needle)==1;src=src.replace(needle,needle+'\n'+block+'\n'+PLATFORM,1)
-    src=src.replace('struct vdev_mlme_obj {','struct vdev_mlme_obj { struct wlan_sm *sm_hdl;',1)
+    src=src.replace('struct vdev_mlme_obj {','struct vdev_mlme_obj;\nstruct engine_exit_ops_type {QDF_STATUS (*mlme_vdev_notify_start_state_exit)(struct vdev_mlme_obj *);};\nstruct vdev_mlme_obj { struct wlan_sm *sm_hdl;const struct engine_exit_ops_type *ops;',1)
     src=src.replace('static unsigned radio_native_substate;','static unsigned radio_native_substate=WLAN_VDEV_SS_IDLE;',1).replace('radio_native_substate=0;','radio_native_substate=WLAN_VDEV_SS_IDLE;',1)
     src=src.replace('static bool native_full,native_bad_start_substate,native_bad_stop_substate;','static bool engine_fence_before_validate;\nstatic bool native_full,native_bad_start_substate,native_bad_stop_substate;',1)
     needle='return mishare_radio_validate(m,n,p);';assert src.count(needle)==1;src=src.replace(needle,'if(engine_fence_before_validate) {engine_fence_before_validate=false;assert(mishare_runtime_quiesce_psoc(wlan_vdev_get_psoc(m->vdev),MISHARE_QUIESCE_SSR)==1);}'+needle,1)
@@ -113,6 +115,10 @@ def fixture(root):
     old=function(src,'native_full_transition');src=src.replace(old,'',1).replace('static void native_full_transition(struct vdev_mlme_obj *,unsigned);\n','',1)
     old=function(src,'native_full_deliver');src=src.replace(old,'static QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {return mlme_vdev_sm_deliver_event(m,e,n,p);}\n',1)
     table=native_table(sm);names=native_names(sm)
+    callback=re.search(r'static inline QDF_STATUS mlme_vdev_notify_start_state_exit\(.*?^\}',(root/SMHEADER).read_text(),re.S|re.M)[0]
+    reject=function((root/MLME).read_text(),'passthru_mlme_reject_6')
+    assert re.search(r'\.mlme_vdev_notify_start_state_exit\s*=\s*passthru_mlme_reject_6',(root/MLME).read_text())
+    extra_prefix=reject+'\nstatic const struct engine_exit_ops_type engine_exit_ops={passthru_mlme_reject_6};\n'+callback+'\n'
     refs=set(re.findall(r'\b(mlme_vdev_\w+(?:_entry|_exit|_event))\b',table));available=set(previous.SELECTED+['mlme_vdev_state_init_event'])
     extra=[];stubbed=[];exit_names=[]
     for n in sorted(refs-available):
@@ -121,7 +127,8 @@ def fixture(root):
         else:
             stubbed.append(n)
             extra.append(('static bool '+n+'(void *c,uint16_t e,uint16_t n,void *p) {assert(!"UNSUPPORTED_NATIVE_SM_BRANCH");return false;}' if n.endswith('_event') else 'static void '+n+'(void *c) {assert(!"UNSUPPORTED_NATIVE_SM_BRANCH");}'))
-    src=src.replace('static QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {return mlme_vdev_sm_deliver_event(m,e,n,p);}', '\n'.join(extra)+'\n'+names+'\n'+table+'\nstatic QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {return mlme_vdev_sm_deliver_event(m,e,n,p);}',1)
+    src=src.replace('static QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {return mlme_vdev_sm_deliver_event(m,e,n,p);}', extra_prefix+'\n'.join(extra)+'\n'+names+'\n'+table+'\nstatic QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {return mlme_vdev_sm_deliver_event(m,e,n,p);}',1)
+    dispatch=function(src,'radio_sm_dispatch');assert dispatch.count('\n }\n assert(0);')==1;src=src.replace(dispatch,dispatch.replace('\n }\n assert(0);','\n default:break;\n }\n assert(0);',1),1)
     src=src.replace(function(src,'main'),UNIT.strip(),1)
     return src,exit_names,stubbed
 
@@ -153,7 +160,7 @@ def audit(root):
         bad=subprocess.run([exe],capture_output=True,text=True,timeout=45,env=env);assert bad.returncode==-6 and 'EXPECTED_NATIVE_NO_PARENT_FALLBACK' in bad.stderr
     assert out.strip()=='MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY'
     sm=(root/SM).read_text()
-    return {'status':out.strip(),'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h','wlan_hdd_mishare_radio.c','wlan_hdd_mishare_radio.h']},'native_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in [ENGINE,HEADER,ENUMS,SM]},'native_state_table_sha256':hashlib.sha256(native_table(sm).encode()).hexdigest(),'native_event_names_sha256':hashlib.sha256(native_names(sm).encode()).hexdigest(),'native_bridge_sha256':{n:hashlib.sha256(function(sm,n).encode()).hexdigest() for n in ['mlme_vdev_sm_transition_to','mlme_vdev_sm_deliver_event']},'native_exit_sha256':{n:hashlib.sha256(function(sm,n).encode()).hexdigest() for n in exits},'stubbed_unexercised_table_functions':stubbed,'negative_control_missing_default_child_rejected':True,'negative_control_parent_fallback_rejected':True,'checks':['complete pinned generic engine C file/header with original dense enum values, original state table and event-name array','unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions','real engine dispatch has no parent fallback; default child entry and child/parent exit order verified','real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected','2.4/5240 MHz ordinary/early response lifecycle reaches DOWN, retires controller and queues PE deletion with parents retained','original SSR INIT rejection and explicit resource reclaim exercised with actual generic engine','engine allocations explicitly released in fixture; no synthetic native state reset'], 'limitations':'Generic engine history/logging/memory/atomic and QDF/SM locks/object state fields remain platform models. Actual driver SM create/destroy wrappers, native MLME callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator are not executed by this fixture. Full table is preserved; unused native handlers are aborting stubs, not full STA/MLO/DFS/restart support. Ordinary peer physical cleanup after queued PE deletion remains outside this composite. Existing INIT rejection SSR scope only; no active START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.'}
+    return {'status':out.strip(),'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in ['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h','wlan_hdd_mishare_radio.c','wlan_hdd_mishare_radio.h']},'native_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in [ENGINE,HEADER,ENUMS,SM]},'native_state_table_sha256':hashlib.sha256(native_table(sm).encode()).hexdigest(),'native_event_names_sha256':hashlib.sha256(native_names(sm).encode()).hexdigest(),'native_bridge_sha256':{n:hashlib.sha256(function(sm,n).encode()).hexdigest() for n in ['mlme_vdev_sm_transition_to','mlme_vdev_sm_deliver_event']},'native_exit_sha256':{n:hashlib.sha256(function(sm,n).encode()).hexdigest() for n in exits},'stubbed_unexercised_table_functions':stubbed,'native_exit_callback_sha256':{'inline':hashlib.sha256(re.search(r'static inline QDF_STATUS mlme_vdev_notify_start_state_exit\(.*?^\}',(root/SMHEADER).read_text(),re.S|re.M)[0].encode()).hexdigest(),'passthru_mlme_reject_6':hashlib.sha256(function((root/MLME).read_text(),'passthru_mlme_reject_6').encode()).hexdigest()},'native_SM_header_sha256':hashlib.sha256((root/SMHEADER).read_bytes()).hexdigest(),'PAS_exit_callback_binding_source_reviewed':True,'negative_control_missing_default_child_rejected':True,'negative_control_parent_fallback_rejected':True,'checks':['complete pinned generic engine C file/header with original dense enum values, original state table and event-name array','unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions','real engine dispatch has no parent fallback; default child entry and child/parent exit order verified','real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected','2.4/5240 MHz ordinary/early response lifecycle reaches DOWN, retires controller and queues PE deletion with parents retained','original SSR INIT rejection and explicit resource reclaim exercised with actual generic engine','engine allocations explicitly released in fixture; no synthetic native state reset'], 'limitations':'Generic engine history/logging/memory/atomic and QDF/SM locks/object state fields remain platform models. Actual driver SM create/destroy wrappers, native MLME callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator are not executed by this fixture. Full table is preserved; unused native handlers are aborting stubs, not full STA/MLO/DFS/restart support. Ordinary peer physical cleanup after queued PE deletion remains outside this composite. Existing INIT rejection SSR scope only; no active START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.'}
 
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--wlan',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();result=audit(a.wlan);a.output.parent.mkdir(parents=True,exist_ok=True);a.output.write_text(json.dumps(result,indent=2)+'\n');print(result['status'])
