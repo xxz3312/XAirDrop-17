@@ -8,6 +8,6 @@
 
 新 Actions 模型执行固定原生 INIT handler 与真实 API 的 lock/dispatch/unlock wrapper，保留旧阶段回归。新增双频、inline/deferred DP、batch 和窗口关闭后的 final-free、24 类来源/状态/身份拒绝、七项计划与 timer 漂移、失败 API 返回/乱序及额外回调/子状态漂移、六类重复混合来源。两个负对照分别移除原生分支 origin 和原生 API unlock，必须均被识别。
 
-CI 待验证。
+CI [41200864386](https://github.com/xxz3312/XAirDrop-17/actions/runs/41200864386) 已通过 53 项 Python 检查、新模型及两个负对照、既有全部 C 模型、完整编译、严格链接及七项布局检查；十组模型生产哈希、九个 native 文件哈希、九项 START 回收入口实际链接及模块记录已复核。测试源码为 `898a9978c271db420a6b771bb1d729eb00fc4507`。验证 ZIP SHA256 为 `3486254c5840b24016ede890865de4c2241b3e987420ffecf50c60a645a93d62`，详见[验证记录](research/popsicle-native-init-reset-0080-validation.json)。首轮模型漏转发非 START/START_REQ 事件，已修正并在此完整 CI 验证。
 
 QDF/锁、通用 SM 引擎/START_REQ dispatch glue/其他状态、完整 WMA 后处理、PE 分配及其余 cleanup、DP/peer 物理生命周期、父资源仍有模型。生成模型哈希记录自 CI，不在本地编译或独立重建。该例外不支持实际进入 START 状态、发出 START、等待响应、UP、失败/部分准备；自动 shutdown/父资源协调和完整 monitor/RX 未完成。backend 关闭，无新手机包，没有手机加载、固件/RF 或 AirDrop 成功证明。
