@@ -82,3 +82,10 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
     DFS and passive/disabled channels are rejected. Actual completion precedes
     PE teardown; partial preparation and identity failures quarantine. No WMI,
     MLME START/UP/STOP/DOWN, channel hopping or runtime caller is enabled.
+
+36. `0036-mishare-native-init-rejection-origin.patch` adds a PAS-only internal
+    origin after the native INIT START validation-failure down notification.
+    No state transition, WMI command, ACK or DOWN is synthesized. The host
+    additionally requires exact callback provenance, successful API return and
+    INIT/IDLE before qualified explicit SSR reclaim. Removing both bounded
+    additions restores the complete pinned native file byte-for-byte.

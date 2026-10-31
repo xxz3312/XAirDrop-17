@@ -31,7 +31,7 @@ static void check_entered_native_init_refusal(void) {
  assert(native_init_down_notices==notices+1 && "EXPECTED_NATIVE_INIT_FAILURE_NOTIFICATION");
  assert(o->radio->start_sm_committed && o->radio->start_sm_entered && !o->radio->ssr_fenced_sm_gate && !o->radio->ssr_sm_entry_aborted && !state(o).recovery_radio_sm_entry_aborted);
  assert(ch_state==WLAN_VDEV_S_INIT && !radio_starts && !radio_downs && !o->radio->state.down_attempted && !o->radio->state.down_accepted && o->radio->state.phase==MISHARE_RADIO_BLOCKED);
- health_recovering=true;assert(!cds_post_disable());assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o->radio && !pe_deletes && !dp_detaches);
+ radio_native_substate=1;health_recovering=true;assert(!cds_post_disable());assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o->radio && !pe_deletes && !dp_detaches);
 }
 int main(void) {
  assert(!completed_prepare_regressions());struct mishare_runtime_owner *o;

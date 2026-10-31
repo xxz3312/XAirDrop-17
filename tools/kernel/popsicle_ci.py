@@ -225,7 +225,8 @@ def check_mishare_host_symbols(work, module, report_name):
     names += ['mishare_radio_ssr_cancel_check', 'mishare_radio_ssr_cancel_release',
               'mishare_runtime_radio_start_flushed',
               'mishare_runtime_radio_start_refused', 'mishare_runtime_radio_start_aborted',
-              'mishare_runtime_radio_prepared_aborted', 'mishare_runtime_radio_sm_entry_aborted']
+              'mishare_runtime_radio_prepared_aborted', 'mishare_runtime_radio_sm_entry_aborted',
+              'mishare_runtime_radio_init_rejected', 'mishare_radio_native_init_rejected']
     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                       '--defined-only', str(module)], text=True)
     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
@@ -267,6 +268,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/mishare_init_rejection_reset_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-init-rejection-reset-fixture.json'],
+               'mishare-init-rejection-reset-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_sm_entry_reset_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-sm-entry-reset-fixture.json'],
                'mishare-sm-entry-reset-fixture.log')

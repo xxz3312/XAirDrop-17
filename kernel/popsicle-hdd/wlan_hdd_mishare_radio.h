@@ -37,6 +37,7 @@ struct mishare_radio_status {
     bool ssr_start_body_aborted; /* Work admitted, fenced before prepare entry. */
     bool ssr_start_prepared_aborted; /* Preparation matched, no START SM commitment. */
     bool ssr_start_sm_entry_aborted; /* Committed intent, fenced before native dispatch entry. */
+    bool ssr_start_init_rejected; /* Native INIT rejected START, full dispatch returned. */
 };
 /* Internal one-shot owned radio controller. Caller keeps the exact event
  * registry, PE session and parent/exclusive psoc transition alive. No concurrent

@@ -31,6 +31,9 @@ STUBS=r'''
 #define QDF_MONITOR_MODE 4
 #define QDF_MAX_NO_OF_MODE 0
 #define WLAN_VDEV_TARGET_IF_ID WLAN_HDD_ID_OBJ_MGR
+#define WLAN_VDEV_SS_IDLE 0
+static unsigned radio_native_substate;
+static unsigned wlan_vdev_mlme_get_substate(struct wlan_objmgr_vdev *v) {assert(v);return radio_native_substate;}
 #define WLAN_VDEV_S_START 1
 #define WLAN_VDEV_S_UP 2
 #define WLAN_VDEV_S_SUSPEND 3
@@ -169,7 +172,7 @@ static QDF_STATUS radio_dispatch_stop(struct wlan_objmgr_psoc *p,struct vdev_sto
 '''
 HARNESS=r'''
 static void reset_radio(void) {
- reset_plan();assert(!radio_q_len && !mishare_radios);
+ reset_plan();assert(!radio_q_len && !mishare_radios);radio_native_substate=0;
  radio_starts=radio_stops=radio_downs=radio_timer=radio_start_pm=radio_stop_pm=radio_rt=sm_depth=0;
  radio_start_fail=radio_stop_fail=radio_down_fail=radio_early_start=radio_early_stop=radio_queue_fail=radio_apply_fail=false;
  rxops.vdev_mgr_start_response=radio_dispatch_start;rxops.vdev_mgr_stop_response=radio_dispatch_stop;

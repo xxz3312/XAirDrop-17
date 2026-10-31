@@ -1,0 +1,25 @@
+--- a/qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c
++++ b/qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c
+@@ -24,6 +24,10 @@
+ #include <wlan_sm_engine.h>
+ #include "include/wlan_vdev_mlme.h"
+ #include "vdev_mlme_sm.h"
++
++/* MISHARE_INIT_REJECT_BEGIN:include */
++#include "wlan_hdd_mishare_ndi.h"
++/* MISHARE_INIT_REJECT_END:include */
+ #include <wlan_utility.h>
+ #include <include/wlan_mlme_cmn.h>
+ 
+@@ -186,6 +190,11 @@
+ 			mlme_vdev_notify_down_complete(vdev_mlme,
+ 						       event_data_len,
+ 						       event_data);
++
++/* MISHARE_INIT_REJECT_BEGIN:notify */
++			if (mode == QDF_PASSTHRU_MODE)
++				mishare_radio_native_init_rejected(vdev_mlme);
++/* MISHARE_INIT_REJECT_END:notify */
+ 		}
+ 		break;
+ 

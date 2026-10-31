@@ -104,7 +104,7 @@ int main(void) {
  if(!child) {
   o=queued_start_owner(5240);unsigned sm=refused_sm_calls;prepared_fence_at_sm=true;radio_run(false);
   assert(o->radio->start_prepare_succeeded && o->radio->start_sm_committed && refused_sm_calls==sm+1 && ch_state==WLAN_VDEV_S_INIT && !radio_starts);
-  assert(!state(o).recovery_radio_prepared_aborted && !o->radio->ssr_fenced_preparation);health_recovering=true;assert(!cds_post_disable());
+  assert(!state(o).recovery_radio_prepared_aborted && !o->radio->ssr_fenced_preparation);radio_native_substate=1;health_recovering=true;assert(!cds_post_disable());
   assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o->radio && !pe_deletes && !dp_detaches);_Exit(0);
  }
  assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));

@@ -34,8 +34,13 @@ void mishare_runtime_radio_prepared_aborted(struct wlan_objmgr_psoc *psoc,
 void mishare_runtime_radio_sm_entry_aborted(struct wlan_objmgr_psoc *psoc,
                                          struct wlan_objmgr_vdev *vdev,
                                          void *owner, void *radio_token);
+void mishare_runtime_radio_init_rejected(struct wlan_objmgr_psoc *psoc,
+                                         struct wlan_objmgr_vdev *vdev,
+                                         void *owner, void *radio_token);
 struct wlan_objmgr_psoc;
 struct vdev_mlme_obj;
+/* Native INIT START-failure provenance only; no state/cleanup operation. */
+void mishare_radio_native_init_rejected(struct vdev_mlme_obj *mlme);
 struct vdev_create_params;
 struct vdev_start_response;
 /* Transport acceptance is not firmware CREATE confirmation. A failed DP attach

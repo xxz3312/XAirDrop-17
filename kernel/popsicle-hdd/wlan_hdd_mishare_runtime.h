@@ -38,6 +38,7 @@ struct mishare_runtime_status {
     bool recovery_radio_start_aborted;
     bool recovery_radio_prepared_aborted;
     bool recovery_radio_sm_entry_aborted;
+    bool recovery_radio_init_rejected;
     bool recovery_radio_released;
     bool recovery_pe_attempted;
     bool recovery_pe_released;
