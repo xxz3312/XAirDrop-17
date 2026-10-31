@@ -1,0 +1,67 @@
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -5703,13 +5703,17 @@
+ /* Only the serialized reset owner may call these after native MC shutdown,
+  * HIF/HTC/RX stop and WMI work drain, while the original MAC/DP parents live.
+  * No scheduler post is possible here; no firmware/state-machine completion is
+- * manufactured. Channel/START histories are rejected by the runtime caller.
++ * manufactured. Only completed host preparation is admitted; any radio START
++ * history is rejected by the runtime caller. expected_freq is captured before
++ * timer drain and is zero only when no channel request ever occurred.
+  */
+ int mishare_ndi_reset_pe_check(struct wlan_objmgr_vdev *vdev, void *owner,
+-                              unsigned long cookie, unsigned long dp_cookie)
++                              unsigned long cookie, unsigned long dp_cookie,
++                              uint32_t expected_freq)
+ {
+ 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+ 	struct pe_session *session;
++	struct wlan_channel *des;
+ 	uint32_t n;
+ 	uint8_t id, sid;
+ 	int ret;
+@@ -5735,7 +5739,8 @@
+ 	    session->bssType != eSIR_MISHARE_PAS_MODE ||
+ 	    session->limSystemRole != eLIM_MISHARE_PAS_ROLE ||
+ 	    session->limMlmState != eLIM_MLM_IDLE_STATE ||
+-	    session->limSmeState != eLIM_SME_IDLE_STATE || session->curr_op_freq ||
++	    session->limSmeState != eLIM_SME_IDLE_STATE ||
++	    session->curr_op_freq != expected_freq ||
+ 	    session->defaultAuthFailureTimeout ||
+ 	    qdf_mem_cmp(session->bssId, wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE) ||
+ 	    qdf_mem_cmp(session->self_mac_addr, wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE) ||
+@@ -5749,6 +5754,16 @@
+ 	    session->beacon || session->assoc_req || session->assocRsp ||
+ 	    session->parsedAssocReq || session->limAssocResponseData)
+ 		return -EUCLEAN;
++	if (expected_freq) {
++		des = wlan_vdev_mlme_get_des_chan(vdev);
++		if ((!wlan_reg_is_24ghz_ch_freq(expected_freq) &&
++		     !wlan_reg_is_5ghz_ch_freq(expected_freq)) ||
++		    !des || session->ch_width != CH_WIDTH_20MHZ ||
++		    session->ch_center_freq_seg1 ||
++		    des->ch_freq != expected_freq || des->ch_width != CH_WIDTH_20MHZ ||
++		    des->ch_cfreq1 != expected_freq || des->ch_cfreq2)
++			return -EUCLEAN;
++	}
+ 	/* Private PAS never submitted an association. A matching running native
+ 	 * confirmation timer is ambiguous ownership, not permission to cancel it.
+ 	 */
+@@ -5763,7 +5778,7 @@
+ 
+ int mishare_ndi_reset_pe_release(struct wlan_objmgr_vdev *vdev, void *owner,
+                                 unsigned long cookie, unsigned long dp_cookie,
+-                                bool *released)
++                                uint32_t expected_freq, bool *released)
+ {
+ 	struct mac_context *mac;
+ 	struct pe_session *session;
+@@ -5772,7 +5787,7 @@
+ 	if (!released)
+ 		return -EINVAL;
+ 	*released = false;
+-	ret = mishare_ndi_reset_pe_check(vdev, owner, cookie, dp_cookie);
++	ret = mishare_ndi_reset_pe_check(vdev, owner, cookie, dp_cookie, expected_freq);
+ 	if (ret)
+ 		return ret;
+ 	mac = cds_get_context(QDF_MODULE_ID_PE);

@@ -476,7 +476,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
 static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner *entry)
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
-    bool early, prepared, no_pe, ready_pe;
+    bool early, prepared, no_pe, ready_pe, no_channel, ready_channel, no_plan, ready_plan;
 
     early = !entry->state.recovery_context_attempted &&
             !entry->state.recovery_context_released && !n->legacy_ready &&
@@ -488,6 +488,23 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
             !n->pe_completed && !n->pe_ready;
     ready_pe = prepared && entry->pe_cookie && n->pe_requested &&
                n->pe_submitted && n->pe_completed && n->pe_ready;
+    no_channel = !n->channel_requested && !n->channel_submitted &&
+                 !n->channel_completed && !n->channel_prepared && !n->channel_freq &&
+                 !n->channel_error;
+    ready_channel = ready_pe && n->channel_requested && n->channel_submitted &&
+                    n->channel_completed && n->channel_prepared && n->channel_freq &&
+                    !n->channel_error;
+    no_plan = !n->start_plan_requested && !n->start_plan_submitted &&
+              !n->start_plan_completed && !n->start_plan_ready && !n->start_plan_error &&
+              !n->start_plan.freq && !n->start_plan.center_freq && !n->start_plan.phy_mode &&
+              !n->start_plan.tx_streams && !n->start_plan.rx_streams &&
+              !n->start_plan.beacon_interval && !n->start_plan.dtim_period;
+    ready_plan = ready_channel && n->start_plan_requested && n->start_plan_submitted &&
+                 n->start_plan_completed && n->start_plan_ready && !n->start_plan_error &&
+                 n->start_plan.freq == n->channel_freq &&
+                 n->start_plan.center_freq == n->channel_freq && n->start_plan.phy_mode &&
+                 n->start_plan.tx_streams && n->start_plan.tx_streams <= 2 &&
+                 n->start_plan.rx_streams == n->start_plan.tx_streams;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
@@ -503,10 +520,9 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
            !entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released &&
            !n->peer_delete_pending && !n->peer_delete_submitted && !n->peer_delete_replied &&
-           !n->pe_error && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
+           !n->pe_error && (no_channel || ready_channel) && (no_plan || ready_plan) &&
+           !n->radio_requested &&
            !n->pe_delete_requested && !n->pe_delete_submitted && !n->pe_delete_completed &&
-           !n->channel_submitted && !n->channel_completed && !n->channel_prepared &&
-           !n->start_plan_submitted && !n->start_plan_completed && !n->start_plan_ready &&
            !n->delete_pending && !n->delete_submitted && !n->delete_replied &&
            !n->dp_detaching && !n->dp_detach_submitted && !n->dp_freed;
 }
@@ -635,6 +651,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         return ret;
     if (!started && ret != 2 && entry->state.ndi.legacy_ready) {
         struct mishare_ndi_reset_context_result result = {0};
+        u32 pe_freq = entry->state.ndi.channel_prepared ? entry->state.ndi.channel_freq : 0;
 
         if (mishare_events_snapshot(entry->events, &txn) ||
             txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
@@ -646,7 +663,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
             return mishare_runtime_recovery_error(entry, ret);
         if (entry->state.ndi.pe_ready) {
             ret = mishare_ndi_reset_pe_check(entry->vdev, entry, entry->pe_cookie,
-                                             entry->state.ndi.create.dp_cookie);
+                                             entry->state.ndi.create.dp_cookie, pe_freq);
             if (ret)
                 return mishare_runtime_recovery_error(entry, ret);
         }
@@ -669,7 +686,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
             spin_unlock_irqrestore(&mishare_runtime_lock, flags);
             ret = mishare_ndi_reset_pe_release(entry->vdev, entry, entry->pe_cookie,
                                                entry->state.ndi.create.dp_cookie,
-                                               &released);
+                                               pe_freq, &released);
             spin_lock_irqsave(&mishare_runtime_lock, flags);
             entry->state.recovery_pe_released = released;
             if (released) {

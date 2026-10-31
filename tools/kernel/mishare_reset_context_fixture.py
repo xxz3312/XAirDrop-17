@@ -143,13 +143,13 @@ int main(void) {
   assert(!state(o).recovery_window && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_force_detaches && !recovery_timer_frees);_Exit(0);
  }
  int marker_status;assert(waitpid(marker_child,&marker_status,0)==marker_child && WIFEXITED(marker_status) && !WEXITSTATUS(marker_status));
- /* PE/radio history is outside the reset route even with force capability. */
+ /* Older model deliberately lacks the real PE reset helper; radio is rejected. */
  for(int phase=0;phase<3;phase++) {
   reset_prepared_test();pid_t child=fork();assert(child>=0);
   if(!child) {
    o=phase==0?with_session():with_plan();if(phase==2)start_up(o);
    mark_closed(o);health_recovering=true;assert(!cds_post_disable());
-   assert(state(o).recovery_window==(phase==0) && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_force_detaches && !dp_detaches);_Exit(0);
+   assert(state(o).recovery_window==(phase<2) && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_force_detaches && !dp_detaches);_Exit(0);
   }
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }

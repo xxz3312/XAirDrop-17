@@ -189,7 +189,7 @@ def audit(root):
                       '22 native identity/state/timer preflight failures retain every resource; no replay',
                       'native PE identity rechecked after synchronous response-timer drain',
                       'later peer failure preserves completed PE fact and remaining WMA/legacy/DP',
-                      'pending/failed PE, any channel/plan/radio history and fabricated reset markers rejected',
+                      'pending/failed PE, incomplete channel/plan or any radio history and fabricated reset markers rejected',
                       'PE history retained without ordinary PE/VDEV DELETE acknowledgement or MC post'],
             'limitations':'Stable PE success before any channel request only, in the explicit qualified SSR window with retained parents. Production runtime, native PE/context/timer/DP wrappers, full native PE destructor and WMA peer removal execute with modeled PE allocation, remaining cleanup callees, timers, synchronization, DP force detach, object-peer physical lifecycle and physical parents. No automatic native shutdown caller/parent lease, channel/START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.'}
 

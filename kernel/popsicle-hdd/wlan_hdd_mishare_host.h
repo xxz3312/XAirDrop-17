@@ -27,8 +27,8 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * The single runtime token must cover the complete exact-psoc registry; extra
  * owners return EBUSY. Batch enforces original SSR fence, MC drain, supported
  * recovery policy and real final-free before adapter/sync close. Fully prepared
- * INIT, including observed PE success before any channel request, may use the
- * qualified reset path. Channel/START/UP reset recovery stays unsupported.
+ * INIT with observed PE success and completed channel/START-plan preparation
+ * may use the qualified reset path. Any radio START/UP history stays unsupported.
  * Errors retain host and the updated runtime token; EINPROGRESS needs polling
  * after releasing locks. This permanently closes the session on admission.
  * This does not hold parents, reset quarantine or authorize physical remove.
