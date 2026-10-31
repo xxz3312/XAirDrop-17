@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0081 原生主流程与发送子状态门槛](docs/POPSICLE-NATIVE-LIFECYCLE-0081.md)。START/STOP 发送现在同时要求精确原生子状态，INIT 校验要求 INIT/IDLE。新增模型执行主流程 23 段原生 entry/event 函数及原生 INIT/API，贯通 START→UP→DOWN→STOP→INIT、双频与提前响应，检查原生 handled=true 掩盖回调失败时 controller 仍隔离资源。两个负对照移除 START/STOP 子状态门槛，必须均被识别。53 项 Python 检查通过，完整 CI 待验证。通用状态机引擎/层级分派/transition 仍有模型，实机和固件未验证；不扩大 SSR 回收范围，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0081 原生主流程与发送子状态门槛](docs/POPSICLE-NATIVE-LIFECYCLE-0081.md)。START/STOP 发送现在同时要求精确原生子状态，INIT 校验要求 INIT/IDLE。新增模型编入 23 段原生 entry/event 函数及原生 INIT/API，普通主流程经过其中 20 段，贯通 START→UP→DOWN→STOP→INIT、双频与提前响应，检查原生 handled=true 掩盖回调失败时 controller 仍隔离资源。两个负对照移除 START/STOP 子状态门槛，必须均被识别。53 项 Python 检查通过，完整 CI 待验证。通用状态机引擎/层级分派/transition 仍有模型，实机和固件未验证；不扩大 SSR 回收范围，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
