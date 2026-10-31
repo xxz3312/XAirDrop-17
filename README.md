@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0075 START 队列拒绝后的 SSR 回收](docs/POPSICLE-REJECTED-START-RESET-0075.md)。仅对原生 scheduler 明确拒绝、未入队未执行的 START，核对私有错误与 runtime 历史后回收；不借用 flush 事实，保留原错误。53 项 Python 检查通过，完整 CI 待验证。实际 START/UP、自动 shutdown/父资源协调和完整 monitor 尚未完成，无线 init 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0075 START 队列拒绝后的 SSR 回收](docs/POPSICLE-REJECTED-START-RESET-0075.md)。仅对原生 scheduler 明确拒绝、未入队未执行的 START，核对私有错误与 runtime 历史后回收；不借用 flush 事实，保留原错误。CI [41184172003](https://github.com/xxz3312/XAirDrop-17/actions/runs/41184172003) 已通过 53 项 Python 检查、新回收模型及私有错误负对照、原生 scheduler post 模型、既有全部 C 模型、完整编译、严格链接及七项布局检查；生产/native 哈希和模块记录已复核。实际 START/UP、自动 shutdown/父资源协调和完整 monitor 尚未完成，无线 init 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
