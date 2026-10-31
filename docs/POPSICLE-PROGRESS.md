@@ -1,6 +1,8 @@
-## 最新阶段 0082
+## 最新阶段 0082（验收完成）
 
-新模型直接编译并执行固定版本通用 SM 引擎完整 C 文件、原始状态表/事件表及真实枚举值，使用原生 transition/deliver 桥接替换层级适配器。覆盖双频普通/提前响应主流程、新建 INIT/0 遇 SSR 保留资源、默认子状态、退出顺序与不向父状态回退的行为，并设置两个引擎负对照及初始子状态漂移负对照。旧 0081 适配器同步修正为未处理子状态事件即失败。同时修复首次 INIT/0 被严格 IDLE 校验拦截的问题，要求原始子状态匹配、漂移即拒绝。CI [41239617189](https://github.com/xxz3312/XAirDrop-17/actions/runs/41239617189)（`6aa5333`）已通过 53 项 Python 检查、原生引擎模型及三项负对照、旧回归、完整编译、CNSS 名称检查、严格模块链接、七项选定布局及最终模块记录检查。新旧模型的公共生产源码哈希已交叉核对，并与该提交的五个生产文件独立匹配；WLAN 未解决依赖为空。见[验证记录](research/popsicle-native-engine-0082-validation.json)。该已通过构建覆盖 INIT/0 的四种双频/响应组合；后续 `005ee1b` 扩展到 INIT/0 与 INIT/IDLE 的八种组合，CI [41244837690](https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690) 尚在运行，不能沿用前一提交的成功结论。平台原子/锁/对象字段仍有模型，未覆盖的 STA/MLO/DFS/restart handler 会中止；不扩大 START/UP 的 SSR 恢复范围，backend 关闭，手机无需操作。见[0082](POPSICLE-NATIVE-ENGINE-0082.md)。
+原生通用状态机引擎、完整原始状态/事件表及真实枚举已进入模型执行，原生 transition/deliver 桥接替代层级适配器。首次 START 允许匹配的 INIT/0 或 INIT/IDLE，初始子状态漂移拒绝；新建 INIT/0 遇 SSR 保留资源。CI [41244837690](https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690)（`005ee1b`）已全部通过：53 项 Python 检查、原生引擎八种启动组合、三项负对照、既有 C 回归、完整 WLAN/Wonder/provider 编译、CNSS 名称检查、严格模块链接、七项选定结构布局及最终模块记录检查。35 份模型报告的公共生产源码哈希已交叉匹配，五个生产文件与已验证源码独立核对；WLAN 未解决依赖为空，五个模块均无版本记录不匹配或缺版本依赖。报告 ZIP 的 SHA-256 已核对，布局候选模块哈希与实际链接 WLAN 模块一致。 详见[0082](POPSICLE-NATIVE-ENGINE-0082.md)和[验证记录](research/popsicle-native-engine-0082-validation.json)。
+
+本阶段的离线验收已完成。实际 START/UP 的 SSR 恢复、父资源自动协调、真实 MLME create/destroy/callback adapter 与完整 monitor/AWDL 收包仍需后续实现和验证，backend 关闭，手机无需操作。
 
 ## 阶段 0081
 

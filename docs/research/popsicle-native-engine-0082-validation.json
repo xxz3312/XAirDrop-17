@@ -1,14 +1,16 @@
 {
-  "source_commit": "6aa533310a07aa0658c4632a7f50266cbc9b8ce4",
-  "workflow_run": 41239617189,
-  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41239617189",
+  "source_commit": "005ee1b62c632ea4a63f0b091757d3188ab1c77d",
+  "workflow_run": 41244837690,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690",
   "workflow_conclusion": "success",
   "required_steps_conclusion": "success",
   "python_regression_checks": 53,
+  "stage": "0082 pinned native generic state-machine engine",
+  "native_engine_stage_acceptance_complete": true,
   "models": {
     "native-engine": {
       "status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
-      "fixture_sha256": "b75f375a1e12d7c707d05e9aa2ed35d4f6cb79334bb3dd6c8b22fb822a1d4375",
+      "fixture_sha256": "aa0c1044ca1bd5ff1ff44dfc2e4f0d24be3c9bf3eb9e69dfd2f182c811faf872",
       "production_sha256": {
         "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
         "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
@@ -76,7 +78,7 @@
         "unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions",
         "real engine dispatch has no parent fallback; default child entry and child/parent exit order verified",
         "real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected",
-        "2.4/5240 MHz ordinary/early response lifecycle reaches DOWN, retires controller and queues PE deletion with parents retained",
+        "2.4/5240 MHz ordinary/early response lifecycle from both INIT/0 and INIT/IDLE reaches DOWN, retires controller and queues PE deletion with parents retained",
         "fresh INIT/zero SSR rejection retains resources; it cannot substitute for native IDLE reclaim proof",
         "engine allocations explicitly released in fixture; no synthetic native state reset"
       ],
@@ -169,6 +171,7 @@
     "wonder-managed-fixture.json",
     "wonder-provider-fixture.json"
   ],
+  "production_unchanged_from_verified_baseline": "6aa533310a07aa0658c4632a7f50266cbc9b8ce4",
   "strict_link": "passed",
   "modules": {
     "wonder_sysctl": {
@@ -212,12 +215,66 @@
     "cfg80211_chan_def": "MATCH",
     "ieee80211_channel": "MATCH"
   },
-  "validation_artifact_id": 13056549600,
-  "validation_artifact_sha256": "43b9c5d1fb9f1806f75dafc965dc4707e04bc62c9f83a4dabb2a2329b93c8f45",
+  "layout_candidate_matches_linked_wlan": true,
+  "validation_artifact_id": 13058653283,
+  "validation_artifact_sha256": "9e58965173e088d2b4a3bb00897a7977a1e01b1fc0ff44cd8494c7794d02b3b3",
   "tested_engine_initial_substates": [
-    0
+    "INIT/0",
+    "INIT/IDLE"
   ],
-  "tested_engine_lifecycle_cases": 4,
+  "tested_engine_lifecycle_cases": 8,
+  "lifecycle_matrix": [
+    {
+      "initial_substate": "INIT/0",
+      "frequency_mhz": 2437,
+      "response": "ordinary",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/0",
+      "frequency_mhz": 2437,
+      "response": "early",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/0",
+      "frequency_mhz": 5240,
+      "response": "ordinary",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/0",
+      "frequency_mhz": 5240,
+      "response": "early",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/IDLE",
+      "frequency_mhz": 2437,
+      "response": "ordinary",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/IDLE",
+      "frequency_mhz": 2437,
+      "response": "early",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/IDLE",
+      "frequency_mhz": 5240,
+      "response": "ordinary",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    },
+    {
+      "initial_substate": "INIT/IDLE",
+      "frequency_mhz": 5240,
+      "response": "early",
+      "expected": "START-UP-DOWN-STOP-INIT; controller retired; PE deletion queued; parents retained"
+    }
+  ],
+  "fresh_INIT_zero_SSR_reclaims_resources": false,
+  "initial_substate_drift_rejected": true,
   "radio_START_UP_reset_recovery_implemented": false,
   "native_parent_shutdown_coordinator_implemented": false,
   "complete_monitor_rx_connected": false,
@@ -225,9 +282,10 @@
   "phone_executed": false,
   "airdrop_verified": false,
   "limitations": "Generic engine history/logging/memory/atomic and QDF/SM locks/object state fields remain platform models. Actual driver SM create/destroy wrappers, native MLME callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator are not executed by this fixture. Full table is preserved; unused native handlers are aborting stubs, not full STA/MLO/DFS/restart support. Ordinary peer physical cleanup after queued PE deletion remains outside this composite. Initial zero substate is recorded and matched before first START; drift rejects. Fresh INIT/zero SSR stays held; existing qualified INIT/IDLE SSR scope only; no active START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.",
-  "subsequent_coverage_commit": {
-    "sha": "005ee1b62c632ea4a63f0b091757d3188ab1c77d",
-    "workflow_run": 41244837690,
-    "scope": "Eight lifecycle combinations: INIT/0 and INIT/IDLE, 2437/5240 MHz, ordinary/early response. This baseline report does not certify that later commit."
-  }
+  "fixture_hash_independently_reconstructed_locally": false,
+  "next_stage_prerequisites": [
+    "Actual driver MLME SM create/destroy wrappers and callback adapters remain unexecuted in the composite.",
+    "Active START/UP SSR recovery and automatic parent/shutdown coordination remain unimplemented.",
+    "Full WMA postprocessing, normal physical PE/peer teardown, complete RX and firmware/RF remain outside this stage."
+  ]
 }

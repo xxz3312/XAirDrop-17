@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0082 原生通用状态机引擎](docs/POPSICLE-NATIVE-ENGINE-0082.md)。新模型直接编译并执行固定版本通用 SM 引擎完整 C 文件、原始状态表/事件表及真实枚举值，使用原生 transition/deliver 桥接替换层级适配器。覆盖双频普通/提前响应主流程、新建 INIT/0 遇 SSR 保留资源、默认子状态、退出顺序与不向父状态回退的行为，并设置两个引擎负对照及初始子状态漂移负对照。旧 0081 适配器同步修正为未处理子状态事件即失败。同时修复首次 INIT/0 被严格 IDLE 校验拦截的问题，要求原始子状态匹配、漂移即拒绝。`6aa5333` 的完整 CI [41239617189](https://github.com/xxz3312/XAirDrop-17/actions/runs/41239617189) 已通过，含 53 项 Python 检查、引擎/负对照、旧回归、完整编译、严格链接和七项选定布局；[验证记录](docs/research/popsicle-native-engine-0082-validation.json)已核对。后续 `005ee1b` 新增 INIT/IDLE 覆盖的 CI [41244837690](https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690) 尚在运行。平台原子/锁/对象字段仍有模型，未覆盖的 STA/MLO/DFS/restart handler 会中止；不扩大 START/UP 的 SSR 恢复范围，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0082 原生通用状态机引擎](docs/POPSICLE-NATIVE-ENGINE-0082.md)已完成离线验收。[CI 41244837690](https://github.com/xxz3312/XAirDrop-17/actions/runs/41244837690) 通过 INIT/0 与 INIT/IDLE 的八种双频/响应组合、三项负对照、53 项 Python 检查、既有 C 回归、完整编译、严格链接和七项选定布局；[验证记录](docs/research/popsicle-native-engine-0082-validation.json)及源码哈希已核对。平台原子/锁/对象字段仍有模型，部分未覆盖 handler 会中止。实际 START/UP 的 SSR 恢复、父资源自动协调及完整 AWDL 收包尚未完成，backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
