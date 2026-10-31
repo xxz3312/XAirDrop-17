@@ -54,10 +54,10 @@ int main(void) {
    if(fault==8)r->state.users=1;
    if(fault==9)r->state.error--;
    if(fault==10)r->owner=(void*)1;
-   if(fault==11)state(o).ndi.radio_submit_error--;
+   if(fault==11)o->state.ndi.radio_submit_error--;
    if(fault==12)r->ssr_fenced_new=true;
    if(fault==13)(void)mishare_radio_validate(last_vdev->mlme,0,NULL);
-   if(fault==14)state(o).recovery_radio_start_flushed=true;
+   if(fault==14)o->state.recovery_radio_start_flushed=true;
    assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o->radio==r && !pe_deletes && !dp_detaches && !recovery_timer_cancels);
    assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN);_Exit(0);
   }
@@ -76,7 +76,7 @@ int main(void) {
   if(!child) {
    o=ready_pre_radio(5240,true);
    if(fault==0)fail_alloc_at=alloc_calls+2;
-   if(fault==1)state(o).work_pending=~0U;
+   if(fault==1)o->state.work_pending=~0U;
    if(fault==2) {radio_queue_fail=true;}
    assert(mishare_runtime_ndi_start(o)<0 && o->radio && !o->radio->start_posted);
    fail_alloc_at=0;radio_queue_fail=false;
