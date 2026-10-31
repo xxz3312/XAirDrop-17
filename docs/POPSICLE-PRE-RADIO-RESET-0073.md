@@ -4,7 +4,7 @@
 
 runtime 严格检查 requested/submitted/completed/ready 与 error、频率、plan 摘要的一致性。清理前捕获已完成 channel 的频率；原生 PE helper 除原有身份、原生 INIT/IDLE、空关联请求和确认定时器检查外，还核对 PE 工作频率、PE/desired HT20 宽度和 desired 中心频率。同步关闭 NDI 响应定时器后，以同一捕获值再次核对，才执行完整原生 PE 析构。未完成的准备不能因 MC flush 而被当作成功。
 
-回收不重跑信道准备、START builder、扫描/并发授权或 MC post；后续保持 0070/0072 的 peer → 实际 DP final-free → WMA/legacy → 对象实际 final-free 顺序。原始 channel/plan 完成旗标和标量摘要保留供诊断；关闭准入后这些 ready 记录不构成再次启动授权。普通 PE/VDEV DELETE ACK 不伪造，失败 sticky、保留剩余资源且不重复析构。PE/channel/plan 的重复或矛盾通知记录独立 completion_error，首个错误保留，SSR 的 blocked 封锁标记不能抹掉先前 quarantine 原因；窗口打开后出现重复通知也禁止清理。
+回收不重跑信道准备、START builder、扫描/并发授权或 MC post；后续保持 0070/0072 的 peer → 实际 DP final-free → WMA/legacy → 对象实际 final-free 顺序。原始 channel/plan 完成旗标和标量摘要保留供诊断；关闭准入后这些 ready 记录不构成再次启动授权。普通 PE/VDEV DELETE ACK 不伪造，失败 sticky、保留剩余资源且不重复析构。PE/channel/plan 的重复或矛盾通知记录独立 completion_error，首个错误保留，SSR 的 blocked 封锁标记不能抹掉先前 quarantine 原因；窗口打开后出现重复通知也禁止清理；同步排空 timer 期间新增的 completion error 会保留 timer 已释放事实，并阻止后续 PE/peer/DP 操作。
 
 代码核对：原生 `lim_pre_vdev_start` 与 `lim_set_session_channel_params` 在此私有 PAS/HT20 路线上更新自身 PE/MLME/desired 字段；STA/AP 专用分支不适用。START builder 使用局部参数结构，复制出的 summary 不含命令缓冲或指针。这是源码检查；完整原生 lim_pre、内核锁/定时器与并发仍未在模型或实机执行。
 

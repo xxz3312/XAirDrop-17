@@ -676,8 +676,12 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.recovery_timer_released = true;
         entry->state.ndi.create.timer_ready = false;
+        if (entry->state.ndi.completion_error)
+            ret = -EUCLEAN;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         timer_done = true;
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
         if (entry->state.ndi.pe_ready) {
             bool released = false;
 

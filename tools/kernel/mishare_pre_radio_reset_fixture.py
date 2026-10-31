@@ -118,6 +118,16 @@ int main(void) {
   assert(state(o).ndi.completion_error==-EUCLEAN && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !pe_deletes && !recovery_timer_cancels && !dp_detaches);_Exit(0);
  }
  assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+ /* Drain publishes actual timer release, then stops if its callback reports
+  * a new completion fault; PE/peer/DP remain intact. */
+ reset_pe_test();child=fork();assert(child>=0);
+ if(!child) {
+  o=ready_pre_radio(5240,true);stop_recovery(o);reset_completion_drift=true;
+  assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && state(o).recovery_timer_released && state(o).ndi.completion_error);
+  assert(!state(o).recovery_pe_attempted && !pe_deletes && pe_slot.valid && pe_heap_live==2 && !dp_detaches && !reset_force_detaches);
+  assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && recovery_timer_cancels==1);_Exit(0);
+ }
+ assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  /* A real submitted radio request remains unsupported even after MC flush. */
  reset_pe_test();child=fork();assert(child>=0);
  if(!child) {
@@ -141,10 +151,10 @@ int main(void) {
 
 def fixture(root):
     src=pe.fixture(root)
-    src=src.replace('static bool reset_pe_drift;','static bool reset_pe_drift,reset_geometry_drift;',1)
-    src=src.replace('reset_prepared_test();reset_pe_drift=false;','reset_prepared_test();reset_pe_drift=reset_geometry_drift=false;',1)
+    src=src.replace('static bool reset_pe_drift;','static bool reset_pe_drift,reset_geometry_drift,reset_completion_drift;',1)
+    src=src.replace('reset_prepared_test();reset_pe_drift=false;','reset_prepared_test();reset_pe_drift=reset_geometry_drift=reset_completion_drift=false;',1)
     needle='recovery_timer_cancels++;';assert src.count(needle)==1
-    src=src.replace(needle,needle+'if(reset_geometry_drift)wlan_vdev_mlme_get_des_chan(last_vdev)->ch_cfreq1+=20;',1)
+    src=src.replace(needle,needle+'if(reset_geometry_drift)wlan_vdev_mlme_get_des_chan(last_vdev)->ch_cfreq1+=20;if(reset_completion_drift)mishare_runtime_ndi_channel_event(&psoc,7,mishare_runtime_owners,5240,0);',1)
     src=src.replace('int main(void) {','static int pre_channel_regressions(void) {',1)
     src=src.replace('puts("MISHARE_PRE_CHANNEL_PE_RESET_FIXTURE_PASS_ONLY");return 0;','return 0;',1)
     return src+HARNESS
@@ -177,7 +187,7 @@ def audit(root):
                       'exact batch retirement and delayed object final-free after window closure',
                       'native PE/desired-channel geometry checked before and after timer drain',
                       '9 native geometry faults and 20 incomplete/failed/malformed/radio/duplicate histories reject without PE/DP cleanup',
-                      'PE/channel/plan duplicate completion errors stay sticky across SSR; late duplicates after admission also block cleanup',
+                      'PE/channel/plan duplicate completion errors stay sticky across SSR; late duplicates after admission and during timer drain stop further cleanup',
                       'actual posted radio request remains unsupported after MC flush',
                       'channel/plan completion flags and scalar summary retained; no preparation replay, MC post or firmware ACK fabricated'],
             'limitations':'Only completed channel and optional START-plan preparation before any radio START request. Production runtime, native request/check/release/destructor and native WMA peer/parameter builder code execute with modeled regulatory/lim_pre_vdev_start, PE allocation, remaining cleanup callees, timers/scheduler/locks, DP/object-peer physical lifecycle and parents. No automatic parent/shutdown coordinator, failed/pending preparation recovery, radio START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof.'}
