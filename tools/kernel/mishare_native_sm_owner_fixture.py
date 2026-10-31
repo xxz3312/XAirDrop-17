@@ -101,7 +101,7 @@ def fixture(root):
     sm = (root / previous.SM).read_text()
     wrappers = '\n'.join(function(sm, n) for n in ['mlme_vdev_sm_create', 'mlme_vdev_sm_destroy'])
     source = replace_once(source, 'static unsigned engine_allocations;', EARLY + '\nstatic unsigned engine_allocations;')
-    source = replace_once(source, 'void *p=calloc(1,n);', 'if(owner_fail_next) {owner_fail_next=false;return NULL;}void *p=calloc(1,n);')
+    source = replace_once(source, 'static void *engine_mem_malloc(size_t n) {void *p=calloc(1,n);', 'static void *engine_mem_malloc(size_t n) {if(owner_fail_next) {owner_fail_next=false;return NULL;}void *p=calloc(1,n);')
     source = replace_once(source, 'engine_allocations--;free(p);', 'engine_allocations--;owner_free_calls++;free(p);')
     # Insert after all original tables and native handlers, before the harness.
     marker = function(source, 'attach_engine')
