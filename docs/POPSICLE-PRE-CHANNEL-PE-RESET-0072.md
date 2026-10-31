@@ -12,6 +12,6 @@
 
 新增 Actions C 模型执行生产 runtime、新原生 PE helper、完整原生 PE 析构及 no-FW WMA peer 分支。覆盖同步/异步 DP、batch、额外 final-free 引用、22 类预检失败、定时器 cancel 时的身份漂移、后续 peer 失败和不支持的状态；撤销私有 PAS 的 SAE guard 必须在实际 SAE helper 路径触发共享认证定时器断言。旧模型缺少真实 PE reset helper 时保留 fail-closed stub。
 
-本地 53 项 Python 检查、补丁应用与原生 API 基线还原已通过。C 模型、完整编译、严格链接和选定布局检查待 CI。
+[CI 41155181814](https://github.com/xxz3312/XAirDrop-17/actions/runs/41155181814)成功：53 项 Python 检查、新增 PE reset 模型及 SAE 负对照、原生 PE 析构模型及两个负对照、既有全部 C 模型、完整 WLAN/Wonder/provider 编译、严格模块链接和七项选定布局检查通过。两个新 helper 已在实际链接的 WLAN 中确认，所有模块版本记录无缺失/不匹配，WLAN 无未解决依赖。下载 ZIP 的 SHA256 与 GitHub digest 一致；五个 native 文件和生产 runtime/header 哈希已独立复核并在两个 PE 模型间交叉核对。17 个提交文件与本地 blob 一致，原生 API 基线还原已验证。见[验证记录](research/popsicle-pre-channel-pe-reset-0072-validation.json)。
 
 PE 分配、其余 cleanup primitives、实际内核锁/定时器/调度器、DP force detach、peer 组件物理析构与父对象仍为模型。没有认证目标固件、实机并发、无线收发或 AirDrop。后续仍需 channel/START/UP 恢复、原生自动 shutdown/父资源协调，以及完整 monitor。

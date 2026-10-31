@@ -1,6 +1,6 @@
 ## 最新阶段 0072
 
-扩展显式 SSR 回收到 PE 已成功、尚未请求 channel/START 的 INIT：严格原生会话身份/IDLE/确认定时器预检 → 同步关闭 NDI 响应定时器 → 原生完整 PE 析构 → 0070 分阶段 peer/DP/WMA/legacy/对象回收。保留创建事实，不伪造普通 PE DELETE ACK。新增原生 C 模型、22 类拒绝与 SAE 负对照；53 项 Python 检查及补丁/基线还原通过，完整 CI 待验证。尚无自动父资源协调、channel/START/UP 回收或完整 monitor，无线 init 保持关闭，手机无需操作。见[0072](POPSICLE-PRE-CHANNEL-PE-RESET-0072.md)。
+扩展显式 SSR 回收到 PE 已成功、尚未请求 channel/START 的 INIT：严格原生会话身份/IDLE/确认定时器预检 → 同步关闭 NDI 响应定时器 → 原生完整 PE 析构 → 0070 分阶段 peer/DP/WMA/legacy/对象回收。保留创建事实，不伪造普通 PE DELETE ACK。新增原生 C 模型、22 类拒绝与 SAE 负对照；CI 41155181814 已通过 53 项 Python 检查、新 PE reset/原生析构模型及负对照、既有全部 C 模型、完整编译、严格链接和七项布局检查；两项新 helper 的实际链接、生产与 native 哈希已复核。尚无自动父资源协调、channel/START/UP 回收或完整 monitor，无线 init 保持关闭，手机无需操作。见[0072](POPSICLE-PRE-CHANNEL-PE-RESET-0072.md)。
 
 ## 阶段 0071
 

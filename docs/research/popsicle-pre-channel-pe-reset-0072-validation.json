@@ -1,0 +1,118 @@
+{
+  "source_commit": "3101428782e97f8d206de08241fce99ab89dbc57",
+  "workflow_run": 41155181814,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41155181814",
+  "workflow_conclusion": "success",
+  "required_steps_conclusion": "success",
+  "python_regression_checks": 53,
+  "source_sha256": {
+    "kernel/patches/popsicle/0034-mishare-pre-channel-pe-reset.patch": "1a65cae61fe6d8497a16440b18c6cc83dc0d9f89c44ca5966cf789430f411d83",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "1c849de3827f377b4b42600ef3fc1555ef843b6368933d3214126638d3902f1c",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "d6e4aff59fc89881616123190f31ad1cc10f062044ce0a1a2bab0eaaad1e0b15",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "588c210521d1cfc287f9da6c316fd92ff983efeb3a985b0c83781b23e63c7356",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "9e4f09753b88aff5649af7a7245fdf9880dd61eb2c402cc3e1fead94daf0265a",
+    "tools/kernel/mishare_pe_reset_fixture.py": "d75b66c3e1e9cd6604d24a70ef62c9cc8adaa1087fdc784b87d36737c1f2aeb8",
+    "tools/kernel/mishare_pe_destructor_fixture.py": "f329e471d1d3c6078ada6187eb6bc4c1b804110bc5f2445d29c98fa57151b55d",
+    "tools/kernel/mishare_pe_reset_origins.py": "3a64a7913957dfa7860b37fae5495b72658fc2d1b6e116f3f888bc3187952824",
+    "tools/kernel/popsicle_ci.py": "4afc062bd6467910f69fe107e24143331e5526972576efe12ac0c6d86f6245b0"
+  },
+  "source_and_doc_blobs_verified": 17,
+  "new_native_helper_function_sha256": {
+    "mishare_ndi_reset_pe_check": "b4fff7dcaed8a8a09222584eb51a5206620fae6fb73bdecc75d8bf2d74840c60",
+    "mishare_ndi_reset_pe_release": "3349c3ee72f4a4d5e7b84c460c842a979a15641e88409c9a9420d6fa10ef5d9d"
+  },
+  "native_API_baseline_restoration_verified": true,
+  "pe_reset_model": {
+    "status": "MISHARE_PRE_CHANNEL_PE_RESET_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "dc0fd41ffd4e8ba78e80d5a2c7a2cdcfca878eba70fb23dc2413b08da000f7db",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "1c849de3827f377b4b42600ef3fc1555ef843b6368933d3214126638d3902f1c",
+      "wlan_hdd_mishare_runtime.h": "d6e4aff59fc89881616123190f31ad1cc10f062044ce0a1a2bab0eaaad1e0b15",
+      "wlan_hdd_mishare_ndi.h": "588c210521d1cfc287f9da6c316fd92ff983efeb3a985b0c83781b23e63c7356"
+    },
+    "native_sha256": {
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "43f348141d2de980e5043f6533b858dcb08bcb3b73949eda34d9cda7687bef61",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_session.c": "90a188007fae29f2a8dce3cb7ad1df441e4400c8ee9993477fb86591e6e97015",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_utils.c": "f8aa1667c04984a453681eda8f511c3c80093a94b85bc8f7dc0447eeac42b2cd",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_process_auth_frame.c": "a538baabf2725d7f7466c791e2d9281167ae788e6e492c9cd28cab40b760fb68",
+      "qcacld-3.0/core/wma/src/wma_dev_if.c": "3676b08537628af9717662201b49e8f8809234596795437db56903b0d2b49308"
+    },
+    "negative_control_PAS_shared_auth_cleanup_rejected": true,
+    "checks": [
+      "production runtime and native PE check/release, complete native PE destructor and no-FW peer path",
+      "inline/deferred DP final-free; actual batch dispatch; external object final-free reference",
+      "22 native identity/state/timer preflight failures retain every resource; no replay",
+      "native PE identity rechecked after synchronous response-timer drain",
+      "later peer failure preserves completed PE fact and remaining WMA/legacy/DP",
+      "pending/failed PE, any channel/plan/radio history and fabricated reset markers rejected",
+      "PE history retained without ordinary PE/VDEV DELETE acknowledgement or MC post"
+    ],
+    "limitations": "Stable PE success before any channel request only, in the explicit qualified SSR window with retained parents. Production runtime, native PE/context/timer/DP wrappers, full native PE destructor and WMA peer removal execute with modeled PE allocation, remaining cleanup callees, timers, synchronization, DP force detach, object-peer physical lifecycle and physical parents. No automatic native shutdown caller/parent lease, channel/START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "five_native_source_file_hashes_independently_verified": true,
+  "production_hashes_verified_and_crossmatched_between_models": true,
+  "ordinary_native_PE_destructor_model_and_both_negative_controls": "passed",
+  "full_target_wlan_wonder_provider_compile": "passed",
+  "strict_link": "passed",
+  "wlan_unresolved": [],
+  "modules": {
+    "wonder_sysctl": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_records": 6,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+      "version_records": 11,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_route_b_probe": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "version_records": 3,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "version_records": 110,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "c52b5c95a624cb6c162b89419cfd0897e4e5865b06eebd55bad0a72463b567d0",
+      "version_records": 585,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "host_module_sha256_crossmatched": "c52b5c95a624cb6c162b89419cfd0897e4e5865b06eebd55bad0a72463b567d0",
+  "new_helper_symbols_present": true,
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "validation_artifact_id": 13024929480,
+  "validation_artifact_sha256": "02f0a3ba0c3a1d6c47bffdafe567d2d26281bddbebb2bfa4a114b2f4dad637f4",
+  "stable_PE_success_before_any_channel_request_SSR_reclaim_implemented": true,
+  "pending_or_failed_PE_reset_recovery_implemented": false,
+  "channel_START_UP_reset_recovery_implemented": false,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "complete_monitor_rx_connected": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Explicit caller must retain original MAC/DP/pdev/adapter parents, serialize all polls/teardown and use the qualified stopped-MC/HIF/HTC/RX/blocked-WMI SSR window. Native PE check/release/destructor and no-FW peer paths plus production runtime execute in C models; PE allocation, remaining cleanup primitives, timers, locks/scheduler, DP force detach, peer physical lifecycle and physical parents remain modeled. Source copy of PE release asserts response timer drained and peer/DP/context retained before actual native destructor. Generated fixture hash is recorded from CI, not independently reconstructed locally. No automatic coordinator, parent lifetime lease, unsupported PE/channel/radio recovery, actual driver loading, firmware/RF or end-to-end AirDrop certification."
+}
