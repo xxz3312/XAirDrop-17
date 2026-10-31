@@ -1,6 +1,6 @@
 ## 最新阶段 0074
 
-新增 queue-accepted START 被原生 MC 停机 flush、回调从未执行时的 SSR controller 回收。实际 flush origin、私有 controller 事实、INIT/零事务/零 callback users 双重核对；先 unlink/ref release，再接续 PE/peer/DP/WMA/对象清理。保留 radio_requested 和 BLOCKED/ESHUTDOWN，仅记录启动前撤销，不造 DOWN/ACK。新增原生队列 flush C 模型、13 类拒绝及私有事实负对照；53 项 Python 检查通过，完整 CI 待验证。实际 START/UP、自动父资源协调和完整 monitor 仍未完成，无线 init 关闭，手机无需操作。见[0074](POPSICLE-QUEUED-START-RESET-0074.md)。
+新增 queue-accepted START 被原生 MC 停机 flush、回调从未执行时的 SSR controller 回收。实际 flush origin、私有 controller 事实、INIT/零事务/零 callback users 双重核对；先 unlink/ref release，再接续 PE/peer/DP/WMA/对象清理。保留 radio_requested 和 BLOCKED/ESHUTDOWN，仅记录启动前撤销，不造 DOWN/ACK。新增原生队列 flush C 模型、13 类拒绝及私有事实负对照；CI [41175604451](https://github.com/xxz3312/XAirDrop-17/actions/runs/41175604451) 已通过 53 项 Python 检查、新模型及私有 flush 负对照、既有全部 C 模型、完整编译、严格链接和七项布局检查；生产/native 哈希、三个新增入口实际链接与模块记录已复核。实际 START/UP、自动父资源协调和完整 monitor 仍未完成，无线 init 关闭，手机无需操作。见[0074](POPSICLE-QUEUED-START-RESET-0074.md)。
 
 ## 阶段 0073
 

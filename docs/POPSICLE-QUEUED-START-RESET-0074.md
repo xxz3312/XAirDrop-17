@@ -10,6 +10,6 @@ radio_requested 保留，BLOCKED/ESHUTDOWN 原值保留；只新增明确的 ssr
 
 新增 Actions C 模型保留 0073/0072 回归，执行生产 runtime/radio、原生 scheduler stop/queue flush、PE 析构和 peer 路径。覆盖 2.4 GHz/5240 MHz、同步/异步 DP、batch、额外 final-free 引用、没有实际 flush 的 MC 观察、13 类 controller/身份/回调拒绝、timer drain 期间回调、重复/外来通知，以及已执行 START/响应/UP、队列失败、非 SSR fence。负对照删掉私有 controller flush 检查后，必须被“runtime 有标记但私有事实缺失”的用例发现。
 
-本地 53 项 Python 检查通过，C 模型、完整编译、严格链接和七项选定布局检查待 CI。新增入口编译进原 WLAN，公开 Wonder ops/priv ABI 不变，没有自动资源释放 caller，也不启用 backend 或制作手机测试包。
+CI [41175604451](https://github.com/xxz3312/XAirDrop-17/actions/runs/41175604451)（源码 `023811b4c34a5c9cd0ded547377b50405f44cfe9`）已通过 53 项 Python 检查、新模型及私有 flush 负对照、既有全部 C 模型、完整 WLAN/Wonder/provider 编译、严格链接和七项选定布局检查。验证报告 ZIP SHA256 为 `65ab6f9df5a8539a8dbb4a58aa2d37e2fb86b9dfade607c90e7255603697a063`；五项生产源码哈希本地核对、其中三项与前序三个模型交叉核对、六个 native 文件哈希、三个新增入口实际链接和模块依赖记录均已复核。详见[验证记录](research/popsicle-queued-start-reset-0074-validation.json)。生成模型源码哈希来自 CI，未在本地独立重建。新增入口编译进原 WLAN，公开 Wonder ops/priv ABI 不变，没有自动资源释放 caller，也不启用 backend 或制作手机测试包。
 
 QDF/锁/定时器/完整 scheduler、MLME SM dispatch、PE 分配及其余 cleanup primitives、DP/peer 物理析构和父资源仍含模型。显式 caller 必须在合格 SSR 窗口中保持原始父资源并串行所有 poll/teardown。这不是原生自动停机/父资源租约，不支持实际 START/UP 回收，不证明驱动加载、固件/空口或 AirDrop。手机无需操作。
