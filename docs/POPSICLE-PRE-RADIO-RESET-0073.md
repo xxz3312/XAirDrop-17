@@ -10,6 +10,6 @@ runtime 严格检查 requested/submitted/completed/ready 与 error、频率、pl
 
 新增 Actions C 模型保留 0072 全部 pre-channel 回归，覆盖 2.4 GHz / 48 信道 5240 MHz、channel-only / completed plan、同步/异步 DP、batch、额外 final-free 引用、9 类原生几何拒绝、20 类未完成/失败/矛盾/重复通知历史、timer cancel 期间的几何漂移，以及真实 radio post 后仍拒绝回收。负对照去掉原生 PE 频率比较，必须在“摘要/desired 看似匹配、PE 频率错误”的用例触发断言；完整保留此比较的对照必须先通过。
 
-53 项本地 Python 检查、补丁反向检查与原生 API 基线还原已通过。C 模型、完整编译、严格链接和七项选定布局检查待 CI。
+[CI 41173256945](https://github.com/xxz3312/XAirDrop-17/actions/runs/41173256945)成功：53 项 Python 检查、新 pre-radio 模型与原生频率比较负对照、0072 pre-channel/原生 PE 析构模型及负对照、既有全部 C 模型、完整 WLAN/Wonder/provider 编译、严格模块链接和七项选定布局检查通过。两个 PE reset helper 在实际 WLAN 中存在，所有模块版本记录无缺失/不匹配，WLAN 无未解决依赖。下载 ZIP 的 SHA256 与 GitHub digest 一致；六个 native 文件、三个 PE 模型的生产 runtime/header 哈希和实际模块记录已交叉核对，15 个提交文件与本地 blob 一致。原生 API 基线还原及准备阶段源码审计已验证。见[验证记录](research/popsicle-pre-radio-reset-0073-validation.json)。
 
 模型的 regulatory/lim_pre、PE 分配、其余 cleanup primitives、锁/调度器/定时器、DP/peer 物理析构和父对象仍为边界替身。尚无 radio START/UP 回收、原生自动停机/父资源协调、完整 monitor、固件/空口或 AirDrop 认证。手机无需操作。
