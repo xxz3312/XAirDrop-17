@@ -53,6 +53,7 @@ static void native_full_transition(struct vdev_mlme_obj *m,unsigned dest) {
  }
 }
 static QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {
+ bool parent_dispatch=radio_native_substate==WLAN_VDEV_SS_IDLE;
  bool handled=false;assert(sm_depth==1 && !lock_depth && m->vdev==last_vdev);native_lifecycle_events++;
  switch(radio_native_substate) {
  case WLAN_VDEV_SS_IDLE:break;
@@ -65,7 +66,7 @@ static QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_
  case WLAN_VDEV_SS_STOP_DOWN_PROGRESS:handled=mlme_vdev_subst_stop_down_progress_event(m,e,n,p);break;
  default:assert(!"unsupported native substate");
  }
- if(!handled) switch(ch_state) {
+ if(parent_dispatch) switch(ch_state) {
  case WLAN_VDEV_S_INIT:native_init_calls++;handled=mlme_vdev_state_init_event(m,e,n,p);native_init_last_handled=handled;break;
  case WLAN_VDEV_S_START:handled=mlme_vdev_state_start_event(m,e,n,p);break;
  case WLAN_VDEV_S_UP:handled=mlme_vdev_state_up_event(m,e,n,p);break;
@@ -73,7 +74,7 @@ static QDF_STATUS native_full_deliver(struct vdev_mlme_obj *m,uint16_t e,uint16_
  case WLAN_VDEV_S_STOP:handled=mlme_vdev_state_stop_event(m,e,n,p);break;
  default:assert(!"unsupported native state");
  }
- return handled?QDF_STATUS_SUCCESS:QDF_STATUS_E_FAILURE;
+ return handled?QDF_STATUS_SUCCESS:QDF_STATUS_E_INVAL;
 }
 '''
 HARNESS=r'''

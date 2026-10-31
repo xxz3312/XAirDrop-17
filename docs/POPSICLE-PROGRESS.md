@@ -1,4 +1,8 @@
-## 最新阶段 0081
+## 最新阶段 0082
+
+新模型直接编译并执行固定版本通用 SM 引擎完整 C 文件、原始状态表/事件表及真实枚举值，使用原生 transition/deliver 桥接替换层级适配器。覆盖双频普通/提前响应主流程、INIT 拒绝 SSR 显式回收、默认子状态、退出顺序与不向父状态回退的行为，并设置两个引擎负对照。旧 0081 适配器同步修正为未处理子状态事件即失败。53 项 Python 检查通过，完整 CI 待验证。平台原子/锁/对象字段仍有模型，未覆盖的 STA/MLO/DFS/restart handler 会中止；不扩大 START/UP 的 SSR 恢复范围，backend 关闭，手机无需操作。见[0082](POPSICLE-NATIVE-ENGINE-0082.md)。
+
+## 阶段 0081
 
 START/STOP 发送现在同时要求精确原生子状态，INIT 校验要求 INIT/IDLE。新增模型编入 23 段原生 entry/event 函数及原生 INIT/API，普通主流程经过其中 20 段，贯通 START→UP→DOWN→STOP→INIT、双频与提前响应，检查原生 handled=true 掩盖回调失败时 controller 仍隔离资源。两个负对照移除 START/STOP 子状态门槛，必须均被识别。CI [41208058251](https://github.com/xxz3312/XAirDrop-17/actions/runs/41208058251) 已通过 53 项 Python 检查、新原生主流程模型及两个子状态负对照、既有全部 C 模型、完整编译、严格链接和七项布局检查；11 组模型公共生产哈希、23 段原生函数哈希、9 个 native 文件哈希、实际链接符号和模块记录已复核。通用状态机引擎/层级分派/transition 仍有模型，实机和固件未验证；不扩大 SSR 回收范围，backend 关闭，手机无需操作。见[0081](POPSICLE-NATIVE-LIFECYCLE-0081.md)。
 
