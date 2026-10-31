@@ -35,6 +35,7 @@ struct mishare_runtime_status {
     bool ndi_reclaim_started;
     bool recovery_radio_start_flushed;
     bool recovery_radio_start_refused;
+    bool recovery_radio_start_aborted;
     bool recovery_radio_released;
     bool recovery_pe_attempted;
     bool recovery_pe_released;
@@ -106,7 +107,10 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * can use this route while retaining radio_submit_error and the original error.
  * Allocation/reservation failures cannot substitute. A callback arriving after
  * the original SSR fence can also retire only if work_enter refused ESHUTDOWN
- * before radio_execute, with distinct private/runtime refusal facts.
+ * before radio_execute, with distinct private/runtime refusal facts. Admitted
+ * work can abort only before the shared-lock preparation-entry gate, with a
+ * distinct body-abort origin after work_exit/put/pending drain. Preparation
+ * already entered, including failure or a later fence, stays unsupported.
  * Private provenance and runtime
  * origin must agree, INIT and untouched transaction must hold, and callbacks
  * must be absent. Controller unlink/ref release is recorded without clearing

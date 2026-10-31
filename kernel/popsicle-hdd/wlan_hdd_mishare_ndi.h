@@ -16,13 +16,16 @@ int mishare_runtime_work_get(struct wlan_objmgr_vdev *vdev, void *owner);
 int mishare_runtime_work_enter(struct wlan_objmgr_vdev *vdev, void *owner);
 void mishare_runtime_work_exit(struct wlan_objmgr_vdev *vdev, void *owner);
 void mishare_runtime_work_put(struct wlan_objmgr_vdev *vdev, void *owner);
-/* Actual radio START flush origin only, after request free/work put/pending
+/* Distinct START flush/refusal/pre-prepare-abort origins, after request free/work put/pending
  * release. Opaque tokens are matched before dereference; no resource release.
  */
 void mishare_runtime_radio_start_flushed(struct wlan_objmgr_psoc *psoc,
                                          struct wlan_objmgr_vdev *vdev,
                                          void *owner, void *radio_token);
 void mishare_runtime_radio_start_refused(struct wlan_objmgr_psoc *psoc,
+                                         struct wlan_objmgr_vdev *vdev,
+                                         void *owner, void *radio_token);
+void mishare_runtime_radio_start_aborted(struct wlan_objmgr_psoc *psoc,
                                          struct wlan_objmgr_vdev *vdev,
                                          void *owner, void *radio_token);
 struct wlan_objmgr_psoc;

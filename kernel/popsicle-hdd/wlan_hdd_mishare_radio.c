@@ -36,6 +36,10 @@ struct mishare_radio {
     int start_post_error;
     bool ssr_fenced_rejected;
     bool ssr_start_refused;
+    bool start_work_admitted;
+    bool start_prepare_entered;
+    bool ssr_fenced_before_prepare;
+    bool ssr_start_aborted;
 };
 struct radio_request {
     struct mishare_radio *radio;
@@ -63,6 +67,14 @@ void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
             !r->start_reply_queued && !r->stop_reply_queued &&
             !r->applying_start_reply && !r->applying_stop_reply)
             r->ssr_fenced_new = true;
+        if (!r->state.closing && r->state.phase == MISHARE_RADIO_NEW &&
+            !r->state.error && r->state.pending == 1 && !r->state.users &&
+            r->start_posted && r->start_callback_entered && !r->start_prepare_entered &&
+            !r->preflight && !r->state.start_attempted && !r->state.stop_attempted &&
+            !r->state.host_up && !r->state.down_attempted && !r->state.down_accepted &&
+            !r->start_reply_queued && !r->stop_reply_queued &&
+            !r->applying_start_reply && !r->applying_stop_reply)
+            r->ssr_fenced_before_prepare = true;
         if (!r->state.closing && r->state.phase == MISHARE_RADIO_CANCELLED &&
             r->start_post_error && r->state.error == r->start_post_error &&
             !r->start_posted && !r->start_callback_entered && !r->preflight &&
@@ -99,7 +111,7 @@ static struct mishare_radio *radio_get(struct vdev_mlme_obj *mlme)
     spin_lock_irqsave(&mishare_radio_lock, flags);
     for (r = mishare_radios; r; r = r->next) {
         if (r->vdev == mlme->vdev) {
-            if (r->ssr_fenced_new || r->ssr_fenced_rejected)
+            if (r->ssr_fenced_new || r->ssr_fenced_rejected || r->ssr_fenced_before_prepare)
                 r->ssr_callback_after_fence = true;
             r->state.users++;
             if (wlan_vdev_mlme_get_cmpt_obj(mlme->vdev) != mlme ||
@@ -468,6 +480,32 @@ QDF_STATUS mishare_radio_stop_rsp(struct vdev_mlme_obj *m, struct vdev_stop_resp
     return radio_reply(m, false, NULL, rsp->vdev_id);
 }
 
+/* Called only at exits before START preparation. The fence and prepare-entry
+ * flag share the radio lock; an error returned by preparation is never proof. */
+static int radio_abort_before_prepare(struct radio_request *req)
+{
+    struct mishare_radio *r = req->radio;
+    unsigned long flags;
+
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    if (req->work == RADIO_START && r->ssr_fenced_before_prepare &&
+        r->start_work_admitted && !r->start_prepare_entered &&
+        r->start_posted && r->start_callback_entered &&
+        !r->ssr_fenced_new && !r->ssr_start_flushed && !r->ssr_start_refused &&
+        !r->ssr_fenced_rejected && !r->start_post_error && !r->ssr_callback_after_fence &&
+        !r->preflight && r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
+        r->state.error == -ESHUTDOWN && r->state.pending == 1 && !r->state.users &&
+        !r->state.start_attempted && !r->state.stop_attempted && !r->state.host_up &&
+        !r->state.down_attempted && !r->state.down_accepted &&
+        !r->start_reply_queued && !r->stop_reply_queued &&
+        !r->applying_start_reply && !r->applying_stop_reply) {
+        r->ssr_start_aborted = true;
+        r->state.ssr_start_body_aborted = true;
+    }
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    return -ESHUTDOWN;
+}
+
 static int radio_execute(struct radio_request *req)
 {
     struct mishare_radio *r = req->radio;
@@ -477,9 +515,11 @@ static int radio_execute(struct radio_request *req)
     unsigned long flags;
     int ret;
     if (!mishare_runtime_work_allowed(r->vdev, r->owner))
-        return -ESHUTDOWN;
+        return radio_abort_before_prepare(req);
     m = wlan_vdev_mlme_get_cmpt_obj(r->vdev);
     mishare_radio_snapshot(r, &s);
+    if (m && s.phase == MISHARE_RADIO_BLOCKED && req->work == RADIO_START)
+        return radio_abort_before_prepare(req);
     if (!m || s.phase == MISHARE_RADIO_BLOCKED)
         return -EUCLEAN;
     switch (req->work) {
@@ -494,6 +534,14 @@ static int radio_execute(struct radio_request *req)
             spin_unlock_irqrestore(&mishare_radio_lock, flags);
             return ret;
         }
+        spin_lock_irqsave(&mishare_radio_lock, flags);
+        ret = r->state.phase != MISHARE_RADIO_NEW || r->state.closing ? -ESHUTDOWN :
+              r->start_prepare_entered ? -EUCLEAN : 0;
+        if (!ret)
+            r->start_prepare_entered = true;
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        if (ret)
+            return ret == -ESHUTDOWN ? radio_abort_before_prepare(req) : ret;
         ret = mishare_ndi_radio_prepare(r->vdev, r->owner, r->session_cookie, r->freq);
         if (ret) {
             /* Preparation can partially change host fields. Quarantine rather
@@ -501,9 +549,14 @@ static int radio_execute(struct radio_request *req)
             return ret;
         }
         spin_lock_irqsave(&mishare_radio_lock, flags);
-        r->preflight = true;
-        r->state.phase = MISHARE_RADIO_STARTING;
+        ret = r->state.phase != MISHARE_RADIO_NEW || r->state.closing ? -ESHUTDOWN : 0;
+        if (!ret) {
+            r->preflight = true;
+            r->state.phase = MISHARE_RADIO_STARTING;
+        }
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        if (ret)
+            return ret; /* Preparation ran: never publish pre-prepare abort. */
         ret = radio_sm(r, WLAN_VDEV_SM_EV_START, false);
         return ret || !radio_phase(r, MISHARE_RADIO_WAIT_START) ? -EUCLEAN : 0;
     case RADIO_STOP:
@@ -540,7 +593,7 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
     struct wlan_objmgr_vdev *vdev;
     struct wlan_objmgr_psoc *psoc;
     void *owner, *token;
-    bool publish_flush = false, publish_refused = false;
+    bool publish_flush = false, publish_refused = false, publish_aborted = false;
     unsigned long flags;
     int ret;
     if (!req)
@@ -581,8 +634,18 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
     } else {
         ret = flushed ? -ECANCELED : mishare_runtime_work_enter(r->vdev, r->owner);
         if (!ret) {
+            if (req->work == RADIO_START) {
+                spin_lock_irqsave(&mishare_radio_lock, flags);
+                r->start_work_admitted = true;
+                spin_unlock_irqrestore(&mishare_radio_lock, flags);
+            }
             ret = radio_execute(req);
             mishare_runtime_work_exit(r->vdev, r->owner);
+            if (req->work == RADIO_START && ret == -ESHUTDOWN) {
+                spin_lock_irqsave(&mishare_radio_lock, flags);
+                publish_aborted = r->ssr_start_aborted;
+                spin_unlock_irqrestore(&mishare_radio_lock, flags);
+            }
         } else if (!flushed && req->work == RADIO_START && ret == -ESHUTDOWN) {
             spin_lock_irqsave(&mishare_radio_lock, flags);
             if (r->ssr_fenced_new && r->start_posted && r->start_callback_entered &&
@@ -615,6 +678,8 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
         mishare_runtime_radio_start_flushed(psoc, vdev, owner, token);
     else if (publish_refused)
         mishare_runtime_radio_start_refused(psoc, vdev, owner, token);
+    else if (publish_aborted)
+        mishare_runtime_radio_start_aborted(psoc, vdev, owner, token);
     return QDF_STATUS_SUCCESS;
 }
 
@@ -687,17 +752,25 @@ static bool radio_ssr_cancel_shape(struct mishare_radio *r)
     return ((r->ssr_fenced_new && r->ssr_start_flushed && r->start_posted &&
              !r->ssr_fenced_rejected && !r->start_post_error &&
              !r->ssr_start_refused && !r->start_callback_entered &&
-             !r->state.ssr_start_callback_refused &&
+             !r->state.ssr_start_callback_refused && !r->ssr_start_aborted &&
              r->state.error == -ESHUTDOWN) ||
             (r->ssr_fenced_rejected && r->start_post_error &&
              !r->ssr_fenced_new && !r->ssr_start_flushed && !r->start_posted &&
              !r->ssr_start_refused && !r->start_callback_entered &&
-             !r->state.ssr_start_callback_refused &&
+             !r->state.ssr_start_callback_refused && !r->ssr_start_aborted &&
              r->state.error == r->start_post_error) ||
             (r->ssr_fenced_new && r->ssr_start_refused && r->start_posted &&
              r->start_callback_entered && r->state.ssr_start_callback_refused &&
              !r->ssr_start_flushed && !r->ssr_fenced_rejected && !r->start_post_error &&
+             !r->ssr_start_aborted && r->state.error == -ESHUTDOWN) ||
+            (r->ssr_fenced_before_prepare && r->ssr_start_aborted &&
+             r->state.ssr_start_body_aborted && r->start_posted && r->start_callback_entered &&
+             !r->ssr_fenced_new && !r->ssr_start_flushed && !r->ssr_start_refused &&
+             !r->state.ssr_start_callback_refused && !r->ssr_fenced_rejected && !r->start_post_error &&
              r->state.error == -ESHUTDOWN)) &&
+           r->start_work_admitted == r->state.ssr_start_body_aborted &&
+           r->ssr_fenced_before_prepare == r->state.ssr_start_body_aborted &&
+           !r->start_prepare_entered &&
            !r->ssr_callback_after_fence && !r->preflight &&
            r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
            !r->state.pending && !r->state.users &&

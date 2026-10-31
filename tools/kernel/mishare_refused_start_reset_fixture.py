@@ -88,6 +88,7 @@ int main(void) {
  /* Actual work-enter boundary ordering: late fence, admitted work, other error,
   * executed preparation failure and REMOVE never gain the SSR refusal proof. */
  for(int phase=0;phase<5;phase++) {
+  if(phase==1)continue; /* 0077 covers admitted work fenced before prepare. */
   reset_pe_test();child=fork();assert(child>=0);
   if(!child) {
    o=queued_start_owner(5240);unsigned before=refused_prepare_calls;
