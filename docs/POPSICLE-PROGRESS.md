@@ -1,6 +1,6 @@
 ## 最新阶段 0076
 
-新增 SSR 先封锁已排队 START、回调后进入但 work_enter 在 radio_execute 前拒绝 ESHUTDOWN 时的显式回收。私有拒绝事实、原始 SSR、单独 runtime origin、INIT/空事务/零 users/pending 共同核对；保留 BLOCKED/ESHUTDOWN 和请求历史，不冒充 flush、队列失败或 DOWN。新增准备/SM 边界计数、16 类拒绝、封锁时序与私有事实负对照。53 项 Python 检查通过，完整 CI 待验证。已执行准备/SM/START/UP、自动父资源协调和完整 monitor 仍未完成，backend 关闭，手机无需操作。见[0076](POPSICLE-REFUSED-START-RESET-0076.md)。
+新增 SSR 先封锁已排队 START、回调后进入但 work_enter 在 radio_execute 前拒绝 ESHUTDOWN 时的显式回收。私有拒绝事实、原始 SSR、单独 runtime origin、INIT/空事务/零 users/pending 共同核对；保留 BLOCKED/ESHUTDOWN 和请求历史，不冒充 flush、队列失败或 DOWN。新增准备/SM 边界计数、16 类拒绝、封锁时序与私有事实负对照。CI [41187930152](https://github.com/xxz3312/XAirDrop-17/actions/runs/41187930152) 已通过 53 项 Python 检查、新模型与私有 refusal 负对照、既有全部 C 模型、完整编译、严格链接及七项布局检查；生产/native 哈希、新 origin 实际链接及模块记录已复核。START 回调内准备/SM 已执行及 START/UP 的 reset 回收、自动父资源协调和完整 monitor 仍未完成，backend 关闭，手机无需操作。见[0076](POPSICLE-REFUSED-START-RESET-0076.md)。
 
 ## 阶段 0075
 
