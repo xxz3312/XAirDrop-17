@@ -101,6 +101,10 @@ def fixture(root):
     source, exits, stubbed = previous.fixture(root)
     sm = (root / previous.SM).read_text()
     wrappers = '\n'.join(function(sm, n) for n in ['mlme_vdev_sm_create', 'mlme_vdev_sm_destroy'])
+    # The pinned create wrapper uses uint8_t name[] for the engine's const
+    # char * name argument. Preserve that native body; limit the kernel-style
+    # pointer-sign diagnostic exemption to these two extracted functions.
+    wrappers = '#pragma GCC diagnostic push\n#pragma GCC diagnostic ignored "-Wpointer-sign"\n' + wrappers + '\n#pragma GCC diagnostic pop\n'
     source = replace_once(source, 'static unsigned engine_allocations;', EARLY + '\nstatic unsigned engine_allocations;')
     source = replace_once(source, 'static void *engine_mem_malloc(size_t n) {void *p=calloc(1,n);', 'static void *engine_mem_malloc(size_t n) {if(owner_fail_next) {owner_fail_next=false;return NULL;}void *p=calloc(1,n);')
     source = replace_once(source, 'engine_allocations--;free(p);', 'engine_allocations--;owner_free_calls++;free(p);')
