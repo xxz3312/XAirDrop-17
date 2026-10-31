@@ -707,13 +707,13 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                 return mishare_runtime_recovery_error(entry, ret);
         }
         if (entry->radio) {
-            struct mishare_radio_status current = {0};
+            struct mishare_radio_status radio_observed = {0};
 
             ret = mishare_radio_ssr_cancel_check(entry->radio, entry->vdev, entry->events,
                                                   entry, entry->pe_cookie, pe_freq);
             if (!ret)
-                ret = mishare_radio_snapshot(entry->radio, &current);
-            if (!ret && current.error != (entry->state.ndi.radio_submit_error ?
+                ret = mishare_radio_snapshot(entry->radio, &radio_observed);
+            if (!ret && radio_observed.error != (entry->state.ndi.radio_submit_error ?
                                           entry->state.ndi.radio_submit_error : -ESHUTDOWN))
                 ret = -EUCLEAN;
             if (ret)
