@@ -6,6 +6,7 @@
  */
 #include <linux/types.h>
 struct wlan_objmgr_vdev;
+struct wlan_objmgr_psoc;
 bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner);
 /* Each owned MC message gets one reservation before posting. Enter/exit spans
  * native execution; put follows its completion publication. Caller holds a
@@ -15,6 +16,12 @@ int mishare_runtime_work_get(struct wlan_objmgr_vdev *vdev, void *owner);
 int mishare_runtime_work_enter(struct wlan_objmgr_vdev *vdev, void *owner);
 void mishare_runtime_work_exit(struct wlan_objmgr_vdev *vdev, void *owner);
 void mishare_runtime_work_put(struct wlan_objmgr_vdev *vdev, void *owner);
+/* Actual radio START flush origin only, after request free/work put/pending
+ * release. Opaque tokens are matched before dereference; no resource release.
+ */
+void mishare_runtime_radio_start_flushed(struct wlan_objmgr_psoc *psoc,
+                                         struct wlan_objmgr_vdev *vdev,
+                                         void *owner, void *radio_token);
 struct wlan_objmgr_psoc;
 struct vdev_mlme_obj;
 struct vdev_create_params;

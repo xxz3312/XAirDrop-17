@@ -33,6 +33,8 @@ struct mishare_runtime_status {
     bool recovery_window;
     bool recovery_window_closed;
     bool ndi_reclaim_started;
+    bool recovery_radio_start_flushed;
+    bool recovery_radio_released;
     bool recovery_pe_attempted;
     bool recovery_pe_released;
     bool recovery_context_attempted;
@@ -97,8 +99,14 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * Frequency is captured before drain and rechecked against native PE/desired
  * HT20 geometry; preparation is never replayed during reset. Matching running
  * confirmation timers reject cleanup. PE/channel/plan completion history remains;
- * no ordinary PE DELETE ACK is fabricated. Pending/failed preparation, ANY radio
- * START request, partial prepare/attach and incomplete DELETE stay held.
+ * no ordinary PE DELETE ACK is fabricated. A queue-accepted radio START may
+ * additionally retire its controller only after an actual native MC START
+ * flush before callback execution. Private controller provenance and runtime
+ * origin must agree, INIT and untouched transaction must hold, and callbacks
+ * must be absent. Controller unlink/ref release is recorded without clearing
+ * radio_requested or changing BLOCKED/ESHUTDOWN into DOWN/CANCELLED. Pending /
+ * failed preparation, executed START/UP, partial attach and incomplete DELETE
+ * stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
 /* SSR-only owner bookkeeping after host deletion already succeeded and all

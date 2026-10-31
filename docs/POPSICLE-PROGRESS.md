@@ -1,4 +1,8 @@
-## 最新阶段 0073
+## 最新阶段 0074
+
+新增 queue-accepted START 被原生 MC 停机 flush、回调从未执行时的 SSR controller 回收。实际 flush origin、私有 controller 事实、INIT/零事务/零 callback users 双重核对；先 unlink/ref release，再接续 PE/peer/DP/WMA/对象清理。保留 radio_requested 和 BLOCKED/ESHUTDOWN，仅记录启动前撤销，不造 DOWN/ACK。新增原生队列 flush C 模型、13 类拒绝及私有事实负对照；53 项 Python 检查通过，完整 CI 待验证。实际 START/UP、自动父资源协调和完整 monitor 仍未完成，无线 init 关闭，手机无需操作。见[0074](POPSICLE-QUEUED-START-RESET-0074.md)。
+
+## 阶段 0073
 
 显式 SSR 回收扩展到 channel 与可选 START plan 已完成、从未请求 radio START 的 INIT。捕获并复核 PE/desired HT20 几何后，沿用原生 PE 析构及分阶段资源释放；保留准备历史，不重跑准备或伪造 ACK；重复通知以独立 completion_error 保留，不能被 SSR 封锁标记掩盖。新增 2.4 GHz/5240 MHz、9 类原生拒绝、20 类失败/矛盾/重复通知历史及频率检查负对照，并保留 0072 回归；CI 41173256945 已通过 53 项 Python 检查、新模型及负对照、既有全部 C 模型、完整编译、严格链接及七项布局检查；native/生产源码哈希、helper 实际链接和模块记录已复核。radio START/UP 回收、自动父资源协调和完整 monitor 尚未完成，无线 init 关闭，手机无需操作。见[0073](POPSICLE-PRE-RADIO-RESET-0073.md)。
 

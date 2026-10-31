@@ -28,6 +28,31 @@ static DEFINE_SPINLOCK(mishare_runtime_lock);
 static struct mishare_runtime_owner *mishare_runtime_owners;
 static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
 
+void mishare_runtime_radio_start_flushed(struct wlan_objmgr_psoc *psoc,
+                                         struct wlan_objmgr_vdev *vdev,
+                                         void *owner, void *radio_token)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner || entry->psoc != psoc || entry->vdev != vdev)
+            continue;
+        if (entry->state.quiesced != MISHARE_QUIESCE_SSR)
+            break;
+        if (!radio_token || entry->radio != radio_token ||
+            !entry->state.ndi.radio_requested || entry->state.recovery_radio_start_flushed ||
+            entry->state.recovery_radio_released || entry->state.ndi_reclaim_started) {
+            if (!entry->state.ndi.completion_error)
+                entry->state.ndi.completion_error = -EUCLEAN;
+        } else {
+            entry->state.recovery_radio_start_flushed = true;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
 unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
                                           enum mishare_quiesce_reason reason)
 {
@@ -448,6 +473,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
            !n->completion_error && !entry->state.recovery_window_closed &&
            !entry->state.ndi_reclaim_started && !entry->state.ndi_reclaim_ready &&
+           !entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_released &&
            !entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released &&
            !entry->state.recovery_context_attempted && !entry->state.recovery_context_released &&
            !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
@@ -477,6 +503,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
     bool early, prepared, no_pe, ready_pe, no_channel, ready_channel, no_plan, ready_plan;
+    bool no_radio, cancelled_radio;
 
     early = !entry->state.recovery_context_attempted &&
             !entry->state.recovery_context_released && !n->legacy_ready &&
@@ -505,13 +532,23 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
                  n->start_plan.center_freq == n->channel_freq && n->start_plan.phy_mode &&
                  n->start_plan.tx_streams && n->start_plan.tx_streams <= 2 &&
                  n->start_plan.rx_streams == n->start_plan.tx_streams;
+    no_radio = !n->radio_requested && !entry->radio &&
+               !entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_released;
+    cancelled_radio = ready_plan && n->radio_requested &&
+                      entry->state.recovery_radio_start_flushed &&
+                      ((!entry->state.recovery_radio_released && entry->radio) ||
+                       (entry->state.recovery_radio_released && !entry->radio &&
+                        entry->state.radio.ssr_cancelled_before_start &&
+                        !entry->state.radio.start_attempted && !entry->state.radio.host_up &&
+                        !entry->state.radio.stop_attempted && !entry->state.radio.down_attempted &&
+                        !entry->state.radio.down_accepted));
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
            !n->completion_error &&
            !entry->state.recovery_window_closed && !entry->state.ndi_reclaim_started &&
            !entry->state.host_reclaim && !entry->state.draining &&
-           entry->vdev && entry->referenced && entry->events && !entry->radio &&
+           entry->vdev && entry->referenced && entry->events && (no_radio || cancelled_radio) &&
            entry->cookie == (unsigned long)entry->vdev && (no_pe || ready_pe) &&
            n->active && !n->create_error && n->create.timer_ready &&
            n->create.wire_attempted && n->create.wire_accepted &&
@@ -521,7 +558,6 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            !entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released &&
            !n->peer_delete_pending && !n->peer_delete_submitted && !n->peer_delete_replied &&
            !n->pe_error && (no_channel || ready_channel) && (no_plan || ready_plan) &&
-           !n->radio_requested &&
            !n->pe_delete_requested && !n->pe_delete_submitted && !n->pe_delete_completed &&
            !n->delete_pending && !n->delete_submitted && !n->delete_replied &&
            !n->dp_detaching && !n->dp_detach_submitted && !n->dp_freed;
@@ -667,6 +703,12 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
             if (ret)
                 return mishare_runtime_recovery_error(entry, ret);
         }
+        if (entry->radio) {
+            ret = mishare_radio_ssr_cancel_check(entry->radio, entry->vdev, entry->events,
+                                                  entry, entry->pe_cookie, pe_freq);
+            if (ret)
+                return mishare_runtime_recovery_error(entry, ret);
+        }
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.recovery_timer_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -682,6 +724,18 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         timer_done = true;
         if (ret)
             return mishare_runtime_recovery_error(entry, ret);
+        if (entry->radio) {
+            struct mishare_radio_status last = {0};
+
+            ret = mishare_radio_ssr_cancel_release(&entry->radio, entry->vdev, entry->events,
+                                                    entry, entry->pe_cookie, pe_freq, &last);
+            if (ret || entry->radio || !last.ssr_cancelled_before_start)
+                return mishare_runtime_recovery_error(entry, ret);
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.radio = last;
+            entry->state.recovery_radio_released = true;
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        }
         if (entry->state.ndi.pe_ready) {
             bool released = false;
 
@@ -835,7 +889,15 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
-    return ((!entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released) ||
+    return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_released) ||
+            (entry->state.recovery_radio_start_flushed && entry->state.recovery_radio_released &&
+             n->radio_requested && entry->state.radio.ssr_cancelled_before_start &&
+             entry->state.radio.phase == MISHARE_RADIO_BLOCKED &&
+             entry->state.radio.error == -ESHUTDOWN && !entry->state.radio.pending &&
+             !entry->state.radio.users && !entry->state.radio.start_attempted &&
+             !entry->state.radio.stop_attempted && !entry->state.radio.host_up &&
+             !entry->state.radio.down_attempted && !entry->state.radio.down_accepted)) &&
+           ((!entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released) ||
             (entry->state.recovery_pe_attempted && entry->state.recovery_pe_released &&
              entry->state.recovery_context_released && n->pe_requested &&
              n->pe_submitted && n->pe_completed && !n->pe_delete_requested &&

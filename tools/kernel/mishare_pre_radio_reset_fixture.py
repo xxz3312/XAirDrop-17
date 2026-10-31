@@ -128,10 +128,11 @@ int main(void) {
   assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && recovery_timer_cancels==1);_Exit(0);
  }
  assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
- /* A real submitted radio request remains unsupported even after MC flush. */
+ /* A radio START callback that already executed remains unsupported. */
  reset_pe_test();child=fork();assert(child>=0);
  if(!child) {
   o=ready_pre_radio(5240,true);assert(mishare_runtime_ndi_start(o)==-EINPROGRESS);
+  radio_run(false);
   mark_closed(o);health_recovering=true;assert(!cds_post_disable());
   assert(!state(o).recovery_window && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !pe_deletes && !dp_detaches);_Exit(0);
  }

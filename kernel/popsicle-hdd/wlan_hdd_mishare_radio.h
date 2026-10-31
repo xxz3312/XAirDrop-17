@@ -30,12 +30,15 @@ struct mishare_radio_status {
     unsigned int pending;
     unsigned int users;
     int error;
+    bool ssr_cancelled_before_start; /* Controller retired after actual MC START flush. */
 };
 /* Internal one-shot owned radio controller. Caller keeps the exact event
  * registry, PE session and parent/exclusive psoc transition alive. No concurrent
  * owner-handle calls or external MLME/config/peer operations on this VDEV.
  * A non-NULL output on error must still be drained. No retries on this owner.
- * No automatic HDD/Wonder caller; SSR/remove recovery is not implemented.
+ * No automatic HDD/Wonder caller; active START/UP and remove recovery remain
+ * unsupported. The explicit SSR interface below covers only a queued START
+ * flushed before its callback ever executes.
  */
 int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
                        struct mishare_event_owner *events, void *owner,
@@ -48,4 +51,20 @@ int mishare_radio_snapshot(struct mishare_radio *radio,
  */
 int mishare_radio_drain(struct mishare_radio **radio,
                         struct mishare_radio_status *last);
+/* Explicit SSR path for a queue-accepted START that never entered its callback.
+ * Caller proves owned/native MC stop, qualified reset window and retains exact
+ * parents under RTNL/exclusive psoc serialization. Check/release revalidate the
+ * live registry identity, actual flush provenance, INIT and untouched transaction.
+ * No WMI/SM/PM/timer operation or synthetic DOWN/CANCELLED phase. Unknown tokens
+ * and any executed work/callback fault remain held. Snapshot storage is caller-owned.
+ */
+int mishare_radio_ssr_cancel_check(struct mishare_radio *radio,
+                                   struct wlan_objmgr_vdev *vdev,
+                                   struct mishare_event_owner *events, void *owner,
+                                   unsigned long cookie, u32 freq);
+int mishare_radio_ssr_cancel_release(struct mishare_radio **radio,
+                                     struct wlan_objmgr_vdev *vdev,
+                                     struct mishare_event_owner *events, void *owner,
+                                     unsigned long cookie, u32 freq,
+                                     struct mishare_radio_status *last);
 #endif

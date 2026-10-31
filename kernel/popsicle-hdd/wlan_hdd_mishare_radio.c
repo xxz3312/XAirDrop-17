@@ -28,6 +28,11 @@ struct mishare_radio {
     bool stop_reply_queued;
     bool applying_start_reply;
     bool applying_stop_reply;
+    bool start_posted;
+    bool start_callback_entered;
+    bool ssr_fenced_new;
+    bool ssr_start_flushed;
+    bool ssr_callback_after_fence;
 };
 struct radio_request {
     struct mishare_radio *radio;
@@ -47,6 +52,14 @@ void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
     for (r = mishare_radios; r; r = r->next) {
         if (wlan_vdev_get_psoc(r->vdev) != psoc)
             continue;
+        if (!r->state.closing && r->state.phase == MISHARE_RADIO_NEW &&
+            !r->state.error && r->state.pending == 1 && !r->state.users &&
+            r->start_posted && !r->start_callback_entered && !r->preflight &&
+            !r->state.start_attempted && !r->state.stop_attempted &&
+            !r->state.host_up && !r->state.down_attempted && !r->state.down_accepted &&
+            !r->start_reply_queued && !r->stop_reply_queued &&
+            !r->applying_start_reply && !r->applying_stop_reply)
+            r->ssr_fenced_new = true;
         r->state.closing = true;
         r->state.phase = MISHARE_RADIO_BLOCKED;
         if (!r->state.error)
@@ -74,6 +87,8 @@ static struct mishare_radio *radio_get(struct vdev_mlme_obj *mlme)
     spin_lock_irqsave(&mishare_radio_lock, flags);
     for (r = mishare_radios; r; r = r->next) {
         if (r->vdev == mlme->vdev) {
+            if (r->ssr_fenced_new)
+                r->ssr_callback_after_fence = true;
             r->state.users++;
             if (wlan_vdev_mlme_get_cmpt_obj(mlme->vdev) != mlme ||
                 !mlme->ext_vdev_ptr ||
@@ -503,11 +518,39 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
 {
     struct radio_request *req = msg->bodyptr;
     struct mishare_radio *r;
+    struct wlan_objmgr_vdev *vdev;
+    struct wlan_objmgr_psoc *psoc;
+    void *owner, *token;
+    bool publish_flush = false;
     unsigned long flags;
     int ret;
     if (!req)
         return QDF_STATUS_E_INVAL;
     r = req->radio;
+    vdev = r->vdev;
+    psoc = wlan_vdev_get_psoc(vdev);
+    owner = r->owner;
+    token = r;
+    if (!flushed && req->work == RADIO_START) {
+        spin_lock_irqsave(&mishare_radio_lock, flags);
+        r->start_callback_entered = true;
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    }
+    if (flushed && req->work == RADIO_START) {
+        spin_lock_irqsave(&mishare_radio_lock, flags);
+        if (r->ssr_fenced_new && !r->ssr_start_flushed &&
+            !r->start_callback_entered && !r->ssr_callback_after_fence &&
+            r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
+            r->state.error == -ESHUTDOWN && r->state.pending == 1 && !r->state.users &&
+            !r->preflight && !r->state.start_attempted && !r->state.stop_attempted &&
+            !r->state.host_up && !r->state.down_attempted && !r->state.down_accepted &&
+            !r->start_reply_queued && !r->stop_reply_queued &&
+            !r->applying_start_reply && !r->applying_stop_reply) {
+            r->ssr_start_flushed = true;
+            publish_flush = true;
+        }
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    }
     if (flushed && req->work == RADIO_START && radio_phase(r, MISHARE_RADIO_NEW)) {
         spin_lock_irqsave(&mishare_radio_lock, flags);
         ret = r->state.phase == MISHARE_RADIO_NEW ? 0 : -ESHUTDOWN;
@@ -532,6 +575,8 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
     r->state.pending--;
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
     /* No access to r after the last pending reference is released. */
+    if (publish_flush)
+        mishare_runtime_radio_start_flushed(psoc, vdev, owner, token);
     return QDF_STATUS_SUCCESS;
 }
 
@@ -579,6 +624,11 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
     *out = r;
     ret = radio_post(r, RADIO_START, NULL);
+    if (!ret) {
+        spin_lock_irqsave(&mishare_radio_lock, flags);
+        r->start_posted = true;
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    }
     if (ret) {
         spin_lock_irqsave(&mishare_radio_lock, flags);
         if (r->state.phase == MISHARE_RADIO_NEW) {
@@ -591,6 +641,88 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
     }
     return ret ? ret : -EINPROGRESS;
+}
+
+/* Radio registry lock held. This is provenance, not a synthesized DOWN. */
+static bool radio_ssr_cancel_shape(struct mishare_radio *r)
+{
+    return r->ssr_fenced_new && r->ssr_start_flushed && r->start_posted &&
+           !r->start_callback_entered && !r->ssr_callback_after_fence && !r->preflight &&
+           r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
+           r->state.error == -ESHUTDOWN && !r->state.pending && !r->state.users &&
+           !r->state.ssr_cancelled_before_start &&
+           !r->state.start_attempted && !r->state.stop_attempted && !r->state.host_up &&
+           !r->state.down_attempted && !r->state.down_accepted &&
+           !r->start_reply_queued && !r->stop_reply_queued &&
+           !r->applying_start_reply && !r->applying_stop_reply;
+}
+
+int mishare_radio_ssr_cancel_check(struct mishare_radio *token,
+                                   struct wlan_objmgr_vdev *vdev,
+                                   struct mishare_event_owner *events, void *owner,
+                                   unsigned long cookie, u32 freq)
+{
+    struct mishare_radio *r;
+    struct vdev_mlme_obj *m;
+    struct mishare_vdev_txn txn;
+    unsigned long flags;
+    int ret = -ENOENT;
+    if (!token || !vdev || !events || !owner || !cookie || !freq)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    for (r = mishare_radios; r && r != token; r = r->next)
+        ;
+    if (r) {
+        ret = r->vdev != vdev || r->events != events || r->owner != owner ||
+              r->session_cookie != cookie || r->freq != freq ||
+              !radio_ssr_cancel_shape(r) ? -EUCLEAN : 0;
+    }
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    if (ret)
+        return ret;
+    m = wlan_vdev_mlme_get_cmpt_obj(vdev);
+    if (!m || m->vdev != vdev || !m->ext_vdev_ptr ||
+        wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE ||
+        m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI || m->mgmt.generic.subtype ||
+        wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT ||
+        mishare_events_snapshot(events, &txn) || txn.state != MISHARE_TXN_QUARANTINED ||
+        txn.serial || txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+        return -EUCLEAN;
+    return 0;
+}
+
+int mishare_radio_ssr_cancel_release(struct mishare_radio **handle,
+                                     struct wlan_objmgr_vdev *vdev,
+                                     struct mishare_event_owner *events, void *owner,
+                                     unsigned long cookie, u32 freq,
+                                     struct mishare_radio_status *last)
+{
+    struct mishare_radio *r, **link;
+    unsigned long flags;
+    int ret;
+    if (!handle || !last)
+        return -EINVAL;
+    r = *handle;
+    ret = mishare_radio_ssr_cancel_check(r, vdev, events, owner, cookie, freq);
+    if (ret)
+        return ret;
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    for (link = &mishare_radios; *link && *link != r; link = &(*link)->next)
+        ;
+    if (!*link || r->vdev != vdev || r->events != events || r->owner != owner ||
+        r->session_cookie != cookie || r->freq != freq || !radio_ssr_cancel_shape(r) ||
+        wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_INIT) {
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        return -EUCLEAN;
+    }
+    *link = r->next; /* No callback can acquire this controller after unlink. */
+    r->state.ssr_cancelled_before_start = true;
+    *last = r->state; /* BLOCKED/ESHUTDOWN stays intact, never DOWN/CANCELLED. */
+    *handle = NULL;
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+    kfree(r);
+    return 0;
 }
 
 int mishare_radio_drain(struct mishare_radio **handle, struct mishare_radio_status *last)

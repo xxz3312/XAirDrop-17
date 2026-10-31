@@ -107,6 +107,8 @@ int mishare_ndi_pe_post(struct wlan_objmgr_vdev *v,void *o,bool c,unsigned long 
 int mishare_ndi_channel_post(struct wlan_objmgr_vdev *v,void *o,unsigned long k,u32 f) { (void)v;(void)o;(void)k;(void)f;assert(0);return -EIO; }
 /* END_CHANNEL_TRANSPORT_STUBS */
 /* RADIO_TRANSPORT_STUBS */
+int mishare_radio_ssr_cancel_check(struct mishare_radio *r,struct wlan_objmgr_vdev *v,struct mishare_event_owner *e,void *o,unsigned long c,u32 f) { (void)r;(void)v;(void)e;(void)o;(void)c;(void)f;return -EOPNOTSUPP; }
+int mishare_radio_ssr_cancel_release(struct mishare_radio **r,struct wlan_objmgr_vdev *v,struct mishare_event_owner *e,void *o,unsigned long c,u32 f,struct mishare_radio_status *s) { (void)r;(void)v;(void)e;(void)o;(void)c;(void)f;(void)s;return -EOPNOTSUPP; }
 void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *p) { (void)p; }
 int mishare_radio_open(struct wlan_objmgr_vdev *v,struct mishare_event_owner *e,void *o,unsigned long k,u32 f,struct mishare_radio **r) { (void)v;(void)e;(void)o;(void)k;(void)f;(void)r;assert(0);return -EIO; }
 int mishare_radio_snapshot(struct mishare_radio *r,struct mishare_radio_status *s) { (void)r;(void)s;assert(0);return -EIO; }
