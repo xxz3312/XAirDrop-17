@@ -149,7 +149,7 @@ int main(void) {
   if(!child) {
    o=phase==0?with_session():with_plan();if(phase==2)start_up(o);
    mark_closed(o);health_recovering=true;assert(!cds_post_disable());
-   assert(!state(o).recovery_window && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_force_detaches && !dp_detaches);_Exit(0);
+   assert(state(o).recovery_window==(phase==0) && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !reset_force_detaches && !dp_detaches);_Exit(0);
   }
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }

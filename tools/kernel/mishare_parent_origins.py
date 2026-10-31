@@ -6,6 +6,8 @@ TAGS = ('cds_dp_close', 'hdd_pdev_close', 'dispatcher_include',
 
 
 def remove_parent_additions(text):
+    from mishare_pe_reset_origins import remove_pe_reset_additions
+    text = remove_pe_reset_additions(text)
     from mishare_reset_context_origins import remove_reset_context_additions
     text = remove_reset_context_additions(text)
     from mishare_idle_origins import remove_idle_additions

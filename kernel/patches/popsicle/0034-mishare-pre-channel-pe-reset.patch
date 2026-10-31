@@ -1,0 +1,96 @@
+--- a/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
++++ b/qcacld-3.0/core/mac/src/pe/lim/lim_api.c
+@@ -5698,3 +5698,93 @@
+  return mishare_start_plan_execute(&req, &summary);
+ }
+ /* MISHARE_END:radio_prepare */
++
++/* MISHARE_PE_RESET_BEGIN:helpers */
++/* Only the serialized reset owner may call these after native MC shutdown,
++ * HIF/HTC/RX stop and WMI work drain, while the original MAC/DP parents live.
++ * No scheduler post is possible here; no firmware/state-machine completion is
++ * manufactured. Channel/START histories are rejected by the runtime caller.
++ */
++int mishare_ndi_reset_pe_check(struct wlan_objmgr_vdev *vdev, void *owner,
++                              unsigned long cookie, unsigned long dp_cookie)
++{
++	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
++	struct pe_session *session;
++	uint32_t n;
++	uint8_t id, sid;
++	int ret;
++
++	if (!vdev || !owner || !cookie || !mac ||
++	    mac->psoc != wlan_vdev_get_psoc(vdev) ||
++	    ANI_DRIVER_TYPE(mac) == QDF_DRIVER_TYPE_MFG ||
++	    !mac->lim.gpSession || !mac->lim.maxBssId ||
++	    !mac->lim.lim_timers.gpLimCnfWaitTimer ||
++	    mac->lim.maxStation == 0xffff)
++		return -EUCLEAN;
++	ret = mishare_ndi_reset_context_check(vdev, dp_cookie);
++	if (ret)
++		return ret;
++	id = wlan_vdev_get_id(vdev);
++	session = pe_find_session_by_vdev_id(mac, id);
++	if (!session || (unsigned long)session != cookie || !session->valid ||
++	    session->vdev != vdev || session->mishare_owner != owner ||
++	    session->mac_ctx != mac || session->vdev_id != id ||
++	    session->peSessionId >= mac->lim.maxBssId ||
++	    session != &mac->lim.gpSession[session->peSessionId] ||
++	    session->opmode != QDF_PASSTHRU_MODE ||
++	    session->bssType != eSIR_MISHARE_PAS_MODE ||
++	    session->limSystemRole != eLIM_MISHARE_PAS_ROLE ||
++	    session->limMlmState != eLIM_MLM_IDLE_STATE ||
++	    session->limSmeState != eLIM_SME_IDLE_STATE || session->curr_op_freq ||
++	    session->defaultAuthFailureTimeout ||
++	    qdf_mem_cmp(session->bssId, wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE) ||
++	    qdf_mem_cmp(session->self_mac_addr, wlan_vdev_mlme_get_macaddr(vdev), QDF_MAC_ADDR_SIZE) ||
++	    pe_find_session_by_bssid(mac, session->bssId, &sid) != session ||
++	    !session->dph.dphHashTable.pHashTable ||
++	    !session->dph.dphHashTable.pDphNodeArray ||
++	    session->dph.dphHashTable.size != mac->lim.max_sta_of_pe_session + 1 ||
++	    session->pLimStartBssReq || session->lim_join_req ||
++	    session->pLimReAssocReq || session->pLimMlmJoinReq ||
++	    session->pLimMlmReassocRetryReq || session->pLimMlmReassocReq ||
++	    session->beacon || session->assoc_req || session->assocRsp ||
++	    session->parsedAssocReq || session->limAssocResponseData)
++		return -EUCLEAN;
++	/* Private PAS never submitted an association. A matching running native
++	 * confirmation timer is ambiguous ownership, not permission to cancel it.
++	 */
++	for (n = 0; n <= mac->lim.maxStation; n++) {
++		TX_TIMER *timer = &mac->lim.lim_timers.gpLimCnfWaitTimer[n];
++
++		if (timer->sessionId == session->peSessionId && tx_timer_running(timer))
++			return -EUCLEAN;
++	}
++	return 0;
++}
++
++int mishare_ndi_reset_pe_release(struct wlan_objmgr_vdev *vdev, void *owner,
++                                unsigned long cookie, unsigned long dp_cookie,
++                                bool *released)
++{
++	struct mac_context *mac;
++	struct pe_session *session;
++	int ret;
++
++	if (!released)
++		return -EINVAL;
++	*released = false;
++	ret = mishare_ndi_reset_pe_check(vdev, owner, cookie, dp_cookie);
++	if (ret)
++		return ret;
++	mac = cds_get_context(QDF_MODULE_ID_PE);
++	session = pe_find_session_by_vdev_id(mac, wlan_vdev_get_id(vdev));
++	/* 0071 private PAS dispatch preserves the shared SAE auth timer. PE's
++	 * own MAC reference is released by the full native destructor, never here.
++	 */
++	pe_delete_session(mac, session);
++	if (session->valid || session->vdev || session->mac_ctx ||
++	    pe_find_session_by_vdev_id(mac, wlan_vdev_get_id(vdev)))
++		return -EUCLEAN;
++	*released = true;
++	return 0;
++}
++/* MISHARE_PE_RESET_END:helpers */

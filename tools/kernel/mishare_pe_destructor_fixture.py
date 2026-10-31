@@ -171,9 +171,8 @@ int main(void) {
 '''
 
 
-def fixture(root):
+def augment(root, src):
     native = (root/pe.SESSION).read_text()
-    src = pe.fixture(root)
     src = src.replace('struct pe_session {', FIELDS+'\nstruct pe_session {'+SESSION_FIELDS, 1)
     src = src.replace('struct mac_context {', 'struct mac_context {struct mgmt_beacon_probe_filter bcn_filter;struct pe_timeout_config *mlme_cfg;', 1)
     src = src.replace('unsigned maxBssId,max_sta_of_pe_session;', 'unsigned maxBssId,max_sta_of_pe_session,maxStation;struct {TX_TIMER *gpLimCnfWaitTimer;} lim_timers;', 1)
@@ -188,6 +187,11 @@ def fixture(root):
     src = src.replace('session_ptr->valid=true;return session_ptr;', 'session_ptr->vdev_id=7;session_ptr->opmode=QDF_PASSTHRU_MODE;session_ptr->mac_ctx=m;session_ptr->valid=true;return session_ptr;', 1)
     src = src.replace('static void reset_pe(void) {', 'static struct pe_timeout_config native_pe_config;\nstatic TX_TIMER empty_pe_timer;\nstatic void reset_pe(void) {', 1)
     src = src.replace('pe_posts=pe_creates=pe_deletes=0;', 'pe_posts=pe_creates=pe_deletes=0;memset(&native_pe_config,0,sizeof(native_pe_config));pe_mac.mlme_cfg=&native_pe_config;empty_pe_timer=(TX_TIMER){0};pe_mac.lim.lim_timers.gpLimCnfWaitTimer=&empty_pe_timer;', 1)
+    return src
+
+
+def fixture(root):
+    src = augment(root, pe.fixture(root))
     src = src.replace('int main(void) {', 'static int owned_pe_regressions(void) {', 1)
     src = src.replace('puts("MISHARE_OWNED_PE_SESSION_FIXTURE_PASS_ONLY");', 'return 0;', 1)
     return src+HARNESS

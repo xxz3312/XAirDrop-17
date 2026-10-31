@@ -1,4 +1,8 @@
-## 最新阶段 0071
+## 最新阶段 0072
+
+扩展显式 SSR 回收到 PE 已成功、尚未请求 channel/START 的 INIT：严格原生会话身份/IDLE/确认定时器预检 → 同步关闭 NDI 响应定时器 → 原生完整 PE 析构 → 0070 分阶段 peer/DP/WMA/legacy/对象回收。保留创建事实，不伪造普通 PE DELETE ACK。新增原生 C 模型、22 类拒绝与 SAE 负对照；53 项 Python 检查及补丁/基线还原通过，完整 CI 待验证。尚无自动父资源协调、channel/START/UP 回收或完整 monitor，无线 init 保持关闭，手机无需操作。见[0072](POPSICLE-PRE-CHANNEL-PE-RESET-0072.md)。
+
+## 阶段 0071
 
 修复私有 PAS 的 PE 删除错误触及共享 SAE 认证定时器：仅私有类型跳过普通 SAE cleanup，其他类型保留原生行为。新增执行原生完整 PE 析构的 Actions 模型：生产 owner/MC 请求回归复用真实 `pe_delete_session`，检查全部可选分配、DPH 借用数组、确认定时器、MAC VDEV 引用释放顺序，并以漏掉引用释放、撤销 SAE 隔离的两个负对照验证。CI 41123670326 已通过 53 项 Python 检查、原生 PE 析构模型及两个负对照、既有 C 模型、完整编译、严格链接和七项布局检查；生产与 native 哈希已复核。本轮补齐验证，不扩大 SSR 准入；手机无需操作。见[0071](POPSICLE-NATIVE-PE-DESTRUCTOR-0071.md)。
 

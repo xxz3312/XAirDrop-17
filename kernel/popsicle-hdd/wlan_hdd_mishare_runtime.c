@@ -448,6 +448,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
            !n->completion_error && !entry->state.recovery_window_closed &&
            !entry->state.ndi_reclaim_started && !entry->state.ndi_reclaim_ready &&
+           !entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released &&
            !entry->state.recovery_context_attempted && !entry->state.recovery_context_released &&
            !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
            !entry->state.recovery_timer_attempted && !entry->state.recovery_timer_released &&
@@ -475,7 +476,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
 static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner *entry)
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
-    bool early, prepared;
+    bool early, prepared, no_pe, ready_pe;
 
     early = !entry->state.recovery_context_attempted &&
             !entry->state.recovery_context_released && !n->legacy_ready &&
@@ -483,6 +484,10 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
     prepared = !entry->state.recovery_context_attempted &&
                !entry->state.recovery_context_released && n->legacy_ready &&
                n->wma_bound && n->peer_create_attempted && n->peer_created;
+    no_pe = !entry->pe_cookie && !n->pe_requested && !n->pe_submitted &&
+            !n->pe_completed && !n->pe_ready;
+    ready_pe = prepared && entry->pe_cookie && n->pe_requested &&
+               n->pe_submitted && n->pe_completed && n->pe_ready;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
@@ -490,15 +495,15 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            !entry->state.recovery_window_closed && !entry->state.ndi_reclaim_started &&
            !entry->state.host_reclaim && !entry->state.draining &&
            entry->vdev && entry->referenced && entry->events && !entry->radio &&
-           entry->cookie == (unsigned long)entry->vdev && !entry->pe_cookie &&
+           entry->cookie == (unsigned long)entry->vdev && (no_pe || ready_pe) &&
            n->active && !n->create_error && n->create.timer_ready &&
            n->create.wire_attempted && n->create.wire_accepted &&
            n->create.dp_attempted && n->create.dp_attached && n->create.dp_cookie &&
            n->create.stats_owned && !n->context_error && (early || prepared) &&
            !entry->state.recovery_peer_released && !entry->state.recovery_context_finish_attempted &&
+           !entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released &&
            !n->peer_delete_pending && !n->peer_delete_submitted && !n->peer_delete_replied &&
-           !n->pe_requested && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
-           !n->pe_submitted && !n->pe_completed && !n->pe_ready &&
+           !n->pe_error && !n->channel_requested && !n->start_plan_requested && !n->radio_requested &&
            !n->pe_delete_requested && !n->pe_delete_submitted && !n->pe_delete_completed &&
            !n->channel_submitted && !n->channel_completed && !n->channel_prepared &&
            !n->start_plan_submitted && !n->start_plan_completed && !n->start_plan_ready &&
@@ -639,6 +644,12 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                                                entry->state.ndi.create.dp_cookie);
         if (ret)
             return mishare_runtime_recovery_error(entry, ret);
+        if (entry->state.ndi.pe_ready) {
+            ret = mishare_ndi_reset_pe_check(entry->vdev, entry, entry->pe_cookie,
+                                             entry->state.ndi.create.dp_cookie);
+            if (ret)
+                return mishare_runtime_recovery_error(entry, ret);
+        }
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.recovery_timer_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -650,6 +661,25 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         entry->state.ndi.create.timer_ready = false;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         timer_done = true;
+        if (entry->state.ndi.pe_ready) {
+            bool released = false;
+
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.recovery_pe_attempted = true;
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            ret = mishare_ndi_reset_pe_release(entry->vdev, entry, entry->pe_cookie,
+                                               entry->state.ndi.create.dp_cookie,
+                                               &released);
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.recovery_pe_released = released;
+            if (released) {
+                entry->state.ndi.pe_ready = false;
+                entry->pe_cookie = 0;
+            }
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+            if (ret || !released)
+                return mishare_runtime_recovery_error(entry, ret);
+        }
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.recovery_context_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -784,7 +814,13 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
-    return (!entry->state.recovery_context_attempted ||
+    return ((!entry->state.recovery_pe_attempted && !entry->state.recovery_pe_released) ||
+            (entry->state.recovery_pe_attempted && entry->state.recovery_pe_released &&
+             entry->state.recovery_context_released && n->pe_requested &&
+             n->pe_submitted && n->pe_completed && !n->pe_delete_requested &&
+             !n->pe_delete_submitted && !n->pe_delete_completed)) &&
+           !n->pe_ready &&
+           (!entry->state.recovery_context_attempted ||
             (entry->state.recovery_peer_released && entry->state.recovery_context_finish_attempted &&
              entry->state.recovery_context_released)) &&
            entry->state.host_delete_accepted && entry->state.draining &&

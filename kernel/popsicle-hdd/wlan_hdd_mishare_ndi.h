@@ -148,6 +148,15 @@ void mishare_runtime_ndi_channel_event(struct wlan_objmgr_psoc *psoc, u8 id,
                                         void *owner, u32 freq, int result);
 int mishare_ndi_pe_post(struct wlan_objmgr_vdev *vdev, void *owner,
                          bool create, unsigned long session_cookie);
+/* Exact never-channel-prepared PE only, in the qualified stopped-MC SSR
+ * window with original MAC/DP parents retained. Synchronous native teardown,
+ * not an ordinary MC DELETE request or acknowledgement. Never retry errors.
+ */
+int mishare_ndi_reset_pe_check(struct wlan_objmgr_vdev *vdev, void *owner,
+                               unsigned long cookie, unsigned long dp_cookie);
+int mishare_ndi_reset_pe_release(struct wlan_objmgr_vdev *vdev, void *owner,
+                                 unsigned long cookie, unsigned long dp_cookie,
+                                 bool *released);
 void mishare_runtime_ndi_pe_event(struct wlan_objmgr_psoc *psoc, u8 id,
                                    void *owner, bool create,
                                    unsigned long session_cookie, int result);

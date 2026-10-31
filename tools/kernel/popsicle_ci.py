@@ -217,6 +217,7 @@ def check_mishare_host_symbols(work, module, report_name):
     names += ['mishare_runtime_reclaim_batch', 'mishare_wonder_host_psoc_busy',
               'mishare_wonder_host_reclaim_ssr_locked',
               'mishare_ndi_reset_context_release', 'mishare_ndi_reset_context_check',
+              'mishare_ndi_reset_pe_check', 'mishare_ndi_reset_pe_release',
               'mishare_ndi_reset_prepared_timer_deinit', 'mishare_ndi_reset_context_finish',
               'mishare_ndi_reset_prepared_dp_detach']
     names += ['mishare_runtime_reclaim_final', 'mishare_raw_tx_sync',
@@ -262,6 +263,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/mishare_pe_reset_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-pe-reset-fixture.json'],
+               'mishare-pe-reset-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_pe_destructor_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-pe-destructor-fixture.json'],
                'mishare-pe-destructor-fixture.log')

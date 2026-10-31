@@ -13,6 +13,10 @@ WMI='qca-wifi-host-cmn/wmi/src/wmi_unified.c'
 DP='qca-wifi-host-cmn/dp/wifi3.0/dp_main.c'
 BASE={CDS:'6d3d5066c16ad68f23a80247ada0aca2149c83b7b0cdc30810bb83f2a3584d84',TIMER:'de9ae1bee934653e908c504b57b9e5a94da37e0b1b6f5fbee03b92c1834b86a0',DISP:'5eb7b61812b8f4f4a4977691b6b433ff953cb47fba74291498d3848d52b10079'}
 MODELS=r'''
+/* PE_RESET_TRANSPORT_STUBS */
+int mishare_ndi_reset_pe_check(struct wlan_objmgr_vdev *v,void *o,unsigned long c,unsigned long d) { (void)v;(void)o;(void)c;(void)d;return -EOPNOTSUPP; }
+int mishare_ndi_reset_pe_release(struct wlan_objmgr_vdev *v,void *o,unsigned long c,unsigned long d,bool *r) { (void)v;(void)o;(void)c;(void)d;*r=false;return -EOPNOTSUPP; }
+/* END_PE_RESET_TRANSPORT_STUBS */
 static void wlan_vdev_obj_lock(struct wlan_objmgr_vdev *v) {assert(!v->vdev_lock);v->vdev_lock=1;}
 static void wlan_vdev_obj_unlock(struct wlan_objmgr_vdev *v) {assert(v->vdev_lock);v->vdev_lock=0;}
 static unsigned wlan_vdev_get_peer_count(struct wlan_objmgr_vdev *v) {assert(v && v->vdev_lock);return ctx_reset_peer_count;}
@@ -181,7 +185,7 @@ int main(void) {
    else {o=early_ndi();if(fault==3)o->state.ndi.delete_pending=true;if(fault==4)o->state.ndi.create.dp_attached=false;if(fault==5)o->state.ndi.context_error=-EIO;}
    if(fault<=5) {
     mark_closed(o);health_recovering=true;assert(!cds_post_disable());
-    assert(state(o).recovery_window==(fault==0) && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !dp_detaches && !recovery_timer_frees);
+    assert(state(o).recovery_window==(fault<=1) && mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && !dp_detaches && !recovery_timer_frees);
    } else {
     stop_recovery(o);assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS);finish_dp();
     if(fault==6) {mishare_runtime_recovery_dp_freed(o);assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && state(o).recovery_error);}
