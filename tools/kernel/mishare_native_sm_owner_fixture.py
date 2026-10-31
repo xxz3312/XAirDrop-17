@@ -3,6 +3,7 @@
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -104,7 +105,12 @@ def fixture(root):
     source = replace_once(source, 'static void *engine_mem_malloc(size_t n) {void *p=calloc(1,n);', 'static void *engine_mem_malloc(size_t n) {if(owner_fail_next) {owner_fail_next=false;return NULL;}void *p=calloc(1,n);')
     source = replace_once(source, 'engine_allocations--;free(p);', 'engine_allocations--;owner_free_calls++;free(p);')
     # Insert after all original tables and native handlers, before the harness.
-    marker = function(source, 'attach_engine')
+    # The shared native extractor handles scalar return types, not this
+    # fixture helper's pointer return type.
+    matches = re.findall(r'^static struct wlan_sm \*attach_engine\(.*?^\}', source, re.S | re.M)
+    if len(matches) != 1:
+        raise ValueError('Expected one engine attachment helper')
+    marker = matches[0]
     attach = r'''static struct wlan_sm *attach_engine(struct mishare_runtime_owner *o) {
  struct vdev_mlme_obj *m=last_vdev->mlme;assert(o && !m->sm_hdl && ch_state==WLAN_VDEV_S_INIT && (radio_native_substate==0 || radio_native_substate==WLAN_VDEV_SS_IDLE));
  owner_arm(m);assert(mlme_vdev_sm_create(m)==QDF_STATUS_SUCCESS);owner_created(m,radio_native_substate);
