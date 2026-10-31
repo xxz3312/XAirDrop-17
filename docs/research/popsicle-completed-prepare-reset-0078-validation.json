@@ -1,0 +1,495 @@
+{
+  "source_commit": "fe1ecaf2ea25f4542aca12b665f140b6f64f5e04",
+  "workflow_run": 41193377121,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41193377121",
+  "workflow_conclusion": "success",
+  "required_steps_conclusion": "success",
+  "python_regression_checks": 53,
+  "source_sha256": {
+    "README.md": "1216f884aa8addc6bd91f737b2617bb0e6e237cc275e07c9d361969fbec33dc5",
+    "docs/POPSICLE-PROGRESS.md": "d6d39be172af516d19eb1600afecf8494d2511281780e04305c0ec9fbd819c3a",
+    "docs/POPSICLE-COMPLETED-PREPARE-RESET-0078.md": "c43a08ac4b8df25e1ca7f2cee77fc97cb32acce638c4d556c27ea1514380ad57",
+    ".github/workflows/popsicle-build.yml": "10679d74ca5eba274f4776fae09822b0be36996991b037e113e236a6c7eb5004",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h": "ab2a05673068334d0214898bf203676203566a57101faf2a6def049379997a30",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "90dc7b6e6c900d5f9155f189b8fc157a9e67c100503143bdafdf5508985600c2",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c": "873dc4c8d57006bcc1ec27f6cda5d1be8560ae0bc8b1cde297bfe09fc55d590c",
+    "tools/kernel/popsicle_ci.py": "fd4304b3fd213e6113bb28f96ae416750cc8cac5d261f3a123f08893bc013ce7",
+    "tools/kernel/mishare_aborted_start_reset_fixture.py": "50172a83f44ff9fc8c2d81ece4fe7090d7713795976d126792d8a2d811b1e94b",
+    "tools/kernel/mishare_completed_prepare_reset_fixture.py": "e03b626ef0c151496c70c69336ad8458e3553561c6ff134d58fe94da90b6dc6c",
+    "tools/kernel/mishare_runtime_fixture.py": "e4bc9356926baf312c86a39db2d19f2021e139473f5971cb1188be0258b986fa"
+  },
+  "source_and_doc_blobs_verified": 14,
+  "production_helper_function_sha256": {
+    "mishare_radio_quiesce_psoc": "51259b33850451a9e5d3e5a6703d0fbb12221971f5e55e09614b4ec2d813c1aa",
+    "radio_plan_equal": "7b32f650ddf3e3ea81fa187df5a821274efe87e3d5b84aa5e96463c441046beb",
+    "radio_execute": "3864a23c4c9f50f545b8f9616c151a6013a9e2e707c25f3787428d927cf93f2a",
+    "radio_finish": "b15cf263bfcaf6518b4c54c47e2c13660e3cc6aba2d3c7c7511faf533f6430f6",
+    "mishare_radio_open": "5e88076f8c9464f0adea55feacecf660ff098520c86b5fa2a9be55c294196d99",
+    "radio_ssr_cancel_shape": "98d143e3cb219026b734091936ffb50306eea31a99be45264a95887b77a58c20",
+    "mishare_radio_ssr_cancel_check": "dbb954412461dad376e37bca80d89d9a00e8049bbaa2be5eed5d555a0b4129c8",
+    "mishare_runtime_radio_cancel_origin": "19a8a2fc7f532c45a83aceef45388e8503d5fbb8eece32d41ed241096a5e5314",
+    "mishare_runtime_radio_prepared_aborted": "7e6065b0247a6964f5fa9fa4ada04dd24db98618cfb53765d8983908f790d3ae",
+    "mishare_runtime_radio_origin_valid": "72619d3601f43eaf2875e0136d4ad5a117f590f61928bbd5978bd2c703b1b927",
+    "mishare_runtime_final_shape_valid": "91721563069e87f39c9c7ed77b044c08470f1c993af26416909ed63df59e92f1"
+  },
+  "publish_after_request_work_pending_release_no_later_controller_access": true,
+  "preparation_source_review": {
+    "pin": "36df473046706a5259942e1bf7222108dbbb860f",
+    "source_order_review_only": true,
+    "transitive_callees_not_certified": true,
+    "functions": {
+      "lim_pre_vdev_start": "e66a54d608a023586a7e2beda4712e0e1f193ec4a8aea506c2121ee999254a57",
+      "lim_set_session_channel_params": "5d33301545a2d7fa46bcee0ca81188bad3d9ae5955de76f8d23825587bd8e2a7",
+      "mishare_ndi_start_plan_build": "f904358a24fcbb7b09f838524da4c970d5eb8d95f7f6d1e706bcd9d6abe18109"
+    },
+    "summary_u32_fields": [
+      "freq",
+      "center_freq",
+      "phy_mode",
+      "tx_streams",
+      "rx_streams",
+      "beacon_interval",
+      "dtim_period"
+    ],
+    "native_core_sha256": "1f1f2df0dbde73acce68d14d3d0b1e37e15d466069a0390ae75e825330319e41"
+  },
+  "completed_prepare_reset_model": {
+    "status": "MISHARE_COMPLETED_PREPARE_SSR_CANCEL_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "b8559ed8f799499ee3287ddfda0e192f965785b00356398562c26a87d1d47039",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+      "wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+      "wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232",
+      "wlan_hdd_mishare_radio.c": "873dc4c8d57006bcc1ec27f6cda5d1be8560ae0bc8b1cde297bfe09fc55d590c",
+      "wlan_hdd_mishare_radio.h": "ab2a05673068334d0214898bf203676203566a57101faf2a6def049379997a30"
+    },
+    "native_scheduler_post_audit": {
+      "status": "NATIVE_SCHEDULER_REJECTION_BEFORE_INSERT_PASS_ONLY",
+      "native_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+      "native_function_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+      "fixture_sha256": "2d55299d8788db7e868e8ec14a1c86c590eb060c41555ea63f5c0c824634cbd9",
+      "error_branches": 10,
+      "success_priorities": 2,
+      "limitations": "Executes native scheduler post function with modeled queue, message duplication, context and QDF primitives; separate from the production radio transport fixture."
+    },
+    "negative_control_missing_private_prepared_abort_rejected": true,
+    "negative_control_missing_current_plan_recheck_rejected": true,
+    "checks": [
+      "all 0077 regressions retained; successful preparation and exact copied plan before any SM commitment",
+      "2.4/5240 MHz, inline/deferred DP, batch, delayed object final-free; actual controller unlink/ref release",
+      "20 private controller/native/callback faults and all seven copied plan fields/current native plan reject before timer/PE/DP cleanup",
+      "callback during timer drain prevents controller retirement after users returns zero",
+      "duplicate/mixed origins sticky; plan drift before/after timer and before startup rejected; caller plan copied by value; SM commitment retains even INIT",
+      "failed/partial preparation, SM commitment, sent START, pending reply, UP and non-SSR fence stay unsupported",
+      "radio_requested, BLOCKED/original submission error and ordinary transaction history remain; no SM/WMI/PM/START/STOP/DOWN fabricated"
+    ],
+    "limitations": "Adds only successful START preparation whose rebuilt native seven-u32 encoder plan exactly matches the copied completed plan, with no SM commitment. The same encoder plan is rechecked before and after timer drain outside the radio lock. Work-exit and pending reservations drain before a separate body-abort origin. Failed/partial preparation, mismatched plans and committed SM dispatch remain unsupported. A post-prepare phase check preserves BLOCKED and avoids SM dispatch after fence. Preparation/SM function counters prove absence in the model. Other callback-entry histories stay unsupported. 0075 queue rejection and 0074 actual flush regressions retained. Original error and distinct flush/rejection histories retained. Native scheduler post is separately executed with modeled primitives; production radio rejection uses its transport model. Explicit qualified reset window and retained/serialized parents required. Production radio/runtime and native scheduler/PE/peer code execute with modeled QDF, SM dispatch, PE allocation/remaining cleanup, DP/peer physical lifecycle and parents. Native MLME destroy/recovery and active START/UP are not certified. No automatic parent/shutdown coordinator, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "completed_prepare_plan_source_review": {
+    "blob_sha1": {
+      "README.md": "f56f324794c0ba0de5ed750eb9e2c2bcdae89cb6",
+      "docs/POPSICLE-PROGRESS.md": "5c3476dbb830cad12a0817f9649c36eb2b059798",
+      "docs/POPSICLE-COMPLETED-PREPARE-RESET-0078.md": "9845fce3491766fa1761b489a27965f2e7ae54d1",
+      ".github/workflows/popsicle-build.yml": "9b5bf180da4c39a7f77eab37f2c1c65d4d0a25f9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h": "e424f071b8352acc4bc8135f0175dea5550a058e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "512e533c660d92b45c04c659118f2881d5e2b3e9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "126638e164d0e2f4096804ea4b6b32dc7af8a597",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "bcff67af0cac22c6e22c06a5bbf65fc2bd2ff17e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "f2b5a131ad8e7157372f5985039833884d58a2f8",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c": "86e5f11d93f8bfaca12bc7b87ad2494b48c3b3d3",
+      "tools/kernel/popsicle_ci.py": "de45bf9b30090e88340242440cc45cd49dbaa237",
+      "tools/kernel/mishare_aborted_start_reset_fixture.py": "86890c578d3fe60277fad0887798193b61d17613",
+      "tools/kernel/mishare_completed_prepare_reset_fixture.py": "d1e5967ab4d2833c2af4bc178f862a2e5edde1ea",
+      "tools/kernel/mishare_runtime_fixture.py": "d23925db0c49340fa405596ef5b46bc97d6c4f31"
+    },
+    "function_sha256": {
+      "mishare_radio_quiesce_psoc": "51259b33850451a9e5d3e5a6703d0fbb12221971f5e55e09614b4ec2d813c1aa",
+      "radio_plan_equal": "7b32f650ddf3e3ea81fa187df5a821274efe87e3d5b84aa5e96463c441046beb",
+      "radio_execute": "3864a23c4c9f50f545b8f9616c151a6013a9e2e707c25f3787428d927cf93f2a",
+      "radio_finish": "b15cf263bfcaf6518b4c54c47e2c13660e3cc6aba2d3c7c7511faf533f6430f6",
+      "mishare_radio_open": "5e88076f8c9464f0adea55feacecf660ff098520c86b5fa2a9be55c294196d99",
+      "radio_ssr_cancel_shape": "98d143e3cb219026b734091936ffb50306eea31a99be45264a95887b77a58c20",
+      "mishare_radio_ssr_cancel_check": "dbb954412461dad376e37bca80d89d9a00e8049bbaa2be5eed5d555a0b4129c8",
+      "mishare_runtime_radio_cancel_origin": "19a8a2fc7f532c45a83aceef45388e8503d5fbb8eece32d41ed241096a5e5314",
+      "mishare_runtime_radio_prepared_aborted": "7e6065b0247a6964f5fa9fa4ada04dd24db98618cfb53765d8983908f790d3ae",
+      "mishare_runtime_radio_origin_valid": "72619d3601f43eaf2875e0136d4ad5a117f590f61928bbd5978bd2c703b1b927",
+      "mishare_runtime_final_shape_valid": "91721563069e87f39c9c7ed77b044c08470f1c993af26416909ed63df59e92f1"
+    },
+    "source_review_only": true,
+    "complete_prepare_exact_plan_before_SM_commit_reviewed": true,
+    "plan_copied_by_value_no_cached_command": true,
+    "native_plan_recheck_outside_radio_lock_reviewed": true,
+    "publish_after_work_exit_request_work_pending_release_no_later_controller_access": true,
+    "native_scheduler_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+    "native_scheduler_post_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+    "native_preparation_functions": {
+      "mishare_ndi_radio_prepare": "d732651b57ca46796a2aa3658dfec100d3006b3584ef4be979edf193b92b385b",
+      "mishare_start_plan_execute": "578edb071c8b542bca7a853a7087daff2a51bb0885bc011c310851295fc2b24b",
+      "mishare_channel_execute": "fd628d61bdc5d1582efc3ee50485e9a481d0fae3d8fda1062aefca364e89d980",
+      "mishare_ndi_start_plan_build": "f904358a24fcbb7b09f838524da4c970d5eb8d95f7f6d1e706bcd9d6abe18109",
+      "vdev_mgr_start_param_update": "e9e51def2945e1d68dd5159dcb2a35f573b7665ad2e409298f2e9cef45c55ff4"
+    },
+    "transitive_callees_not_certified": true
+  },
+  "aborted_start_reset_model": {
+    "status": "MISHARE_ABORTED_START_SSR_CANCEL_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "01fded865b97b86c891e5171b2e8e665d66a0adeadc59a4672b10bb74037d29f",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+      "wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+      "wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232",
+      "wlan_hdd_mishare_radio.c": "873dc4c8d57006bcc1ec27f6cda5d1be8560ae0bc8b1cde297bfe09fc55d590c",
+      "wlan_hdd_mishare_radio.h": "ab2a05673068334d0214898bf203676203566a57101faf2a6def049379997a30"
+    },
+    "native_scheduler_post_audit": {
+      "status": "NATIVE_SCHEDULER_REJECTION_BEFORE_INSERT_PASS_ONLY",
+      "native_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+      "native_function_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+      "fixture_sha256": "2d55299d8788db7e868e8ec14a1c86c590eb060c41555ea63f5c0c824634cbd9",
+      "error_branches": 10,
+      "success_priorities": 2,
+      "limitations": "Executes native scheduler post function with modeled queue, message duplication, context and QDF primitives; separate from the production radio transport fixture."
+    },
+    "negative_control_missing_private_abort_fact_rejected": true,
+    "checks": [
+      "all 0076 regressions retained; admitted work aborted at two boundaries before prepare/SM",
+      "2.4/5240 MHz, inline/deferred DP, batch, delayed object final-free; actual controller unlink/ref release",
+      "18 private controller/native/callback faults reject before timer/PE/DP cleanup",
+      "callback during timer drain prevents controller retirement after users returns zero",
+      "duplicate/mixed origins sticky; preparation-entry and post-prepare fences retain resources and never enter SM",
+      "executed preparation or SM, sent START, pending reply, UP and non-SSR fence stay unsupported",
+      "radio_requested, BLOCKED/original submission error and ordinary transaction history remain; no SM/WMI/PM/START/STOP/DOWN fabricated"
+    ],
+    "limitations": "Adds only work-admitted START aborted by SSR before the synchronized preparation-entry gate. Work-exit and pending reservations drain before a separate body-abort origin. Preparation already entered remains unsupported even if it failed or fenced before SM. A post-prepare phase check preserves BLOCKED and avoids SM dispatch after fence. Preparation/SM function counters prove absence in the model. Other callback-entry histories stay unsupported. 0075 queue rejection and 0074 actual flush regressions retained. Original error and distinct flush/rejection histories retained. Native scheduler post is separately executed with modeled primitives; production radio rejection uses its transport model. Explicit qualified reset window and retained/serialized parents required. Production radio/runtime and native scheduler/PE/peer code execute with modeled QDF, SM dispatch, PE allocation/remaining cleanup, DP/peer physical lifecycle and parents. Native MLME destroy/recovery and active START/UP are not certified. No automatic parent/shutdown coordinator, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "abort_gate_and_publish_source_review": {
+    "blob_sha1": {
+      "README.md": "f56f324794c0ba0de5ed750eb9e2c2bcdae89cb6",
+      "docs/POPSICLE-PROGRESS.md": "5c3476dbb830cad12a0817f9649c36eb2b059798",
+      "docs/POPSICLE-COMPLETED-PREPARE-RESET-0078.md": "9845fce3491766fa1761b489a27965f2e7ae54d1",
+      ".github/workflows/popsicle-build.yml": "9b5bf180da4c39a7f77eab37f2c1c65d4d0a25f9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h": "e424f071b8352acc4bc8135f0175dea5550a058e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "512e533c660d92b45c04c659118f2881d5e2b3e9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "126638e164d0e2f4096804ea4b6b32dc7af8a597",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "bcff67af0cac22c6e22c06a5bbf65fc2bd2ff17e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "f2b5a131ad8e7157372f5985039833884d58a2f8",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c": "86e5f11d93f8bfaca12bc7b87ad2494b48c3b3d3",
+      "tools/kernel/popsicle_ci.py": "de45bf9b30090e88340242440cc45cd49dbaa237",
+      "tools/kernel/mishare_aborted_start_reset_fixture.py": "86890c578d3fe60277fad0887798193b61d17613",
+      "tools/kernel/mishare_completed_prepare_reset_fixture.py": "d1e5967ab4d2833c2af4bc178f862a2e5edde1ea",
+      "tools/kernel/mishare_runtime_fixture.py": "d23925db0c49340fa405596ef5b46bc97d6c4f31"
+    },
+    "function_sha256": {
+      "mishare_radio_quiesce_psoc": "51259b33850451a9e5d3e5a6703d0fbb12221971f5e55e09614b4ec2d813c1aa",
+      "radio_plan_equal": "7b32f650ddf3e3ea81fa187df5a821274efe87e3d5b84aa5e96463c441046beb",
+      "radio_execute": "3864a23c4c9f50f545b8f9616c151a6013a9e2e707c25f3787428d927cf93f2a",
+      "radio_finish": "b15cf263bfcaf6518b4c54c47e2c13660e3cc6aba2d3c7c7511faf533f6430f6",
+      "mishare_radio_open": "5e88076f8c9464f0adea55feacecf660ff098520c86b5fa2a9be55c294196d99",
+      "radio_ssr_cancel_shape": "98d143e3cb219026b734091936ffb50306eea31a99be45264a95887b77a58c20",
+      "mishare_radio_ssr_cancel_check": "dbb954412461dad376e37bca80d89d9a00e8049bbaa2be5eed5d555a0b4129c8",
+      "mishare_runtime_radio_cancel_origin": "19a8a2fc7f532c45a83aceef45388e8503d5fbb8eece32d41ed241096a5e5314",
+      "mishare_runtime_radio_prepared_aborted": "7e6065b0247a6964f5fa9fa4ada04dd24db98618cfb53765d8983908f790d3ae",
+      "mishare_runtime_radio_origin_valid": "72619d3601f43eaf2875e0136d4ad5a117f590f61928bbd5978bd2c703b1b927",
+      "mishare_runtime_final_shape_valid": "91721563069e87f39c9c7ed77b044c08470f1c993af26416909ed63df59e92f1"
+    },
+    "source_review_only": true,
+    "complete_prepare_exact_plan_before_SM_commit_reviewed": true,
+    "plan_copied_by_value_no_cached_command": true,
+    "native_plan_recheck_outside_radio_lock_reviewed": true,
+    "publish_after_work_exit_request_work_pending_release_no_later_controller_access": true,
+    "native_scheduler_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+    "native_scheduler_post_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+    "native_preparation_functions": {
+      "mishare_ndi_radio_prepare": "d732651b57ca46796a2aa3658dfec100d3006b3584ef4be979edf193b92b385b",
+      "mishare_start_plan_execute": "578edb071c8b542bca7a853a7087daff2a51bb0885bc011c310851295fc2b24b",
+      "mishare_channel_execute": "fd628d61bdc5d1582efc3ee50485e9a481d0fae3d8fda1062aefca364e89d980",
+      "mishare_ndi_start_plan_build": "f904358a24fcbb7b09f838524da4c970d5eb8d95f7f6d1e706bcd9d6abe18109",
+      "vdev_mgr_start_param_update": "e9e51def2945e1d68dd5159dcb2a35f573b7665ad2e409298f2e9cef45c55ff4"
+    },
+    "transitive_callees_not_certified": true
+  },
+  "refused_start_reset_model": {
+    "status": "MISHARE_REFUSED_START_SSR_CANCEL_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "b598e484cf5cfd5f9327f12012b91e38f7a81294a28ee032717bf9a9ff329b9a",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+      "wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+      "wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232",
+      "wlan_hdd_mishare_radio.c": "873dc4c8d57006bcc1ec27f6cda5d1be8560ae0bc8b1cde297bfe09fc55d590c",
+      "wlan_hdd_mishare_radio.h": "ab2a05673068334d0214898bf203676203566a57101faf2a6def049379997a30"
+    },
+    "native_scheduler_post_audit": {
+      "status": "NATIVE_SCHEDULER_REJECTION_BEFORE_INSERT_PASS_ONLY",
+      "native_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+      "native_function_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+      "fixture_sha256": "2d55299d8788db7e868e8ec14a1c86c590eb060c41555ea63f5c0c824634cbd9",
+      "error_branches": 10,
+      "success_priorities": 2,
+      "limitations": "Executes native scheduler post function with modeled queue, message duplication, context and QDF primitives; separate from the production radio transport fixture."
+    },
+    "negative_control_missing_private_refusal_fact_rejected": true,
+    "checks": [
+      "all 0075 regressions retained; callback work admission refused after original SSR fence; no prepare or SM dispatch",
+      "2.4/5240 MHz, inline/deferred DP, batch, delayed object final-free; actual controller unlink/ref release",
+      "16 private controller/native/callback faults reject before timer/PE/DP cleanup",
+      "callback during timer drain prevents controller retirement after users returns zero",
+      "mixed and duplicate origins remain sticky; late fence, admitted body, other errors, preparation failure and REMOVE stay held",
+      "executed preparation or SM, sent START, pending reply, UP and non-SSR fence stay unsupported",
+      "radio_requested, BLOCKED/original submission error and ordinary transaction history remain; no SM/WMI/PM/START/STOP/DOWN fabricated"
+    ],
+    "limitations": "Adds only accepted START whose callback enters after original SSR fence but work_enter returns ESHUTDOWN before radio_execute. Preparation/SM function counters prove absence in the model. Other callback-entry histories stay unsupported. 0075 queue rejection and 0074 actual flush regressions retained. Original error and distinct flush/rejection histories retained. Native scheduler post is separately executed with modeled primitives; production radio rejection uses its transport model. Explicit qualified reset window and retained/serialized parents required. Production radio/runtime and native scheduler/PE/peer code execute with modeled QDF, SM dispatch, PE allocation/remaining cleanup, DP/peer physical lifecycle and parents. Native MLME destroy/recovery and active START/UP are not certified. No automatic parent/shutdown coordinator, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "refusal_publish_and_source_review": {
+    "blob_sha1": {
+      "README.md": "f56f324794c0ba0de5ed750eb9e2c2bcdae89cb6",
+      "docs/POPSICLE-PROGRESS.md": "5c3476dbb830cad12a0817f9649c36eb2b059798",
+      "docs/POPSICLE-COMPLETED-PREPARE-RESET-0078.md": "9845fce3491766fa1761b489a27965f2e7ae54d1",
+      ".github/workflows/popsicle-build.yml": "9b5bf180da4c39a7f77eab37f2c1c65d4d0a25f9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h": "e424f071b8352acc4bc8135f0175dea5550a058e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "512e533c660d92b45c04c659118f2881d5e2b3e9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "126638e164d0e2f4096804ea4b6b32dc7af8a597",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "bcff67af0cac22c6e22c06a5bbf65fc2bd2ff17e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "f2b5a131ad8e7157372f5985039833884d58a2f8",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c": "86e5f11d93f8bfaca12bc7b87ad2494b48c3b3d3",
+      "tools/kernel/popsicle_ci.py": "de45bf9b30090e88340242440cc45cd49dbaa237",
+      "tools/kernel/mishare_aborted_start_reset_fixture.py": "86890c578d3fe60277fad0887798193b61d17613",
+      "tools/kernel/mishare_completed_prepare_reset_fixture.py": "d1e5967ab4d2833c2af4bc178f862a2e5edde1ea",
+      "tools/kernel/mishare_runtime_fixture.py": "d23925db0c49340fa405596ef5b46bc97d6c4f31"
+    },
+    "function_sha256": {
+      "mishare_radio_quiesce_psoc": "51259b33850451a9e5d3e5a6703d0fbb12221971f5e55e09614b4ec2d813c1aa",
+      "radio_plan_equal": "7b32f650ddf3e3ea81fa187df5a821274efe87e3d5b84aa5e96463c441046beb",
+      "radio_execute": "3864a23c4c9f50f545b8f9616c151a6013a9e2e707c25f3787428d927cf93f2a",
+      "radio_finish": "b15cf263bfcaf6518b4c54c47e2c13660e3cc6aba2d3c7c7511faf533f6430f6",
+      "mishare_radio_open": "5e88076f8c9464f0adea55feacecf660ff098520c86b5fa2a9be55c294196d99",
+      "radio_ssr_cancel_shape": "98d143e3cb219026b734091936ffb50306eea31a99be45264a95887b77a58c20",
+      "mishare_radio_ssr_cancel_check": "dbb954412461dad376e37bca80d89d9a00e8049bbaa2be5eed5d555a0b4129c8",
+      "mishare_runtime_radio_cancel_origin": "19a8a2fc7f532c45a83aceef45388e8503d5fbb8eece32d41ed241096a5e5314",
+      "mishare_runtime_radio_prepared_aborted": "7e6065b0247a6964f5fa9fa4ada04dd24db98618cfb53765d8983908f790d3ae",
+      "mishare_runtime_radio_origin_valid": "72619d3601f43eaf2875e0136d4ad5a117f590f61928bbd5978bd2c703b1b927",
+      "mishare_runtime_final_shape_valid": "91721563069e87f39c9c7ed77b044c08470f1c993af26416909ed63df59e92f1"
+    },
+    "source_review_only": true,
+    "complete_prepare_exact_plan_before_SM_commit_reviewed": true,
+    "plan_copied_by_value_no_cached_command": true,
+    "native_plan_recheck_outside_radio_lock_reviewed": true,
+    "publish_after_work_exit_request_work_pending_release_no_later_controller_access": true,
+    "native_scheduler_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+    "native_scheduler_post_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+    "native_preparation_functions": {
+      "mishare_ndi_radio_prepare": "d732651b57ca46796a2aa3658dfec100d3006b3584ef4be979edf193b92b385b",
+      "mishare_start_plan_execute": "578edb071c8b542bca7a853a7087daff2a51bb0885bc011c310851295fc2b24b",
+      "mishare_channel_execute": "fd628d61bdc5d1582efc3ee50485e9a481d0fae3d8fda1062aefca364e89d980",
+      "mishare_ndi_start_plan_build": "f904358a24fcbb7b09f838524da4c970d5eb8d95f7f6d1e706bcd9d6abe18109",
+      "vdev_mgr_start_param_update": "e9e51def2945e1d68dd5159dcb2a35f573b7665ad2e409298f2e9cef45c55ff4"
+    },
+    "transitive_callees_not_certified": true
+  },
+  "rejected_start_reset_model": {
+    "status": "MISHARE_REJECTED_START_SSR_CANCEL_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "b2fda894695b1049196432a356a4a73871db751ffa76c41b51a719b0906ba7fd",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+      "wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+      "wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232",
+      "wlan_hdd_mishare_radio.c": "873dc4c8d57006bcc1ec27f6cda5d1be8560ae0bc8b1cde297bfe09fc55d590c",
+      "wlan_hdd_mishare_radio.h": "ab2a05673068334d0214898bf203676203566a57101faf2a6def049379997a30"
+    },
+    "native_scheduler_post_audit": {
+      "status": "NATIVE_SCHEDULER_REJECTION_BEFORE_INSERT_PASS_ONLY",
+      "native_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+      "native_function_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+      "fixture_sha256": "2d55299d8788db7e868e8ec14a1c86c590eb060c41555ea63f5c0c824634cbd9",
+      "error_branches": 10,
+      "success_priorities": 2,
+      "limitations": "Executes native scheduler post function with modeled queue, message duplication, context and QDF primitives; separate from the production radio transport fixture."
+    },
+    "negative_control_missing_private_rejection_fact_rejected": true,
+    "checks": [
+      "all 0074 regressions retained; scheduler rejected before insertion, exact private error retained",
+      "2.4/5240 MHz, inline/deferred DP, batch, delayed object final-free; actual controller unlink/ref release",
+      "15 private controller/native/callback faults reject before timer/PE/DP cleanup",
+      "callback during timer drain prevents controller retirement after users returns zero",
+      "allocation and work-reservation failures do not substitute for scheduler rejection",
+      "executed START callback, sent START, pending reply, UP and non-SSR fence stay unsupported",
+      "radio_requested, BLOCKED/original submission error and ordinary transaction history remain; no SM/WMI/PM/START/STOP/DOWN fabricated"
+    ],
+    "limitations": "Only START explicitly rejected before queue insertion or accepted and actually flushed before callback execution. Original error and distinct flush/rejection histories retained. Native scheduler post is separately executed with modeled primitives; production radio rejection uses its transport model. Explicit qualified reset window and retained/serialized parents required. Production radio/runtime and native scheduler/PE/peer code execute with modeled QDF, SM dispatch, PE allocation/remaining cleanup, DP/peer physical lifecycle and parents. Native MLME destroy/recovery and active START/UP are not certified. No automatic parent/shutdown coordinator, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "native_scheduler_source_review": {
+    "blob_sha1": {
+      "README.md": "f56f324794c0ba0de5ed750eb9e2c2bcdae89cb6",
+      "docs/POPSICLE-PROGRESS.md": "5c3476dbb830cad12a0817f9649c36eb2b059798",
+      "docs/POPSICLE-COMPLETED-PREPARE-RESET-0078.md": "9845fce3491766fa1761b489a27965f2e7ae54d1",
+      ".github/workflows/popsicle-build.yml": "9b5bf180da4c39a7f77eab37f2c1c65d4d0a25f9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h": "e424f071b8352acc4bc8135f0175dea5550a058e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "512e533c660d92b45c04c659118f2881d5e2b3e9",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "126638e164d0e2f4096804ea4b6b32dc7af8a597",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "bcff67af0cac22c6e22c06a5bbf65fc2bd2ff17e",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "f2b5a131ad8e7157372f5985039833884d58a2f8",
+      "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c": "86e5f11d93f8bfaca12bc7b87ad2494b48c3b3d3",
+      "tools/kernel/popsicle_ci.py": "de45bf9b30090e88340242440cc45cd49dbaa237",
+      "tools/kernel/mishare_aborted_start_reset_fixture.py": "86890c578d3fe60277fad0887798193b61d17613",
+      "tools/kernel/mishare_completed_prepare_reset_fixture.py": "d1e5967ab4d2833c2af4bc178f862a2e5edde1ea",
+      "tools/kernel/mishare_runtime_fixture.py": "d23925db0c49340fa405596ef5b46bc97d6c4f31"
+    },
+    "function_sha256": {
+      "mishare_radio_quiesce_psoc": "51259b33850451a9e5d3e5a6703d0fbb12221971f5e55e09614b4ec2d813c1aa",
+      "radio_plan_equal": "7b32f650ddf3e3ea81fa187df5a821274efe87e3d5b84aa5e96463c441046beb",
+      "radio_execute": "3864a23c4c9f50f545b8f9616c151a6013a9e2e707c25f3787428d927cf93f2a",
+      "radio_finish": "b15cf263bfcaf6518b4c54c47e2c13660e3cc6aba2d3c7c7511faf533f6430f6",
+      "mishare_radio_open": "5e88076f8c9464f0adea55feacecf660ff098520c86b5fa2a9be55c294196d99",
+      "radio_ssr_cancel_shape": "98d143e3cb219026b734091936ffb50306eea31a99be45264a95887b77a58c20",
+      "mishare_radio_ssr_cancel_check": "dbb954412461dad376e37bca80d89d9a00e8049bbaa2be5eed5d555a0b4129c8",
+      "mishare_runtime_radio_cancel_origin": "19a8a2fc7f532c45a83aceef45388e8503d5fbb8eece32d41ed241096a5e5314",
+      "mishare_runtime_radio_prepared_aborted": "7e6065b0247a6964f5fa9fa4ada04dd24db98618cfb53765d8983908f790d3ae",
+      "mishare_runtime_radio_origin_valid": "72619d3601f43eaf2875e0136d4ad5a117f590f61928bbd5978bd2c703b1b927",
+      "mishare_runtime_final_shape_valid": "91721563069e87f39c9c7ed77b044c08470f1c993af26416909ed63df59e92f1"
+    },
+    "source_review_only": true,
+    "complete_prepare_exact_plan_before_SM_commit_reviewed": true,
+    "plan_copied_by_value_no_cached_command": true,
+    "native_plan_recheck_outside_radio_lock_reviewed": true,
+    "publish_after_work_exit_request_work_pending_release_no_later_controller_access": true,
+    "native_scheduler_sha256": "ab6353bc0d901c0cb90cc0e95920cd4258a2cabe1961d6e93b1a1971b09c5190",
+    "native_scheduler_post_sha256": "a152e2328e08205580b8a9b5d212321c4e8c2d28df313e5e8b370e24d9fee8c4",
+    "native_preparation_functions": {
+      "mishare_ndi_radio_prepare": "d732651b57ca46796a2aa3658dfec100d3006b3584ef4be979edf193b92b385b",
+      "mishare_start_plan_execute": "578edb071c8b542bca7a853a7087daff2a51bb0885bc011c310851295fc2b24b",
+      "mishare_channel_execute": "fd628d61bdc5d1582efc3ee50485e9a481d0fae3d8fda1062aefca364e89d980",
+      "mishare_ndi_start_plan_build": "f904358a24fcbb7b09f838524da4c970d5eb8d95f7f6d1e706bcd9d6abe18109",
+      "vdev_mgr_start_param_update": "e9e51def2945e1d68dd5159dcb2a35f573b7665ad2e409298f2e9cef45c55ff4"
+    },
+    "transitive_callees_not_certified": true
+  },
+  "queued_start_reset_model": {
+    "status": "MISHARE_QUEUED_START_SSR_CANCEL_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "5d812c8524133f6b859a4242aedd247270a551b0b51663c23c4cb88c84d6b9a1",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+      "wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+      "wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232",
+      "wlan_hdd_mishare_radio.c": "873dc4c8d57006bcc1ec27f6cda5d1be8560ae0bc8b1cde297bfe09fc55d590c",
+      "wlan_hdd_mishare_radio.h": "ab2a05673068334d0214898bf203676203566a57101faf2a6def049379997a30"
+    },
+    "negative_control_missing_private_flush_fact_rejected": true,
+    "checks": [
+      "all prior pre-radio/pre-channel regressions retained; actual native scheduler queue flush publishes provenance",
+      "2.4/5240 MHz, inline/deferred DP, batch, delayed object final-free; actual controller unlink/ref release",
+      "13 private controller/native/callback faults reject before timer/PE/DP cleanup",
+      "callback during timer drain prevents controller retirement after users returns zero",
+      "duplicate flush notification is sticky; foreign owner/psoc ignored without dereference",
+      "executed START callback, sent START, pending reply, UP and non-SSR fence stay unsupported",
+      "radio_requested, BLOCKED/ESHUTDOWN and ordinary transaction history remain; no SM/WMI/PM/START/STOP/DOWN fabricated"
+    ],
+    "limitations": "Only queue-accepted START flushed by native MC shutdown before any START callback execution. Explicit qualified reset window and retained/serialized parents required. Production radio/runtime and native scheduler/PE/peer code execute with modeled QDF, SM dispatch, PE allocation/remaining cleanup, DP/peer physical lifecycle and parents. Native MLME destroy/recovery and active START/UP are not certified. No automatic parent/shutdown coordinator, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "pre_radio_reset_model": {
+    "status": "MISHARE_PRE_RADIO_PREPARED_RESET_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "b1be29030754b1ca269d61b904f3adb6e1031d0e19f394e26f4f0256f3c96d93",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "4303b870980433228df7d8391bf46a78a5cd5c9de473fd9601b70875fba3cce8",
+      "wlan_hdd_mishare_runtime.h": "60756b79c64d83b75a3113740b59a5125733efb4fc384a9bccbc656b67237763",
+      "wlan_hdd_mishare_ndi.h": "55f66225859031da4aa957eece2b15db60839d5e9778dc91053ccbddbd233232"
+    },
+    "native_sha256": {
+      "qcacld-3.0/core/mac/src/pe/lim/lim_api.c": "343dca1e03581e531325cbf2cf6de6f74244b4f86a5020c0bad965815a03ffdf",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_session.c": "90a188007fae29f2a8dce3cb7ad1df441e4400c8ee9993477fb86591e6e97015",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_utils.c": "f8aa1667c04984a453681eda8f511c3c80093a94b85bc8f7dc0447eeac42b2cd",
+      "qcacld-3.0/core/mac/src/pe/lim/lim_process_auth_frame.c": "a538baabf2725d7f7466c791e2d9281167ae788e6e492c9cd28cab40b760fb68",
+      "qcacld-3.0/core/wma/src/wma_dev_if.c": "3676b08537628af9717662201b49e8f8809234596795437db56903b0d2b49308"
+    },
+    "negative_control_missing_native_frequency_check_rejected": true,
+    "checks": [
+      "all 0072 pre-channel PE regressions retained",
+      "2.4 GHz and 48-channel 5240 MHz; channel-only and completed START plan; inline/deferred DP final-free",
+      "exact batch retirement and delayed object final-free after window closure",
+      "native PE/desired-channel geometry checked before and after timer drain",
+      "9 native geometry faults and 20 incomplete/failed/malformed/radio/duplicate histories reject without PE/DP cleanup",
+      "PE/channel/plan duplicate completion errors stay sticky across SSR; late duplicates after admission and during timer drain stop further cleanup",
+      "actual posted radio request remains unsupported after MC flush",
+      "channel/plan completion flags and scalar summary retained; no preparation replay, MC post or firmware ACK fabricated"
+    ],
+    "limitations": "Only completed channel and optional START-plan preparation before any radio START request. Production runtime, native request/check/release/destructor and native WMA peer/parameter builder code execute with modeled regulatory/lim_pre_vdev_start, PE allocation, remaining cleanup callees, timers/scheduler/locks, DP/object-peer physical lifecycle and parents. No automatic parent/shutdown coordinator, failed/pending preparation recovery, radio START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof."
+  },
+  "seven_native_source_file_hashes_independently_verified": true,
+  "production_hashes_crossmatched_between_eight_models": true,
+  "pre_channel_regressions_and_native_PE_destructor_negative_controls": "passed",
+  "full_target_wlan_wonder_provider_compile": "passed",
+  "strict_link": "passed",
+  "wlan_unresolved": [],
+  "modules": {
+    "wonder_sysctl": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_records": 6,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+      "version_records": 11,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_route_b_probe": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "version_records": 3,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "version_records": 110,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8881b6e21cd19c4138639d9ee01177629c451b380a6bc3e10b142a452dd31068",
+      "version_records": 585,
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "host_module_sha256_crossmatched": "8881b6e21cd19c4138639d9ee01177629c451b380a6bc3e10b142a452dd31068",
+  "both_native_PE_reset_helpers_linked": true,
+  "all_six_START_reset_helpers_linked": true,
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "validation_artifact_id": 13039393927,
+  "validation_artifact_sha256": "3a451474502193ca625da9d8bdf2b216fe8da13251de106509776a188d15807c",
+  "completed_matching_prepare_before_SM_commit_SSR_reclaim_implemented": true,
+  "admitted_START_aborted_before_prepare_entry_SSR_reclaim_implemented": true,
+  "START_callback_work_admission_refused_after_SSR_reclaim_implemented": true,
+  "scheduler_rejected_START_original_error_SSR_reclaim_implemented": true,
+  "queued_never_executed_START_native_MC_flush_SSR_reclaim_implemented": true,
+  "pre_radio_completion_faults_sticky_across_SSR_and_timer_drain": true,
+  "pending_failed_preparation_reset_recovery_implemented": false,
+  "radio_START_UP_reset_recovery_implemented": false,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "complete_monitor_rx_connected": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Explicit qualified stopped-MC/HIF/HTC/RX/blocked-WMI window and exact original parents retained/serialized throughout all polls. Completed channel and optional START plan, or queue-accepted START actually flushed by native MC stop before any START callback execution, or exact scheduler rejection before queue insertion. The native scheduler post function runs in a separate model, while the production radio transport uses a model; this is not complete native integration. Callback entry after original SSR fence with work_enter ESHUTDOWN refusal before radio_execute is also supported; Work-admitted START fenced before the synchronized preparation-entry gate is also supported with its own body-abort origin; Successful preparation that exactly matches all seven copied plan fields and no SM commitment is also supported, with current native encoder rechecks before/after timer drain. Failed/partial preparation, plan mismatch and any SM commitment remain unsupported. The post-prepare check prevents SM dispatch when it observes a prior fence; it is not an atomic gate across the entire native SM dispatch. Active START/UP still rejected. Retains radio_requested, radio_submit_error and BLOCKED with the original submission error, or ESHUTDOWN for actual flush/work-admission refusal/pre-prepare or matched post-prepare abort; no fake DOWN or ACK. C models execute production runtime, native request/check/release/destructor, START builder and WMA peer code; regulatory/lim_pre, PE allocation, remaining cleanup callees, synchronization/timers/scheduler platform primitives, DP/peer physical lifecycle and parents remain modeled. Direct preparation source review is not execution of transitive native callees. Generated fixture hashes are recorded from CI, not independently reconstructed locally. No automatic coordinator/parent lease, failed/pending preparation or committed SM/START/UP recovery, driver loading, firmware/RF or AirDrop certification."
+}

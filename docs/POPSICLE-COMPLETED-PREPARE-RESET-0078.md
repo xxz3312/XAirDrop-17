@@ -12,6 +12,6 @@ SSR 可以为准备已进入、SM 尚未提交且无执行/回复/MLME users 的
 
 新增 Actions 模型保留 0077 回归，执行生产 runtime/radio、native builder 和 PE/peer 路径；覆盖双频、inline/deferred DP、准备入口/成功返回处 fence、batch、窗口关闭后的延迟 final-free、caller 计划拷贝、20 类拒绝、七项保存计划及当前原生参数漂移、timer drain 中漂移、准备完成但摘要不匹配、SM 提交时 fence。两个负对照分别移除私有 prepared-abort 检查、移除当前 native plan 重检，必须均被测试发现。
 
-53 项 Python 检查通过，C 模型、完整编译、严格链接和七项布局检查待 CI。公开 Wonder ops/priv ABI 不变；内部 radio_open 参数更新，WLAN 和模型共同构建。
+CI [41193377121](https://github.com/xxz3312/XAirDrop-17/actions/runs/41193377121)（源码 `fe1ecaf2ea25f4542aca12b665f140b6f64f5e04`）已通过 53 项 Python 检查、新模型及私有 prepared-abort/当前 native plan 两个负对照、既有全部 C 模型、完整 WLAN/Wonder/provider 编译、严格链接和七项布局检查。五项生产源码哈希、八组模型间公共哈希、七个 native 文件哈希、新 origin 实际链接及模块依赖记录已复核。验证 ZIP SHA256 为 `3a451474502193ca625da9d8bdf2b216fe8da13251de106509776a188d15807c`，详见[验证记录](research/popsicle-completed-prepare-reset-0078-validation.json)。生成模型源码哈希记录自 CI，未在本地独立重建。公开 Wonder ops/priv ABI 不变；内部 radio_open 参数更新，WLAN 和模型共同构建。
 
 显式 caller 仍须保留并串行原始父资源，完整 scheduler/QDF/锁/定时器、原生 SM/WMA 后处理、PE 分配及其余 cleanup、DP/peer 物理生命周期和父资源仍含模型。SM commit 只是严格拒绝回收的门槛，不是覆盖完整 native dispatch 的原子封锁。实际 SM/START/UP、自动 shutdown/父资源协调和完整接收路径仍未完成；backend 关闭，不制作新手机包，不证明驱动加载、固件/RF 或 AirDrop。
