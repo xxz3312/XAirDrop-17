@@ -35,6 +35,7 @@ struct mishare_radio {
     bool ssr_callback_after_fence;
     int start_post_error;
     bool ssr_fenced_rejected;
+    bool ssr_start_refused;
 };
 struct radio_request {
     struct mishare_radio *radio;
@@ -539,7 +540,7 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
     struct wlan_objmgr_vdev *vdev;
     struct wlan_objmgr_psoc *psoc;
     void *owner, *token;
-    bool publish_flush = false;
+    bool publish_flush = false, publish_refused = false;
     unsigned long flags;
     int ret;
     if (!req)
@@ -582,6 +583,23 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
         if (!ret) {
             ret = radio_execute(req);
             mishare_runtime_work_exit(r->vdev, r->owner);
+        } else if (!flushed && req->work == RADIO_START && ret == -ESHUTDOWN) {
+            spin_lock_irqsave(&mishare_radio_lock, flags);
+            if (r->ssr_fenced_new && r->start_posted && r->start_callback_entered &&
+                !r->ssr_start_flushed && !r->ssr_start_refused &&
+                !r->ssr_fenced_rejected && !r->start_post_error &&
+                !r->ssr_callback_after_fence && !r->preflight &&
+                r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
+                r->state.error == -ESHUTDOWN && r->state.pending == 1 && !r->state.users &&
+                !r->state.start_attempted && !r->state.stop_attempted && !r->state.host_up &&
+                !r->state.down_attempted && !r->state.down_accepted &&
+                !r->start_reply_queued && !r->stop_reply_queued &&
+                !r->applying_start_reply && !r->applying_stop_reply) {
+                r->ssr_start_refused = true;
+                r->state.ssr_start_callback_refused = true;
+                publish_refused = true;
+            }
+            spin_unlock_irqrestore(&mishare_radio_lock, flags);
         }
     }
     if (ret)
@@ -595,6 +613,8 @@ static QDF_STATUS radio_finish(struct scheduler_msg *msg, bool flushed)
     /* No access to r after the last pending reference is released. */
     if (publish_flush)
         mishare_runtime_radio_start_flushed(psoc, vdev, owner, token);
+    else if (publish_refused)
+        mishare_runtime_radio_start_refused(psoc, vdev, owner, token);
     return QDF_STATUS_SUCCESS;
 }
 
@@ -666,11 +686,19 @@ static bool radio_ssr_cancel_shape(struct mishare_radio *r)
 {
     return ((r->ssr_fenced_new && r->ssr_start_flushed && r->start_posted &&
              !r->ssr_fenced_rejected && !r->start_post_error &&
+             !r->ssr_start_refused && !r->start_callback_entered &&
+             !r->state.ssr_start_callback_refused &&
              r->state.error == -ESHUTDOWN) ||
             (r->ssr_fenced_rejected && r->start_post_error &&
              !r->ssr_fenced_new && !r->ssr_start_flushed && !r->start_posted &&
-             r->state.error == r->start_post_error)) &&
-           !r->start_callback_entered && !r->ssr_callback_after_fence && !r->preflight &&
+             !r->ssr_start_refused && !r->start_callback_entered &&
+             !r->state.ssr_start_callback_refused &&
+             r->state.error == r->start_post_error) ||
+            (r->ssr_fenced_new && r->ssr_start_refused && r->start_posted &&
+             r->start_callback_entered && r->state.ssr_start_callback_refused &&
+             !r->ssr_start_flushed && !r->ssr_fenced_rejected && !r->start_post_error &&
+             r->state.error == -ESHUTDOWN)) &&
+           !r->ssr_callback_after_fence && !r->preflight &&
            r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
            !r->state.pending && !r->state.users &&
            !r->state.ssr_cancelled_before_start &&
@@ -741,7 +769,7 @@ int mishare_radio_ssr_cancel_release(struct mishare_radio **handle,
     *link = r->next; /* No callback can acquire this controller after unlink. */
     r->state.ssr_cancelled_before_start = true;
     r->state.ssr_start_submit_error = r->start_post_error;
-    *last = r->state; /* BLOCKED/ESHUTDOWN stays intact, never DOWN/CANCELLED. */
+    *last = r->state; /* Preserve BLOCKED/original error, never DOWN/CANCELLED. */
     *handle = NULL;
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
     wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);

@@ -32,6 +32,7 @@ struct mishare_radio_status {
     int error;
     bool ssr_cancelled_before_start; /* Proven never-executed START retirement. */
     int ssr_start_submit_error; /* Original scheduler rejection, zero for MC flush. */
+    bool ssr_start_callback_refused; /* Callback entered, work_enter refused before body. */
 };
 /* Internal one-shot owned radio controller. Caller keeps the exact event
  * registry, PE session and parent/exclusive psoc transition alive. No concurrent
@@ -39,7 +40,8 @@ struct mishare_radio_status {
  * A non-NULL output on error must still be drained. No retries on this owner.
  * No automatic HDD/Wonder caller; active START/UP and remove recovery remain
  * unsupported. The explicit SSR interface below covers a queued START
- * flushed before its callback executes, or an exact scheduler rejection.
+ * flushed before its callback executes, an exact scheduler rejection, or a
+ * callback refused by work admission after the original SSR fence.
  */
 int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
                        struct mishare_event_owner *events, void *owner,
@@ -52,12 +54,12 @@ int mishare_radio_snapshot(struct mishare_radio *radio,
  */
 int mishare_radio_drain(struct mishare_radio **radio,
                         struct mishare_radio_status *last);
-/* Explicit SSR path for START flushed before callback or rejected before insertion.
+/* Explicit SSR path for START flushed, scheduler-rejected, or work-admission refused.
  * Caller proves owned/native MC stop, qualified reset window and retains exact
  * parents under RTNL/exclusive psoc serialization. Check/release revalidate the
- * live registry identity, exact flush/rejection provenance, INIT and untouched transaction.
+ * live identity, exact flush/rejection/refusal provenance, INIT and untouched transaction.
  * No WMI/SM/PM/timer operation or synthetic DOWN/CANCELLED phase. Unknown tokens
- * and any executed work/callback fault remain held. Snapshot storage is caller-owned.
+ * and any preparation/SM execution or callback fault remain held. Snapshot storage is caller-owned.
  */
 int mishare_radio_ssr_cancel_check(struct mishare_radio *radio,
                                    struct wlan_objmgr_vdev *vdev,

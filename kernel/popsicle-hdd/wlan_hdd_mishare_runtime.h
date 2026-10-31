@@ -34,6 +34,7 @@ struct mishare_runtime_status {
     bool recovery_window_closed;
     bool ndi_reclaim_started;
     bool recovery_radio_start_flushed;
+    bool recovery_radio_start_refused;
     bool recovery_radio_released;
     bool recovery_pe_attempted;
     bool recovery_pe_released;
@@ -103,11 +104,14 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * additionally retire its controller only after an actual native MC START
  * flush before callback execution. An exact scheduler rejection before insertion
  * can use this route while retaining radio_submit_error and the original error.
- * Allocation/reservation failures cannot substitute. Private provenance and runtime
+ * Allocation/reservation failures cannot substitute. A callback arriving after
+ * the original SSR fence can also retire only if work_enter refused ESHUTDOWN
+ * before radio_execute, with distinct private/runtime refusal facts.
+ * Private provenance and runtime
  * origin must agree, INIT and untouched transaction must hold, and callbacks
  * must be absent. Controller unlink/ref release is recorded without clearing
  * radio_requested or changing BLOCKED/original error into DOWN/CANCELLED. Pending /
- * failed preparation, executed START/UP, partial attach and incomplete DELETE
+ * failed preparation, executed preparation/SM/START/UP, partial attach and incomplete DELETE
  * stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);

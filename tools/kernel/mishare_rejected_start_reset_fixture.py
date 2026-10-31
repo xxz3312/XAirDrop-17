@@ -195,10 +195,10 @@ def audit(root):
         c.write_text(source);subprocess.run(command,check=True);out=subprocess.check_output([exe],text=True,timeout=45,env=env)
         target=source.replace(function(source,'main'),NEGATIVE_HARNESS.strip(),1)
         c.write_text(target);subprocess.run(command,check=True);subprocess.run([exe],check=True,timeout=45,env=env)
-        radio=(production/'wlan_hdd_mishare_radio.c').read_text();guard='r->state.error == r->start_post_error)) &&';assert radio.count(guard)==1
+        radio=(production/'wlan_hdd_mishare_radio.c').read_text();guard='r->state.error == r->start_post_error)';assert radio.count(guard)==1
         # Mutate only the copied production radio file; positive and negative
         # variants compile against the same owner, native helper and harness.
-        (d/'wlan_hdd_mishare_radio.c').write_text(radio.replace(guard,'r->state.error != 0)) && /* negative: omit exact private error match */',1))
+        (d/'wlan_hdd_mishare_radio.c').write_text(radio.replace(guard,'r->state.error != 0) /* negative: omit exact private error match */',1))
         subprocess.run(command,check=True)
         bad=subprocess.run([exe],capture_output=True,text=True,timeout=45,env=env)
         assert bad.returncode==-6 and 'EXPECTED_PRIVATE_REJECTION_PROVENANCE' in bad.stderr

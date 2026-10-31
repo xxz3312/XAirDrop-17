@@ -30,7 +30,8 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * INIT with observed PE success and completed channel/START-plan preparation
  * may use the qualified reset path. A queued START actually flushed before
  * callback execution, or an exact pre-insertion scheduler rejection, can retire
- * its controller first; executed START/UP
+ * its controller first. A callback refused by work admission after the original
+ * SSR fence is also supported, before any preparation/SM execution. START/UP
  * stays unsupported.
  * Errors retain host and the updated runtime token; EINPROGRESS needs polling
  * after releasing locks. This permanently closes the session on admission.

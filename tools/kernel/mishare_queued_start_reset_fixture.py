@@ -103,7 +103,7 @@ int main(void) {
  }
  assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  /* Callback execution / sent START / queued reply / UP are not cancellation. */
- for(int phase=0;phase<5;phase++) {
+ for(int phase=1;phase<5;phase++) {
   reset_pe_test();child=fork();assert(child>=0);
   if(!child) {
    if(phase==4) {

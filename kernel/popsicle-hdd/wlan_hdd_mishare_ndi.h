@@ -22,6 +22,9 @@ void mishare_runtime_work_put(struct wlan_objmgr_vdev *vdev, void *owner);
 void mishare_runtime_radio_start_flushed(struct wlan_objmgr_psoc *psoc,
                                          struct wlan_objmgr_vdev *vdev,
                                          void *owner, void *radio_token);
+void mishare_runtime_radio_start_refused(struct wlan_objmgr_psoc *psoc,
+                                         struct wlan_objmgr_vdev *vdev,
+                                         void *owner, void *radio_token);
 struct wlan_objmgr_psoc;
 struct vdev_mlme_obj;
 struct vdev_create_params;
