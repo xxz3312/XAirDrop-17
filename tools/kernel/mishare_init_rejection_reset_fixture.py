@@ -144,7 +144,7 @@ def fixture(root):
     native_api=function((root/API).read_text(),'wlan_vdev_mlme_sm_deliver_evt')
     src=src.replace(model_api,API_GLUE.replace('NATIVE_API',native_api),1)
     glue=function(src,'mlme_vdev_sm_deliver_event')
-    body=glue.replace('assert(e==WLAN_VDEV_SM_EV_START_REQ', 'if(e==WLAN_VDEV_SM_EV_START) {QDF_STATUS status=radio_sm_dispatch(m->vdev,e);if(init_engine_substate_drift)radio_native_substate=1;return init_engine_return_error?QDF_STATUS_E_FAILURE:status;}assert(e==WLAN_VDEV_SM_EV_START_REQ',1)
+    body=glue.replace('assert(e==WLAN_VDEV_SM_EV_START_REQ', 'if(e!=WLAN_VDEV_SM_EV_START_REQ) {QDF_STATUS status=radio_sm_dispatch(m->vdev,e);if(e==WLAN_VDEV_SM_EV_START) {if(init_engine_substate_drift)radio_native_substate=1;if(init_engine_return_error)return QDF_STATUS_E_FAILURE;}return status;}assert(e==WLAN_VDEV_SM_EV_START_REQ',1)
     assert body!=glue;src=src.replace(glue,body,1)
     needle='return mishare_radio_validate(m,n,p);';assert src.count(needle)==1
     src=src.replace(needle,'if(init_early_down) {init_early_down=false;(void)mishare_radio_down_complete(m,n,p);}'+needle,1)
