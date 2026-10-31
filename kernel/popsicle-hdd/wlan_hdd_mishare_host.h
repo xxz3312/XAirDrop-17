@@ -32,7 +32,9 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * callback execution, or an exact pre-insertion scheduler rejection, can retire
  * its controller first. A callback refused by work admission after the original
  * SSR fence is also supported. Admitted work aborted before the serialized
- * preparation-entry gate can retire with its own provenance. Preparation/START/UP
+ * preparation-entry gate can retire with its own provenance. Successful matching
+ * preparation without any SM commitment has its own checked retirement route.
+ * Failed/partial preparation and SM/START/UP
  * stays unsupported.
  * Errors retain host and the updated runtime token; EINPROGRESS needs polling
  * after releasing locks. This permanently closes the session on admission.

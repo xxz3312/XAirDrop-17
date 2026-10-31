@@ -36,6 +36,7 @@ struct mishare_runtime_status {
     bool recovery_radio_start_flushed;
     bool recovery_radio_start_refused;
     bool recovery_radio_start_aborted;
+    bool recovery_radio_prepared_aborted;
     bool recovery_radio_released;
     bool recovery_pe_attempted;
     bool recovery_pe_released;
@@ -110,12 +111,15 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * before radio_execute, with distinct private/runtime refusal facts. Admitted
  * work can abort only before the shared-lock preparation-entry gate, with a
  * distinct body-abort origin after work_exit/put/pending drain. Preparation
- * already entered, including failure or a later fence, stays unsupported.
+ * already entered remains held unless it returned success and the native encoder
+ * summary matches all seven copied plan fields with no SM commitment. That
+ * prepared-abort route rebuilds the native summary before/after timer drain;
+ * failed/partial preparation and any committed SM remain held.
  * Private provenance and runtime
  * origin must agree, INIT and untouched transaction must hold, and callbacks
  * must be absent. Controller unlink/ref release is recorded without clearing
  * radio_requested or changing BLOCKED/original error into DOWN/CANCELLED. Pending /
- * failed preparation, executed preparation/SM/START/UP, partial attach and incomplete DELETE
+ * failed preparation, committed SM/START/UP, partial attach and incomplete DELETE
  * stay held.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);

@@ -85,10 +85,10 @@ int main(void) {
  }
  /* Once preparation's entry gate was crossed, even failure/no SM is held.
   * Successful preparation followed by fence must not overwrite BLOCKED/enter SM. */
- for(int boundary=1;boundary<=2;boundary++) {
+ for(int boundary=1;boundary<=1;boundary++) {
   reset_pe_test();child=fork();assert(child>=0);
   if(!child) {
-   o=queued_start_owner(5240);unsigned prepare_before=refused_prepare_calls,sm_before=refused_sm_calls;aborted_prepare_fence=boundary;radio_run(false);
+   o=queued_start_owner(5240);unsigned prepare_before=refused_prepare_calls,sm_before=refused_sm_calls;aborted_prepare_fence=boundary;ch_scan=true;radio_run(false);ch_scan=false;
    assert(refused_prepare_calls==prepare_before+1 && refused_sm_calls==sm_before && o->radio->start_prepare_entered);
    assert(o->radio->state.phase==MISHARE_RADIO_BLOCKED && !o->radio->ssr_fenced_before_prepare && !o->radio->ssr_start_aborted && !state(o).recovery_radio_start_aborted);
    health_recovering=true;assert(!cds_post_disable());assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o->radio && !pe_deletes && !dp_detaches);_Exit(0);

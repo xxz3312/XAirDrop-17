@@ -1,4 +1,8 @@
-## 最新阶段 0077
+## 最新阶段 0078
+
+新增 START 准备成功、七项原生编码器摘要与原计划完全匹配、尚未提交任何 SM 的 SSR 回收。计划按值拷贝，不借用 caller 存储；准备、SM 提交、SSR 封锁使用明确的记录。回收预检与 timer drain 后重新构建并比较当前原生摘要，漂移则保留 controller/PE/DP。新增双准备边界、20 类拒绝、全部七项参数/当前参数漂移、caller 拷贝、SM 已提交但仍 INIT 的拒绝及两个负对照。53 项 Python 检查通过，完整 CI 待验证。失败/部分准备、SM/START/UP、自动父资源协调和完整接收路径仍未完成，backend 关闭，手机无需操作。见[0078](POPSICLE-COMPLETED-PREPARE-RESET-0078.md)。
+
+## 阶段 0077
 
 新增已获准 START 在准备入口前遇到 SSR 的显式回收：共享 radio 锁保护 preparation-entry 与封锁观察，work_exit、reservation 和 pending 释放后才发布独立 body-abort origin。已进入准备函数的情况继续保留资源；准备返回后的复核若发现已封锁，不会覆盖 BLOCKED 或继续进入 SM。新增双边界零准备/SM 计数、18 类拒绝、准备中/准备后 fence、混合来源及私有事实负对照。CI [41190764518](https://github.com/xxz3312/XAirDrop-17/actions/runs/41190764518) 已通过 53 项 Python 检查、新模型与私有 abort 负对照、既有全部 C 模型、完整编译、严格链接及七项布局检查；生产/native 哈希、新 origin 实际链接和模块记录已复核。实际准备已执行/START/UP 的 reset 回收、自动父资源协调和完整接收路径仍未完成，backend 关闭，手机无需操作。见[0077](POPSICLE-ABORTED-START-RESET-0077.md)。
 
