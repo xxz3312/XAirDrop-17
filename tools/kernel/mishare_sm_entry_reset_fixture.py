@@ -123,7 +123,7 @@ static unsigned native_init_calls,native_init_down_notices;
 static bool native_init_last_handled;
 static QDF_STATUS mlme_vdev_validate_basic_params(struct vdev_mlme_obj *m,uint16_t n,void *p) {return mishare_radio_validate(m,n,p);}
 static void mlme_vdev_sm_transition_to(struct vdev_mlme_obj *m,unsigned state) {assert(m->vdev==last_vdev);ch_state=state;}
-static QDF_STATUS mlme_vdev_sm_deliver_event(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {assert(e==WLAN_VDEV_SM_EV_START_REQ && ch_state==WLAN_VDEV_S_START);return mishare_radio_start_send(m,n,p);}
+static QDF_STATUS mlme_vdev_sm_deliver_event(struct vdev_mlme_obj *m,uint16_t e,uint16_t n,void *p) {assert(e==WLAN_VDEV_SM_EV_START_REQ && ch_state==WLAN_VDEV_S_START);radio_native_substate=WLAN_VDEV_SS_START_START_PROGRESS;return mishare_radio_start_send(m,n,p);}
 static QDF_STATUS mlme_vdev_notify_down_complete(struct vdev_mlme_obj *m,uint16_t n,void *p) {native_init_down_notices++;return mishare_radio_down_complete(m,n,p);}
 static void mlme_vdev_init_down(struct vdev_mlme_obj *m) {assert(m);}
 static void mlme_vdev_down_cmpl_notify_mlo_mgr(struct vdev_mlme_obj *m) {assert(m);}
@@ -138,7 +138,7 @@ def fixture(root):
     needle='bool allowed=mishare_runtime_work_allowed(v,o);';assert src.count(needle)==1
     src=src.replace(needle,needle+'if(allowed && sm_entry_fence_armed && refused_prepare_calls>sm_entry_prepare_floor) {sm_entry_fence_armed=false;assert(mishare_runtime_quiesce_psoc(wlan_vdev_get_psoc(v),MISHARE_QUIESCE_SSR)==1);}',1)
     dispatcher=function(src,'radio_sm_dispatch')
-    old='s=mishare_radio_validate(m,0,NULL);if(s)return s;ch_state=WLAN_VDEV_S_START;\n  return mishare_radio_start_send(m,0,NULL);';assert dispatcher.count(old)==1
+    old='s=mishare_radio_validate(m,0,NULL);if(s)return s;ch_state=WLAN_VDEV_S_START;\n  radio_native_substate=WLAN_VDEV_SS_START_START_PROGRESS;return mishare_radio_start_send(m,0,NULL);';assert dispatcher.count(old)==1
     new='native_init_calls++;native_init_last_handled=mlme_vdev_state_init_event(m,e,0,NULL);return native_init_last_handled?QDF_STATUS_SUCCESS:QDF_STATUS_E_FAILURE;'
     native_init=function((root/SM).read_text(),'mlme_vdev_state_init_event')
     src=src.replace(dispatcher,INIT_GLUE.replace('NATIVE_INIT',native_init)+'\n'+dispatcher.replace(old,new,1),1)

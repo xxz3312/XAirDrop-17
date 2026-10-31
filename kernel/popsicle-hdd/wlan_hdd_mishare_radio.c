@@ -389,7 +389,7 @@ QDF_STATUS mishare_radio_validate(struct vdev_mlme_obj *m, uint16_t len, void *d
         spin_lock_irqsave(&mishare_radio_lock, flags);
         ret = r->state.phase != MISHARE_RADIO_STARTING || !r->preflight ||
               !r->start_sm_committed || !r->start_sm_entered ||
-              wlan_vdev_mlme_get_state(r->vdev) != WLAN_VDEV_S_INIT ? -EUCLEAN : 0;
+              !radio_init_idle(r) ? -EUCLEAN : 0;
         if (ret && r->start_sm_call_active && radio_init_reject_context(r, 1, 1) &&
             !r->init_validate_rejected && !r->init_down_rejected && !r->init_native_notified)
             r->init_validate_rejected = true;
@@ -410,6 +410,8 @@ static QDF_STATUS radio_send(struct vdev_mlme_obj *m, bool start)
         return QDF_STATUS_E_NOSUPPORT;
     if (!radio_phase(r, phase) ||
         wlan_vdev_mlme_get_state(r->vdev) != (start ? WLAN_VDEV_S_START : WLAN_VDEV_S_STOP) ||
+        wlan_vdev_mlme_get_substate(r->vdev) !=
+            (start ? WLAN_VDEV_SS_START_START_PROGRESS : WLAN_VDEV_SS_STOP_STOP_PROGRESS) ||
         !m->ext_vdev_ptr || m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI ||
         m->mgmt.generic.subtype || wlan_vdev_mlme_get_opmode(r->vdev) != QDF_PASSTHRU_MODE)
         return radio_result(r, -EUCLEAN);

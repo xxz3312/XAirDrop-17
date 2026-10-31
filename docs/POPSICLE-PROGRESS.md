@@ -1,4 +1,8 @@
-## 最新阶段 0080
+## 最新阶段 0081
+
+START/STOP 发送现在同时要求精确原生子状态，INIT 校验要求 INIT/IDLE。新增模型执行主流程 23 段原生 entry/event 函数及原生 INIT/API，贯通 START→UP→DOWN→STOP→INIT、双频与提前响应，检查原生 handled=true 掩盖回调失败时 controller 仍隔离资源。两个负对照移除 START/STOP 子状态门槛，必须均被识别。53 项 Python 检查通过，完整 CI 待验证。通用状态机引擎/层级分派/transition 仍有模型，实机和固件未验证；不扩大 SSR 回收范围，backend 关闭，手机无需操作。见[0081](POPSICLE-NATIVE-LIFECYCLE-0081.md)。
+
+## 阶段 0080
 
 新增原生 INIT START 校验被原始 SSR 拒绝后的显式回收：必须依次确认 validation 拒绝、down 通知被拒绝、原生分支 origin、成功返回且 SM 已解锁，并保持 INIT/IDLE、空事务及零 pending/users。保留 BLOCKED/ESHUTDOWN 和入口历史，不冒充 DOWN；七项原生计划在 timer drain 前后重检。新增原生 API wrapper 执行、双频与异常来源/状态/回调顺序检查，以及缺失原生 origin、缺失 SM unlock 两个负对照。CI [41200864386](https://github.com/xxz3312/XAirDrop-17/actions/runs/41200864386) 已通过 53 项 Python 检查、新模型及两个负对照、既有全部 C 模型、完整编译、严格链接及七项布局检查；十组模型生产哈希、九个 native 文件哈希、九项 START 回收入口实际链接及模块记录已复核。真正进入 START 状态/发送 START/等待响应/UP 的回收、自动父资源协调及完整接收路径仍未完成，backend 关闭，手机无需操作。见[0080](POPSICLE-NATIVE-INIT-RESET-0080.md)。
 

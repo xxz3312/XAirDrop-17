@@ -32,6 +32,8 @@ STUBS=r'''
 #define QDF_MAX_NO_OF_MODE 0
 #define WLAN_VDEV_TARGET_IF_ID WLAN_HDD_ID_OBJ_MGR
 #define WLAN_VDEV_SS_IDLE 0
+#define WLAN_VDEV_SS_START_START_PROGRESS 101
+#define WLAN_VDEV_SS_STOP_STOP_PROGRESS 102
 static unsigned radio_native_substate;
 static unsigned wlan_vdev_mlme_get_substate(struct wlan_objmgr_vdev *v) {assert(v);return radio_native_substate;}
 #define WLAN_VDEV_S_START 1
@@ -142,7 +144,7 @@ static QDF_STATUS radio_sm_dispatch(struct wlan_objmgr_vdev *v,enum wlan_vdev_sm
  case WLAN_VDEV_SM_EV_START:
   assert(ch_state==WLAN_VDEV_S_INIT);
   s=mishare_radio_validate(m,0,NULL);if(s)return s;ch_state=WLAN_VDEV_S_START;
-  return mishare_radio_start_send(m,0,NULL);
+  radio_native_substate=WLAN_VDEV_SS_START_START_PROGRESS;return mishare_radio_start_send(m,0,NULL);
  case WLAN_VDEV_SM_EV_START_RESP:
   assert(ch_state==WLAN_VDEV_S_START);return mishare_radio_start_continue(m,0,NULL);
  case WLAN_VDEV_SM_EV_START_SUCCESS:
@@ -155,14 +157,14 @@ static QDF_STATUS radio_sm_dispatch(struct wlan_objmgr_vdev *v,enum wlan_vdev_sm
   assert(ch_state==WLAN_VDEV_S_UP);ch_state=WLAN_VDEV_S_SUSPEND;
   return passthru_radio_disconnect(m,0,NULL,false);
  case WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE:
-  assert(ch_state==WLAN_VDEV_S_SUSPEND);ch_state=WLAN_VDEV_S_STOP;
+  assert(ch_state==WLAN_VDEV_S_SUSPEND);ch_state=WLAN_VDEV_S_STOP;radio_native_substate=WLAN_VDEV_SS_STOP_STOP_PROGRESS;
   return mishare_radio_stop_send(m,0,NULL);
  case WLAN_VDEV_SM_EV_STOP_RESP:
   assert(ch_state==WLAN_VDEV_S_STOP);return mishare_radio_stop_continue(m,0,NULL);
  case WLAN_VDEV_SM_EV_MLME_DOWN_REQ:
   assert(ch_state==WLAN_VDEV_S_STOP);return mishare_radio_down_send(m,0,NULL);
  case WLAN_VDEV_SM_EV_DOWN_COMPLETE:
-  assert(ch_state==WLAN_VDEV_S_STOP);ch_state=WLAN_VDEV_S_INIT;
+  assert(ch_state==WLAN_VDEV_S_STOP);ch_state=WLAN_VDEV_S_INIT;radio_native_substate=WLAN_VDEV_SS_IDLE;
   return mishare_radio_down_complete(m,0,NULL);
  }
  assert(0);return QDF_STATUS_E_FAILURE;
