@@ -265,6 +265,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/mishare_rejected_start_reset_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-rejected-start-reset-fixture.json'],
+               'mishare-rejected-start-reset-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_queued_start_reset_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-queued-start-reset-fixture.json'],
                'mishare-queued-start-reset-fixture.log')

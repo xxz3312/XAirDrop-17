@@ -103,13 +103,10 @@ int main(void) {
  }
  assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  /* Callback execution / sent START / queued reply / UP are not cancellation. */
- for(int phase=0;phase<6;phase++) {
+ for(int phase=0;phase<5;phase++) {
   reset_pe_test();child=fork();assert(child>=0);
   if(!child) {
    if(phase==4) {
-    o=ready_pre_radio(5240,true);radio_queue_fail=true;
-    assert(mishare_runtime_ndi_start(o)<0 && o->radio && !radio_q_len);mark_closed(o);
-   } else if(phase==5) {
     o=queued_start_owner(5240);assert(mishare_runtime_quiesce_psoc(&psoc,MISHARE_QUIESCE_REMOVE)==1);
    } else if(phase==0) {o=queued_start_owner(5240);mark_closed(o);radio_run(false);}
    else {
@@ -177,7 +174,7 @@ def audit(root):
                       '13 private controller/native/callback faults reject before timer/PE/DP cleanup',
                       'callback during timer drain prevents controller retirement after users returns zero',
                       'duplicate flush notification is sticky; foreign owner/psoc ignored without dereference',
-                      'executed START callback, sent START, pending reply, UP, queue rejection and non-SSR fence stay unsupported',
+                      'executed START callback, sent START, pending reply, UP and non-SSR fence stay unsupported',
                       'radio_requested, BLOCKED/ESHUTDOWN and ordinary transaction history remain; no SM/WMI/PM/START/STOP/DOWN fabricated'],
             'limitations':'Only queue-accepted START flushed by native MC shutdown before any START callback execution. Explicit qualified reset window and retained/serialized parents required. Production radio/runtime and native scheduler/PE/peer code execute with modeled QDF, SM dispatch, PE allocation/remaining cleanup, DP/peer physical lifecycle and parents. Native MLME destroy/recovery and active START/UP are not certified. No automatic parent/shutdown coordinator, backend activation, phone/firmware/RF or AirDrop proof.'}
 

@@ -33,6 +33,8 @@ struct mishare_radio {
     bool ssr_fenced_new;
     bool ssr_start_flushed;
     bool ssr_callback_after_fence;
+    int start_post_error;
+    bool ssr_fenced_rejected;
 };
 struct radio_request {
     struct mishare_radio *radio;
@@ -60,6 +62,15 @@ void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
             !r->start_reply_queued && !r->stop_reply_queued &&
             !r->applying_start_reply && !r->applying_stop_reply)
             r->ssr_fenced_new = true;
+        if (!r->state.closing && r->state.phase == MISHARE_RADIO_CANCELLED &&
+            r->start_post_error && r->state.error == r->start_post_error &&
+            !r->start_posted && !r->start_callback_entered && !r->preflight &&
+            !r->state.pending && !r->state.users &&
+            !r->state.start_attempted && !r->state.stop_attempted &&
+            !r->state.host_up && !r->state.down_attempted && !r->state.down_accepted &&
+            !r->start_reply_queued && !r->stop_reply_queued &&
+            !r->applying_start_reply && !r->applying_stop_reply)
+            r->ssr_fenced_rejected = true;
         r->state.closing = true;
         r->state.phase = MISHARE_RADIO_BLOCKED;
         if (!r->state.error)
@@ -87,7 +98,7 @@ static struct mishare_radio *radio_get(struct vdev_mlme_obj *mlme)
     spin_lock_irqsave(&mishare_radio_lock, flags);
     for (r = mishare_radios; r; r = r->next) {
         if (r->vdev == mlme->vdev) {
-            if (r->ssr_fenced_new)
+            if (r->ssr_fenced_new || r->ssr_fenced_rejected)
                 r->ssr_callback_after_fence = true;
             r->state.users++;
             if (wlan_vdev_mlme_get_cmpt_obj(mlme->vdev) != mlme ||
@@ -209,6 +220,13 @@ static int radio_post(struct mishare_radio *r, enum radio_work work,
         spin_unlock_irqrestore(&mishare_radio_lock, flags);
         mishare_runtime_work_put(r->vdev, r->owner);
         kfree(req);
+        /* Native scheduler errors precede insertion. Record only after
+         * returning the work reservation and freeing our request. */
+        if (work == RADIO_START) {
+            spin_lock_irqsave(&mishare_radio_lock, flags);
+            r->start_post_error = qdf_status_to_os_return(status);
+            spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        }
         return qdf_status_to_os_return(status);
     }
     return 0;
@@ -646,10 +664,15 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
 /* Radio registry lock held. This is provenance, not a synthesized DOWN. */
 static bool radio_ssr_cancel_shape(struct mishare_radio *r)
 {
-    return r->ssr_fenced_new && r->ssr_start_flushed && r->start_posted &&
+    return ((r->ssr_fenced_new && r->ssr_start_flushed && r->start_posted &&
+             !r->ssr_fenced_rejected && !r->start_post_error &&
+             r->state.error == -ESHUTDOWN) ||
+            (r->ssr_fenced_rejected && r->start_post_error &&
+             !r->ssr_fenced_new && !r->ssr_start_flushed && !r->start_posted &&
+             r->state.error == r->start_post_error)) &&
            !r->start_callback_entered && !r->ssr_callback_after_fence && !r->preflight &&
            r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing &&
-           r->state.error == -ESHUTDOWN && !r->state.pending && !r->state.users &&
+           !r->state.pending && !r->state.users &&
            !r->state.ssr_cancelled_before_start &&
            !r->state.start_attempted && !r->state.stop_attempted && !r->state.host_up &&
            !r->state.down_attempted && !r->state.down_accepted &&
@@ -717,6 +740,7 @@ int mishare_radio_ssr_cancel_release(struct mishare_radio **handle,
     }
     *link = r->next; /* No callback can acquire this controller after unlink. */
     r->state.ssr_cancelled_before_start = true;
+    r->state.ssr_start_submit_error = r->start_post_error;
     *last = r->state; /* BLOCKED/ESHUTDOWN stays intact, never DOWN/CANCELLED. */
     *handle = NULL;
     spin_unlock_irqrestore(&mishare_radio_lock, flags);

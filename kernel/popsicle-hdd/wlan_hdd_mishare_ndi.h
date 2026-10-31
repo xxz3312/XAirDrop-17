@@ -102,6 +102,7 @@ struct mishare_ndi_status {
     bool channel_completed;
     bool channel_prepared;
     bool radio_requested;
+    int radio_submit_error;
     bool start_plan_requested;
     bool start_plan_submitted;
     bool start_plan_completed;

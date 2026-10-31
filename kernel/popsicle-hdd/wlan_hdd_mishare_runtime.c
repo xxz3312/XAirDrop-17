@@ -41,7 +41,8 @@ void mishare_runtime_radio_start_flushed(struct wlan_objmgr_psoc *psoc,
         if (entry->state.quiesced != MISHARE_QUIESCE_SSR)
             break;
         if (!radio_token || entry->radio != radio_token ||
-            !entry->state.ndi.radio_requested || entry->state.recovery_radio_start_flushed ||
+            !entry->state.ndi.radio_requested || entry->state.ndi.radio_submit_error ||
+            entry->state.recovery_radio_start_flushed ||
             entry->state.recovery_radio_released || entry->state.ndi_reclaim_started) {
             if (!entry->state.ndi.completion_error)
                 entry->state.ndi.completion_error = -EUCLEAN;
@@ -493,7 +494,7 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
            !n->pe_delete_requested && !n->pe_delete_submitted && !n->pe_delete_completed &&
            !n->channel_requested && !n->channel_submitted && !n->channel_completed &&
            !n->channel_prepared && !n->start_plan_requested && !n->start_plan_submitted &&
-           !n->start_plan_completed && !n->start_plan_ready && !n->radio_requested &&
+           !n->start_plan_completed && !n->start_plan_ready && !n->radio_requested && !n->radio_submit_error &&
            n->delete_pending && n->delete_submitted && n->delete_replied &&
            n->dp_detaching && n->dp_detach_submitted && n->dp_freed;
 }
@@ -532,13 +533,15 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
                  n->start_plan.center_freq == n->channel_freq && n->start_plan.phy_mode &&
                  n->start_plan.tx_streams && n->start_plan.tx_streams <= 2 &&
                  n->start_plan.rx_streams == n->start_plan.tx_streams;
-    no_radio = !n->radio_requested && !entry->radio &&
+    no_radio = !n->radio_requested && !n->radio_submit_error && !entry->radio &&
                !entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_released;
     cancelled_radio = ready_plan && n->radio_requested &&
-                      entry->state.recovery_radio_start_flushed &&
+                      ((entry->state.recovery_radio_start_flushed && !n->radio_submit_error) ||
+                       (!entry->state.recovery_radio_start_flushed && n->radio_submit_error)) &&
                       ((!entry->state.recovery_radio_released && entry->radio) ||
                        (entry->state.recovery_radio_released && !entry->radio &&
                         entry->state.radio.ssr_cancelled_before_start &&
+                        entry->state.radio.ssr_start_submit_error == n->radio_submit_error &&
                         !entry->state.radio.start_attempted && !entry->state.radio.host_up &&
                         !entry->state.radio.stop_attempted && !entry->state.radio.down_attempted &&
                         !entry->state.radio.down_accepted));
@@ -704,8 +707,15 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                 return mishare_runtime_recovery_error(entry, ret);
         }
         if (entry->radio) {
+            struct mishare_radio_status current = {0};
+
             ret = mishare_radio_ssr_cancel_check(entry->radio, entry->vdev, entry->events,
                                                   entry, entry->pe_cookie, pe_freq);
+            if (!ret)
+                ret = mishare_radio_snapshot(entry->radio, &current);
+            if (!ret && current.error != (entry->state.ndi.radio_submit_error ?
+                                          entry->state.ndi.radio_submit_error : -ESHUTDOWN))
+                ret = -EUCLEAN;
             if (ret)
                 return mishare_runtime_recovery_error(entry, ret);
         }
@@ -729,7 +739,8 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
 
             ret = mishare_radio_ssr_cancel_release(&entry->radio, entry->vdev, entry->events,
                                                     entry, entry->pe_cookie, pe_freq, &last);
-            if (ret || entry->radio || !last.ssr_cancelled_before_start)
+            if (ret || entry->radio || !last.ssr_cancelled_before_start ||
+                last.ssr_start_submit_error != entry->state.ndi.radio_submit_error)
                 return mishare_runtime_recovery_error(entry, ret);
             spin_lock_irqsave(&mishare_runtime_lock, flags);
             entry->state.radio = last;
@@ -890,10 +901,14 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
     struct mishare_ndi_status *n = &entry->state.ndi;
 
     return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_released) ||
-            (entry->state.recovery_radio_start_flushed && entry->state.recovery_radio_released &&
+            (((entry->state.recovery_radio_start_flushed && !n->radio_submit_error) ||
+              (!entry->state.recovery_radio_start_flushed && n->radio_submit_error)) &&
+             entry->state.recovery_radio_released &&
              n->radio_requested && entry->state.radio.ssr_cancelled_before_start &&
              entry->state.radio.phase == MISHARE_RADIO_BLOCKED &&
-             entry->state.radio.error == -ESHUTDOWN && !entry->state.radio.pending &&
+             entry->state.radio.ssr_start_submit_error == n->radio_submit_error &&
+             entry->state.radio.error == (n->radio_submit_error ? n->radio_submit_error : -ESHUTDOWN) &&
+             !entry->state.radio.pending &&
              !entry->state.radio.users && !entry->state.radio.start_attempted &&
              !entry->state.radio.stop_attempted && !entry->state.radio.host_up &&
              !entry->state.radio.down_attempted && !entry->state.radio.down_accepted)) &&
@@ -1631,6 +1646,11 @@ int mishare_runtime_ndi_start(struct mishare_runtime_owner *entry)
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     ret = mishare_radio_open(entry->vdev, entry->events, entry, entry->pe_cookie,
                               ndi->channel_freq, &entry->radio);
+    if (ret != -EINPROGRESS) {
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        ndi->radio_submit_error = ret;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    }
     if (ret != -EINPROGRESS && !entry->radio) {
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.radio.phase = MISHARE_RADIO_CANCELLED;
