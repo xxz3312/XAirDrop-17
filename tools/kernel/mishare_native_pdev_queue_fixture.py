@@ -50,7 +50,8 @@ REF_ENUM
 WORK_TYPES
 struct wlan_objmgr_psoc {int live;};
 struct vdev_list {struct wlan_objmgr_vdev *head;};
-struct wlan_objmgr_pdev {struct {qdf_atomic_t ref_cnt,ref_id_dbg[WLAN_REF_ID_MAX];unsigned print_cnt,wlan_pdev_id,wlan_vdev_count,max_vdev_count;struct vdev_list wlan_vdev_list;struct wlan_objmgr_psoc *wlan_psoc;} pdev_objmgr;int obj_state,pdev_lock,peer_free_lock;qdf_list_t peer_free_list;qdf_work_t peer_obj_free_work;unsigned active_work_cnt;};
+struct wlan_objmgr_pdev_objmgr {qdf_atomic_t ref_cnt,ref_id_dbg[WLAN_REF_ID_MAX];unsigned print_cnt,wlan_pdev_id,wlan_vdev_count,max_vdev_count;struct vdev_list wlan_vdev_list;struct wlan_objmgr_psoc *wlan_psoc;};
+struct wlan_objmgr_pdev {struct wlan_objmgr_pdev_objmgr pdev_objmgr;int obj_state,pdev_lock,peer_free_lock;qdf_list_t peer_free_list;qdf_work_t peer_obj_free_work;unsigned active_work_cnt;};
 struct wlan_objmgr_vdev {struct wlan_objmgr_pdev *pdev;struct wlan_objmgr_vdev *next;};
 struct wlan_objmgr_peer {struct wlan_objmgr_vdev *vdev;qdf_list_node_t free_node;uint8_t mac[6];};
 static QDF_STATUS wlan_objmgr_pdev_obj_destroy(struct wlan_objmgr_pdev *);
