@@ -128,6 +128,7 @@ static void q90_drain(struct mishare_runtime_owner **o) {
  if(!p->peer_free_list.count && !w->pending)return;
  assert(w->pending && ctx_peer && p89_heap==1 && !p89_destroy_calls && ctx_peer->peer_objmgr.ref_cnt.value==0 && p89_vdev_link && p89_psoc_link && p89_free_calls==0 && "EXPECTED_PEER_WORK_SCHEDULE");
  assert(mishare_runtime_destroy(o)==-EINPROGRESS && !delete_calls && !detach_calls && engine_allocations==1 && dp_objects);
+ q90_closed=true; /* This fixture creates one private peer; its last producer has returned. */
  bool old=q90_atomic;q90_atomic=false;
  if(q90_mode==2) {q90_closed=true;assert(q90_try_deinit(p)==-EINPROGRESS && p->q90_live && p->peer_free_list.count==1 && "EXPECTED_PEER_QUEUE_DEINIT_QUIESCENCE");}
  if(q90_mode==5 && !q90_cancel_seen) {
