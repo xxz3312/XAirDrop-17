@@ -46,6 +46,9 @@ static void clean_dp_delete(void *soc,uint8_t id,uint8_t *mac,uint32_t bitmap) {
 }
 static void clean_key_release(struct wlan_objmgr_vdev *v,uint8_t *mac) {assert(v==ctx_peer.vdev && mac && v->mlme->ext_vdev_ptr && clean_peer_phase==3 && !clean_peer_users);clean_peer_phase=4;}
 static QDF_STATUS clean_obj_delete(struct wlan_objmgr_peer *p) {assert(p==&ctx_peer && clean_peer_phase==4 && clean_peer_users==1 && !clean_peer_deleted && ctx_peer_present);clean_peer_phase=5;clean_peer_deleted=true;ctx_peer_present=false;clean_obj_deletes++;clean_try_peer_gone();return QDF_STATUS_SUCCESS;}
+#pragma push_macro("QDF_BUG")
+#undef QDF_BUG
+#define QDF_BUG(x) assert(x)
 #define cds_get_context clean_get_soc
 #define wma_remove_peer clean_native_remove_peer
 #define wma_remove_objmgr_peer clean_native_remove_objmgr_peer
@@ -75,6 +78,7 @@ NATIVE_PEER_FUNCTIONS
 #undef wma_remove_objmgr_peer
 #undef wma_remove_peer
 #undef cds_get_context
+#pragma pop_macro("QDF_BUG")
 '''
 
 FINAL = r'''
