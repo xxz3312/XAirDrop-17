@@ -122,7 +122,11 @@ def fixture(root):
     enum = re.search(r'enum vdev_cmd_type\s*\{.*?^\};', types, re.S | re.M)[0]
     type_block = ('struct peer_delete_all_response;struct ml_rv_info;\n'
                   '#undef START_REQ\n#undef RESTART_REQ\n#undef STOP_REQ\n#undef DELETE_REQ\n' + enum + '\n' + ops_type(types) + '\n')
-    anchor = 'static unsigned native_lifecycle_events,native_lifecycle_transitions;'
+    # INIT validation/down adapters precede the lifecycle adapters. Declare the
+    # complete type before that earliest group, and remove the old adapter's
+    # synthetic START_REQ macro so native command enum values stay in effect.
+    source = owner.replace_once(source, '#ifndef START_REQ\n#define START_REQ 1\n#endif\n', '')
+    anchor = 'static QDF_STATUS mlme_vdev_validate_basic_params('
     source = owner.replace_once(source, anchor, type_block + anchor)
     for name in ADAPTERS:
         if name == 'mlme_vdev_notify_start_state_exit':
