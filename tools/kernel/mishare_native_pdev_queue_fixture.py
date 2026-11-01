@@ -170,8 +170,8 @@ def mutations(source):
  ('final_release','wlan_objmgr_pdev_release_ref','wlan_objmgr_pdev_obj_destroy(pdev);','(void)pdev;','EXPECTED_PDEV_FINAL_RELEASE'),
  ('reference_id_gate','wlan_objmgr_pdev_release_ref','if (!qdf_atomic_read(&pdev->pdev_objmgr.ref_id_dbg[id]))','if (false)','EXPECTED_PDEV_REFERENCE_ID_GATE'),
  ('reference_admission','wlan_objmgr_pdev_try_get_ref','if (pdev->obj_state != WLAN_OBJ_STATE_CREATED)','if (false)','EXPECTED_PDEV_REFERENCE_ADMISSION'),
- ('work_drain',None,'drain(p);','/* missing process-context drain */','EXPECTED_PDEV_WORK_DRAIN'),
- ('producer_closed',None,'closed=true;\n drain(p);','closed=false;\n drain(p);','EXPECTED_PDEV_PRODUCER_CLOSED')]
+ ('work_drain','finish_parent','drain(p);','/* missing process-context drain */','EXPECTED_PDEV_WORK_DRAIN'),
+ ('producer_closed','finish_parent','closed=true;\n drain(p);','closed=false;\n drain(p);','EXPECTED_PDEV_PRODUCER_CLOSED')]
 
 def audit(root):
  if os.environ.get('GITHUB_ACTIONS')!='true':raise ValueError('C compilation is restricted to GitHub Actions')
