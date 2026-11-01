@@ -1,4 +1,12 @@
-## 最新阶段 0086（离线验收完成）
+## 最新阶段 0087（离线验收完成）
+
+0086 的零引用清理继续进入原生 VDEV 析构分发器、组件状态汇总、component detach 和完整 MLME destroy handler。保留原生 54 个组件槽位与对象状态枚举，MLME 为原生处理器体，另外两个槽为逆序检查的测试处理器。新增 12 个带/不带外持引用用例，覆盖异步成功、组件失败、MLO detach 拒绝、错误逻辑状态、MLME detach 不匹配和错误异步完成参数。
+
+CI [41284004867](https://github.com/xxz3312/XAirDrop-17/actions/runs/41284004867)（`e6d68ca`）已全部通过：53 项 Python 检查、新原生析构模型、12 个新增组件/外持引用用例、15 项负对照、0086/0085/0084/0083/0082 独立模型与既有 C 回归、完整编译、CNSS 名称检查、严格链接、七项选定布局及最终模块记录检查。40 份模型报告所列生产源码哈希均已与仓库源码核对，其中 34 份与本模型共享 runtime/radio 等主文件；不同路径别名也已对照相应 Git blob 验证。四个原生函数体与两组枚举独立匹配固定版本，四份 native 输入的原始 Git blob 身份一致。完整生成源码在实现时从固定快照与既有补丁重建，SHA-256 与 CI 匹配；本地未执行 C 编译。报告 ZIP 校验值、实际链接模块与布局候选哈希均已核对，WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。本阶段离线验收完成，见[验证记录](research/popsicle-native-object-destructor-0087-validation.json)。
+
+原生 MLME 处理器忽略 detach 错误时，生产 final-free 的 attached-pointer veto 仍挡住 VDEV/父资源释放；已释放的 SM/MLME 不伪造回滚。实际引用获取/释放、计数和处理器注册/创建仍为平台模型，真实 release_ref/debug 与 registration init 尚未编入；DP/peer 真实析构图、自动父资源协调、活动 START/UP SSR 恢复和完整 AWDL 收包仍待继续。backend 关闭，手机无需操作。见[0087](POPSICLE-NATIVE-OBJECT-DESTRUCTOR-0087.md)。
+
+## 阶段 0086（离线验收完成）
 
 普通 DOWN/INIT 后，0085 完整 WMA/SM 主流程继续经过原生 PE 析构、普通 WMA peer 删除、固件 peer/VDEV DELETE 响应来源、DP 完成、WMA/legacy 释放、原生 SM 销毁与 VDEV 最终释放。新增 32 种串行回调/引用组合、六类失败保留和两个生产等待门槛负对照；外持引用与 flush-service 共用测试位，不能宣称六个独立维度的全部组合。
 
