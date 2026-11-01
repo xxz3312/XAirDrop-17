@@ -157,11 +157,11 @@ def ref_enum(root):
 
 def fixture(root):
  source,exits,stubbed=previous.fixture(root)
- source=owner.replace_once(source,'#define WLAN_HDD_ID_OBJ_MGR 1',ref_enum(root)+'\nenum {REF_NATIVE_HDD=WLAN_HDD_ID_OBJ_MGR,REF_NATIVE_OSIF=WLAN_OSIF_ID,REF_NATIVE_WMA=WLAN_LEGACY_WMA_ID,REF_NATIVE_MAC=WLAN_LEGACY_MAC_ID};\n#define WLAN_HDD_ID_OBJ_MGR 1')
+ source=owner.replace_once(source,'#define WLAN_HDD_ID_OBJ_MGR 1',ref_enum(root)+'\nstatic const wlan_objmgr_ref_dbgid REF_NATIVE_HDD=WLAN_HDD_ID_OBJ_MGR,REF_NATIVE_OSIF=WLAN_OSIF_ID,REF_NATIVE_WMA=WLAN_LEGACY_WMA_ID,REF_NATIVE_MAC=WLAN_LEGACY_MAC_ID;\n#define WLAN_HDD_ID_OBJ_MGR 1')
  source=owner.replace_once(source,'WLAN_OBJ_STATE obj_state;','WLAN_OBJ_STATE obj_state;struct {qdf_atomic_t ref_cnt,ref_id_dbg[WLAN_REF_ID_MAX];unsigned print_cnt;uint8_t vdev_id;} vdev_objmgr;unsigned ref_trace_gets,ref_trace_puts;bool ref_components_armed;')
  old='\n'.join(re.search(r'^static [^\n]*\b'+n+r'\([^\n]*$',source,re.M)[0] for n in ['wlan_objmgr_vdev_try_get_ref','wlan_objmgr_vdev_release_ref','wlan_objmgr_vdev_obj_delete'])
  assert old in source
- text=(root/OBJECT).read_text();refs='\n'.join(function(text,n) for n in NAMES[:-1]);block=EARLY.replace('NATIVE_REFERENCE_FUNCTIONS',refs).replace('NATIVE_LOGICAL_DELETE',function(text,NAMES[-1]))
+ text=(root/OBJECT).read_text();refs='\n'.join(function(text,n) for n in NAMES[:-1]);block=EARLY.replace('\nNATIVE_REFERENCE_FUNCTIONS\n','\n'+refs+'\n').replace('\nNATIVE_LOGICAL_DELETE\n','\n'+function(text,NAMES[-1])+'\n')
  source=owner.replace_once(source,old,block)
  source=owner.replace_once(source,'v->refs=1;memcpy(v->mac,params->macaddr,6);','v->obj_state=WLAN_OBJ_STATE_CREATED;v->vdev_objmgr.vdev_id=7;ref_selected_get(v,WLAN_OBJMGR_ID);ref_check(v);memcpy(v->mac,params->macaddr,6);')
  source=owner.replace_once(source,'if(defer_ref)v->refs++;','if(defer_ref){ref_selected_get(v,REF_NATIVE_OSIF);ref_check(v);}')
@@ -177,6 +177,7 @@ def fixture(root):
  wrapper='int main(void) {\nfor(unsigned trace=0;trace<2;trace++){pid_t c=fork();assert(c>=0);if(!c){ref_trace_mode=trace;ref_contract();assert(!ref_baseline());_Exit(0);}int status;assert(waitpid(c,&status,0)==c && WIFEXITED(status) && !WEXITSTATUS(status));}puts("MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY");return 0;\n}'
  extra=LATE[LATE.index('static void ref_contract'):]
  source=owner.replace_once(source,main,extra+'\n'+body+'\n'+wrapper)
+ for name in NAMES:assert source.count(function(text,name))==1,name
  return source,exits,stubbed
 
 def negative_controls(directory,c_file,command,env,source,root):
