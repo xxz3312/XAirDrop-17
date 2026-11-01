@@ -64,6 +64,16 @@ def ops_type(text):
     return re.search(r'struct vdev_mlme_ops\s*\{.*?^\};', text, re.S | re.M)[0]
 
 
+def model_adapter(text, name):
+    # These adapter models are deliberately single-line definitions. The shared
+    # native extractor expects a closing brace on its own line and would consume
+    # following functions when used for this compact model representation.
+    matches = re.findall(r'^static QDF_STATUS ' + name + r'\([^\n]*\) \{[^\n]*\}', text, re.M)
+    if len(matches) != 1:
+        raise ValueError('Expected one compact model adapter: ' + name)
+    return matches[0]
+
+
 def contract(table):
     bindings = re.findall(r'\.(\w+)\s*=\s*(\w+)', table)
     expected_probes = {original: probe for original, probe in PROBES.values()}
@@ -119,7 +129,7 @@ def fixture(root):
             # 0082 already inserted this unchanged native inline adapter.
             assert source.count(inline_function(header, name)) == 1
             continue
-        old = function(source, name)
+        old = model_adapter(source, name)
         replacement = inline_function(header, name)
         if name in PROBES:
             _, probe = PROBES[name]
