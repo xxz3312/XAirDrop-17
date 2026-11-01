@@ -35,7 +35,7 @@ static void wlan_peer_obj_lock(struct wlan_objmgr_peer *p) {assert(p && !p->peer
 static void wlan_peer_obj_unlock(struct wlan_objmgr_peer *p) {assert(p && p->peer_lock);p->peer_lock=0;}
 static u8 *wlan_peer_get_macaddr(struct wlan_objmgr_peer *p) {assert(p);return p->mac;}
 static struct wlan_objmgr_psoc *wlan_peer_get_psoc(struct wlan_objmgr_peer *p) {return wlan_vdev_get_psoc(p->vdev);}
-static enum wlan_peer_type wlan_peer_get_peer_type(struct wlan_objmgr_peer *p) {return p->peer_mlme.peer_type;}
+static enum wlan_peer_type p89_peer_type(struct wlan_objmgr_peer *p) {return p->peer_mlme.peer_type;}
 static QDF_STATUS p89_addr_equal(const u8 *a,const u8 *b) {return memcmp(a,b,6)?QDF_STATUS_E_FAILURE:QDF_STATUS_SUCCESS;}
 static int p89_atomic_read(qdf_atomic_t *p) {return p->value;}
 static void p89_atomic_inc(qdf_atomic_t *p) {p->value++;}
@@ -76,6 +76,7 @@ static void wlan_objmgr_vdev_peer_freed_notify(struct wlan_objmgr_vdev *v) {asse
 #define obj_mgr_err p89_log
 #define obj_mgr_debug p89_log
 #define WLAN_ADDR_EQ p89_addr_equal
+#define wlan_peer_get_peer_type p89_peer_type
 #define qdf_atomic_read p89_atomic_read
 #define qdf_atomic_inc p89_atomic_inc
 #define qdf_atomic_dec p89_atomic_dec
@@ -137,6 +138,7 @@ NATIVE_PEER_FUNCTIONS
 #undef qdf_atomic_dec
 #undef qdf_atomic_inc
 #undef qdf_atomic_read
+#undef wlan_peer_get_peer_type
 #undef WLAN_ADDR_EQ
 #undef obj_mgr_debug
 #undef obj_mgr_err
@@ -184,7 +186,8 @@ static bool p89_complete(struct mishare_runtime_owner **o) {
   assert(mishare_runtime_destroy(o)==-EINPROGRESS && !delete_calls && !detach_calls);return false;
  }
  assert(clean_peer_gone && !ctx_peer && !p89_heap && p89_free_calls==1 && p89_vdev_detaches==1 && p89_psoc_detaches==1 && !p89_bugs);
- if(pending_dp_cb)finish_dp();return true;
+ if(pending_dp_cb) {finish_dp();}
+ return true;
 }
 '''
 EXTRA=r'''
