@@ -1,4 +1,12 @@
-## 最新阶段 0085（离线验收完成）
+## 最新阶段 0086（离线验收完成）
+
+普通 DOWN/INIT 后，0085 完整 WMA/SM 主流程继续经过原生 PE 析构、普通 WMA peer 删除、固件 peer/VDEV DELETE 响应来源、DP 完成、WMA/legacy 释放、原生 SM 销毁与 VDEV 最终释放。新增 32 种串行回调/引用组合、六类失败保留和两个生产等待门槛负对照；外持引用与 flush-service 共用测试位，不能宣称六个独立维度的全部组合。
+
+CI [41275178699](https://github.com/xxz3312/XAirDrop-17/actions/runs/41275178699)（`388b029`）已全部通过：53 项 Python 检查、16 种 WMA 主流程与三次 ratemask 流程接续完整清理、32 种新增回调/引用组合、六类新增失败保留、既有八类 WMA 失败保留、11 项负对照、0085/0084/0083/0082 独立模型与旧 C 回归、完整编译、CNSS 名称检查、严格链接、七项选定布局及最终模块记录检查。39 份模型报告的公共生产源码哈希一致，五个生产文件已独立核对；两个普通 WMA 删除函数与固定源码独立匹配，owned peer 删除入口与 0017 补丁一致。完整生成源码在本地从固定快照与既有补丁重建，SHA-256 与 CI 匹配；本地未执行 C 编译。报告 ZIP 校验值及实际链接模块/布局候选均已核对，WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。本阶段离线验收完成，见[验证记录](research/popsicle-native-cleanup-0086-validation.json)。
+
+peer 引用/逻辑删除/unmap、DP 完成、component destructor 调用方和父列表仍为平台模型；模型明确将 DP VDEV 完成延迟至 peer unmap/逻辑删除完成，不认证真实 DP/peer 析构图或硬件并发顺序。真实对象管理器析构调用方、父资源停机自动协调、活动 START/UP SSR 恢复与完整 AWDL 收包仍待后续工作。backend 关闭，手机无需操作。见[0086](POPSICLE-NATIVE-CLEANUP-0086.md)。
+
+## 阶段 0085（离线验收完成）
 
 完整原生 WMA START 响应函数及 MAC/DP 更新、频道响应、ratemask 转换三个助手已进入 PAS/NDI 复合模型。覆盖频道复制、TX streams、MAC/功率和原生指针长度事件参数；检查早期失败、部分字段已更新、UP 后失败及 SM 拒绝事件时 controller 封锁并保留资源。原生 ratemask 发送失败仅记录继续、越界配置跳过的行为保持原样。
 
