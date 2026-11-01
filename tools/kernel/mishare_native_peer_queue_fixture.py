@@ -171,7 +171,7 @@ static void q90_extra_cases(void) {
 '''
 
 def extract(text,name):
- m=re.search(r'(?:static\s+)?(?:inline\s+)?(?:void|bool|QDF_STATUS|uint32_t)\s+'+name+r'\([^;{]+\)\s*\{.*?^\}',text,re.S|re.M)
+ m=re.search(r'(?:static\s+)?(?:inline\s+)?(?:void|bool|int|QDF_STATUS|uint32_t)\s+'+name+r'\([^;{]+\)\s*\{.*?^\}',text,re.S|re.M)
  if not m:raise ValueError('Missing queue source function: '+name)
  return m[0]
 
