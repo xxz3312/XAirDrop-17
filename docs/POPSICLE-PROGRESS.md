@@ -1,6 +1,10 @@
-## 最新阶段 0084（验证中）
+## 最新阶段 0084（离线验收完成）
 
-新增 12 个原生 inline 回调、完整 ops 类型和 32 槽 PAS 表，覆盖 NULL ops/slot 默认行为、参数/返回值传播、所有表绑定和两个回调负对照；八种主流程继续执行原生 SM owner/engine，已有五项负对照保留。validation/down 两个测试探针明确记录，完整 WMA 后处理等边界保留。Python 语法/提取检查通过，完整 CI 待验证。见[0084](POPSICLE-NATIVE-CALLBACKS-0084.md)。backend 关闭，手机无需操作。
+原生 12 个 inline 回调、完整 ops 类型及 32 槽 PAS 表已进入模型执行。每个 adapter 覆盖 NULL ops/slot 默认 SUCCESS、参数和三类返回值传播；完整绑定检查及两个新增负对照避免把缺回调的默认成功当作动作完成。八种主流程与既有五项负对照保留，validation/down 两个竞态测试探针明确记录。
+
+CI [41270857085](https://github.com/xxz3312/XAirDrop-17/actions/runs/41270857085)（`01b6203`）已全部通过：53 项 Python 检查、新原生回调模型、12 个 adapter 的 60 项空槽/参数/返回值契约检查、完整 32 槽绑定、八种主流程、七项负对照、0083/0082 独立模型与既有 C 回归、完整编译、CNSS 名称检查、严格链接、七项选定布局和最终模块记录检查。37 份模型报告的公共生产源码哈希一致，五个生产文件已独立核对；12 个函数与原生 ops 类型哈希匹配，PAS 表从 0011/0022 补丁独立重建后匹配。整个 ops 头文件与原始固定源码的差异来自既有 0007 补丁的 PASSTHRU 类型宏/注释，重建后的整文件哈希也匹配，ops 声明没有差异。报告 ZIP 校验值与实际链接模块/布局候选记录均已复核，WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。 见[0084](POPSICLE-NATIVE-CALLBACKS-0084.md)及[验证记录](research/popsicle-native-callbacks-0084-validation.json)。
+
+完整 WMA 后处理、真实 object-manager 调用方、物理 PE/peer 生命周期、实际 START/UP SSR 恢复、父资源自动协调与完整 AWDL 收包仍需后续工作。平台字段/锁/minidump/transport 仍有模型；backend 关闭，手机无需操作。
 
 ## 阶段 0083（离线验收完成）
 
