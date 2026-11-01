@@ -1,4 +1,8 @@
-## 最新阶段 0083（离线验收完成）
+## 最新阶段 0084（验证中）
+
+新增 12 个原生 inline 回调、完整 ops 类型和 32 槽 PAS 表，覆盖 NULL ops/slot 默认行为、参数/返回值传播、所有表绑定和两个回调负对照；八种主流程继续执行原生 SM owner/engine，已有五项负对照保留。validation/down 两个测试探针明确记录，完整 WMA 后处理等边界保留。Python 语法/提取检查通过，完整 CI 待验证。见[0084](POPSICLE-NATIVE-CALLBACKS-0084.md)。backend 关闭，手机无需操作。
+
+## 阶段 0083（离线验收完成）
 
 新增模型实际执行原生 `mlme_vdev_sm_create/destroy`，覆盖创建分配失败、VM-id 名称/初始状态、minidump 与锁建立/释放顺序、三次成功配对释放，并包围八种主流程和拒绝用例。CI [41247250279](https://github.com/xxz3312/XAirDrop-17/actions/runs/41247250279)（`22cd90f`）已全部通过：53 项 Python 检查、新原生创建/销毁模型、八种启动组合、五项负对照、0082 独立引擎模型、既有 C 回归、完整 WLAN/Wonder/provider 编译、CNSS 名称检查、严格链接、七项选定布局及最终模块记录检查。36 份模型报告的公共生产源码哈希一致；两个原生 wrapper 函数哈希与固定源码独立匹配，五个生产文件哈希、报告 ZIP 校验值及实际链接模块/布局候选记录均已核对。WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。 见[0083](POPSICLE-NATIVE-SM-OWNER-0083.md)与[验证记录](research/popsicle-native-sm-owner-0083-validation.json)。
 

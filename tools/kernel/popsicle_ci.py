@@ -268,6 +268,9 @@ def build(work, phase):
                 raise subprocess.CalledProcessError(process.returncode, command)
 
     try:
+        logged(['python3', REPO / 'tools/kernel/mishare_native_callbacks_fixture.py',
+                '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-native-callbacks-fixture.json'],
+               'mishare-native-callbacks-fixture.log')
         logged(['python3', REPO / 'tools/kernel/mishare_native_sm_owner_fixture.py',
                 '--wlan', work / 'wlan', '--output', artifacts / 'reports/mishare-native-sm-owner-fixture.json'],
                'mishare-native-sm-owner-fixture.log')
