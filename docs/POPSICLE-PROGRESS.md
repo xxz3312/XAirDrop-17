@@ -1,4 +1,12 @@
-## 最新阶段 0087（离线验收完成）
+## 最新阶段 0088（离线验收完成）
+
+普通/trace 两套原生 get_ref、try_get_ref、release_ref 与完整 obj_delete 已进入组合执行，保留原生 109 个引用 ID。原生逻辑删除先关闭准入再释放 OBJMGR 引用，原生 aggregate 减零才进入 0087 析构分发器；旧 refs 仅是被核对的镜像，不独立触发销毁。两种版本各重跑完整套件，并各覆盖三个额外引用的六种释放顺序、带/不带外持引用，共 24 个新增完整序列。新增九项负对照，总计 24 项。
+
+CI [41328315517](https://github.com/xxz3312/XAirDrop-17/actions/runs/41328315517)（`16f4599`）已全部通过：53 项 Python 检查、普通与 trace 两个版本各自完整执行 0087 套件、24 个新增多引用释放序列、累计 24 项负对照、0087/0086/0085/0084/0083/0082 独立模型及既有 C 回归、完整编译、CNSS 名称检查、严格链接、七项选定布局和最终模块记录检查。41 份报告所列生产源码哈希均已与仓库源码核对，其中 35 份与本模型共享主生产文件；37 个路径别名均与相应 Git blob 和 SHA-256 一致。七个函数体和完整引用 ID 枚举独立匹配固定源码。完整生成源码已从固定快照与既有补丁重建，SHA-256 与 CI 一致；本地未执行 C 编译。报告 ZIP 校验值、实际链接 WLAN 模块与布局候选哈希已核对，WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。本阶段离线验收完成，见[验证记录](research/popsicle-native-reference-release-0088-validation.json)。
+
+保持原生差异：raw get_ref 本身没有状态准入门槛，try_get_ref 才会拒绝八种非 CREATED 状态；受控 QDF_ASSERT/BUG 仅为隔离契约。紧凑调用方标签映射到原生 HDD/OSIF/WMA/MAC ID，不能认证全部真实调用方。atomic/锁、trace 数据库、创建与组件注册仍为平台模型；真实 DP/peer 析构图、自动父资源协调、活动 START/UP SSR 恢复和完整 AWDL 收包仍待继续。backend 关闭，手机无需操作。见[0088](POPSICLE-NATIVE-REFERENCE-RELEASE-0088.md)。
+
+## 阶段 0087（离线验收完成）
 
 0086 的零引用清理继续进入原生 VDEV 析构分发器、组件状态汇总、component detach 和完整 MLME destroy handler。保留原生 54 个组件槽位与对象状态枚举，MLME 为原生处理器体，另外两个槽为逆序检查的测试处理器。新增 12 个带/不带外持引用用例，覆盖异步成功、组件失败、MLO detach 拒绝、错误逻辑状态、MLME detach 不匹配和错误异步完成参数。
 
