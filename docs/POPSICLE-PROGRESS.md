@@ -1,6 +1,10 @@
-## 最新阶段 0085（验证中）
+## 最新阶段 0085（离线验收完成）
 
-新增完整原生 WMA START 响应函数及三个原生助手，覆盖 16 种主流程、频道/MAC/功率/事件参数副作用、ratemask 分支与八个失败保留用例，新增两个负对照。生产源码未改，源码生成及函数体核对已通过，完整 CI 待验证。平台/传递调用与实际 START/UP SSR 恢复、父资源协调等边界保留。见[0085](POPSICLE-NATIVE-WMA-START-0085.md)。backend 关闭，手机无需操作。
+完整原生 WMA START 响应函数及 MAC/DP 更新、频道响应、ratemask 转换三个助手已进入 PAS/NDI 复合模型。覆盖频道复制、TX streams、MAC/功率和原生指针长度事件参数；检查早期失败、部分字段已更新、UP 后失败及 SM 拒绝事件时 controller 封锁并保留资源。原生 ratemask 发送失败仅记录继续、越界配置跳过的行为保持原样。
+
+CI [41273213537](https://github.com/xxz3312/XAirDrop-17/actions/runs/41273213537)（`82baf02`）已全部通过：53 项 Python 检查、新完整 WMA 响应模型、16 种主流程、3 次额外 ratemask 流程、6 项类型映射契约、8 类失败保留、九项负对照、0084/0083/0082 独立模型与既有 C 回归、完整编译、CNSS 名称检查、严格链接、七项选定布局及最终模块记录检查。38 份报告的公共生产源码哈希一致，五个生产文件已独立核对；四个函数体从固定源码加 0015 补丁重建后匹配，ratemask 类型、回调/PAS 表与独立模型哈希一致。完整生成源码也已在本地从固定源码快照与补丁重建，与 CI 生成源码哈希一致；本地未执行 C 编译。报告 ZIP 校验值及实际链接模块/布局候选均已核对，WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。 见[0085](POPSICLE-NATIVE-WMA-START-0085.md)与[验证记录](research/popsicle-native-wma-start-0085-validation.json)。
+
+DP/policy/ratemask transport、上下文/config 等端点仍是平台模型；非 PAS 分支和 AP MCC 条件配置未由本阶段认证。delivery bridge 的观察/拒绝探针明确记录，不将源函数体覆盖写成全部传递调用或实际固件执行。物理 PE/peer 完整清理、原生 object-manager 调用方、父资源停机自动协调、活动 START/UP SSR 恢复及完整 AWDL 收包仍需后续实现/验证。backend 关闭，手机无需操作。
 
 ## 阶段 0084（离线验收完成）
 

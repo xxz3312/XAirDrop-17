@@ -1,0 +1,548 @@
+{
+  "stage": "0085 full native WMA START-response body in PAS/NDI composite",
+  "stage_offline_acceptance_complete": true,
+  "source_commit": "82baf026bc263624ca137d4d939b0d77a2124883",
+  "workflow_run": 41273213537,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41273213537",
+  "workflow_conclusion": "success",
+  "required_steps_conclusion": "success",
+  "python_regression_checks": 53,
+  "models": {
+    "native-wma-start": {
+      "status": "MISHARE_NATIVE_WMA_START_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "0892a771da3b4dc3699d6d6a56c9aa9f242a4d012f9083434de54267e1e60098",
+      "production_sha256": {
+        "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+        "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+        "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+        "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+        "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+      },
+      "native_sha256": {
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+        "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+        "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+      },
+      "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+      "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+      "native_bridge_sha256": {
+        "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+        "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+      },
+      "native_exit_sha256": {
+        "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+        "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+        "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+        "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+        "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+        "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+        "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+        "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+        "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+        "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+        "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+        "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+      },
+      "stubbed_unexercised_table_functions": [
+        "mlme_vdev_state_dfs_cac_wait_entry",
+        "mlme_vdev_state_dfs_cac_wait_event",
+        "mlme_vdev_state_dfs_cac_wait_exit",
+        "mlme_vdev_subst_mlo_sync_wait_entry",
+        "mlme_vdev_subst_mlo_sync_wait_event",
+        "mlme_vdev_subst_mlo_sync_wait_exit",
+        "mlme_vdev_subst_start_restart_progress_entry",
+        "mlme_vdev_subst_start_restart_progress_event",
+        "mlme_vdev_subst_start_restart_progress_exit",
+        "mlme_vdev_subst_suspend_csa_restart_entry",
+        "mlme_vdev_subst_suspend_csa_restart_event",
+        "mlme_vdev_subst_suspend_csa_restart_exit",
+        "mlme_vdev_subst_suspend_host_restart_entry",
+        "mlme_vdev_subst_suspend_host_restart_event",
+        "mlme_vdev_subst_suspend_host_restart_exit",
+        "mlme_vdev_subst_suspend_suspend_restart_entry",
+        "mlme_vdev_subst_suspend_suspend_restart_event",
+        "mlme_vdev_subst_suspend_suspend_restart_exit"
+      ],
+      "native_exit_callback_sha256": {
+        "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+        "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+      },
+      "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+      "PAS_exit_callback_binding_source_reviewed": true,
+      "negative_control_missing_initial_substate_recheck_rejected": true,
+      "negative_control_missing_default_child_rejected": true,
+      "negative_control_parent_fallback_rejected": true,
+      "checks": [
+        "complete pinned generic engine C file/header with original dense enum values, original state table and event-name array",
+        "native transition and selected entry/event/exit bodies; delivery bridge has an explicit WMA observation/failure probe",
+        "real engine dispatch has no parent fallback; default child entry and child/parent exit order verified",
+        "real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected",
+        "2.4/5240 MHz ordinary/early response lifecycle from both INIT/0 and INIT/IDLE reaches DOWN, retires controller and queues PE deletion with parents retained",
+        "fresh INIT/zero SSR rejection retains resources; it cannot substitute for native IDLE reclaim proof",
+        "engine allocations explicitly released in fixture; no synthetic native state reset",
+        "complete patched native WMA START-response body, native MAC/DP update, channel-switch response and ratemask mapping functions",
+        "16 main combinations: INIT/0 or IDLE, 2437/5240 MHz, ordinary/early response, direct MAC or pdev-to-MAC mapping",
+        "BSS channel copy, TX streams, native host/DP MAC id, power fields and original pointer-sized START_RESP arguments observed before native UP",
+        "eight failures: missing WMA/MAC/config/resource, invalid pdev id, missing MLME object, invalid WMI after UP, rejected SM event; controllers/parents retained",
+        "ratemask mapping contract and three extra full cycles: valid send, logged send failure accepted by native body, out-of-range config skipped",
+        "seven previous negative controls and missing channel-copy/DP-update negative controls rejected"
+      ],
+      "limitations": "Four unchanged patched native WMA function bodies execute for qualified PAS/NDI successful START responses; native callbacks, owner and engine composite retained. Context/configuration objects, legacy/WMA fields, locks/minidump and allocator are platform models. DP MAC update and policy/ratemask transport endpoints are instrumented models, not actual DP/firmware operations. Inactive AP/STA/OCB/restart paths abort in stubs; FEATURE_AP_MCC_CH_AVOIDANCE is disabled around the extracted bodies. Full function text is not full configuration/callee coverage. Validation/down table probes and a START_RESP observation/failure probe in the native delivery bridge are explicit. WMA ignores the delivery return; production phase checks still quarantine a rejected event. Native WMA may fail after channel/MAC mutations or after UP; no rollback/recovery is claimed. Child fault cases retain all resources until process scope ends. No physical PE/peer teardown, automatic parent/shutdown coordination, active START/UP SSR recovery, backend activation, phone/firmware/RF or AirDrop proof.",
+      "base_engine_status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+      "native_WMA_function_sha256": {
+        "wma_get_ratemask_type": "1c467f736e50cc997d45f62c72ab2c18ef2e38ffb4d6eff9937eceee67053ca3",
+        "wma_set_and_update_mac_id": "9e6202feff5d6d20fa702a12d2aa1dedf917726cdf00e22118ca5eed00cd68d6",
+        "wma_handle_channel_switch_resp": "2418f68a0ccc705515c082983063a07784f4cbec6b8daef437421a75a68028cc",
+        "wma_vdev_start_resp_handler": "e37c2b1931dd7361734f92fa4bceafaecd178b82f0705fdbc24fd52fc316038d"
+      },
+      "native_config_type_sha256": {
+        "wlan_mlme_ratemask_type": "f36b2bceb92b8ec3a0e75b93cd6d730d7dc2e01b99087573994c75c9c59cfa55",
+        "wlan_mlme_ratemask": "0f8bb219821bbe53e913c35d2d148a80d200a71ab5081dadc0bcf9eaf5effc16"
+      },
+      "native_callback_sha256": {
+        "mlme_vdev_validate_basic_params": "4463143504a4e107a8cb6f73a1a7884c6c35cd1a4368b65ed2c61f3ac36f9294",
+        "mlme_vdev_start_send": "c586d46ee87d5f5f09a30ead3b4d4d4f6f565e6a7e8a39ce8bff5047967d94cd",
+        "mlme_vdev_start_continue": "b0ed425131abdd4eb1d93a06976869e2eca2dcfe9130f15a2e372b6d6c55a529",
+        "mlme_vdev_update_beacon": "8273f07ecebe7f22bbd44a96e7f8740a3f92a2f274dc1153c81acfa649e597a9",
+        "mlme_vdev_up_send": "0be5eac58a1a22eea165dbada7c053eaf01b8ff714c23ec65701f4b7cd4a562d",
+        "mlme_vdev_notify_up_complete": "cd19341a05f71b97ca2bb377039fc3fc370ce376b2096c2010abd8f101be3c4d",
+        "mlme_vdev_disconnect_peers": "338c237242562c8c20b08d4973792a9e15f12224af0965a3b822f05ee12bfcc3",
+        "mlme_vdev_stop_send": "5f83ba03a278f87de7b7f6e07a6c9efb319b9ab2345a76fe56985a69438780a4",
+        "mlme_vdev_stop_continue": "19c17c644a272620a1c981825495ede01be2dd4e3fd773cf9a843861e617798e",
+        "mlme_vdev_down_send": "bce0f99fa65923e89835536a03aa31639336ebf7007f1892153acaeda3471fe9",
+        "mlme_vdev_notify_down_complete": "57f03e21f8b9c891ce943127068df193737c5a95deb87b8c34cb70545e00c174",
+        "mlme_vdev_notify_start_state_exit": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639"
+      },
+      "native_PAS_table_sha256": "2042086e195401a5f7c80206a6b898af125f87551409fc18ab70840e59535589",
+      "instrumented_table_targets": {
+        "mishare_radio_validate": "callback_probe_validate",
+        "mishare_radio_down_complete": "callback_probe_down"
+      },
+      "instrumented_native_bridge": "mlme_vdev_sm_deliver_event: START_RESP argument/effect observation and one deliberate dispatch failure",
+      "native_START_RESP_length_expression": "sizeof(rsp), the original pointer size, not sizeof(*rsp)",
+      "legacy_AP_MCC_conditional_enabled": false,
+      "negative_control_missing_native_SM_free_rejected": true,
+      "negative_control_hidden_native_allocation_failure_rejected": true,
+      "negative_control_missing_PAS_START_binding_rejected": true,
+      "negative_control_hidden_native_callback_error_rejected": true,
+      "negative_control_missing_native_BSS_channel_copy_rejected": true,
+      "negative_control_missing_native_PAS_DP_MAC_update_rejected": true
+    },
+    "native-callbacks": {
+      "status": "MISHARE_NATIVE_CALLBACKS_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "c472de96aae4c6feed3ffd57fc85e188afb220399e7d5a2c44906aa84bd834b8",
+      "production_sha256": {
+        "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+        "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+        "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+        "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+        "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+      },
+      "native_sha256": {
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+        "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+        "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+      },
+      "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+      "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+      "native_bridge_sha256": {
+        "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+        "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+      },
+      "native_exit_sha256": {
+        "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+        "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+        "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+        "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+        "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+        "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+        "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+        "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+        "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+        "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+        "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+        "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+      },
+      "stubbed_unexercised_table_functions": [
+        "mlme_vdev_state_dfs_cac_wait_entry",
+        "mlme_vdev_state_dfs_cac_wait_event",
+        "mlme_vdev_state_dfs_cac_wait_exit",
+        "mlme_vdev_subst_mlo_sync_wait_entry",
+        "mlme_vdev_subst_mlo_sync_wait_event",
+        "mlme_vdev_subst_mlo_sync_wait_exit",
+        "mlme_vdev_subst_start_restart_progress_entry",
+        "mlme_vdev_subst_start_restart_progress_event",
+        "mlme_vdev_subst_start_restart_progress_exit",
+        "mlme_vdev_subst_suspend_csa_restart_entry",
+        "mlme_vdev_subst_suspend_csa_restart_event",
+        "mlme_vdev_subst_suspend_csa_restart_exit",
+        "mlme_vdev_subst_suspend_host_restart_entry",
+        "mlme_vdev_subst_suspend_host_restart_event",
+        "mlme_vdev_subst_suspend_host_restart_exit",
+        "mlme_vdev_subst_suspend_suspend_restart_entry",
+        "mlme_vdev_subst_suspend_suspend_restart_event",
+        "mlme_vdev_subst_suspend_suspend_restart_exit"
+      ],
+      "native_exit_callback_sha256": {
+        "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+        "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+      },
+      "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+      "PAS_exit_callback_binding_source_reviewed": true,
+      "negative_control_missing_initial_substate_recheck_rejected": true,
+      "negative_control_missing_default_child_rejected": true,
+      "negative_control_parent_fallback_rejected": true,
+      "checks": [
+        "complete pinned generic engine C file/header with original dense enum values, original state table and event-name array",
+        "unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions",
+        "real engine dispatch has no parent fallback; default child entry and child/parent exit order verified",
+        "real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected",
+        "2.4/5240 MHz ordinary/early response lifecycle from both INIT/0 and INIT/IDLE reaches DOWN, retires controller and queues PE deletion with parents retained",
+        "fresh INIT/zero SSR rejection retains resources; it cannot substitute for native IDLE reclaim proof",
+        "engine allocations explicitly released in fixture; no synthetic native state reset",
+        "12 unchanged native inline callback adapters with complete original ops declaration and full PAS table",
+        "each adapter: NULL ops and NULL slot default success with no callback; complete argument forwarding and exact SUCCESS/FAILURE/NOSUPPORT propagation",
+        "all PAS table targets checked, including explicit reject/noop slots; missing START binding and hidden error negative controls rejected",
+        "all eight native lifecycle combinations and owner allocation/free controls retained; validation/down provenance probes explicitly recorded"
+      ],
+      "limitations": "Native inline callback bodies and full PAS table/type text execute in the 0083 owner/0082 engine composite. Two table targets use named validation/down test probes to preserve existing race/provenance injection; they then call the real controller functions. Other native PAS callbacks use original bindings; callback contract spies are separate from production lifecycle cases. Original missing-ops/slot default SUCCESS is verified as behavior, not accepted as proof of a completed radio operation. Ops object fields, locks/minidump, allocation and transport/WMA postprocessing remain modeled; full declaration is not private ABI/layout proof. Native object-manager create/destroy callers, physical DP/peer cleanup, parent coordinator and active START/UP SSR recovery remain outside scope. No backend activation, phone/firmware/RF or AirDrop certification.",
+      "base_engine_status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+      "native_callback_sha256": {
+        "mlme_vdev_validate_basic_params": "4463143504a4e107a8cb6f73a1a7884c6c35cd1a4368b65ed2c61f3ac36f9294",
+        "mlme_vdev_start_send": "c586d46ee87d5f5f09a30ead3b4d4d4f6f565e6a7e8a39ce8bff5047967d94cd",
+        "mlme_vdev_start_continue": "b0ed425131abdd4eb1d93a06976869e2eca2dcfe9130f15a2e372b6d6c55a529",
+        "mlme_vdev_update_beacon": "8273f07ecebe7f22bbd44a96e7f8740a3f92a2f274dc1153c81acfa649e597a9",
+        "mlme_vdev_up_send": "0be5eac58a1a22eea165dbada7c053eaf01b8ff714c23ec65701f4b7cd4a562d",
+        "mlme_vdev_notify_up_complete": "cd19341a05f71b97ca2bb377039fc3fc370ce376b2096c2010abd8f101be3c4d",
+        "mlme_vdev_disconnect_peers": "338c237242562c8c20b08d4973792a9e15f12224af0965a3b822f05ee12bfcc3",
+        "mlme_vdev_stop_send": "5f83ba03a278f87de7b7f6e07a6c9efb319b9ab2345a76fe56985a69438780a4",
+        "mlme_vdev_stop_continue": "19c17c644a272620a1c981825495ede01be2dd4e3fd773cf9a843861e617798e",
+        "mlme_vdev_down_send": "bce0f99fa65923e89835536a03aa31639336ebf7007f1892153acaeda3471fe9",
+        "mlme_vdev_notify_down_complete": "57f03e21f8b9c891ce943127068df193737c5a95deb87b8c34cb70545e00c174",
+        "mlme_vdev_notify_start_state_exit": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639"
+      },
+      "native_ops_header_sha256": "9395884ab0481e3039ff65dbf307b3d2c04256fda6c70c654d9f1c3ab3d05ef4",
+      "native_ops_type_sha256": "e1e2a1c8f0238d09b81d5565beb55da2d5c3439cd8853505b89589c1b3540b32",
+      "native_PAS_table_sha256": "2042086e195401a5f7c80206a6b898af125f87551409fc18ab70840e59535589",
+      "native_owner_wrapper_sha256": {
+        "mlme_vdev_sm_create": "1d2cf4c7fe82b82d0bcfd4254c9c47fa5bef6c89211df7135a3ed5580de1f3a8",
+        "mlme_vdev_sm_destroy": "dfc2b57630a8e34f934fc0203f6e2130564219057010446bcffd340c69e92049"
+      },
+      "instrumented_table_targets": {
+        "mishare_radio_validate": "callback_probe_validate",
+        "mishare_radio_down_complete": "callback_probe_down"
+      },
+      "native_callback_adapter_count": 12,
+      "native_PAS_table_binding_count": 32,
+      "negative_control_missing_native_SM_free_rejected": true,
+      "negative_control_hidden_native_allocation_failure_rejected": true,
+      "negative_control_missing_PAS_START_binding_rejected": true,
+      "negative_control_hidden_native_callback_error_rejected": true
+    },
+    "native-sm-owner": {
+      "status": "MISHARE_NATIVE_SM_OWNER_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "a27e5c662b4d2be21cca74ade9f6e3d8d8b6edadccb21f9361010a8dbdc8d629",
+      "production_sha256": {
+        "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+        "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+        "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+        "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+        "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+      },
+      "native_sha256": {
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+        "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+        "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+      },
+      "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+      "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+      "native_bridge_sha256": {
+        "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+        "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+      },
+      "native_exit_sha256": {
+        "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+        "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+        "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+        "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+        "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+        "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+        "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+        "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+        "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+        "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+        "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+        "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+      },
+      "stubbed_unexercised_table_functions": [
+        "mlme_vdev_state_dfs_cac_wait_entry",
+        "mlme_vdev_state_dfs_cac_wait_event",
+        "mlme_vdev_state_dfs_cac_wait_exit",
+        "mlme_vdev_subst_mlo_sync_wait_entry",
+        "mlme_vdev_subst_mlo_sync_wait_event",
+        "mlme_vdev_subst_mlo_sync_wait_exit",
+        "mlme_vdev_subst_start_restart_progress_entry",
+        "mlme_vdev_subst_start_restart_progress_event",
+        "mlme_vdev_subst_start_restart_progress_exit",
+        "mlme_vdev_subst_suspend_csa_restart_entry",
+        "mlme_vdev_subst_suspend_csa_restart_event",
+        "mlme_vdev_subst_suspend_csa_restart_exit",
+        "mlme_vdev_subst_suspend_host_restart_entry",
+        "mlme_vdev_subst_suspend_host_restart_event",
+        "mlme_vdev_subst_suspend_host_restart_exit",
+        "mlme_vdev_subst_suspend_suspend_restart_entry",
+        "mlme_vdev_subst_suspend_suspend_restart_event",
+        "mlme_vdev_subst_suspend_suspend_restart_exit"
+      ],
+      "native_exit_callback_sha256": {
+        "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+        "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+      },
+      "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+      "PAS_exit_callback_binding_source_reviewed": true,
+      "negative_control_missing_initial_substate_recheck_rejected": true,
+      "negative_control_missing_default_child_rejected": true,
+      "negative_control_parent_fallback_rejected": true,
+      "checks": [
+        "complete pinned generic engine C file/header with original dense enum values, original state table and event-name array",
+        "unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions",
+        "real engine dispatch has no parent fallback; default child entry and child/parent exit order verified",
+        "real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected",
+        "2.4/5240 MHz ordinary/early response lifecycle from both INIT/0 and INIT/IDLE reaches DOWN, retires controller and queues PE deletion with parents retained",
+        "fresh INIT/zero SSR rejection retains resources; it cannot substitute for native IDLE reclaim proof",
+        "engine allocations explicitly released in fixture; no synthetic native state reset",
+        "unchanged native MLME SM create/destroy wrappers execute around all eight original lifecycle combinations and held-resource/drift cases",
+        "failed engine allocation propagates failure without handle publication, minidump, lock setup, or native state entry",
+        "native VM-id naming, engine context/state, minidump registration before lock setup and mutex/spinlock/minidump teardown before engine free",
+        "three successive create/destroy pairs with exactly one engine free each; fixture explicitly clears parent handle after native destroy",
+        "two owner negative controls plus the three original engine/substate negative controls are rejected"
+      ],
+      "limitations": "Executes unchanged pinned native MLME SM create/destroy wrapper bodies and the 0082 generic engine composite. Lock create/destroy, minidump registration/removal, allocator failure and object-parent bookkeeping remain instrumented platform models; no real QDF lock/minidump implementation or concurrent lock teardown is executed. The fixture, not the native destroy wrapper, clears the parent handle. Native object-manager create/destroy callers, callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator remain outside this composite. Unused native handlers still abort. Ordinary physical peer/PE cleanup after queued deletion remains outside this composite. No active START/UP SSR recovery, automatic shutdown, backend activation, phone/firmware/RF or AirDrop proof.",
+      "base_engine_status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+      "native_owner_wrapper_sha256": {
+        "mlme_vdev_sm_create": "1d2cf4c7fe82b82d0bcfd4254c9c47fa5bef6c89211df7135a3ed5580de1f3a8",
+        "mlme_vdev_sm_destroy": "dfc2b57630a8e34f934fc0203f6e2130564219057010446bcffd340c69e92049"
+      },
+      "negative_control_missing_native_SM_free_rejected": true,
+      "negative_control_hidden_native_allocation_failure_rejected": true
+    },
+    "native-engine": {
+      "status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "aa0c1044ca1bd5ff1ff44dfc2e4f0d24be3c9bf3eb9e69dfd2f182c811faf872",
+      "production_sha256": {
+        "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+        "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+        "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+        "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+        "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+      },
+      "native_sha256": {
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+        "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+        "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+        "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+      },
+      "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+      "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+      "native_bridge_sha256": {
+        "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+        "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+      },
+      "native_exit_sha256": {
+        "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+        "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+        "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+        "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+        "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+        "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+        "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+        "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+        "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+        "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+        "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+        "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+      },
+      "stubbed_unexercised_table_functions": [
+        "mlme_vdev_state_dfs_cac_wait_entry",
+        "mlme_vdev_state_dfs_cac_wait_event",
+        "mlme_vdev_state_dfs_cac_wait_exit",
+        "mlme_vdev_subst_mlo_sync_wait_entry",
+        "mlme_vdev_subst_mlo_sync_wait_event",
+        "mlme_vdev_subst_mlo_sync_wait_exit",
+        "mlme_vdev_subst_start_restart_progress_entry",
+        "mlme_vdev_subst_start_restart_progress_event",
+        "mlme_vdev_subst_start_restart_progress_exit",
+        "mlme_vdev_subst_suspend_csa_restart_entry",
+        "mlme_vdev_subst_suspend_csa_restart_event",
+        "mlme_vdev_subst_suspend_csa_restart_exit",
+        "mlme_vdev_subst_suspend_host_restart_entry",
+        "mlme_vdev_subst_suspend_host_restart_event",
+        "mlme_vdev_subst_suspend_host_restart_exit",
+        "mlme_vdev_subst_suspend_suspend_restart_entry",
+        "mlme_vdev_subst_suspend_suspend_restart_event",
+        "mlme_vdev_subst_suspend_suspend_restart_exit"
+      ],
+      "native_exit_callback_sha256": {
+        "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+        "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+      },
+      "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+      "PAS_exit_callback_binding_source_reviewed": true,
+      "negative_control_missing_initial_substate_recheck_rejected": true,
+      "negative_control_missing_default_child_rejected": true,
+      "negative_control_parent_fallback_rejected": true,
+      "checks": [
+        "complete pinned generic engine C file/header with original dense enum values, original state table and event-name array",
+        "unchanged native transition/deliver bridges and 0081 selected native handlers plus native exit functions",
+        "real engine dispatch has no parent fallback; default child entry and child/parent exit order verified",
+        "real engine create rejects state order and hierarchy cycles; invalid event sentinel rejected",
+        "2.4/5240 MHz ordinary/early response lifecycle from both INIT/0 and INIT/IDLE reaches DOWN, retires controller and queues PE deletion with parents retained",
+        "fresh INIT/zero SSR rejection retains resources; it cannot substitute for native IDLE reclaim proof",
+        "engine allocations explicitly released in fixture; no synthetic native state reset"
+      ],
+      "limitations": "Generic engine history/logging/memory/atomic and QDF/SM locks/object state fields remain platform models. Actual driver SM create/destroy wrappers, native MLME callback adapters, full WMA postprocessing, physical DP/peer lifecycle and parent coordinator are not executed by this fixture. Full table is preserved; unused native handlers are aborting stubs, not full STA/MLO/DFS/restart support. Ordinary peer physical cleanup after queued PE deletion remains outside this composite. Initial zero substate is recorded and matched before first START; drift rejects. Fresh INIT/zero SSR stays held; existing qualified INIT/IDLE SSR scope only; no active START/UP recovery, backend activation, phone/firmware/RF or AirDrop proof."
+    }
+  },
+  "native_WMA_functions": 4,
+  "full_native_WMA_START_response_body_executed": true,
+  "full_native_WMA_callee_graph_executed": false,
+  "native_WMA_function_bodies_independently_reconstructed_from_pin_and_patch_0015": true,
+  "local_source_reconstruction": {
+    "generated_source_sha256": "0892a771da3b4dc3699d6d6a56c9aa9f242a4d012f9083434de54267e1e60098",
+    "original_git_blob_reads": {
+      "qca-wifi-host-cmn/scheduler/src/scheduler_api.c": "f666a4cd73016a7846873fcaf97324316c3df2f8",
+      "qca-wifi-host-cmn/scheduler/src/scheduler_core.c": "f67e220220111eb5ca09178c9aa02313688e047f",
+      "qca-wifi-host-cmn/umac/cmn_services/obj_mgr/src/wlan_objmgr_vdev_obj.c": "647cb9df9ef2afda750677a87841a30316394e81"
+    },
+    "native_config_type_sha256": {
+      "wlan_mlme_ratemask_type": "f36b2bceb92b8ec3a0e75b93cd6d730d7dc2e01b99087573994c75c9c59cfa55",
+      "wlan_mlme_ratemask": "0f8bb219821bbe53e913c35d2d148a80d200a71ab5081dadc0bcf9eaf5effc16"
+    }
+  },
+  "local_source_matches_CI_generated_source_hash": true,
+  "local_C_compilation_performed": false,
+  "main_lifecycle_combinations": 16,
+  "additional_ratemask_lifecycle_cases": 3,
+  "ratemask_mapping_contract_cases": 6,
+  "failure_retention_cases": 8,
+  "negative_controls": {
+    "negative_control_missing_initial_substate_recheck_rejected": true,
+    "negative_control_missing_default_child_rejected": true,
+    "negative_control_parent_fallback_rejected": true,
+    "negative_control_missing_native_SM_free_rejected": true,
+    "negative_control_hidden_native_allocation_failure_rejected": true,
+    "negative_control_missing_PAS_START_binding_rejected": true,
+    "negative_control_hidden_native_callback_error_rejected": true,
+    "negative_control_missing_native_BSS_channel_copy_rejected": true,
+    "negative_control_missing_native_PAS_DP_MAC_update_rejected": true
+  },
+  "original_callback_and_PAS_table_hashes_crossmatched": true,
+  "native_START_RESP_event_length": "Original sizeof(rsp) pointer length; no full response structure-length claim.",
+  "instrumented_table_targets": {
+    "mishare_radio_validate": "callback_probe_validate",
+    "mishare_radio_down_complete": "callback_probe_down"
+  },
+  "instrumented_native_bridge": "mlme_vdev_sm_deliver_event: START_RESP argument/effect observation and one deliberate dispatch failure",
+  "conditional_AP_MCC_branch_enabled": false,
+  "production_source_sha256_independently_verified": true,
+  "production_hashes_crossmatched_reports": [
+    "mishare-aborted-start-reset-fixture.json",
+    "mishare-backend-fixture.json",
+    "mishare-batch-fixture.json",
+    "mishare-channel-fixture.json",
+    "mishare-commands-fixture.json",
+    "mishare-completed-fixture.json",
+    "mishare-completed-prepare-reset-fixture.json",
+    "mishare-completion-fixture.json",
+    "mishare-context-fixture.json",
+    "mishare-events-fixture.json",
+    "mishare-final-fixture.json",
+    "mishare-firmware-fixture.json",
+    "mishare-host-fixture.json",
+    "mishare-init-rejection-reset-fixture.json",
+    "mishare-native-callbacks-fixture.json",
+    "mishare-native-engine-fixture.json",
+    "mishare-native-lifecycle-fixture.json",
+    "mishare-native-sm-owner-fixture.json",
+    "mishare-native-wma-start-fixture.json",
+    "mishare-parent-fixture.json",
+    "mishare-pe-destructor-fixture.json",
+    "mishare-pe-reset-fixture.json",
+    "mishare-pre-radio-reset-fixture.json",
+    "mishare-queued-start-reset-fixture.json",
+    "mishare-radio-fixture.json",
+    "mishare-recovery-fixture.json",
+    "mishare-refused-start-reset-fixture.json",
+    "mishare-rejected-start-reset-fixture.json",
+    "mishare-reset-context-fixture.json",
+    "mishare-runtime-fixture.json",
+    "mishare-session-fixture.json",
+    "mishare-shutdown-fixture.json",
+    "mishare-sm-entry-reset-fixture.json",
+    "mishare-start-plan-fixture.json",
+    "mishare-txn-fixture.json",
+    "mishare-work-fixture.json",
+    "wonder-managed-fixture.json",
+    "wonder-provider-fixture.json"
+  ],
+  "production_kernel_unchanged_from_0084": true,
+  "strict_link": "passed",
+  "modules": {
+    "wonder_sysctl": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_wonder_provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "opairshare_route_b_probe": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wonder": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    },
+    "wlan": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "cffb05a881fa853de8d9607f2947f7c7405cba335bd694e3424d162c9ec4413d",
+      "version_record_mismatches": {},
+      "undefined_without_version": []
+    }
+  },
+  "wlan_unresolved": [],
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "layout_candidate_matches_linked_wlan": true,
+  "validation_artifact_id": 13069499934,
+  "validation_artifact_sha256": "d10a0595cdd9bb214f1ebc7f3f1dda4ea0fedc3e3bc2a5a8061c663d636e3b90",
+  "fixture_hash_independently_reconstructed_locally": true,
+  "native_object_manager_create_destroy_callers_executed": false,
+  "full_physical_PE_peer_teardown_executed": false,
+  "radio_START_UP_reset_recovery_implemented": false,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "complete_monitor_rx_connected": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "limitations": "Four unchanged patched native WMA function bodies execute for qualified PAS/NDI successful START responses; native callbacks, owner and engine composite retained. Context/configuration objects, legacy/WMA fields, locks/minidump and allocator are platform models. DP MAC update and policy/ratemask transport endpoints are instrumented models, not actual DP/firmware operations. Inactive AP/STA/OCB/restart paths abort in stubs; FEATURE_AP_MCC_CH_AVOIDANCE is disabled around the extracted bodies. Full function text is not full configuration/callee coverage. Validation/down table probes and a START_RESP observation/failure probe in the native delivery bridge are explicit. WMA ignores the delivery return; production phase checks still quarantine a rejected event. Native WMA may fail after channel/MAC mutations or after UP; no rollback/recovery is claimed. Child fault cases retain all resources until process scope ends. No physical PE/peer teardown, automatic parent/shutdown coordination, active START/UP SSR recovery, backend activation, phone/firmware/RF or AirDrop proof."
+}
