@@ -180,7 +180,7 @@ def negative_controls(directory, c_file, command, env, source, root):
     bad = subprocess.run([executable], capture_output=True, text=True, timeout=45, env=env)
     assert bad.returncode == -6 and 'EXPECTED_PASSTHRU_CALLBACK_BINDINGS' in bad.stderr
     adapter = inline_function(target, 'mlme_vdev_start_send')
-    changed = owner.replace_once(adapter, 'return ret;', 'return QDF_STATUS_SUCCESS; /* negative: hide callback failure */')
+    changed = owner.replace_once(adapter, 'return ret;', '(void)ret;return QDF_STATUS_SUCCESS; /* negative: hide callback failure */')
     c_file.write_text(owner.replace_once(target, adapter, changed))
     subprocess.run(command, check=True)
     bad = subprocess.run([executable], capture_output=True, text=True, timeout=45, env=env)
