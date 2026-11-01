@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_native_peer_queue_fixture.py
       - tools/kernel/mishare_native_peer_fixture.py
       - tools/kernel/mishare_native_lifecycle_fixture.py
       - tools/kernel/mishare_init_rejection_reset_fixture.py
