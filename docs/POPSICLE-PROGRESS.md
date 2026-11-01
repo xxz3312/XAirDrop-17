@@ -1,4 +1,12 @@
-## 最新阶段 0088（离线验收完成）
+## 最新阶段 0089（离线验收完成）
+
+12 个原生函数体进入 self-peer 回收组合：非 trace peer 引用 API 与 debug-ID 检查、逻辑删除、正序组件分发/状态汇总/异步 detach、非延迟销毁入口、peer 最终 free，以及 VDEV peer detach。unmap 端点释放真实执行的 native peer DP 引用，由原生计数减零触发析构。原生 peer free 临时持有 VDEV，移除 VDEV/PSOC 归属并释放 peer 存储，最后归还临时 VDEV 引用。
+
+CI [41332655703](https://github.com/xxz3312/XAirDrop-17/actions/runs/41332655703)（`b1de1f3`）已全部通过：53 项 Python 检查、新原生 self-peer 回收模型、24 个新增组件/引用用例、累计 29 项负对照、0088/0087/0086/0085/0084/0083/0082 独立模型与旧 C 回归、完整编译、CNSS 名称检查、严格链接、七项选定布局及最终模块记录检查。42 份模型报告所列生产源码哈希均已与仓库源码核对，其中 36 份与本模型共享主生产文件；37 个路径别名均与相应 Git blob 及 SHA-256 一致。12 个函数体从固定源码独立匹配，peer type 枚举及三份原始 native 输入的 Git blob 身份也已核对。完整生成源码已从固定快照与既有补丁重建，SHA-256 与 CI 一致；本地未执行 C 编译。报告 ZIP 校验值、实际链接 WLAN 模块和布局候选哈希已核对；WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。本阶段离线验收完成，见[验证记录](research/popsicle-native-peer-destructor-0089-validation.json)。
+
+新增 24 个组件异步/失败、列表/PSOC detach 失败、错误完成参数与额外 peer 引用用例，分别经过提前/延迟 unmap 和两种 VDEV trace 配置；BSS 指针与 unmap 共用测试位，不宣称独立全组合。失败保留已经发生的部分效果，不伪造回滚。peer 创建/注册/组件处理器、QDF atomic/锁、DP 生产者、PSOC/链表与 PDEV 计数端点仍为模型；peer trace 数据库及延迟销毁队列尚未覆盖。完整真实 DP 回调图、native shutdown 自动协调、活动 START/UP SSR 恢复与完整 AWDL 收包仍待继续。backend 关闭，手机无需操作。见[0089](POPSICLE-NATIVE-PEER-DESTRUCTOR-0089.md)。
+
+## 阶段 0088（离线验收完成）
 
 普通/trace 两套原生 get_ref、try_get_ref、release_ref 与完整 obj_delete 已进入组合执行，保留原生 109 个引用 ID。原生逻辑删除先关闭准入再释放 OBJMGR 引用，原生 aggregate 减零才进入 0087 析构分发器；旧 refs 仅是被核对的镜像，不独立触发销毁。两种版本各重跑完整套件，并各覆盖三个额外引用的六种释放顺序、带/不带外持引用，共 24 个新增完整序列。新增九项负对照，总计 24 项。
 
