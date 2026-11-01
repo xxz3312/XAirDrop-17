@@ -1,4 +1,14 @@
-## 最新阶段 0089（离线验收完成）
+## 最新阶段 0090（离线验收完成）
+
+在 0089 组合上执行原生 peer 延迟工作队列五个函数体与九个 QDF work 适配函数体。排队期间检查 peer heap、VDEV peer pin、DP VDEV 和 native SM 保留；worker 解开列表锁后才调用原生 peer 析构。新增 36 个队列/组件/引用组合，普通与 trace VDEV 配置分别重跑完整 0089 套件，累计 35 项负对照。
+
+CI [41338423652](https://github.com/xxz3312/XAirDrop-17/actions/runs/41338423652)（`e444e3d`）已全部通过：53 项 Python 检查、原生 peer 延迟队列模型及 36 个新增组合、累计 35 项负对照、0089 至 0082 独立模型与旧 C 回归、完整编译、CNSS 检查、严格链接、七项选定布局及模块记录检查。43 份模型报告的生产源码哈希均已核对，其中 37 份与本模型共享主生产文件；37 个路径别名与 Git blob/SHA-256 一致。14 个新增原生函数体及四份固定输入的 Git blob 身份已独立匹配，完整生成源码重建哈希与 CI 一致，0089 生成源码也保持一致；本地未执行 C 编译。报告 ZIP 校验通过，布局候选对应最终链接 WLAN，WLAN 无未解决依赖，五个模块均无版本记录不匹配或缺版本依赖。离线验收完成，见[验证记录](research/popsicle-native-peer-queue-0090-validation.json)。
+
+本阶段验证的是父对象仍存活、私有 peer 生产者已结束后，显式 flush 至工作空闲且列表空，再调用原生 deinit 的 fixture 调用方合同。原生 qdf_destroy_work 同步取消工作，不能代替排空。合并调度后的 active_work_cnt 残留、运行期间重入队需再次 flush、列表满时 enqueue 忽略 insert 失败均已在模型中观察；没有修改这些生产行为，也不以计数授权停机。
+
+Linux workqueue/锁/链表和若干 DP/对象管理器端点仍为模型。父对象最终引用在 worker 内释放、全局迟到生产者、真实 DP 回调图、native shutdown 自动协调、活动 START/UP SSR 恢复与完整 AWDL 收包仍待继续。backend 关闭，手机无需操作。见[0090](POPSICLE-NATIVE-PEER-QUEUE-0090.md)。
+
+## 阶段 0089（离线验收完成）
 
 12 个原生函数体进入 self-peer 回收组合：非 trace peer 引用 API 与 debug-ID 检查、逻辑删除、正序组件分发/状态汇总/异步 detach、非延迟销毁入口、peer 最终 free，以及 VDEV peer detach。unmap 端点释放真实执行的 native peer DP 引用，由原生计数减零触发析构。原生 peer free 临时持有 VDEV，移除 VDEV/PSOC 归属并释放 peer 存储，最后归还临时 VDEV 引用。
 
