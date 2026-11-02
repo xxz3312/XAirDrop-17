@@ -1,4 +1,12 @@
-## 最新阶段 0093（离线验收完成）
+## 最新阶段 0094（离线验收完成）
+
+将六个原生 PSOC 引用、PDEV attach/detach 和逻辑删除函数体接入 0093 的堆 PDEV 组合。原生 attach 维护 ID/map/count 并取得 PSOC attachment 引用；原生 PDEV free 调用原生 PSOC detach 后，fixture caller 仍持有 PSOC HDD 引用，直到 PDEV 队列关闭及 host heap free 完成才归还。原有 56 个序列迁移到该合同，另有 16 个 PSOC OSIF 引用与归还顺序组合，共 72 个序列、17 项负对照；单槽合同检查满表与无效已脱离 ID。
+
+[CI 41424409521](https://github.com/xxz3312/XAirDrop-17/actions/runs/41424409521)（`1d8aec3`）两项作业均成功：新增组合、0093/0092 独立组合、53 项 Python 检查、0091/0090 及旧回归、完整 WLAN 编译、CNSS 检查、严格链接、七项布局及模块记录检查均通过。完整新/旧组合源码、六个 PSOC 和 10 个 PDEV 原生函数体、PSOC 原始文件/Git blob 身份及 46 份报告中的生产源码已核对，37 个路径别名、源码清单与两份 ZIP digest 匹配。见[0094 说明](POPSICLE-NATIVE-PSOC-LEASE-0094.md)及[验证记录](research/popsicle-native-psoc-lease-0094-validation.json)。
+
+PSOC 最终 destroy/free 及存储仍是静态模型端点，未执行真实 PSOC 组件、PSOC peer/VDEV attachment 引用或 PSOC heap free。移除 caller pin 的负对照在原生最后引用分支进入模型端点时检测到 PDEV 仍存活，不构成实际内核 UAF 复现。容量 1 为 Kbuild 默认选择；原生 attach 的逻辑删除准入及 detach 的有效槽位 owner 检查没有修改，仅选取私有、串行化、已核对归属的映射合同。真实 DP 完成图、PSOC 最终析构、迟到生产者、自动停机协调、活动 START/UP SSR 恢复与完整 AWDL 收包仍待继续。生产内核未修改，backend 关闭，手机无需操作。
+
+## 阶段 0093（离线验收完成）
 
 将 0092 的选定父对象改为 host heap PDEV，执行原生 PDEV object_status、component_detach、最终 dispatcher 和最终 free 四个函数体，并保留此前六个原生引用/attachment 函数体。成功路径由原生最终 free 依次执行 PSOC detach、父锁销毁、原生延迟 peer queue deinit/QDF cancel、队列锁销毁及实际 host heap free，fixture 调用方不提前 deinit。0092 的 40 个序列迁移到堆父对象，另外 16 个覆盖父组件异步、组件失败、PSOC detach 失败及错误异步 token；共 56 个序列、11 项负对照。
 
