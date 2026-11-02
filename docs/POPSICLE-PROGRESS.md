@@ -1,4 +1,12 @@
-## 最新阶段 0095（离线验收完成）
+## 最新阶段 0096（离线验收完成）
+
+0095 组合接入未改写的原生 `dp_vdev_unref_delete()`，选定 passthru 路径执行模块引用递减、最后引用判断、清理调用、inactive 列表移除、可选删除通知、实际 DP VDEV host heap free，再经检查 trampoline 把原始令牌交给既有生产运行时完成回调。额外 HTT 引用尚存时必须保留存储；模型 peer 清理失败时保留 DP 资源，禁止完成。
+
+相关代码和用例集中写齐后统一验证，[CI 41441718233](https://github.com/xxz3312/XAirDrop-17/actions/runs/41441718233)（`07f0c79`）两项作业成功：104 组组合、34 项负对照、0095/0094/0093/0092 独立组合、53 项 Python 检查、旧回归、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。首次运行的最后一个错误令牌负对照有测试变体花括号问题，修正后全部重跑成功，原生函数体未改。五份生成组合源码、DP 原生函数/Git blob/enum 来源及 48 份报告中的生产源码、37 个路径别名和两个 ZIP digest 已独立核对。见[0096 说明](POPSICLE-NATIVE-DP-VDEV-FREE-0096.md)及[验证记录](research/popsicle-native-dp-vdev-free-0096-validation.json)。
+
+DP 分配、attach/detach 设置、初始引用取得、peer-gone gate、迟到 HTT put、清理端点、列表/锁/原子操作仍为模型；未执行真实 DP peer unmap/ref-delete，也不声明 DP 与 ObjMgr 间存在已验证的直接引用释放桥。继承的父资源构造/真实组件、生产停机协调、真实并发、活动 START/UP SSR、完整 AWDL 收包和整机验证仍待继续。生产内核未修改，backend 保持关闭，手机无需操作。
+
+## 阶段 0095（离线验收完成）
 
 选定序列的 PSOC 改为 host heap，原生 object_status、component_detach、最终 dispatcher、peer_list_deinit 和最终 free 五个函数体接入；此前六个 PSOC 引用/map/逻辑删除及 10 个 PDEV 原生函数体保持执行。原生 PSOC dispatcher 正序调用两个模型组件处理器，成功后原生 free 依次执行模型全局 detach、原生 peer-list deinit 的 64 个空模型桶和锁清理、最终 PSOC 锁销毁及实际 host heap free。异步组件经原生 completion 恢复 free；失败保留未完成部分。
 
