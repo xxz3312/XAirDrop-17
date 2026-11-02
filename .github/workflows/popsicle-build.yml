@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_native_dp_unmap_fixture.py
       - tools/kernel/mishare_native_dp_peer_free_fixture.py
       - tools/kernel/mishare_native_dp_vdev_free_fixture.py
       - tools/kernel/mishare_native_psoc_free_fixture.py
@@ -136,6 +137,8 @@ jobs:
         run: python3 tools/kernel/mishare_native_dp_vdev_free_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-dp-vdev-free.json
       - name: Native DP peer free returning VDEV CHILD reference with sanitizers
         run: python3 tools/kernel/mishare_native_dp_peer_free_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-dp-peer-free.json
+      - name: Native DP peer unmap lookup and map removal with sanitizers
+        run: python3 tools/kernel/mishare_native_dp_unmap_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-dp-unmap.json
       - uses: actions/upload-artifact@v4
         with:
           name: popsicle-parent-peer-${{ github.run_id }}-${{ github.run_attempt }}
@@ -146,6 +149,7 @@ jobs:
             native-psoc-free.json
             native-dp-vdev-free.json
             native-dp-peer-free.json
+            native-dp-unmap.json
           if-no-files-found: error
           retention-days: 7
 
