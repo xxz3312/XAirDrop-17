@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_native_dp_vdev_free_fixture.py
       - tools/kernel/mishare_native_psoc_free_fixture.py
       - tools/kernel/mishare_native_psoc_lease_fixture.py
       - tools/kernel/mishare_native_pdev_free_fixture.py
@@ -130,6 +131,8 @@ jobs:
         run: python3 tools/kernel/mishare_native_psoc_lease_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-psoc-lease.json
       - name: Native heap PSOC dispatcher and final free with sanitizers
         run: python3 tools/kernel/mishare_native_psoc_free_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-psoc-free.json
+      - name: Native DP VDEV final free and production completion with sanitizers
+        run: python3 tools/kernel/mishare_native_dp_vdev_free_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-dp-vdev-free.json
       - uses: actions/upload-artifact@v4
         with:
           name: popsicle-parent-peer-${{ github.run_id }}-${{ github.run_attempt }}
@@ -138,6 +141,7 @@ jobs:
             native-pdev-free.json
             native-psoc-lease.json
             native-psoc-free.json
+            native-dp-vdev-free.json
           if-no-files-found: error
           retention-days: 7
 
