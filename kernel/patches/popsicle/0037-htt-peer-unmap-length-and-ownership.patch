@@ -53,7 +53,7 @@
 +		HTT_RX_PEER_UNMAP_BYTES :
 +		HTT_RX_PEER_UNMAP_V2_PEER_WDS_FREE_COUNT_OFFSET + sizeof(words[0]);
 +	if (qdf_nbuf_len(msg) < required) {
-+		dp_htt_err("short peer unmap type %u len %u need %u", type,
++		dp_htt_err("short peer unmap type %u len %zu need %u", type,
 +			   qdf_nbuf_len(msg), required);
 +		dp_htt_rx_nbuf_free(msg);
 +		return true;
