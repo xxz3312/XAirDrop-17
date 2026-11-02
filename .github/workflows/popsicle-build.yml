@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_parent_peer_composite_fixture.py
       - tools/kernel/mishare_native_pdev_queue_fixture.py
       - tools/kernel/mishare_native_peer_queue_fixture.py
       - tools/kernel/mishare_native_peer_fixture.py
@@ -101,6 +102,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  parent-peer-composite:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch pinned WLAN and apply existing patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/parent-peer-wlan"
+          git -C "$RUNNER_TEMP/parent-peer-wlan" remote add origin https://github.com/MiCode/vendor_qcom_opensource_wlan.git
+          git -C "$RUNNER_TEMP/parent-peer-wlan" fetch --depth=1 origin 36df473046706a5259942e1bf7222108dbbb860f
+          git -C "$RUNNER_TEMP/parent-peer-wlan" checkout --detach FETCH_HEAD
+          for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
+            git -C "$RUNNER_TEMP/parent-peer-wlan" apply "$patch"
+          done
+      - name: Native parent and peer composite with sanitizers
+        run: python3 tools/kernel/mishare_parent_peer_composite_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output parent-peer-composite.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-parent-peer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: parent-peer-composite.json
+          if-no-files-found: error
+          retention-days: 7
+
   diagnostic:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
