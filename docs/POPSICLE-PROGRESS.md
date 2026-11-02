@@ -1,4 +1,12 @@
-## 最新阶段 0098（离线验收完成）
+## 最新阶段 0099（离线验收完成）
+
+生产补丁 0037 在 `dp_htt_t2h_msg_handler()` 读取 packet context/header 前调用新的 unmap consumer。它处理传输错误/取消、缺失 context/nbuf/data、短 header；成功非 unmap 消息保留原 generic dispatcher 所有权。V1 至少四字节，V2 至少包含 WDS-free-count 的二十字节消费前缀，额外尾部兼容；有界复制到对齐局部 words 后使用原始 wire GET 和 MAC deswizzle，再调用原生 DP unmap，并在返回后恰好释放一次 nbuf。旧两个 unmap switch 分支移除，其他分支与原注册指向保持。
+
+相关代码和用例集中写齐后统一验证，[CI 41515796705](https://github.com/xxz3312/XAirDrop-17/actions/runs/41515796705)（`bbe95ed`）两项作业成功：168 组释放组合、303 项解析合同、68 项失败控制、0098/0097/0096/0095/0094/0093/0092 七项独立组合、53 项 Python 检查、旧回归、完整 WLAN 编译、CNSS、严格链接、七项布局和模块记录检查通过。先后修正夹具 MAC-size 宏作用域，以及完整 WLAN 编译发现的 qdf_size_t 日志格式问题；夹具加入类型/格式检查，本次完整重跑成功。八份组合源码、补丁独立重放、generic dispatcher 受限改动和原始 deswizzle/wire 来源及 51 份报告中的生产源码、37 个路径别名和两份 ZIP digest 均核对。见[0099 说明](POPSICLE-HTT-UNMAP-0099.md)及[验收记录](research/popsicle-htt-unmap-0099-validation.json)。
+
+生产 parser helper 已在主机模型中执行，完整 generic dispatcher、HTC/HIF 注册和真实固件事件输送只经源码/编译检查；没有主机模型运行或实机事件证明。BIG_ENDIAN_HOST 为字节表示转换后的原源码分支探针，非真实大端平台认证。初始资源/引用、peer-gone gate 和平台/清理端点仍为模型；真实并发、生产父资源停机、活动 START/UP SSR、完整 AWDL 收包与整机验证仍待继续。backend 保持关闭，手机无需操作。
+
+## 阶段 0098（离线验收完成）
 
 0097 组合接入原生 `dp_rx_peer_unmap_handler()`、`dp_peer_get_ref()`、`__dp_peer_get_ref_by_id()` 和 `dp_peer_find_id_to_obj_remove()`，保留原生 peer/VDEV 最终函数体。lookup 通过非零总引用取得临时 HTT pin；map remove 在模型 map lock 内清除 peer/txrx ID 和 slot，归还独立 map CONFIG；unmap 继续执行 Qref/事件/状态/通知及 HTT、生命周期 CONFIG 归还，最终进入 peer/VDEV host heap free 和既有生产运行时完成回调。覆盖未知/边界/重复 ID、零引用 lookup、WDS skip 和两种 AST 返回、offload/IPA/txrx/可选回调与外部引用释放时机。
 
