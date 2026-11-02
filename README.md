@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0092 原生 PDEV 引用接入 peer/VDEV 析构组合](docs/POPSICLE-PARENT-PEER-COMPOSITE-0092.md)已完成离线验收。[CI 41408965293](https://github.com/xxz3312/XAirDrop-17/actions/runs/41408965293) 两项作业通过：40 个新增序列、五项负对照、53 项 Python 检查、0091/0090 及旧回归、完整编译、严格链接和七项选定布局。完整生成测试源码、六个原生 PDEV 函数体及新组合与 43 份 diagnostic 生产源码报告均已独立核对；见[验证记录](docs/research/popsicle-parent-peer-composite-0092-validation.json)。PDEV/PSOC 存储与父最终 free 仍为模型，真实 DP 回调与生产自动停机协调尚未接入。活动 START/UP SSR 恢复及完整 AWDL 收包仍未完成。backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0093 原生 PDEV 最终析构与堆释放](docs/POPSICLE-NATIVE-PDEV-FREE-0093.md)已完成离线验收。[CI 41416403715](https://github.com/xxz3312/XAirDrop-17/actions/runs/41416403715) 两项作业通过：56 个堆父对象序列、11 项负对照、0092 独立组合、53 项 Python 检查、0091/0090 及旧回归、完整编译、严格链接和七项选定布局。原生 PDEV dispatcher/free 已在组合中执行，成功路径实际释放 host heap；完整生成源码、10 个原生函数体及 45 份报告中的生产源码均已独立核对。见[验证记录](docs/research/popsicle-native-pdev-free-0093-validation.json)。PDEV 创建/真实组件、PSOC 生命周期、真实 DP 回调与生产自动停机协调尚未完成。活动 START/UP SSR 恢复及完整 AWDL 收包仍待继续。backend 关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)

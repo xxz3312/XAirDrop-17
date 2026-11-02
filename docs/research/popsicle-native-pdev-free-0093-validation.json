@@ -1,0 +1,652 @@
+{
+  "stage": "0093 native heap PDEV final dispatcher and free in peer/VDEV composite",
+  "stage_offline_acceptance_complete": true,
+  "source_commit": "61d86cb06b8bc5e1de018d8214eb80af8cf18bd8",
+  "workflow_run": 41416403715,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41416403715",
+  "workflow_conclusion": "success",
+  "prior_failed_attempts": [
+    {
+      "workflow_run": 41415506084,
+      "reason": "discarding logging stub made native pdev_id unused; corrected by evaluating logging arguments without changing native function bodies"
+    },
+    {
+      "workflow_run": 41415984212,
+      "reason": "alternate engine-drift entrypoint reset channel model before fallback parent initialization; fixed static fallback initialization; main positive suite had already completed"
+    }
+  ],
+  "python_regression_checks": 53,
+  "new_model": {
+    "status": "MISHARE_NATIVE_PDEV_FREE_COMPOSITE_FIXTURE_PASS_ONLY",
+    "fixture_sha256": "744230933dfaf33bbf59f6740219b2717f831587edc5b6cc6f4a561f961b182f",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+      "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+      "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+      "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+      "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+    },
+    "native_sha256": {
+      "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+      "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+      "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+      "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+    },
+    "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+    "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+    "native_bridge_sha256": {
+      "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+      "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+    },
+    "native_exit_sha256": {
+      "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+      "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+      "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+      "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+      "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+      "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+      "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+      "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+      "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+      "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+      "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+      "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+    },
+    "stubbed_unexercised_table_functions": [
+      "mlme_vdev_state_dfs_cac_wait_entry",
+      "mlme_vdev_state_dfs_cac_wait_event",
+      "mlme_vdev_state_dfs_cac_wait_exit",
+      "mlme_vdev_subst_mlo_sync_wait_entry",
+      "mlme_vdev_subst_mlo_sync_wait_event",
+      "mlme_vdev_subst_mlo_sync_wait_exit",
+      "mlme_vdev_subst_start_restart_progress_entry",
+      "mlme_vdev_subst_start_restart_progress_event",
+      "mlme_vdev_subst_start_restart_progress_exit",
+      "mlme_vdev_subst_suspend_csa_restart_entry",
+      "mlme_vdev_subst_suspend_csa_restart_event",
+      "mlme_vdev_subst_suspend_csa_restart_exit",
+      "mlme_vdev_subst_suspend_host_restart_entry",
+      "mlme_vdev_subst_suspend_host_restart_event",
+      "mlme_vdev_subst_suspend_host_restart_exit",
+      "mlme_vdev_subst_suspend_suspend_restart_entry",
+      "mlme_vdev_subst_suspend_suspend_restart_event",
+      "mlme_vdev_subst_suspend_suspend_restart_exit"
+    ],
+    "native_exit_callback_sha256": {
+      "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+      "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+    },
+    "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+    "PAS_exit_callback_binding_source_reviewed": true,
+    "negative_control_missing_initial_substate_recheck_rejected": true,
+    "negative_control_missing_default_child_rejected": true,
+    "negative_control_parent_fallback_rejected": true,
+    "checks": [
+      "0090 baseline plus 0092 forty parent/peer/VDEV cases now use actual heap PDEV storage and native final dispatcher/status/detach/free",
+      "sixteen additional parent component async, component failure, PSOC detach failure and bad async completion sequences under both VDEV trace modes with/without extra parent reference",
+      "native PDEV forward component dispatch and original async status gate; fixture delivers valid native component completion in process context to resume final free",
+      "native PDEV free calls modeled PSOC detach and lock destruction, original peer queue deinit/QDF cancellation, then actual host heap free in order; no explicit premature queue deinit by fixture caller",
+      "all five 0092 and six new native dispatcher/free mutations rejected"
+    ],
+    "limitations": "Fixture caller integration, no production kernel changes or automatic shutdown coordinator. Heap PDEV allocation/setup, component registry/two sentinel handlers, PSOC detach, PDEV/list/lock and Linux workqueue endpoints remain models. Native PDEV create and real component implementations/PSOC lifetime are not executed. DP unmap producer and completion gate retain 0090 model boundaries. Only selected added cases enable heap/native parent integration; baseline uses static fallback. Failure children intentionally retain unfinished resources until process exit. No real concurrent late producers, peer trace parity, active START/UP SSR recovery, backend activation, phone/firmware/RF or AirDrop certification.",
+    "base_engine_status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+    "native_PDEV_function_sha256": {
+      "wlan_objmgr_pdev_get_ref": "300f518d0b8344c093595950856098fec311d70686ed2d31f0f8e38445eff6c4",
+      "wlan_objmgr_pdev_try_get_ref": "9808fc936def15a83e525f19e15a5b49a5aefa6e213580d242b8636f2f5dc804",
+      "wlan_objmgr_pdev_release_ref": "75bf9d15cbb93129f71b22cc76b851439caa0f0a16ab6a8853dc51d25c1a8a9f",
+      "wlan_objmgr_pdev_vdev_attach": "194a408da71728cf56dcdf648c7d9debf8e70d2824ef0985799826dece703d43",
+      "wlan_objmgr_pdev_vdev_detach": "b65003e0c289b9e53c0413df38ca7aeac63863b19f4c8d864adba5f232014428",
+      "wlan_objmgr_pdev_obj_delete": "9997f2b8b845225322972413899af34c582dcf2b25258c089ec46c159fd104d4",
+      "wlan_objmgr_pdev_object_status": "60e04aeea36dd912eacfdfa8867c7ee5389e3f7929f6ee781ff9c7934530ad88",
+      "wlan_objmgr_pdev_component_obj_detach": "cca8e04d055a4ffbb1d59346b941c40b72a169cc8c3997c4bb3341642001fd44",
+      "wlan_objmgr_pdev_obj_destroy": "9226832dbf7544ea62acc45a8613c4dd9359a56d3f762457d416a01234f7acd2",
+      "wlan_objmgr_pdev_obj_free": "87516a4c53c7a24e4dbda2abb27c297f69fca71e51af0a9fe0b5a14ebed44bda"
+    },
+    "additional_composite_cases": 56,
+    "negative_controls_rejected": 11
+  },
+  "prior_0092_model": {
+    "status": "MISHARE_PARENT_PEER_COMPOSITE_FIXTURE_PASS_ONLY",
+    "fixture_sha256": "a005b313f690f366b6c58ce5df5246fb17ed5b17add170fdf40b9699b6c1a33a",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676",
+      "wlan_hdd_mishare_runtime.h": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e",
+      "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+      "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+      "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+    },
+    "native_sha256": {
+      "qca-wifi-host-cmn/umac/cmn_services/sm_engine/src/wlan_sm_engine.c": "cae7a09efd731db550a358f4ebab2202f00e33fe763b56896176fe15f139d57b",
+      "qca-wifi-host-cmn/umac/cmn_services/sm_engine/inc/wlan_sm_engine.h": "d98bca13d1b849a43ab13abfc7984478a39c8c60943a46c045b1a75813b6b360",
+      "qca-wifi-host-cmn/umac/mlme/mlme_objmgr/dispatcher/inc/wlan_vdev_mlme_main.h": "70dd14cee0ddaf7a61de0ffc76a44ee2dd5b3d38bd35d062b94d4d80878b54d7",
+      "qca-wifi-host-cmn/umac/mlme/vdev_mgr/core/src/vdev_mlme_sm.c": "87674caea6af8b45a9ff4fb732c3de931d4d5c1639ce5b0c012bb6a6628eaa64"
+    },
+    "native_state_table_sha256": "e0b3a29694fa8c93cd847ecf13fe7be70c2cd412160de43f3832f4753d6cc00e",
+    "native_event_names_sha256": "1bd3e2323ef73b6eeeb5cb0c6ed2885ae9282b449bf798d637774981edfaa6b6",
+    "native_bridge_sha256": {
+      "mlme_vdev_sm_transition_to": "5f891fde8926bfae3a70958e46283954387739ca6836f35d30e94e6845c14554",
+      "mlme_vdev_sm_deliver_event": "e35eef4ac1fa7609ce5a48271533a9a33a86f4f22741185ab01c098842bbfea4"
+    },
+    "native_exit_sha256": {
+      "mlme_vdev_state_init_exit": "97fa2be13ecf0e31c31d3242e4a56198b1a717ac0f14be162816076a77ac79a1",
+      "mlme_vdev_state_start_exit": "c913097e2b0c78eb3f9e3d2597de7d2785260a2f72d7ac4f839fa6d526550308",
+      "mlme_vdev_state_stop_exit": "5dc5e09803a1c7f64229a8809a04b4a83eba87d2fae81400ba86bd7624b9721d",
+      "mlme_vdev_state_suspend_exit": "1920b468f96e099942bb9cf031cd1e06bc77e4cb49c5732dc673c42dea159291",
+      "mlme_vdev_state_up_exit": "ce5c03f88b257c33e8d7982db05ff99ed1c0293868ea06612151e8186325e85e",
+      "mlme_vdev_subst_start_conn_progress_exit": "110bb2a9d1b30fb529a7128eedd1942cf99d397bd0d4819e0eead60c56a6fa8b",
+      "mlme_vdev_subst_start_disconn_progress_exit": "f7669ad2dae6b13cfdc5acbddb27d90cac9dbd8a76454ece36753962e19bd276",
+      "mlme_vdev_subst_start_start_progress_exit": "d634702dba0cf903bed0ad2690631975a890989b47e79632864fc8885c56ee64",
+      "mlme_vdev_subst_stop_down_progress_exit": "7d44616681f18273dbc943b44abe090b27847e0fa8c1e6e2a319dc661cec4c03",
+      "mlme_vdev_subst_stop_stop_progress_exit": "a7fe2a0ec007d9d01b8a0b5ca6c1c113f5a3f4b3ab6fbe83e1386bfc74660860",
+      "mlme_vdev_subst_suspend_suspend_down_exit": "77c4785b127c13b9c29fcf32c31fb5251a5fbe61227ec6137d8954de38eb616b",
+      "mlme_vdev_subst_up_active_exit": "e751ea43ff7d43b057463bd829d79e590ab452d6cb5e344ec7782ddba0cf19bd"
+    },
+    "stubbed_unexercised_table_functions": [
+      "mlme_vdev_state_dfs_cac_wait_entry",
+      "mlme_vdev_state_dfs_cac_wait_event",
+      "mlme_vdev_state_dfs_cac_wait_exit",
+      "mlme_vdev_subst_mlo_sync_wait_entry",
+      "mlme_vdev_subst_mlo_sync_wait_event",
+      "mlme_vdev_subst_mlo_sync_wait_exit",
+      "mlme_vdev_subst_start_restart_progress_entry",
+      "mlme_vdev_subst_start_restart_progress_event",
+      "mlme_vdev_subst_start_restart_progress_exit",
+      "mlme_vdev_subst_suspend_csa_restart_entry",
+      "mlme_vdev_subst_suspend_csa_restart_event",
+      "mlme_vdev_subst_suspend_csa_restart_exit",
+      "mlme_vdev_subst_suspend_host_restart_entry",
+      "mlme_vdev_subst_suspend_host_restart_event",
+      "mlme_vdev_subst_suspend_host_restart_exit",
+      "mlme_vdev_subst_suspend_suspend_restart_entry",
+      "mlme_vdev_subst_suspend_suspend_restart_event",
+      "mlme_vdev_subst_suspend_suspend_restart_exit"
+    ],
+    "native_exit_callback_sha256": {
+      "inline": "13ea2f3b15c85f88544e4d65b16cdfe9ade0d167ecd4825c454beb5c6e0b2639",
+      "passthru_mlme_reject_6": "ad69bee6c17677bf15f7f3198d6c5c458711d4c8c357d440e09fabd98a535fae"
+    },
+    "native_SM_header_sha256": "df21d8d0a88477b9cd408d5c9f85822c7e4765b11d83d4178af53c21afbb8444",
+    "PAS_exit_callback_binding_source_reviewed": true,
+    "negative_control_missing_initial_substate_recheck_rejected": true,
+    "negative_control_missing_default_child_rejected": true,
+    "negative_control_parent_fallback_rejected": true,
+    "checks": [
+      "0090 baseline retained; 32 native PDEV/peer/VDEV sequences plus eight retained-failure cases under both VDEV trace modes",
+      "native PDEV attachment called from modeled VDEV allocator; actual native VDEV final-free calls native PDEV detach through fixture wrapper",
+      "full existing native peer worker/component/free, VDEV reference/component/free and native SM chain executes; PDEV caller pin remains until VDEV storage gone and queue deinit complete",
+      "native PDEV logical delete rejects new references; parent final zero reached only after explicit caller put; extra parent reference postpones final endpoint"
+    ],
+    "limitations": "Fixture caller integration only; no production kernel changes or automatic shutdown coordinator. PDEV and PSOC storage remain static harness objects; final PDEV component dispatcher/free is a guarded model, not native PDEV free or heap deallocation. Parent VDEV list is a one-entry model. VDEV creation, peer DP-unmap producer, DP completion gating, PSOC/list operations, workqueue and platform primitives retain 0090 model boundaries. Only the selected added cases enable native PDEV attachment; other 0090 cases remain unchanged. Failure cases retain resources until child process exit. No concurrent late producer, PSOC lifetime, peer trace parity, active START/UP SSR recovery, backend activation, phone/firmware/RF or AirDrop proof.",
+    "base_engine_status": "MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY",
+    "native_PDEV_function_sha256": {
+      "wlan_objmgr_pdev_get_ref": "300f518d0b8344c093595950856098fec311d70686ed2d31f0f8e38445eff6c4",
+      "wlan_objmgr_pdev_try_get_ref": "9808fc936def15a83e525f19e15a5b49a5aefa6e213580d242b8636f2f5dc804",
+      "wlan_objmgr_pdev_release_ref": "75bf9d15cbb93129f71b22cc76b851439caa0f0a16ab6a8853dc51d25c1a8a9f",
+      "wlan_objmgr_pdev_vdev_attach": "194a408da71728cf56dcdf648c7d9debf8e70d2824ef0985799826dece703d43",
+      "wlan_objmgr_pdev_vdev_detach": "b65003e0c289b9e53c0413df38ca7aeac63863b19f4c8d864adba5f232014428",
+      "wlan_objmgr_pdev_obj_delete": "9997f2b8b845225322972413899af34c582dcf2b25258c089ec46c159fd104d4"
+    },
+    "additional_composite_cases": 40,
+    "new_negative_controls_rejected": [
+      "caller_pin",
+      "attachment_pin",
+      "attachment_put",
+      "final_put",
+      "parent_admission"
+    ]
+  },
+  "independently_rebuilt_fixture_hashes_match": true,
+  "native_PDEV_function_hashes_independently_matched": 10,
+  "native_PDEV_file_sha256": "bd4eb1f76744258a3457f9efa67af9e122b3de6dbcd37702338075085d306b0b",
+  "native_PDEV_git_blob": "c0aad88efa020fe97998b8d7fde2308bdb8b7404",
+  "native_source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+  "production_report_hashes": {
+    "mishare-aborted-start-reset-fixture": "93e6987fe832838c60105e07d818609b95a203cf8e2e41e7c82d848ecff2580e",
+    "mishare-backend-fixture": "df5b0ce26ac724287fcc5b63a261a2ff3a4a2ebf3a3ea6a7fd3c9e4b38ff3ec0",
+    "mishare-batch-fixture": "103926e2ea01d62abb7f6bf5411d24244369ed9bc113389e869f1dc60b38522f",
+    "mishare-channel-fixture": "8fc06931db8703f423749798164f526e0d128b7fa9c32518fddb3cb9f91a9e9f",
+    "mishare-commands-fixture": "c43b90b18c0fd34d080e7624369481673f64f4c9f3a1f7111efac38d99dfa664",
+    "mishare-completed-fixture": "3a2788fbe33b19a4ced7b17e1e1e3ddcb503d6faaa9baf694c9a991717b6b51e",
+    "mishare-completed-prepare-reset-fixture": "8791924ce7465e3698c2e1c047fbb4531f7e3dde53a7c72c6a7abe330630c741",
+    "mishare-completion-fixture": "993b31ad8e761b27160a4f5bdc09a2017cb499ad312c0dffd55c95cec38624d8",
+    "mishare-context-fixture": "e701f2c888b88496b62cc3dae226e2af264495657cc7924ebc48574fb86dae51",
+    "mishare-events-fixture": "de039c2386034f3b5fbfe509db8bd431174d9b0f7293ba3fe60a086c512808a0",
+    "mishare-final-fixture": "1ece1add2e73c083ea80e118e5b15da591b7f6336454a827d6b559bad65da998",
+    "mishare-firmware-fixture": "434159fdc28acf48f1ce0681a4839c4b4051ed34a96674092a4ff91089671a2a",
+    "mishare-host-fixture": "759f8f2919afc4a2873e885b2de96cd2dddc27a1c09a2bc356f7c4a1537e1277",
+    "mishare-init-rejection-reset-fixture": "22e15642b136ff315ef988b7d0e5e3f052a819a9322ecadde18226b9a419a5bd",
+    "mishare-native-callbacks-fixture": "1cbc9b3c8944c9fea47ccc1566538ae25828b3c008a174ac8e5cd7209b1794de",
+    "mishare-native-cleanup-fixture": "2c840e5781f200fb5cbf6cc6b41d9935f0ca1ff7e344efc5a83097a1e33f8e59",
+    "mishare-native-engine-fixture": "74cce1f81a7a2208de57b804e5840719ae0a1af05002554fc072bc7d6b98f0f7",
+    "mishare-native-lifecycle-fixture": "413c5deda44c2e5623c7b1809c90ce20dfd70fa7dfd8804ce19a87738219c01f",
+    "mishare-native-objmgr-fixture": "de1ae18c58924340c71b1d1b6f901b36551cd0284c30df5f28730ff212f204c9",
+    "mishare-native-peer-fixture": "50a6de7333c27bf292c4c1fa5c93a9d597d21b1d3d253ecef7930efeb63f2afd",
+    "mishare-native-peer-queue-fixture": "17c8ffdccc1d03d1f43aa800defe9dfd466a7c5a6a26ca462864ff5ce3ddf7c0",
+    "mishare-native-refs-fixture": "f8cfd084a97821668ca70e8426b0d6cd56aaeb2cbff6517f4512eae54abc8f1b",
+    "mishare-native-sm-owner-fixture": "947dc1df77f2acf2e43b9877f11f192b9abdea761edab0b4357f331a05ec6362",
+    "mishare-native-wma-start-fixture": "518fba025b0049f2221b1f45a4c1f849a96597258aa69c6c5832209fe165f42f",
+    "mishare-parent-fixture": "dff4a1b67398a5e2ef3f63957553d83bef431af9207c2da4ad214291185b8f3c",
+    "mishare-pe-destructor-fixture": "c72e13eddda5fccd45f8121aff028e387897c15e461d5e18224a28dc9b313727",
+    "mishare-pe-reset-fixture": "065ce90d8892a86805920d9f1faba27bfed3ea081831c898873a6a2736343a31",
+    "mishare-pre-radio-reset-fixture": "1189966661b11df5291e28e273d1c03e71a716e786b51861a00f834fec80e244",
+    "mishare-queued-start-reset-fixture": "acb00aa72a10c7b7a61383d144968bec5f2d87a479f7afce134b3acb4dc27ed5",
+    "mishare-radio-fixture": "34d4b070548891aee2b16f9a0723940023355b51a4c849ecb00defa35975412e",
+    "mishare-recovery-fixture": "ec31df8b5b99063d3928686370da0c852625d1e14f8703da74df02fd65b3a952",
+    "mishare-refused-start-reset-fixture": "6b3f1217db2a8a1468686460b86cc86e7fa9f3770ea83e098957c74774364184",
+    "mishare-rejected-start-reset-fixture": "2f34553882f20953c263d62196ef26b3f1d356ef58cbf304b3e9188bad000ad0",
+    "mishare-reset-context-fixture": "eb45897f182d76401eaad22d240623d03b47f2ac6e08c9ca0523155da0ec38bd",
+    "mishare-runtime-fixture": "66a567c3e509d6b97cbd591021182b3db6254db616f205288170f36da2001fc2",
+    "mishare-session-fixture": "2e8f8a040db57ca9586178ef93e80a7aa0b7088425c226aa32b51df9ff498b4e",
+    "mishare-shutdown-fixture": "c155c838b0243880ea8591de63114304a4e844d3e1d42c9ede97aab3dcbfedcd",
+    "mishare-sm-entry-reset-fixture": "623ec9fd92f3b064d1798e64daa3e7149679110134bc123002972bf587d6a530",
+    "mishare-start-plan-fixture": "3e8785ad9113f66a48129637ab7d8dec5dff1b715f34951dce883a3bcc33e422",
+    "mishare-txn-fixture": "e937dc06a1bd4c2df90542ee96b2a5b240d659a21748052abed80a4209d6999d",
+    "mishare-work-fixture": "137e6bafa43bb93e3e12048772fa4409838a4792fbd3ba69437b4fbe6e596292",
+    "wonder-managed-fixture": "36b9e311dcea1ca22dea40b22c6b2611f45bc09762c5fb3fd435d2df4d615238",
+    "wonder-provider-fixture": "9bf223343669c08ab46b0460660d01e2d15fd8dd22c3e24b6f8a2645611378d6",
+    "native-pdev-free": "f066792c7b8949f911317170afcb56b1feb1f3c128ab4b3d42ddea5612edfc0d",
+    "parent-peer-composite": "78e8c1136c320caaa3d3855c584d3a548a77555208dfefa810bd51c077e111cb"
+  },
+  "production_path_aliases": {
+    "wlan_hdd_mishare_runtime.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c"
+      ],
+      "sha256": "d586a6058e33f7723db603d6e045b92ba95a21a7bf560bc56dddd7e277407676"
+    },
+    "wlan_hdd_mishare_runtime.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h"
+      ],
+      "sha256": "4351a3bf0f2d9b9ea6192e0788ae1152d67719327d8417240e2a3beb9b6c1d8e"
+    },
+    "wlan_hdd_mishare_ndi.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h"
+      ],
+      "sha256": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0"
+    },
+    "wlan_hdd_mishare_radio.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c"
+      ],
+      "sha256": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f"
+    },
+    "wlan_hdd_mishare_radio.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h"
+      ],
+      "sha256": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108"
+    },
+    "wlan_hdd_mishare_backend.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c"
+      ],
+      "sha256": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375"
+    },
+    "wlan_hdd_mishare_backend.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h"
+      ],
+      "sha256": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9"
+    },
+    "wondertap.h": {
+      "matching_paths": [
+        "kernel/provider/wondertap.h",
+        "kernel/wonder/include/wonder/wondertap.h"
+      ],
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546"
+    },
+    "wondertap_managed.h": {
+      "matching_paths": [
+        "kernel/wonder/wondertap_managed.h"
+      ],
+      "sha256": "c28ae1bdc6a86cf1574ac9a8f81d063d92a8dba58c7916c1fcd14a9d040077a2"
+    },
+    "wlan_hdd_mishare_commands.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_commands.c"
+      ],
+      "sha256": "adc1b5eb12937bde9d3beae7d6ac37c44fe0d8d235edd7726252dca034a5972c"
+    },
+    "wlan_hdd_mishare_commands.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_commands.h"
+      ],
+      "sha256": "c692a595444c79be0b9ba4835311563c513c47d0ecf1a84f5b7efe8c416a5fe8"
+    },
+    "wlan_hdd_mishare_events.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_events.c"
+      ],
+      "sha256": "68c7c0cf267ebf9ccd4517a90909e262e3c586a98e29f2cf77c2afc0896fe442"
+    },
+    "wlan_hdd_mishare_events.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_events.h"
+      ],
+      "sha256": "6ee0f88ea590f972c754cf2318bba94bf03e2881edd7ba08a49ab45ce10f066d"
+    },
+    "wlan_hdd_mishare_txn.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_txn.c"
+      ],
+      "sha256": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3"
+    },
+    "wlan_hdd_mishare_txn.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_txn.h"
+      ],
+      "sha256": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8"
+    },
+    "wlan_mishare_mgmt_diag.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_mishare_mgmt_diag.h"
+      ],
+      "sha256": "f267795df26a37cce53a081d58e022bb420bcb0fbd0879376e30f5ac32656eb3"
+    },
+    "wma_mishare_raw_tx.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wma_mishare_raw_tx.h"
+      ],
+      "sha256": "77b49a549e52eaa185218c8685f01b8a4f7b856932d4c3a48f38d0c2073801ce"
+    },
+    "wlan_hdd_mishare_radio_mlme.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_radio_mlme.h"
+      ],
+      "sha256": "10423cc042ae3d061efe316733d1d582ddc4b287f692beca42757d9962ad33c3"
+    },
+    "mishare_raw_protocol.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/mishare_raw_protocol.h"
+      ],
+      "sha256": "d0a99550d621d1d146bd4c0b54375b1d049a1808f234556500f512e4aa335d4e"
+    },
+    "wlan_hdd_mishare_host.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_host.c"
+      ],
+      "sha256": "28b99f0afee9103df35fa57cc264103d3226c0ef7e1dcaaf124b0a7c59e92a05"
+    },
+    "wlan_hdd_mishare_mgmt_rx.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_mgmt_rx.h"
+      ],
+      "sha256": "393f834a40f05832b74618c495509d3ba7c5d7401e54d27a7051bbc61dea1472"
+    },
+    "wlan_hdd_mishare_session.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_session.h"
+      ],
+      "sha256": "59ce9373d9832718108c36d1bfe48ffe9d581197a547ef63ef78589c904b09ef"
+    },
+    "wlan_hdd_mishare_host.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_host.h"
+      ],
+      "sha256": "2ae5c012c6798618687a08700ce854c08bfd8fed5426c2eb70ba973a4d2a741f"
+    },
+    "wlan_hdd_mishare_mgmt_rx.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_mgmt_rx.c"
+      ],
+      "sha256": "68f65a3aaebab333c15de683129b7e57c1a6017d5a72b3a4e59e29bb80d876e3"
+    },
+    "wlan_hdd_mishare_raw_tx.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_raw_tx.h"
+      ],
+      "sha256": "b92a492c9661004fa1e010525fb26d33822f47ce5cb164a1e3ac497e38fe21a3"
+    },
+    "wondertap.c": {
+      "matching_paths": [
+        "kernel/wonder/wondertap.c"
+      ],
+      "sha256": "e817a3d5bb3d6792dbc479667f5320155677f3eecbc469691f2b33197cbcd113"
+    },
+    "wondertap_internal.h": {
+      "matching_paths": [
+        "kernel/wonder/wondertap_internal.h"
+      ],
+      "sha256": "4ee5b0f0308e5271ac5bd24f0689183b1ea6174828f9abfda1b5c7268570b09f"
+    },
+    "include/wonder/wondertap.h": {
+      "matching_paths": [
+        "kernel/provider/wondertap.h",
+        "kernel/wonder/include/wonder/wondertap.h"
+      ],
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546"
+    },
+    "kernel/provider/provider.c": {
+      "matching_paths": [
+        "kernel/provider/provider.c"
+      ],
+      "sha256": "982b0d8e3b7b3d93b4bab641d61e1a19dbd2331f4cc3af6fabf3717f38a3a5e7"
+    },
+    "kernel/provider/wondertap.h": {
+      "matching_paths": [
+        "kernel/provider/wondertap.h"
+      ],
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546"
+    },
+    "kernel/wonder/wondertap.c": {
+      "matching_paths": [
+        "kernel/wonder/wondertap.c"
+      ],
+      "sha256": "e817a3d5bb3d6792dbc479667f5320155677f3eecbc469691f2b33197cbcd113"
+    },
+    "kernel/wonder/wondertap_internal.h": {
+      "matching_paths": [
+        "kernel/wonder/wondertap_internal.h"
+      ],
+      "sha256": "4ee5b0f0308e5271ac5bd24f0689183b1ea6174828f9abfda1b5c7268570b09f"
+    },
+    "kernel/wonder/wondertap_managed.h": {
+      "matching_paths": [
+        "kernel/wonder/wondertap_managed.h"
+      ],
+      "sha256": "c28ae1bdc6a86cf1574ac9a8f81d063d92a8dba58c7916c1fcd14a9d040077a2"
+    },
+    "kernel/wonder/wondertap_provider_binding.c": {
+      "matching_paths": [
+        "kernel/wonder/wondertap_provider_binding.c"
+      ],
+      "sha256": "906c1127e0254c671290636d12b50857073e8f7721fdb432aba05eea83a852e6"
+    },
+    "kernel/wonder/include/wonder/wondertap.h": {
+      "matching_paths": [
+        "kernel/wonder/include/wonder/wondertap.h"
+      ],
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546"
+    },
+    "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c"
+      ],
+      "sha256": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375"
+    },
+    "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h": {
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h"
+      ],
+      "sha256": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9"
+    }
+  },
+  "source_lock_matches_repository": true,
+  "artifacts": {
+    "parent-peer": {
+      "id": 13127447953,
+      "name": "popsicle-parent-peer-41416403715-1",
+      "size_in_bytes": 6476,
+      "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13127447953",
+      "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13127447953/zip",
+      "expired": false,
+      "created_at": "2026-11-02T08:57:20Z",
+      "expires_at": "2026-11-09T08:57:20Z",
+      "updated_at": "2026-11-02T08:57:20Z",
+      "digest": "sha256:4726b04c23fd2f7ce23564a300b1631274b9a1f5de67099b4b460b25b7f0de22",
+      "workflow_run": {
+        "id": 41416403715,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "61d86cb06b8bc5e1de018d8214eb80af8cf18bd8"
+      }
+    },
+    "validation": {
+      "id": 13129911252,
+      "name": "popsicle-validation-41416403715-1",
+      "size_in_bytes": 117273,
+      "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13129911252",
+      "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13129911252/zip",
+      "expired": false,
+      "created_at": "2026-11-02T09:26:57Z",
+      "expires_at": "2026-11-09T09:26:56Z",
+      "updated_at": "2026-11-02T09:26:57Z",
+      "digest": "sha256:f069af13a24f9744043440398c950a05ef916ef5874b6041f04ee9ea0ae2697a",
+      "workflow_run": {
+        "id": 41416403715,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "61d86cb06b8bc5e1de018d8214eb80af8cf18bd8"
+      }
+    }
+  },
+  "modules": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "modules": {
+      "wonder_sysctl": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+        "version_records": 6,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "opairshare_wonder_provider": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+        "version_records": 11,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "opairshare_route_b_probe": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+        "version_records": 3,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wonder": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+        "version_records": 110,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wlan": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "cffb05a881fa853de8d9607f2947f7c7405cba335bd694e3424d162c9ec4413d",
+        "version_records": 585,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      }
+    },
+    "wlan_unresolved": [],
+    "limitations": "Diagnostic .ko files only. No independent C type, private layout, KCFI, BTF, GKI access, firmware, loading or AirDrop certification."
+  },
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
+  "layout_candidate_matches_linked_wlan": true,
+  "local_C_compilation_executed": false,
+  "production_kernel_changed": false,
+  "native_PDEV_final_dispatcher_and_free_executed_in_composite": true,
+  "host_heap_PDEV_actual_free_executed": true,
+  "native_PDEV_create_executed": false,
+  "PDEV_components_and_PSOC_lifetime_are_models": true,
+  "async_PDEV_completion_context_is_fixture_selected_process_context": true,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "real_DP_callback_graph_executed": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "QDF_BUG_failure_endpoint_is_controlled_model": true
+}

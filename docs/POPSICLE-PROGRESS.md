@@ -1,4 +1,12 @@
-## 最新阶段 0092（离线验收完成）
+## 最新阶段 0093（离线验收完成）
+
+将 0092 的选定父对象改为 host heap PDEV，执行原生 PDEV object_status、component_detach、最终 dispatcher 和最终 free 四个函数体，并保留此前六个原生引用/attachment 函数体。成功路径由原生最终 free 依次执行 PSOC detach、父锁销毁、原生延迟 peer queue deinit/QDF cancel、队列锁销毁及实际 host heap free，fixture 调用方不提前 deinit。0092 的 40 个序列迁移到堆父对象，另外 16 个覆盖父组件异步、组件失败、PSOC detach 失败及错误异步 token；共 56 个序列、11 项负对照。
+
+[CI 41416403715](https://github.com/xxz3312/XAirDrop-17/actions/runs/41416403715)（`61d86cb`）两项作业均成功：新增组合、0092 独立组合、53 项 Python 检查、0091/0090 及旧回归、完整 WLAN 编译、CNSS 检查、严格链接、七项布局及模块记录检查均通过。独立重建的新/旧组合源码、10 个原生 PDEV 函数体、原始文件与 Git blob 身份均匹配；45 份报告中的生产源码、37 个路径别名和固定源码清单已核对，两份 ZIP digest 匹配。布局候选对应最终链接 WLAN，五个模块无版本记录不匹配或缺版本依赖。见[0093 说明](POPSICLE-NATIVE-PDEV-FREE-0093.md)及[验证记录](research/popsicle-native-pdev-free-0093-validation.json)。
+
+PDEV 分配/初始化、组件 registry/sentinel handler、PSOC detach、锁/列表及 Linux workqueue 仍为模型；QDF_BUG 为受控捕获端点，异步完成由 fixture 选择进程上下文。原生 PDEV create、真实组件/DP unmap 生产者与完成图、PSOC 生命周期、并发迟到生产者、自动停机协调、活动 START/UP SSR 恢复和完整 AWDL 收包仍待继续。生产内核未修改，backend 关闭，手机无需操作。
+
+## 阶段 0092（离线验收完成）
 
 将六个原生 PDEV 引用、VDEV attach/detach 和逻辑删除函数体接入选定的 0090 peer/VDEV/native SM 析构组合。VDEV 分配端点取得原生 PDEV attachment pin；原生 VDEV 最终 free 调用原生 PDEV detach 归还它。显式调用方持有 HDD 引用，等 peer/VDEV 存储清理和队列 deinit 完成后再归还；可选 OSIF 引用继续推迟父对象最终减零端点。新增 32 个成功序列和八项失败保留序列，覆盖两种 VDEV trace，另有五项负对照；0090 baseline 保留。
 
