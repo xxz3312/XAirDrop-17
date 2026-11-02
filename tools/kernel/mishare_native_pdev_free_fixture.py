@@ -13,7 +13,8 @@ static unsigned p93_mode,p93_heap,p93_order,p93_free_step,p93_free_calls,p93_dei
 static void *p93_async;
 static int p93_bad;
 static QDF_STATUS p93_result;
-static struct wlan_objmgr_pdev *p93_parent;
+static struct wlan_objmgr_pdev p93_default;
+static struct wlan_objmgr_pdev *p93_parent=&p93_default;
 static QDF_STATUS p93_free_gate(struct wlan_objmgr_pdev *);
 static QDF_STATUS p93_component_detach(struct wlan_objmgr_pdev *,enum wlan_umac_comp_id,void *);
 static void p93_bug(int condition) {assert(!condition && p93_mode==2);p93_bugs++;}
