@@ -112,6 +112,7 @@ def fixture(root):
  decl='#define WLAN_UMAC_MAX_PDEVS 1\nstruct wlan_objmgr_psoc_objmgr {qdf_atomic_t ref_cnt,ref_id_dbg[WLAN_REF_ID_MAX];unsigned print_cnt,psoc_id,wlan_pdev_id_map,wlan_pdev_count;struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];};\nstruct wlan_objmgr_psoc {int id,obj_state,p94_lock;struct wlan_objmgr_psoc_objmgr soc_objmgr;};'
  s=owner.replace_once(s,'struct wlan_objmgr_psoc { int id; };',decl)
  s=owner.replace_once(s,'static struct wlan_objmgr_psoc psoc={1};','static struct wlan_objmgr_psoc psoc={.id=1};')
+ s=re.sub(r'(struct wlan_objmgr_psoc\s+\w+\s*=\s*)\{(\d+)\}',r'\1{.id=\2}',s)
  block=SUPPORT.replace('\nNATIVE_PSOC\n','\n'+'\n'.join(extract(text,n) for n in NAMES)+'\n')
  block=owner.replace_once(block,'#define wlan_psoc_obj_lock p94_lock','void p94_get(struct wlan_objmgr_psoc *,wlan_objmgr_ref_dbgid);\nvoid p94_put(struct wlan_objmgr_psoc *,wlan_objmgr_ref_dbgid);\n#define wlan_psoc_obj_lock p94_lock')
  old=function(s,'p93_psoc_detach')
