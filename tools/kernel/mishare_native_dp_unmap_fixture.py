@@ -131,7 +131,7 @@ def fixture(root):
  s=owner.replace_once(s,'struct dp_soc {int inactive_peer_list_lock;','struct dp_soc {unsigned max_peer_id;int peer_map_lock;struct dp_peer *peer_id_to_obj_map[64];bool ast_offload_support,host_ast_db_enable;void *wlan_cfg_ctx;struct {struct {unsigned peer_unmap,invalid_peer_unmap;} t2h_msg_stats;} stats;struct {void (*dp_partner_chips_unmap)(struct dp_soc *,uint16_t);} arch_ops;struct {struct d98_ol *ol_ops;} cdp_soc;int inactive_peer_list_lock;')
  s=owner.replace_once(s,'struct dp_vdev *vdev;uint16_t peer_id;int mod_refs','struct dp_vdev *vdev;uint16_t peer_id;struct dp_txrx_peer *txrx_peer;bool is_tdls_peer;int mod_refs')
  s=owner.replace_once(s,'static void d97_attach(void);','static bool d98_enabled;\nstatic void d98_attach(void);\nstatic void d98_finish(void);\nstatic void d97_attach(void);')
- attach=function(s,'d97_attach');s=owner.replace_once(s,attach,owner.replace_once(attach,'if(!d97_unlisted)d96_soc.inactive_peer_list=p;','if(!d97_unlisted)d96_soc.inactive_peer_list=p;if(d98_enabled)d98_attach();'))
+ attach=function(s,'d97_attach');s=owner.replace_once(s,attach,owner.replace_once(attach,'if(!d97_unlisted)d96_soc.inactive_peer_list=p;','if(!d97_unlisted){d96_soc.inactive_peer_list=p;}\n if(d98_enabled){d98_attach();}'))
  finish=function(s,'d97_finish');s=owner.replace_once(s,finish,owner.replace_once(finish,'struct dp_peer *p=d97_peer;','if(d98_enabled){d98_finish();return;}\n struct dp_peer *p=d97_peer;'))
  block=SUPPORT
  for mapping,prefix in [(HELPERS,'HELPER'),(UNMAP,'UNMAP')]:
