@@ -1,4 +1,12 @@
-## 最新阶段 0097（离线验收完成）
+## 最新阶段 0098（离线验收完成）
+
+0097 组合接入原生 `dp_rx_peer_unmap_handler()`、`dp_peer_get_ref()`、`__dp_peer_get_ref_by_id()` 和 `dp_peer_find_id_to_obj_remove()`，保留原生 peer/VDEV 最终函数体。lookup 通过非零总引用取得临时 HTT pin；map remove 在模型 map lock 内清除 peer/txrx ID 和 slot，归还独立 map CONFIG；unmap 继续执行 Qref/事件/状态/通知及 HTT、生命周期 CONFIG 归还，最终进入 peer/VDEV host heap free 和既有生产运行时完成回调。覆盖未知/边界/重复 ID、零引用 lookup、WDS skip 和两种 AST 返回、offload/IPA/txrx/可选回调与外部引用释放时机。
+
+相关代码和用例集中完成后统一验证，[CI 41497778660](https://github.com/xxz3312/XAirDrop-17/actions/runs/41497778660)（`80f9194`）两项作业成功：152 组组合、56 项失败控制、0097/0096/0095/0094/0093/0092 六项独立组合、53 项 Python 检查、旧回归、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。继承 46 项控制保持此前模型 unmap，十项新控制针对本轮原生路径。七份组合源码、六个原生函数和三个原始来源 Git blob 及 50 份报告中的生产源码、37 个路径别名和两个 ZIP digest 已独立核对。见[0098 说明](POPSICLE-NATIVE-DP-UNMAP-0098.md)及[验证记录](research/popsicle-native-dp-unmap-0098-validation.json)。
+
+本轮为夹具调用原生 handler，未执行固件 HTT 解析/事件注册/真实输送；初始构造/map/生命周期引用、map 数组与平台原语、事件/AST/Qref/flow/统计/回调端点、peer-gone gate 和释放调度仍为模型。STA 和多 SOC/MLO 路径未选定；DP/ObjMgr peer 仍没有经过验证的生产衔接。真实组件、生产停机协调、真实并发、活动 START/UP SSR、完整 AWDL 收包和整机验证仍待继续。生产内核未修改，backend 保持关闭，手机无需操作。
+
+## 阶段 0097（离线验收完成）
 
 0096 组合接入未改写的原生 `dp_peer_unref_delete()`。DP peer 使用独立 host heap，原生函数执行模块引用递减、最终引用和 peer-ID/AST 检查、inactive 列表移除、清理与锁销毁调用、实际 peer heap free，随后归还 DP VDEV CHILD 引用并进入原生 VDEV finalizer；VDEV heap free 后经既有 checking trampoline 调用生产运行时完成回调。额外 TX/RX 引用尚存时保留 peer 与 CHILD；覆盖 RX 模块计数绕过规则。
 
