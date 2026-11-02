@@ -47,10 +47,14 @@ static void p92_check(struct wlan_objmgr_pdev *p,unsigned expected,const char *m
 #define qdf_atomic_dec_and_test p92_zero
 #define qdf_atomic_read p92_read
 #define WLAN_PDEV_OP 1
+#define WLAN_OBJMGR_BUG(x) assert(x)
+#define obj_mgr_debug(...) ((void)0)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 NATIVE_PARENT
 #pragma GCC diagnostic pop
+#undef obj_mgr_debug
+#undef WLAN_OBJMGR_BUG
 #undef WLAN_PDEV_OP
 #undef qdf_atomic_read
 #undef qdf_atomic_dec_and_test
@@ -119,8 +123,8 @@ static void p92_cases(void) {
 
 def fixture(root):
  s,exits,stubbed=previous.fixture(root)
- s=owner.replace_once(s,'struct wlan_objmgr_pdev {', 'struct wlan_objmgr_pdev_objmgr {qdf_atomic_t ref_cnt,ref_id_dbg[WLAN_REF_ID_MAX];unsigned print_cnt,wlan_vdev_count,max_vdev_count;struct wlan_objmgr_vdev *wlan_vdev_list;};\nstruct wlan_objmgr_pdev {struct wlan_objmgr_pdev_objmgr pdev_objmgr;int obj_state,p92_lock;')
- old=previous.function(s,'wlan_objmgr_pdev_vdev_detach')
+ s=owner.replace_once(s,'struct wlan_objmgr_pdev {', 'struct wlan_objmgr_pdev_objmgr {qdf_atomic_t ref_cnt,ref_id_dbg[WLAN_REF_ID_MAX];unsigned print_cnt,wlan_pdev_id,wlan_vdev_count,max_vdev_count;struct wlan_objmgr_vdev *wlan_vdev_list;};\nstruct wlan_objmgr_pdev {struct wlan_objmgr_pdev_objmgr pdev_objmgr;int obj_state,p92_lock;')
+ old=previous.function(s,'wlan_objmgr_pdev_vdev_detach').splitlines()[0]
  block=SUPPORT.replace('NATIVE_PARENT','\n'.join(previous.extract((root/parent.PDEV).read_text(),n) for n in NAMES))
  # Preserve static declarations while original bodies remain unchanged behind macro names.
  block=block.replace('static void p92_get(', 'void p92_get(').replace('static void p92_put(', 'void p92_put(')
@@ -128,9 +132,10 @@ def fixture(root):
  s=owner.replace_once(s,'v->pdev=p;v->mode=17;','v->pdev=p;if(p92_enabled){assert(!p92_attach(p,v));p92_attaches++;p92_check(p,p92_extra?4:3,"EXPECTED_COMPOSITE_ATTACH_PIN");}v->mode=17;')
  clean=previous.function(s,'clean_end')
  s=owner.replace_once(s,clean,owner.replace_once(clean,'clean_active=true;','if(p92_enabled){assert(!p92_delete(&pdev));assert(p92_try(&pdev,WLAN_SCAN_ID)==QDF_STATUS_E_RESOURCES && "EXPECTED_COMPOSITE_PARENT_ADMISSION");}\n clean_active=true;'))
- shutdown=previous.function(s,'q90_shutdown')
+ shutdown=previous.function(s,'q90_shutdown').splitlines()[0]
  s=owner.replace_once(s,shutdown,shutdown.replace('q90_atomic=old;','p92_finish(&pdev);q90_atomic=old;'))
  main=previous.function(s,'main');s=owner.replace_once(s,main,LATE+'\n'+owner.replace_once(main,'q90_contracts();','p92_cases();q90_contracts();'))
+ for n in NAMES:assert s.count(previous.extract((root/parent.PDEV).read_text(),n))==1,n
  return s,exits,stubbed
 
 def negative_controls(directory,c_file,command,env,source,root):
