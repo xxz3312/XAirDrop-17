@@ -1,4 +1,12 @@
-## 最新阶段 0091（离线验收完成）
+## 最新阶段 0092（离线验收完成）
+
+将六个原生 PDEV 引用、VDEV attach/detach 和逻辑删除函数体接入选定的 0090 peer/VDEV/native SM 析构组合。VDEV 分配端点取得原生 PDEV attachment pin；原生 VDEV 最终 free 调用原生 PDEV detach 归还它。显式调用方持有 HDD 引用，等 peer/VDEV 存储清理和队列 deinit 完成后再归还；可选 OSIF 引用继续推迟父对象最终减零端点。新增 32 个成功序列和八项失败保留序列，覆盖两种 VDEV trace，另有五项负对照；0090 baseline 保留。
+
+[CI 41408965293](https://github.com/xxz3312/XAirDrop-17/actions/runs/41408965293)（`69e6d0f`）两项作业均成功：新增组合、53 项 Python 检查、0091/0090 及旧回归、完整 WLAN 编译、CNSS 检查、严格链接、七项布局和模块记录检查均通过。独立重建的完整测试源码及六个原生 PDEV 函数体哈希与 CI 一致；新组合与 43 份 diagnostic 模型报告所列生产源码均匹配，37 个路径别名及固定源码清单已核对，两份验证 ZIP digest 匹配。布局候选对应最终链接 WLAN，五个模块无版本记录不匹配或缺版本依赖。见[0092 说明](POPSICLE-PARENT-PEER-COMPOSITE-0092.md)及[验证记录](research/popsicle-parent-peer-composite-0092-validation.json)。
+
+PDEV/PSOC 存储仍为静态模型，父对象最终组件分发/free 是受控标记端点；没有执行组合中的原生 PDEV free，也没有父 heap 释放认证。VDEV 创建、DP unmap 生产者/完成门、工作队列及平台原语保留既有模型边界。真实 DP 回调、迟到生产者、PDEV/PSOC 最终析构、自动停机协调、活动 START/UP SSR 恢复与完整 AWDL 收包仍待继续。生产内核未修改，backend 关闭，手机无需操作。
+
+## 阶段 0091（离线验收完成）
 
 独立 parent/queue fixture 执行七个原生 PDEV 引用、attach/detach、逻辑删除和最终 free 函数体，以及十四个原生 peer queue/QDF work 函数体。50 个序列及八项负对照验证：调用方保留 PDEV 引用，worker 内 VDEV detach 后父存储仍存活，关闭生产者并在进程上下文显式排空后归还最后引用；原生 free 按序关闭队列并释放 host heap。
 
