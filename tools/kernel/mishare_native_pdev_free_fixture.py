@@ -53,7 +53,10 @@ static void p93_storage_free(struct wlan_objmgr_pdev *p) {
 #define wlan_print_pdev_info p93_print
 #define wlan_minidump_remove p93_dump
 #define g_umac_glb_obj (&p93_registry)
-#define obj_mgr_debug(...) ((void)0)
+#pragma push_macro("obj_mgr_err")
+#undef obj_mgr_err
+#define obj_mgr_err ref_log
+#define obj_mgr_debug ref_log
 #define WLAN_OBJMGR_BUG(x) p93_bug(x)
 #pragma push_macro("QDF_BUG")
 #undef QDF_BUG
@@ -65,6 +68,7 @@ NATIVE_DISPATCH
 #pragma pop_macro("QDF_BUG")
 #undef WLAN_OBJMGR_BUG
 #undef obj_mgr_debug
+#pragma pop_macro("obj_mgr_err")
 #undef g_umac_glb_obj
 #undef wlan_minidump_remove
 #undef wlan_print_pdev_info
