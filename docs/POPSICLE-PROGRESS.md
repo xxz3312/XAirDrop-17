@@ -1,4 +1,12 @@
-## 最新阶段 0094（离线验收完成）
+## 最新阶段 0095（离线验收完成）
+
+选定序列的 PSOC 改为 host heap，原生 object_status、component_detach、最终 dispatcher、peer_list_deinit 和最终 free 五个函数体接入；此前六个 PSOC 引用/map/逻辑删除及 10 个 PDEV 原生函数体保持执行。原生 PSOC dispatcher 正序调用两个模型组件处理器，成功后原生 free 依次执行模型全局 detach、原生 peer-list deinit 的 64 个空模型桶和锁清理、最终 PSOC 锁销毁及实际 host heap free。异步组件经原生 completion 恢复 free；失败保留未完成部分。
+
+相关实现、失败处理、边界用例和 CI 入口集中完成后统一验证。[CI 41436339138](https://github.com/xxz3312/XAirDrop-17/actions/runs/41436339138)（`cc815e1`）两项作业均成功：88 个组合序列、26 项负对照、0094/0093/0092 独立组合、53 项 Python 检查、0091/0090 及旧回归、完整 WLAN 编译、CNSS 检查、严格链接、七项布局及模块记录检查均通过。完整新/旧组合源码、11 个 PSOC 和 10 个 PDEV 原生函数体、PSOC 文件/Git blob 身份及 47 份报告中的生产源码已核对，37 个路径别名、源码清单及两份 ZIP digest 匹配。见[0095 说明](POPSICLE-NATIVE-PSOC-FREE-0095.md)及[验证记录](research/popsicle-native-psoc-free-0095-validation.json)。
+
+全局 PSOC 注册/detach、分配初始化、registry/sentinel handler、空哈希桶和平台原语仍是模型；未执行原生 PSOC/PDEV create、原生 peer-list init、真实 PSOC peer/VDEV 引用图或真实组件。只验证私有父资源整体停机合同；真实 DP unmap/完成图、并发迟到生产者、生产父资源协调、活动 START/UP SSR 恢复及完整 AWDL 收包仍待继续。生产内核未修改，backend 保持关闭，手机无需操作。
+
+## 阶段 0094（离线验收完成）
 
 将六个原生 PSOC 引用、PDEV attach/detach 和逻辑删除函数体接入 0093 的堆 PDEV 组合。原生 attach 维护 ID/map/count 并取得 PSOC attachment 引用；原生 PDEV free 调用原生 PSOC detach 后，fixture caller 仍持有 PSOC HDD 引用，直到 PDEV 队列关闭及 host heap free 完成才归还。原有 56 个序列迁移到该合同，另有 16 个 PSOC OSIF 引用与归还顺序组合，共 72 个序列、17 项负对照；单槽合同检查满表与无效已脱离 ID。
 
