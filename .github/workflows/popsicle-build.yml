@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_native_htt_unmap_fixture.py
       - tools/kernel/mishare_native_dp_unmap_fixture.py
       - tools/kernel/mishare_native_dp_peer_free_fixture.py
       - tools/kernel/mishare_native_dp_vdev_free_fixture.py
@@ -125,6 +126,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/parent-peer-wlan" apply "$patch"
           done
+      - name: Production HTT peer unmap parser and nbuf ownership with sanitizers
+        run: python3 tools/kernel/mishare_native_htt_unmap_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-htt-unmap.json
       - name: Native DP peer unmap lookup and map removal with sanitizers
         run: python3 tools/kernel/mishare_native_dp_unmap_fixture.py --wlan "$RUNNER_TEMP/parent-peer-wlan" --output native-dp-unmap.json
       - name: Native parent and peer composite with sanitizers
@@ -150,6 +153,7 @@ jobs:
             native-dp-vdev-free.json
             native-dp-peer-free.json
             native-dp-unmap.json
+            native-htt-unmap.json
           if-no-files-found: error
           retention-days: 7
 

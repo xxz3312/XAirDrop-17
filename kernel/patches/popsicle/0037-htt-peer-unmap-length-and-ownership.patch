@@ -1,0 +1,159 @@
+--- a/qca-wifi-host-cmn/dp/wifi3.0/dp_htt.c
++++ b/qca-wifi-host-cmn/dp/wifi3.0/dp_htt.c
+@@ -4534,22 +4534,91 @@
+ 	dp_mlo_latency_req(soc->dp_soc, vdev_id, interval, enable);
+ }
+ 
++/*
++ * Consume peer-unmap indications before the generic dispatcher reads fields.
++ * Return false only for a successful, header-sized non-unmap indication: its
++ * nbuf remains owned by the existing dispatcher. All consumed indications are
++ * freed exactly once here, including transport errors and short messages.
++ * V2 needs the prefix through PEER_WDS_FREE_COUNT; unused trailing fields are
++ * deliberately not required for compatibility with the previous consumer.
++ */
++static bool dp_htt_t2h_peer_unmap_try_handle(void *context, HTC_PACKET *pkt)
++{
++	struct htt_soc *soc = context;
++	qdf_nbuf_t msg;
++	u_int32_t words[HTT_RX_PEER_UNMAP_V2_BYTES / sizeof(u_int32_t)] = {0};
++	u_int32_t required, free_wds_count = DP_PEER_WDS_COUNT_INVALID;
++	enum htt_t2h_msg_type type;
++	u_int16_t peer_id;
++	u_int8_t vdev_id, is_wds = 0;
++	u_int8_t mac_buffer[QDF_MAC_ADDR_SIZE] = {0};
++	u_int8_t *mac = mac_buffer;
++
++	if (!pkt)
++		return true;
++	msg = (qdf_nbuf_t)pkt->pPktContext;
++	if (!soc || !msg) {
++		if (msg)
++			dp_htt_rx_nbuf_free(msg);
++		return true;
++	}
++	if (pkt->Status != QDF_STATUS_SUCCESS) {
++		if (pkt->Status != QDF_STATUS_E_CANCELED)
++			soc->stats.htc_err_cnt++;
++		dp_htt_rx_nbuf_free(msg);
++		return true;
++	}
++	if (qdf_nbuf_len(msg) < sizeof(words[0]) || !qdf_nbuf_data(msg)) {
++		dp_htt_err("short or absent HTT indication header");
++		dp_htt_rx_nbuf_free(msg);
++		return true;
++	}
++	qdf_mem_copy(words, qdf_nbuf_data(msg), sizeof(words[0]));
++	type = HTT_T2H_MSG_TYPE_GET(words[0]);
++	if (type != HTT_T2H_MSG_TYPE_PEER_UNMAP &&
++	    type != HTT_T2H_MSG_TYPE_PEER_UNMAP_V2)
++		return false;
++
++	required = type == HTT_T2H_MSG_TYPE_PEER_UNMAP ?
++		HTT_RX_PEER_UNMAP_BYTES :
++		HTT_RX_PEER_UNMAP_V2_PEER_WDS_FREE_COUNT_OFFSET + sizeof(words[0]);
++	if (qdf_nbuf_len(msg) < required) {
++		dp_htt_err("short peer unmap type %u len %u need %u", type,
++			   qdf_nbuf_len(msg), required);
++		dp_htt_rx_nbuf_free(msg);
++		return true;
++	}
++	qdf_mem_copy(words, qdf_nbuf_data(msg), required);
++	if (type == HTT_T2H_MSG_TYPE_PEER_UNMAP) {
++		peer_id = HTT_RX_PEER_UNMAP_PEER_ID_GET(words[0]);
++		vdev_id = HTT_RX_PEER_UNMAP_VDEV_ID_GET(words[0]);
++	} else {
++		peer_id = HTT_RX_PEER_UNMAP_V2_SW_PEER_ID_GET(words[0]);
++		vdev_id = HTT_RX_PEER_UNMAP_V2_VDEV_ID_GET(words[0]);
++		mac = htt_t2h_mac_addr_deswizzle((u_int8_t *)(words + 1),
++					       mac_buffer);
++		is_wds = HTT_RX_PEER_UNMAP_V2_NEXT_HOP_GET(words[2]);
++		free_wds_count =
++			HTT_RX_PEER_UNMAP_V2_PEER_WDS_FREE_COUNT_GET(words[4]);
++	}
++	htt_event_record(soc->htt_logger_handle, type, qdf_nbuf_data(msg));
++	dp_rx_peer_unmap_handler(soc->dp_soc, peer_id, vdev_id, mac,
++				 is_wds, free_wds_count);
++	dp_htt_rx_nbuf_free(msg);
++	return true;
++}
++
+ void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
+ {
+ 	struct htt_soc *soc = (struct htt_soc *) context;
+-	qdf_nbuf_t htt_t2h_msg = (qdf_nbuf_t) pkt->pPktContext;
++	qdf_nbuf_t htt_t2h_msg;
+ 	u_int32_t *msg_word;
+ 	enum htt_t2h_msg_type msg_type;
+ 	bool free_buf = true;
+ 
+-	/* check for successful message reception */
+-	if (pkt->Status != QDF_STATUS_SUCCESS) {
+-		if (pkt->Status != QDF_STATUS_E_CANCELED)
+-			soc->stats.htc_err_cnt++;
+-
+-		dp_htt_rx_nbuf_free(htt_t2h_msg);
++	if (dp_htt_t2h_peer_unmap_try_handle(context, pkt))
+ 		return;
+-	}
++	htt_t2h_msg = (qdf_nbuf_t)pkt->pPktContext;
+ 
+ 	/* TODO: Check if we should pop the HTC/HTT header alignment padding */
+ 
+@@ -4598,19 +4667,6 @@
+ 			dp_rx_peer_map_handler(soc->dp_soc, peer_id, hw_peer_id,
+ 					       vdev_id, peer_mac_addr, 0,
+ 					       is_wds);
+-			break;
+-		}
+-	case HTT_T2H_MSG_TYPE_PEER_UNMAP:
+-		{
+-			u_int16_t peer_id;
+-			u_int8_t vdev_id;
+-			u_int8_t mac_addr[QDF_MAC_ADDR_SIZE] = {0};
+-			peer_id = HTT_RX_PEER_UNMAP_PEER_ID_GET(*msg_word);
+-			vdev_id = HTT_RX_PEER_UNMAP_VDEV_ID_GET(*msg_word);
+-
+-			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
+-						 vdev_id, mac_addr, 0,
+-						 DP_PEER_WDS_COUNT_INVALID);
+ 			break;
+ 		}
+ 	case HTT_T2H_MSG_TYPE_SEC_IND:
+@@ -4813,36 +4869,6 @@
+ 						peer_id, peer_mac_addr,
+ 						&ast_flow_info);
+ 
+-			break;
+-		}
+-	case HTT_T2H_MSG_TYPE_PEER_UNMAP_V2:
+-		{
+-			u_int8_t mac_addr_deswizzle_buf[QDF_MAC_ADDR_SIZE];
+-			u_int8_t *mac_addr;
+-			u_int16_t peer_id;
+-			u_int8_t vdev_id;
+-			u_int8_t is_wds;
+-			u_int32_t free_wds_count;
+-
+-			peer_id =
+-			HTT_RX_PEER_UNMAP_V2_SW_PEER_ID_GET(*msg_word);
+-			vdev_id = HTT_RX_PEER_UNMAP_V2_VDEV_ID_GET(*msg_word);
+-			mac_addr =
+-			htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+-						   &mac_addr_deswizzle_buf[0]);
+-			is_wds =
+-			HTT_RX_PEER_UNMAP_V2_NEXT_HOP_GET(*(msg_word + 2));
+-			free_wds_count =
+-			HTT_RX_PEER_UNMAP_V2_PEER_WDS_FREE_COUNT_GET(*(msg_word + 4));
+-
+-			QDF_TRACE(QDF_MODULE_ID_TXRX,
+-				  QDF_TRACE_LEVEL_INFO,
+-				  "HTT_T2H_MSG_TYPE_PEER_UNMAP msg for peer id %d vdev id %d n",
+-				  peer_id, vdev_id);
+-
+-			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
+-						 vdev_id, mac_addr,
+-						 is_wds, free_wds_count);
+ 			break;
+ 		}
+ 	case HTT_T2H_MSG_TYPE_RX_DELBA:

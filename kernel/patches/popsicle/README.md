@@ -89,3 +89,7 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
     additionally requires exact callback provenance, successful API return and
     INIT/IDLE before qualified explicit SSR reclaim. Removing both bounded
     additions restores the complete pinned native file byte-for-byte.
+
+### 0037 HTT peer-unmap consumed-prefix and nbuf ownership
+
+`dp_htt_t2h_peer_unmap_try_handle()` runs before generic packet-context/header reads. Transport errors/cancellation, absent buffers/data and short headers are consumed safely; successful non-unmap packets remain owned by the original dispatcher. V1 consumes at least four bytes; V2 consumes the prefix through the WDS-free-count field (twenty bytes), allowing unused trailing fields. A bounded copy into aligned local words preserves the original wire GET macros and MAC deswizzle. Valid unmaps enter the existing native DP handler before exactly one nbuf free. This patch does not enable the MiShare backend or validate other HTT message payloads.
