@@ -122,7 +122,7 @@ static void h99_contracts(void) {
  h99_probe=h99_big=false;
 }
 '''
-MACROS={'qdf_nbuf_len':'h99_len','qdf_nbuf_data':'h99_data','qdf_mem_copy':'h99_copy','dp_htt_rx_nbuf_free':'h99_free','dp_htt_err':'ref_log','htt_event_record':'h99_event','htt_t2h_mac_addr_deswizzle':'h99_deswizzle','dp_rx_peer_unmap_handler':'h99_decoded'}
+MACROS={'QDF_MAC_ADDR_SIZE':'6','qdf_nbuf_len':'h99_len','qdf_nbuf_data':'h99_data','qdf_mem_copy':'h99_copy','dp_htt_rx_nbuf_free':'h99_free','dp_htt_err':'ref_log','htt_event_record':'h99_event','htt_t2h_mac_addr_deswizzle':'h99_deswizzle','dp_rx_peer_unmap_handler':'h99_decoded'}
 def source_contract(root):
  text=(root/HTT).read_text();handler=extract(text,'dp_htt_t2h_msg_handler');assert handler.index('dp_htt_t2h_peer_unmap_try_handle(context, pkt)')<handler.index('pkt->pPktContext');assert 'case HTT_T2H_MSG_TYPE_PEER_UNMAP:' not in handler and 'case HTT_T2H_MSG_TYPE_PEER_UNMAP_V2:' not in handler
  assert 'connect.EpCallbacks.EpRecv = dp_htt_t2h_msg_handler;' in text
