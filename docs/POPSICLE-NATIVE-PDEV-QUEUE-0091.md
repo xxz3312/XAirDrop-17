@@ -6,4 +6,8 @@
 
 该 fixture 独立于完整 0090 WMA/DP/MLME 组合，后者继续单独回归。这里的 peer 析构端点模拟最后 VDEV detach；PDEV 组件析构分发器为调用原生 free 的受控端点，PSOC detach、Linux workqueue/锁/原子/链表仍为模型。额外 PDEV 引用只能保留存储，不能阻止 native 组件先行关闭；实际 PSOC 生命周期、全局迟到生产者、真实 DP 图和自动停机协调尚未实现。原生合并计数与列表插入行为没有修改，计数不作为排空证据。生产内核不变，backend 关闭，手机无需操作。
 
-CI 与产物独立校验待完成。
+离线验收完成：修正 fixture 的具名 `wlan_objmgr_pdev_objmgr` 声明后，[CI 41348908513](https://github.com/xxz3312/XAirDrop-17/actions/runs/41348908513)（`10eaf90`）通过 53 项 Python 检查、50 个序列及八项负对照、0090 和旧回归、完整 WLAN 编译、CNSS 检查、严格链接、七项选定布局和模块记录检查。该修正仅修改适配器声明，原生函数体不变。
+
+独立取得固定 Xiaomi 源码后，四份原生输入的文件 SHA-256、21 个函数体及引用 ID 枚举均与报告一致；重建的完整 fixture SHA-256 为 `fd9cb185fa0191fefeeddcb6027ad51c54c637aa638228868acb2c4a56b997ae`，与 CI 相同。本地未执行 C 编译。43 份生产源码报告与仓库内容一致，共核对 37 个路径别名；同内容头文件保留全部匹配路径。验证报告 ZIP 的 SHA-256 与 Actions artifact digest 一致；布局候选对应链接后的 WLAN，五个模块无版本记录不匹配或缺版本依赖，WLAN 无未解决依赖。见[验证记录](research/popsicle-native-pdev-queue-0091-validation.json)。
+
+下一步是把父引用持有合同接入真实 peer/VDEV/DP 回收图，并协调父资源关闭与迟到生产者；目前不能以此授权生产后端启动。

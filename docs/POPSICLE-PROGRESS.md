@@ -1,4 +1,12 @@
-## 最新阶段 0090（离线验收完成）
+## 最新阶段 0091（离线验收完成）
+
+独立 parent/queue fixture 执行七个原生 PDEV 引用、attach/detach、逻辑删除和最终 free 函数体，以及十四个原生 peer queue/QDF work 函数体。50 个序列及八项负对照验证：调用方保留 PDEV 引用，worker 内 VDEV detach 后父存储仍存活，关闭生产者并在进程上下文显式排空后归还最后引用；原生 free 按序关闭队列并释放 host heap。
+
+[CI 41348908513](https://github.com/xxz3312/XAirDrop-17/actions/runs/41348908513)（`10eaf90`）通过 53 项 Python 检查、0091/0090 及旧回归、完整 WLAN 编译、严格链接、七项布局和模块记录检查。独立核对四份原生文件、21 个函数体、引用枚举和完整 fixture 哈希；43 份生产源码报告及 37 个路径别名均匹配仓库，报告 ZIP 校验通过，布局候选对应链接 WLAN，五个模块无版本记录不匹配或缺版本依赖。见[0091 说明](POPSICLE-NATIVE-PDEV-QUEUE-0091.md)及[验证记录](research/popsicle-native-pdev-queue-0091-validation.json)。
+
+本阶段是独立引用合同验证，并未把实际 peer/VDEV/DP 析构图接入父对象回收；组件分发、PSOC detach 和平台原语仍有模型端点。持有引用仅保留父存储，不能阻止组件关闭。真实 DP 回调、全局迟到生产者、自动停机协调、活动 START/UP SSR 恢复和完整 AWDL 收包仍待实现。生产内核未修改，backend 关闭，手机无需操作。
+
+## 阶段 0090（离线验收完成）
 
 在 0089 组合上执行原生 peer 延迟工作队列五个函数体与九个 QDF work 适配函数体。排队期间检查 peer heap、VDEV peer pin、DP VDEV 和 native SM 保留；worker 解开列表锁后才调用原生 peer 析构。新增 36 个队列/组件/引用组合，普通与 trace VDEV 配置分别重跑完整 0089 套件，累计 35 项负对照。
 
