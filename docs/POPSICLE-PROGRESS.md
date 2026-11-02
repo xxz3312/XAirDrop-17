@@ -1,4 +1,12 @@
-## 最新阶段 0096（离线验收完成）
+## 最新阶段 0097（离线验收完成）
+
+0096 组合接入未改写的原生 `dp_peer_unref_delete()`。DP peer 使用独立 host heap，原生函数执行模块引用递减、最终引用和 peer-ID/AST 检查、inactive 列表移除、清理与锁销毁调用、实际 peer heap free，随后归还 DP VDEV CHILD 引用并进入原生 VDEV finalizer；VDEV heap free 后经既有 checking trampoline 调用生产运行时完成回调。额外 TX/RX 引用尚存时保留 peer 与 CHILD；覆盖 RX 模块计数绕过规则。
+
+相关代码和用例集中完成后统一验证，[CI 41488890858](https://github.com/xxz3312/XAirDrop-17/actions/runs/41488890858)（`c4926c2`）两项作业成功：120 组组合、46 项失败控制、0096/0095/0094/0093/0092 五项独立组合、53 项 Python 检查、旧回归、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。六份生成组合源码、两个 DP 原生函数/Git blob/enum 与 HTT 常量来源及 49 份报告中的生产源码、37 个路径别名和两个 ZIP digest 已独立核对。见[0097 说明](POPSICLE-NATIVE-DP-PEER-FREE-0097.md)及[验证记录](research/popsicle-native-dp-peer-free-0097-validation.json)。
+
+DP peer/VDEV 构造、初始引用、peer-ID map 失效、peer-gone gate、释放调度及清理端点/列表/锁/原子操作仍为模型；没有执行固件 `dp_rx_peer_unmap_handler()`。DP peer 与 ObjMgr peer 为不同对象，未声称其间已有生产引用桥。真实组件、生产停机协调、真实并发、活动 START/UP SSR、完整 AWDL 收包及整机验证仍待继续。生产内核未修改，backend 保持关闭，手机无需操作。
+
+## 阶段 0096（离线验收完成）
 
 0095 组合接入未改写的原生 `dp_vdev_unref_delete()`，选定 passthru 路径执行模块引用递减、最后引用判断、清理调用、inactive 列表移除、可选删除通知、实际 DP VDEV host heap free，再经检查 trampoline 把原始令牌交给既有生产运行时完成回调。额外 HTT 引用尚存时必须保留存储；模型 peer 清理失败时保留 DP 资源，禁止完成。
 
