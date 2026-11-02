@@ -144,7 +144,7 @@ def negative_controls(directory,c_file,command,env,source,root):
  ('notify','vdev_del_notify(vdev_del_noitfy_ctx, (struct cdp_vdev *)vdev);','(void)vdev_del_noitfy_ctx;','EXPECTED_DP_NOTIFY_BEFORE_STORAGE_FREE'),
  ('free','qdf_mem_common_free(vdev);','/* omit free */','EXPECTED_DP_STORAGE_FREE_BEFORE_COMPLETION'),
  ('callback','vdev_delete_cb(vdev_delete_context);','(void)vdev_delete_context;','EXPECTED_DP_FINAL_COMPLETION'),
- ('context','vdev_delete_cb(vdev_delete_context);','vdev_delete_cb(NULL);(void)vdev_delete_context;','EXPECTED_DP_ORIGINAL_CALLBACK_TOKEN'),
+ ('context','vdev_delete_cb(vdev_delete_context);','{vdev_delete_cb(NULL);(void)vdev_delete_context;}','EXPECTED_DP_ORIGINAL_CALLBACK_TOKEN'),
  ]
  for label,needle,mutation,marker in controls:
   target=owner.replace_once(source,function(source,'main'),'int main(void) {d96_notify_enabled=true;p92_case(false,1,0,false);_Exit(0);}')
