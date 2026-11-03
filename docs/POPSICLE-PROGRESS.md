@@ -1,4 +1,12 @@
-## 最新阶段 0100（离线验收完成）
+## 最新阶段 0101（离线验收完成）
+
+接入原生 HIF `hif_update_pipe_callback()` 回调保存、`hif_ce_do_recv()` 长度设置/超长释放、multibus `hif_stop()` 转发、`htc_stop()` 两个 SG 分支和 `reset_endpoint_states()`。原生 CE 收包通过保存的 HP 回调进入 HTT 适配、生产解析器及既有释放链。停止函数先清理 endpoint RX/TX 和 polling timer，再调用下层 HIF，随后按 WMI/control/非轮询 HTT 策略清理 lookup queue、排空 SG 并重置 endpoint。
+
+[CI 41665851697](https://github.com/xxz3312/XAirDrop-17/actions/runs/41665851697)（`fcb336d`）四项作业成功：32 组停止合同、8 项 CE 长度/所有权合同、192 组组合、64 项回调合同、303 项解析合同、94 项失败控制、九项既有独立组合、53 项 Python 检查、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。十份组合源码和五个新增原生函数、53 份报告中的生产源码、37 个路径别名及四份 ZIP digest 均独立核对。两次夹具编译警告（断言括号和变异未用变量）已修正并记录；未新增生产补丁。见[0101 说明](POPSICLE-TRANSPORT-STOP-0101.md)及[验收记录](research/popsicle-transport-stop-0101-validation.json)。
+
+本轮也确认：endpoint reset 不清除已保存的接收回调指针；排空并阻断迟到消息必须依赖下层停止同步。bus stop 中最后一条已接纳消息、停止后入口关闭及 context release 均为模型合同，未证明真实并发/中断/DMA 排空或物理 HTT free。CE 采用源码 16-pipe 分支，SG 两分支覆盖不代表手机配置。queue/timer/layout 仍为模型，生产父资源停机协调、真实总线与整机验证继续待办。backend 保持关闭，手机无需操作。
+
+## 阶段 0100（离线验收完成）
 
 执行原生 `htt_soc_initialize()`、`htt_htc_soc_attach()`、`dp_htt_hif_t2h_hp_callback()`、`dp_htt_h2t_full()` 和两个 `dp_hif_update_pipe_callback()` 源码分支。模型下层 HTC/HIF 端点保存原生注册的回调/上下文，再通过保存的指针送入消息；原生 HP 适配检查 pipe 5、清零包、填写成功状态和 nbuf，进入原接收函数的 unmap 消费前缀及 0099 生产解析器，再衔接既有 DP 释放链。WDI-disabled 原分支保持 no-op，普通 HTC 接收仍可用；连接失败不发布模型端点。
 
