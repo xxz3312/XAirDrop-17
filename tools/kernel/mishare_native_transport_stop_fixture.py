@@ -67,7 +67,7 @@ static void h101_timer_free_fn(h101_timer *timer) {assert(timer->stopped && !tim
 static void h101_lookup_fn(HTC_TARGET *t,int index,bool force) {
  assert(t==&h101_target && h101_closed && h101_stop_calls==1 && !h101_reset && "EXPECTED_LOOKUP_AFTER_HIF_STOP");
  unsigned service=t->endpoint[index].service_id;
- assert((service==WMI_CONTROL_SVC && !force) || ((service==HTC_CTRL_RSVD_SVC || (service==HTT_DATA_MSG_SVC && !t->endpoint[index].ul_is_polled)) && force) && "EXPECTED_NATIVE_LOOKUP_POLICY");h101_lookup++;
+ assert(((service==WMI_CONTROL_SVC && !force) || ((service==HTC_CTRL_RSVD_SVC || (service==HTT_DATA_MSG_SVC && !t->endpoint[index].ul_is_polled)) && force)) && "EXPECTED_NATIVE_LOOKUP_POLICY");h101_lookup++;
 }
 static void h101_queue_init_fn(h101_queue *q) {assert(h101_closed && h101_lookup==h101_expected_lookup && !q->initialized && "EXPECTED_RESET_AFTER_LOOKUP");q->initialized=1;h101_queue_init++;}
 static void h101_atomic_init(int *p) {*p=0;}
