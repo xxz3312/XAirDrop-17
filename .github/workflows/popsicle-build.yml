@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_native_htt_callbacks_fixture.py
       - tools/kernel/mishare_native_htt_unmap_fixture.py
       - tools/kernel/mishare_native_dp_unmap_fixture.py
       - tools/kernel/mishare_native_dp_peer_free_fixture.py
@@ -109,6 +110,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  htt-callbacks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch pinned WLAN and apply existing patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/htt-callback-wlan"
+          git -C "$RUNNER_TEMP/htt-callback-wlan" remote add origin https://github.com/MiCode/vendor_qcom_opensource_wlan.git
+          git -C "$RUNNER_TEMP/htt-callback-wlan" fetch --depth=1 origin 36df473046706a5259942e1bf7222108dbbb860f
+          git -C "$RUNNER_TEMP/htt-callback-wlan" checkout --detach FETCH_HEAD
+          for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
+            git -C "$RUNNER_TEMP/htt-callback-wlan" apply "$patch"
+          done
+      - name: Native HTC registration and HIF callback composite with sanitizers
+        run: python3 tools/kernel/mishare_native_htt_callbacks_fixture.py --wlan "$RUNNER_TEMP/htt-callback-wlan" --output native-htt-callbacks.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-htt-callbacks-${{ github.run_id }}-${{ github.run_attempt }}
+          path: native-htt-callbacks.json
+          if-no-files-found: error
+          retention-days: 7
+
   parent-peer-composite:
     runs-on: ubuntu-24.04
     steps:
