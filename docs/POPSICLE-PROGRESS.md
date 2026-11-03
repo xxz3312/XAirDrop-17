@@ -1,4 +1,12 @@
-## 最新阶段 0099（离线验收完成）
+## 最新阶段 0100（离线验收完成）
+
+执行原生 `htt_soc_initialize()`、`htt_htc_soc_attach()`、`dp_htt_hif_t2h_hp_callback()`、`dp_htt_h2t_full()` 和两个 `dp_hif_update_pipe_callback()` 源码分支。模型下层 HTC/HIF 端点保存原生注册的回调/上下文，再通过保存的指针送入消息；原生 HP 适配检查 pipe 5、清零包、填写成功状态和 nbuf，进入原接收函数的 unmap 消费前缀及 0099 生产解析器，再衔接既有 DP 释放链。WDI-disabled 原分支保持 no-op，普通 HTC 接收仍可用；连接失败不发布模型端点。
+
+代码和相关用例集中完成后统一验证，[CI 41625241354](https://github.com/xxz3312/XAirDrop-17/actions/runs/41625241354)（`d09f2bf`）三项作业成功：192 组组合、64 项回调合同、303 项继承解析合同、82 项失败控制、0099/0098/0097/0096/0095/0094/0093/0092 八项独立组合、53 项 Python 检查、旧回归、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。九份组合源码、四个 HTT 原生函数、两个 HIF 源码分支、接收消费前缀及 52 份报告中的生产源码、37 个路径别名和三份 ZIP digest 均独立核对。生产 HTT 与 0099 一致。见[0100 说明](POPSICLE-HTT-CALLBACKS-0100.md)及[验收记录](research/popsicle-htt-callbacks-0100-validation.json)。
+
+下层 service/connect、endpoint 保存、logging、HIF 回调存储、构造存储/句柄与数据布局仍为模型；未证明真实总线/DMA/中断/固件消息、注册重入、注销和迟到回调安全。generic dispatcher 非消费尾部是中止桩，并未执行；只对该前缀的未用局部变量作窄范围警告豁免。WDI 两分支测试不代表手机当前配置选择。既有 DP 构造/引用、peer-gone/platform/清理端点、生产父资源停机及活动 SSR/完整 AWDL/整机验证仍待继续。backend 保持关闭，手机无需操作。
+
+## 阶段 0099（离线验收完成）
 
 生产补丁 0037 在 `dp_htt_t2h_msg_handler()` 读取 packet context/header 前调用新的 unmap consumer。它处理传输错误/取消、缺失 context/nbuf/data、短 header；成功非 unmap 消息保留原 generic dispatcher 所有权。V1 至少四字节，V2 至少包含 WDS-free-count 的二十字节消费前缀，额外尾部兼容；有界复制到对齐局部 words 后使用原始 wire GET 和 MAC deswizzle，再调用原生 DP unmap，并在返回后恰好释放一次 nbuf。旧两个 unmap switch 分支移除，其他分支与原注册指向保持。
 
