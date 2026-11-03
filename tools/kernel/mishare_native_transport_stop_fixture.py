@@ -169,13 +169,13 @@ def negative_controls(directory,c_file,command,env,source,root):
       (CE,'hif_ce_do_recv','qdf_nbuf_set_pktlen(netbuf, nbytes);','/* missing length */','h101_length_contract(1,false);','EXPECTED_HTT_CALLBACK_BEFORE_NBUF_FREE'),
       (CE,'hif_ce_do_recv','rxCompletionHandler(msg_callbacks->Context,','rxCompletionHandler(NULL,','h101_length_contract(0,false);','EXPECTED_NATIVE_DELIVERY_CONTEXT'),
       (CE,'hif_ce_do_recv','hif_ce_rx_nbuf_free(netbuf);','/* leaked oversize */','h101_length_contract(3,false);','EXPECTED_CE_LENGTH_OWNERSHIP'),
-      (BUS,'hif_stop','hif_sc->bus_ops.hif_stop(hif_sc);','/* stop omitted */','h101_stop_contract(false,true,false,false,false);','EXPECTED_LOOKUP_AFTER_HIF_STOP'),
+      (BUS,'hif_stop','hif_sc->bus_ops.hif_stop(hif_sc);','/* stop omitted */ (void)hif_sc;','h101_stop_contract(false,true,false,false,false);','EXPECTED_LOOKUP_AFTER_HIF_STOP'),
       (HTC,'htc_stop','htc_flush_endpoint_tx(target, endpoint, HTC_TX_PACKET_TAG_ALL);','/* TX flush omitted */','h101_stop_contract(false,true,false,false,false);','EXPECTED_RX_TX_FLUSH_ORDER'),
       (HTC,'htc_stop','qdf_timer_stop(&endpoint->ul_poll_timer);','/* timer stop omitted */','h101_stop_contract(false,true,false,false,false);','EXPECTED_TIMER_STOP_BEFORE_FREE'),
       (HTC,'htc_stop','hif_stop(target->hif_dev);','reset_endpoint_states(target);\n\thif_stop(target->hif_dev);','h101_stop_contract(false,true,false,false,false);','EXPECTED_STOP_BEFORE_ENDPOINT_RESET'),
       (HTC,'htc_stop','!endpoint->ul_is_polled','endpoint->ul_is_polled','h101_stop_contract(false,true,false,false,false);','EXPECTED_NATIVE_LOOKUP_POLICY'),
       (HTC,'reset_endpoint_states','pEndpoint->service_id = 0;','pEndpoint->service_id = 42;','h101_stop_contract(false,true,false,false,false);','EXPECTED_NATIVE_ENDPOINT_RESET'),
-      (HTC,'htc_stop','qdf_nbuf_free(netbuf);','/* SG leak */','h101_stop_contract(true,true,false,false,false);','h101_sg_frees==2'),
+      (HTC,'htc_stop','qdf_nbuf_free(netbuf);','/* SG leak */ (void)netbuf;','h101_stop_contract(true,true,false,false,false);','h101_sg_frees==2'),
     ]
     for path,name,needle,mutation,call,marker in controls:
         target=owner.replace_once(source,function(source,'main'),'int main(void) {'+call+'_Exit(0);}')
