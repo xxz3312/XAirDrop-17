@@ -234,7 +234,7 @@ static void reclaim_handoff_ssr_cases(struct hdd_context *h,struct wireless_dev 
  }
  h->parent_dev=dev;h->psoc=psoc;h->pdev=pdev;
  active->dev->running=true;
- assert(mishare_wonder_host_reclaim_handoff_ssr_locked(h)==-EBUSY && batch_calls==before_batches);active->dev->running=false;
+ assert(mishare_wonder_host_reclaim_handoff_ssr_locked(h)==-EBUSY && batch_calls==before_batches && "EXPECTED_HANDOFF_SSR_POLL");active->dev->running=false;
  struct mishare_runtime_owner *token=retained->runtime;
  batch_extra=true;
  assert(mishare_wonder_host_reclaim_handoff_ssr_locked(h)==-EBUSY && retained->runtime==token && retained->idle_owned && "EXPECTED_HANDOFF_SSR_POLL");batch_extra=false;
