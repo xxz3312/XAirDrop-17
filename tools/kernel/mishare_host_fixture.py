@@ -552,12 +552,12 @@ static void ssr_resume_cases(struct hdd_context *h,struct wireless_dev *wdev)
    result=hdd_mishare_resume_stop_modules(h);rtnl_contended=false;
    assert(result==(kind==3?-EAGAIN:-EINPROGRESS) && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_WAIT_PAUSE");batch_rc=0;
   }
-  if(kind==4){struct hdd_context other=*h;assert(hdd_mishare_resume_stop_modules(&other)==-EUCLEAN && "EXPECTED_SSR_RESUME_IDENTITY");}
-  if(kind==5){h->parent_dev=&other_dev;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && "EXPECTED_SSR_RESUME_IDENTITY");h->parent_dev=dev;}
-  if(kind==6){h->psoc=&other_psoc;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && "EXPECTED_SSR_RESUME_IDENTITY");h->psoc=psoc;}
-  if(kind==7){h->pdev=&other_pdev;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && "EXPECTED_SSR_RESUME_IDENTITY");h->pdev=pdev;}
-  if(kind==8){h->driver_status++;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && "EXPECTED_SSR_RESUME_STATUS");h->driver_status--;}
-  if(kind==9){runtime_ssr=false;assert(hdd_mishare_resume_stop_modules(h)==-ESHUTDOWN && "EXPECTED_SSR_RESUME_RECOVERY");runtime_ssr=true;}
+  if(kind==4){struct hdd_context other=*h;assert(hdd_mishare_resume_stop_modules(&other)==-EUCLEAN && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_RESUME_IDENTITY");}
+  if(kind==5){h->parent_dev=&other_dev;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_RESUME_IDENTITY");h->parent_dev=dev;}
+  if(kind==6){h->psoc=&other_psoc;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_RESUME_IDENTITY");h->psoc=psoc;}
+  if(kind==7){h->pdev=&other_pdev;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_RESUME_IDENTITY");h->pdev=pdev;}
+  if(kind==8){h->driver_status++;assert(hdd_mishare_resume_stop_modules(h)==-EUCLEAN && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_RESUME_STATUS");h->driver_status--;}
+  if(kind==9){runtime_ssr=false;assert(hdd_mishare_resume_stop_modules(h)==-ESHUTDOWN && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_RESUME_RECOVERY");runtime_ssr=true;}
   if(kind==10){ssr_epping=true;assert(hdd_mishare_resume_stop_modules(h)==-EOPNOTSUPP && "EXPECTED_SSR_RESUME_MODE");ssr_epping=false;}
   if(kind==11)assert(ssr_stop_section(h,true,true)==-EOPNOTSUPP && "EXPECTED_SSR_RESUME_MODE");
   if(kind==12)batch_rc=-EUCLEAN;
