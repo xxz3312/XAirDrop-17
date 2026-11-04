@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0112 显式原生停机续执行](docs/POPSICLE-SSR-RESUME-0112.md)生产 C 快速验证通过，[完整构建运行中](https://github.com/xxz3312/XAirDrop-17/actions/runs/41928166595)。仅 CDS 停用后等待回收的记录可领取一次续执行，跳过原停机前缀并重新检查限定回收；永久错误及已开始的父关闭不允许重放。上层自动调用和电源完成确认仍待实现，SoC 重初始化保护保留。0111 完整构建仍在运行；0110 已完成离线验收。无线后端关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0113 原生 reinit 调用与电源停机完成确认](docs/POPSICLE-SSR-POWER-ACK-0113.md)生产 C 快速验证通过，[完整构建运行中](https://github.com/xxz3312/XAirDrop-17/actions/runs/41930505140)。reinit 回调对等待记录尝试一次限定续执行，模块关闭及原生电源完成尾部结束后才解除 SoC 保护；等待/错误保留原独占 transition 并报告错误。没有独立 worker、定时轮询或强制清除入口。0111 已完成七项 CI 与离线验收，0112 完整构建仍在运行。物理 remove/exit 协调与无线后端尚未接通，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
