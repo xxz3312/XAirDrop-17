@@ -8,7 +8,7 @@ def remove_idle_additions(text):
     text, count = re.subn(pattern, '', text, flags=re.S)
     if count > 1:
         raise ValueError('Duplicate idle host guard')
-    for name in ['mode_inner', 'mode_change']:
+    for name in ['mode_inner', 'mode_change', 'mode_request']:
         mode = r'/\* MISHARE_IDLE_BEGIN:' + name + r' \*/\n.*?/\* MISHARE_IDLE_END:' + name + r' \*/\n'
         text, count = re.subn(mode, '', text, flags=re.S)
         if count > 1:
