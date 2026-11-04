@@ -1,0 +1,17 @@
+# 0111 Native private module-stop journal
+
+The native `hdd_wlan_stop_modules()` entry now admits a private recovery stop through an independent journal before its first stop side effect. Patch 0043 installs the entry, successful-CDS boundary, parent-close boundary and completion observation. An occupied slot rejects another entry even after host/runtime metadata disappears or the recovering flag clears. Replaced HDD/device/PSOC/PDEV identities are refused before prefix replay. The single native slot deliberately fails closed for another HDD while occupied; its small record operations share the host registry lock, while the caller retains the exclusive PSOC transition.
+
+The record follows PREFIX → POST_DISABLED → PARENTS. Failed CDS disable retains PREFIX; qualified retirement waits/errors retain POST_DISABLED; a failure in the later native suffix retains PARENTS. Native DP/PDEV errors are remembered before the original code can overwrite `ret`. Only a successful completion of the same native invocation, after entering the parent suffix and observing `DRIVER_MODULES_CLOSED`, clears the journal. PDEV may then be NULL, but a replacement non-NULL PDEV is refused. The native SoC/power failure and reinit gate remains separately authoritative.
+
+The record contains borrowed identities. It does not pin HDD, native components or firmware, perform reclamation, schedule retries or authorize physical remove. There is no reset/force-clear/resume API. Future continuation must distinguish the post-disable wait from a partial parent-close failure; it must not rerun the prefix merely because registries are empty. The radio backend remains disabled, and Apple discovery/handshake/file transfers remain unverified.
+
+## Verification
+
+Source: `7278ab374f24598d85c7fe0bd8e85594cd109979`. [Actions 41925977115](https://github.com/xxz3312/XAirDrop-17/actions/runs/41925977115) passed production C fast validation on its first attempt: eight new journal scenarios, all 60 mutation controls and inherited cases passed with ASan/UBSan and leak detection. The compact ZIP digest, production/native hashes, regenerated fixture and actual native entry/finish fragment hashes match. Full WLAN diagnostic build and the remaining regressions are still running; this is not full offline acceptance. Locally, 53 Python tests, Python syntax, source assembly, inherited whole-source restoration, reverse patch application and whitespace checks passed. C fixtures run only in Actions.
+
+The host fixture adds eight journal scenarios plus invalid/ordinary/empty inputs, identity substitutions, repeated entry before and after owner retirement, monotonic boundaries, premature completion, original-error retention and final PDEV disappearance. Eight new mutation controls target journal arming, duplicate entry, PSOC identity, boundary order, completion checks, first-error retention, recovery-flag changes and omission of the actual native entry guard. Existing 52 controls and native shutdown/reset cases remain. Actual native entry and finish fragments execute with the extracted post-disable section; later parent teardown and qualification are still modeled boundaries, not physical driver execution.
+
+Stage 0110 has separately completed seven-job offline acceptance, including seven compact ZIP digests, 57 production-bearing reports, regenerated source/fixture hashes and final module symbols. See its [validation record](research/popsicle-ssr-prepare-0110-validation.json).
+
+See the [0111 checkpoint](research/popsicle-ssr-journal-0111-validation.json).
