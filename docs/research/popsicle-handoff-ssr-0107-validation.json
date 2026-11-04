@@ -1,37 +1,21 @@
 {
+  "stage": "0107 qualified handed-off SSR retirement and migrated-parent admission",
+  "stage_offline_acceptance_complete": true,
   "source_commit": "0e57e501286f6a30b7165cd8c8dc44079b056a1f",
   "workflow_run": 41875529467,
-  "fast_artifact": {
-    "id": 13345698132,
-    "name": "popsicle-stop-admission-41875529467-1",
-    "size_in_bytes": 4700,
-    "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13345698132",
-    "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13345698132/zip",
-    "expired": false,
-    "created_at": "2026-11-04T17:15:27Z",
-    "expires_at": "2026-11-11T17:15:26Z",
-    "updated_at": "2026-11-04T17:15:27Z",
-    "digest": "sha256:695f5e8c978e6d704e6a551240d1de986adcf25ab38d0f9dcd3e5f1c0e56a8af",
-    "workflow_run": {
-      "id": 41875529467,
-      "repository_id": 1433402945,
-      "head_repository_id": 1433402945,
-      "head_branch": "main",
-      "head_sha": "0e57e501286f6a30b7165cd8c8dc44079b056a1f"
-    }
-  },
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41875529467",
   "jobs": [
     {
       "id": 126734385198,
       "name": "ce-stop",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 126734385697,
       "name": "transport-stop",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 126734385785,
@@ -42,31 +26,28 @@
     {
       "id": 126734386083,
       "name": "ce-buffers",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 126734386270,
       "name": "parent-peer-composite",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 126734386328,
       "name": "htt-callbacks",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 126734387245,
       "name": "diagnostic",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     }
   ],
-  "stage": "0107 qualified handed-off SSR retirement and migrated-parent stop admission",
-  "stage_offline_acceptance_complete": false,
-  "status": "production C fast validation passed; full build and remaining regressions in progress",
   "host_validation": {
     "status": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
     "negative_stop_controls_rejected": 6,
@@ -148,16 +129,358 @@
     ],
     "limitations": "Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. It is not wired into automatic SSR/remove shutdown, and does not certify native kernel locking, teardown or radio validation."
   },
-  "python_regression_checks": 53,
-  "fast_artifact_digest_verified": true,
-  "production_host_hashes_verified_against_local_source": true,
-  "host_fixture_hash_independently_regenerated": true,
-  "same_HDD_migrated_parent_guard_in_idle_and_mode_admission": true,
-  "explicit_handed_off_SSR_poll_implemented": true,
-  "automatic_SSR_remove_coordinator_implemented": false,
-  "caller_handoff_installed_in_backend": false,
-  "runtime_batch_and_reference_primitives_are_models_in_host_fixture": true,
+  "fast_and_full_build_host_and_runtime_reports_identical": true,
+  "artifact_metadata": {
+    "validation": {
+      "id": 13348121706,
+      "name": "popsicle-validation-41875529467-1",
+      "size_in_bytes": 118453,
+      "digest": "sha256:9d8610ff1cf686d2f2e0d0d78034a26adfe65bbacdb3499b24a7f770956353df"
+    },
+    "transport-stop": {
+      "id": 13347795276,
+      "name": "popsicle-transport-stop-41875529467-1",
+      "size_in_bytes": 3536,
+      "digest": "sha256:a778c9c021f1ad70f59c7ec84fa41c3d6d827723d3b80db756402b0a97c6e6d2"
+    },
+    "ce-buffers": {
+      "id": 13347761110,
+      "name": "popsicle-ce-buffers-41875529467-1",
+      "size_in_bytes": 2690,
+      "digest": "sha256:41a42069c0e3c39044ce4f0d6555094e57007e3e0ff7a5bdd5849d8cc178d72d"
+    },
+    "diagnostics": {
+      "id": 13347613355,
+      "name": "popsicle-diagnostics-41875529467-1",
+      "size_in_bytes": 338734394,
+      "digest": "sha256:bb2017205c36c2a5324f7ab8aebcf3ddfc95f1d3555296b95e8f2996839db83a"
+    },
+    "parent-peer": {
+      "id": 13347317260,
+      "name": "popsicle-parent-peer-41875529467-1",
+      "size_in_bytes": 27597,
+      "digest": "sha256:4925b24c2d48f45f819e76511a67f85fa7ce875854ac26828a49651b17f572ec"
+    },
+    "htt-callbacks": {
+      "id": 13347311352,
+      "name": "popsicle-htt-callbacks-41875529467-1",
+      "size_in_bytes": 3727,
+      "digest": "sha256:53d4d1b8f88dc1244510d1b7774f7f0e338167e1eb1586fa5cb2378600573a75"
+    },
+    "ce-stop": {
+      "id": 13346278468,
+      "name": "popsicle-ce-stop-41875529467-1",
+      "size_in_bytes": 3445,
+      "digest": "sha256:76563a49adc1256a5d0390c71d4034eebd242263c37bec8e0c8db840b823b3b0"
+    },
+    "stop-admission": {
+      "id": 13345698132,
+      "name": "popsicle-stop-admission-41875529467-1",
+      "size_in_bytes": 4700,
+      "digest": "sha256:695f5e8c978e6d704e6a551240d1de986adcf25ab38d0f9dcd3e5f1c0e56a8af"
+    }
+  },
+  "all_compact_artifact_digests_verified": true,
+  "production_report_hashes": {
+    "validation0107/mishare-aborted-start-reset-fixture.json": "022615ebbeb81c3469dd5463160369c595956d3d3a17352e3e6535f4c12cf1f8",
+    "validation0107/mishare-backend-fixture.json": "df5b0ce26ac724287fcc5b63a261a2ff3a4a2ebf3a3ea6a7fd3c9e4b38ff3ec0",
+    "validation0107/mishare-batch-fixture.json": "9bf3ee0948055389ac22ac708d91bf25827c45ef5d03663f68ac78cfb7480ddb",
+    "validation0107/mishare-channel-fixture.json": "db66abceeb33175050b40994b85f2bc26e6efaad67caa740f02f1683622646c1",
+    "validation0107/mishare-commands-fixture.json": "c43b90b18c0fd34d080e7624369481673f64f4c9f3a1f7111efac38d99dfa664",
+    "validation0107/mishare-completed-fixture.json": "716e6330e2eb771f286028d68a4a359bcdd3b7984ccd6a7a5b3e9b7d3acdb3f1",
+    "validation0107/mishare-completed-prepare-reset-fixture.json": "9be542b372459dda9c2875f63f72f126d0a0aca5b8f2ff38a3bcee4782caf46e",
+    "validation0107/mishare-completion-fixture.json": "9d9b79c6d1a410a09a8859d12d9fc753194955dfc90c3f3c83f42ec194d45699",
+    "validation0107/mishare-context-fixture.json": "bed2bcd47449b80759cfd10468e27d233011dd910c000461c0e31cc35aab9791",
+    "validation0107/mishare-events-fixture.json": "de039c2386034f3b5fbfe509db8bd431174d9b0f7293ba3fe60a086c512808a0",
+    "validation0107/mishare-final-fixture.json": "e89f65cf74d090d6b57cbccb5e2ccc159c20ad861e712de905f6e0b8d2dfcd85",
+    "validation0107/mishare-firmware-fixture.json": "34377588a103e4811b36fcbc603a325479dd3afb3ebbf15008b565fb51b51bc8",
+    "validation0107/mishare-host-fixture.json": "7382c1ef0bcf11bfad8c6cad429d51c1502225788620e3c1ff476661298b7bcf",
+    "validation0107/mishare-init-rejection-reset-fixture.json": "e2ae855a5035cd8809c066cc2289ed627876c2e79a32ad9213d83739407b1292",
+    "validation0107/mishare-native-callbacks-fixture.json": "4eb5de70b3a84760a69fd6a8fc23c9442676258730eb226115f522990a1c3f87",
+    "validation0107/mishare-native-cleanup-fixture.json": "c68f673fbd3e101082dd9c367c5cf5475b368f530821f9431a51d5eb56c76ab0",
+    "validation0107/mishare-native-engine-fixture.json": "a93b9238b4eaec46fa3f6adfc76c46f0c0ab37cc630a323b3d843adea6314474",
+    "validation0107/mishare-native-lifecycle-fixture.json": "c71476061bd37c7eb4d6e8bd5db16ef8f9dccfba435f6fdff7accb7eb8a85f0a",
+    "validation0107/mishare-native-objmgr-fixture.json": "456644b3eff074bf9f619487d89db4520bad090a94d464ab8a197f58d0d3f85e",
+    "validation0107/mishare-native-peer-fixture.json": "668203e4f4487e2d764f6e6cc22d59ed74e2356e7091199e993a4a6d25dbaf96",
+    "validation0107/mishare-native-peer-queue-fixture.json": "f63c82ffac29eff788ac2ed2d8a83e31b94a287c057aa26eb48090625f550072",
+    "validation0107/mishare-native-refs-fixture.json": "2de7a6d78b0aeedda21663643801dd59a0cc8635a7acd72eff455ff7803a896e",
+    "validation0107/mishare-native-sm-owner-fixture.json": "07ed611c941335f1cae02f8d93d0a7c489e467a9bc2d1125163a7c28b43c1f3a",
+    "validation0107/mishare-native-wma-start-fixture.json": "7d2f1dddb691afd865c9ca761c153f720e9517f2e95a71debd6a48fff4d94f5c",
+    "validation0107/mishare-parent-fixture.json": "ce130d1b9448bc998e2cedbe591772b3a8a0e55f683fcb29cf9740b49d4145a4",
+    "validation0107/mishare-pe-destructor-fixture.json": "196c54fed0f8a4334ee0a11cea84c45946e9fdbd43514e5cb88b116df6665d94",
+    "validation0107/mishare-pe-reset-fixture.json": "2238579cc96dac0517937f57b98145ed51dcbeb860fe6c607f21b74caa5edcdc",
+    "validation0107/mishare-pre-radio-reset-fixture.json": "5c7ede2bbc39ae9eb124dd7f231bf08ff9fd1e52dee357fd655b82b5d0c9ae9b",
+    "validation0107/mishare-queued-start-reset-fixture.json": "23553be1f87a1409309bcfee5e46e8d6a045eb15a6f7ab7d620bc2a7f27b7b6f",
+    "validation0107/mishare-radio-fixture.json": "af0279a256ca32ca45eaf1b6f1f00e1c3d55bbc9e9994bcdde7fad2c8bed0094",
+    "validation0107/mishare-recovery-fixture.json": "bc0df34145b7a1893f46a22b798770a36181e240a3a94f459c42194a81f3bad6",
+    "validation0107/mishare-refused-start-reset-fixture.json": "0c66293e59f6dc442db9041b3e9fcece181c24f814af81734a795bf48145c2e8",
+    "validation0107/mishare-rejected-start-reset-fixture.json": "de3d9964f9eaeb07081ff0118add3e8ba49e334642b4b4d62311d59c0e7df9f7",
+    "validation0107/mishare-reset-context-fixture.json": "0c4541855e57088a9e9e212e13c13ea1ac500b21082dd41b2bcadbffedf52715",
+    "validation0107/mishare-runtime-fixture.json": "15063b020f0a08967bfc5702e2f430cc5e896587caa403598ccfe967408e3132",
+    "validation0107/mishare-session-fixture.json": "4c35cff33925e7a22a32ee161dce67f77e90242865d06fc8d1fe5ffabc77f1bc",
+    "validation0107/mishare-shutdown-fixture.json": "02e056fdf880fc3c0bb2a468dcfae3cb37718e311cb73c54d467685e55e24dfc",
+    "validation0107/mishare-sm-entry-reset-fixture.json": "6ad05518cfc057dac512fb93a3881cf11f8d1aae2e2905cf54ecbe9e444e252e",
+    "validation0107/mishare-start-plan-fixture.json": "34c47701ec59d5ca9fc401c38ef5c69cbaf7bddf4b22e2e036b4524c33a2c79f",
+    "validation0107/mishare-txn-fixture.json": "e937dc06a1bd4c2df90542ee96b2a5b240d659a21748052abed80a4209d6999d",
+    "validation0107/mishare-work-fixture.json": "f34d941cc62a0dcd560ae19fd8c16c9989b5063b0d4149d1c638f21603593319",
+    "validation0107/wonder-managed-fixture.json": "36b9e311dcea1ca22dea40b22c6b2611f45bc09762c5fb3fd435d2df4d615238",
+    "validation0107/wonder-provider-fixture.json": "9bf223343669c08ab46b0460660d01e2d15fd8dd22c3e24b6f8a2645611378d6",
+    "transport-stop0107/native-transport-stop.json": "0520972e9c2745fa97d46057a3f7b91cfb2d8e864924d1bfa757fe9d2a260063",
+    "ce-buffers0107/native-ce-buffers.json": "1322487f95601cac50f0f46c23a93cbcffa8220a7ce4549d724a8ffd225ae51f",
+    "parent-peer0107/native-dp-peer-free.json": "d521407dfeada76136b7548809bb71758fc351f680b2db1f2ff95f5811e26082",
+    "parent-peer0107/native-dp-unmap.json": "06cc10acc4b5f9a6ac2e4e729dcc7e4d665bf74006685a59431b936c59a3f8f6",
+    "parent-peer0107/native-dp-vdev-free.json": "d6e1e28ecfae9172b1adc833cdcc28739cb02a3ca4ab16860440881a9bcf952d",
+    "parent-peer0107/native-htt-unmap.json": "2c68ab11daa127d83578ab59ea2def976805ce8ff634fc25be0e363b38314aa8",
+    "parent-peer0107/native-pdev-free.json": "01417b2c37f6d8fc36102d2a14d05fadb73ea21071fd76459a401da3576e68f3",
+    "parent-peer0107/native-psoc-free.json": "1812aa9d889c1fd215414c9b06d8536ce8dbac3b30a64f90dcde499cc16012cb",
+    "parent-peer0107/native-psoc-lease.json": "19cd60b11edb567d6158314542d74410deaa0bc63f6edc50a688dd87923f6072",
+    "parent-peer0107/parent-peer-composite.json": "1c9fa55e0a6f60ee6587c7226063859b606c60f0c645240b4cca051642a2d852",
+    "htt-callbacks0107/native-htt-callbacks.json": "e3d6f575f73c148b168af4e6c78c2869355d3be1fe04eef83228054f13984855",
+    "ce-stop0107/native-ce-stop.json": "ec6949da4b2259313259f903fc98d8b0d5af3a7a83254be1640624eb104b6347",
+    "stop-admission0107/stop-host.json": "7382c1ef0bcf11bfad8c6cad429d51c1502225788620e3c1ff476661298b7bcf",
+    "stop-admission0107/stop-runtime.json": "15063b020f0a08967bfc5702e2f430cc5e896587caa403598ccfe967408e3132"
+  },
+  "production_path_aliases": {
+    "wlan_hdd_mishare_runtime.c": {
+      "sha256": "6773fff8789fda5c2ccf31c93725dd8d9fc9fd74b6ebcfcb636cb71b203be0c7",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c"
+      ]
+    },
+    "wlan_hdd_mishare_runtime.h": {
+      "sha256": "84c30baca92ad85c46f57a3790e0dfc76a31b40de57c1aadf62caf4d8f169b06",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h"
+      ]
+    },
+    "wlan_hdd_mishare_ndi.h": {
+      "sha256": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h"
+      ]
+    },
+    "wlan_hdd_mishare_radio.c": {
+      "sha256": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_radio.c"
+      ]
+    },
+    "wlan_hdd_mishare_radio.h": {
+      "sha256": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_radio.h"
+      ]
+    },
+    "wlan_hdd_mishare_backend.c": {
+      "sha256": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c"
+      ]
+    },
+    "wlan_hdd_mishare_backend.h": {
+      "sha256": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h"
+      ]
+    },
+    "wondertap.h": {
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+      "matching_paths": [
+        "kernel/provider/wondertap.h",
+        "kernel/wonder/include/wonder/wondertap.h"
+      ]
+    },
+    "wondertap_managed.h": {
+      "sha256": "c28ae1bdc6a86cf1574ac9a8f81d063d92a8dba58c7916c1fcd14a9d040077a2",
+      "matching_paths": [
+        "kernel/wonder/wondertap_managed.h"
+      ]
+    },
+    "wlan_hdd_mishare_commands.c": {
+      "sha256": "adc1b5eb12937bde9d3beae7d6ac37c44fe0d8d235edd7726252dca034a5972c",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_commands.c"
+      ]
+    },
+    "wlan_hdd_mishare_commands.h": {
+      "sha256": "c692a595444c79be0b9ba4835311563c513c47d0ecf1a84f5b7efe8c416a5fe8",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_commands.h"
+      ]
+    },
+    "wlan_hdd_mishare_events.c": {
+      "sha256": "68c7c0cf267ebf9ccd4517a90909e262e3c586a98e29f2cf77c2afc0896fe442",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_events.c"
+      ]
+    },
+    "wlan_hdd_mishare_events.h": {
+      "sha256": "6ee0f88ea590f972c754cf2318bba94bf03e2881edd7ba08a49ab45ce10f066d",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_events.h"
+      ]
+    },
+    "wlan_hdd_mishare_txn.c": {
+      "sha256": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_txn.c"
+      ]
+    },
+    "wlan_hdd_mishare_txn.h": {
+      "sha256": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_txn.h"
+      ]
+    },
+    "wlan_mishare_mgmt_diag.h": {
+      "sha256": "f267795df26a37cce53a081d58e022bb420bcb0fbd0879376e30f5ac32656eb3",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_mishare_mgmt_diag.h"
+      ]
+    },
+    "wma_mishare_raw_tx.h": {
+      "sha256": "77b49a549e52eaa185218c8685f01b8a4f7b856932d4c3a48f38d0c2073801ce",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wma_mishare_raw_tx.h"
+      ]
+    },
+    "wlan_hdd_mishare_radio_mlme.h": {
+      "sha256": "10423cc042ae3d061efe316733d1d582ddc4b287f692beca42757d9962ad33c3",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_radio_mlme.h"
+      ]
+    },
+    "mishare_raw_protocol.h": {
+      "sha256": "d0a99550d621d1d146bd4c0b54375b1d049a1808f234556500f512e4aa335d4e",
+      "matching_paths": [
+        "kernel/popsicle-hdd/mishare_raw_protocol.h"
+      ]
+    },
+    "wlan_hdd_mishare_host.c": {
+      "sha256": "bda1f1721aa439c4ae6c255881a1704f3b1948442819f59944f178e44c284f9b",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_host.c"
+      ]
+    },
+    "wlan_hdd_mishare_mgmt_rx.h": {
+      "sha256": "393f834a40f05832b74618c495509d3ba7c5d7401e54d27a7051bbc61dea1472",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_mgmt_rx.h"
+      ]
+    },
+    "wlan_hdd_mishare_session.h": {
+      "sha256": "59ce9373d9832718108c36d1bfe48ffe9d581197a547ef63ef78589c904b09ef",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_session.h"
+      ]
+    },
+    "wlan_hdd_mishare_host.h": {
+      "sha256": "05865a9d256ddf7baed92eb91e17b450a07b4fdfbf60071a13aaaaa530149220",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_host.h"
+      ]
+    },
+    "wlan_hdd_mishare_mgmt_rx.c": {
+      "sha256": "68f65a3aaebab333c15de683129b7e57c1a6017d5a72b3a4e59e29bb80d876e3",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_mgmt_rx.c"
+      ]
+    },
+    "wlan_hdd_mishare_raw_tx.h": {
+      "sha256": "b92a492c9661004fa1e010525fb26d33822f47ce5cb164a1e3ac497e38fe21a3",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_raw_tx.h"
+      ]
+    },
+    "wondertap.c": {
+      "sha256": "e817a3d5bb3d6792dbc479667f5320155677f3eecbc469691f2b33197cbcd113",
+      "matching_paths": [
+        "kernel/wonder/wondertap.c"
+      ]
+    },
+    "wondertap_internal.h": {
+      "sha256": "4ee5b0f0308e5271ac5bd24f0689183b1ea6174828f9abfda1b5c7268570b09f",
+      "matching_paths": [
+        "kernel/wonder/wondertap_internal.h"
+      ]
+    },
+    "include/wonder/wondertap.h": {
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+      "matching_paths": [
+        "kernel/provider/wondertap.h",
+        "kernel/wonder/include/wonder/wondertap.h"
+      ]
+    },
+    "kernel/provider/provider.c": {
+      "sha256": "982b0d8e3b7b3d93b4bab641d61e1a19dbd2331f4cc3af6fabf3717f38a3a5e7",
+      "matching_paths": [
+        "kernel/provider/provider.c"
+      ]
+    },
+    "kernel/provider/wondertap.h": {
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+      "matching_paths": [
+        "kernel/provider/wondertap.h"
+      ]
+    },
+    "kernel/wonder/wondertap.c": {
+      "sha256": "e817a3d5bb3d6792dbc479667f5320155677f3eecbc469691f2b33197cbcd113",
+      "matching_paths": [
+        "kernel/wonder/wondertap.c"
+      ]
+    },
+    "kernel/wonder/wondertap_internal.h": {
+      "sha256": "4ee5b0f0308e5271ac5bd24f0689183b1ea6174828f9abfda1b5c7268570b09f",
+      "matching_paths": [
+        "kernel/wonder/wondertap_internal.h"
+      ]
+    },
+    "kernel/wonder/wondertap_managed.h": {
+      "sha256": "c28ae1bdc6a86cf1574ac9a8f81d063d92a8dba58c7916c1fcd14a9d040077a2",
+      "matching_paths": [
+        "kernel/wonder/wondertap_managed.h"
+      ]
+    },
+    "kernel/wonder/wondertap_provider_binding.c": {
+      "sha256": "906c1127e0254c671290636d12b50857073e8f7721fdb432aba05eea83a852e6",
+      "matching_paths": [
+        "kernel/wonder/wondertap_provider_binding.c"
+      ]
+    },
+    "kernel/wonder/include/wonder/wondertap.h": {
+      "sha256": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+      "matching_paths": [
+        "kernel/wonder/include/wonder/wondertap.h"
+      ]
+    },
+    "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c": {
+      "sha256": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c"
+      ]
+    },
+    "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h": {
+      "sha256": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9",
+      "matching_paths": [
+        "kernel/popsicle-hdd/wlan_hdd_mishare_backend.h"
+      ]
+    }
+  },
+  "linked_wlan_sha256": "47d79178b5043835126fc7ab53474c9f3c23e2c273c446068c15a844cc8bfd2d",
+  "selected_layouts": {
+    "module": "MATCH",
+    "net_device": "MATCH",
+    "wiphy": "MATCH",
+    "wireless_dev": "MATCH",
+    "sk_buff": "MATCH",
+    "cfg80211_chan_def": "MATCH",
+    "ieee80211_channel": "MATCH"
+  },
   "local_C_compilation_executed": false,
+  "reference_primitives_in_host_fixture_are_models": true,
+  "native_physical_parent_deletion_executed_by_host_fixture": false,
+  "standalone_runtime_parent_contract_changed": false,
+  "native_parent_shutdown_coordinator_implemented": false,
   "radio_backend_activation_enabled": false,
   "phone_executed": false,
   "airdrop_verified": false,
@@ -165,7 +488,18 @@
     {
       "run": 41875217066,
       "source": "f9b2c6f2dbef1e59897cdd8ddceea030ed43a414",
-      "reason": "Production positive cases passed; deliberate SSR error suppression hit an earlier adapter-running assertion without the expected marker. Marker added and all controls reran; production C unchanged."
+      "reason": "Production positive cases passed; deliberate SSR error suppression hit an earlier adapter-running assertion without the expected marker. Added the marker and reran; production C unchanged."
     }
-  ]
+  ],
+  "ordinary_idle_coordinator_implemented": true,
+  "explicit_handed_off_SSR_poll_implemented": true,
+  "automatic_SSR_remove_coordinator_implemented": false,
+  "separate_whole_tree_namespace_check": {
+    "passed": false,
+    "preexisting_unchanged_findings": [
+      "tools/coex-build-na20.py",
+      "third-party/xairdrop15/reference/action.sh.txt"
+    ],
+    "reason": "Legacy-name findings in unchanged files; separate from the 53 passing kernel Python tests and Actions build checks."
+  }
 }

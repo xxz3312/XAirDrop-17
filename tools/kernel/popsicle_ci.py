@@ -178,6 +178,7 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_wonder_host_handoff_idle_locked',
              'mishare_wonder_host_idle_prepare_locked',
              'mishare_wonder_host_reclaim_handoff_ssr_locked',
+             'mishare_wonder_host_adapter_owned',
              'mishare_wonder_host_session_step_locked',
              'hdd_mishare_host_adapter_open', 'mishare_wonder_backend_register',
              'mishare_wonder_backend_unregister', 'mishare_vdev_txn_init',

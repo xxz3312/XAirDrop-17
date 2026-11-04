@@ -9,6 +9,7 @@ import re
 import subprocess
 import tempfile
 from mishare_idle_origins import remove_idle_additions
+from mishare_parent_origins import remove_parent_additions
 
 ROOT = Path(__file__).resolve().parents[2]
 COMMON = r'''
@@ -54,7 +55,7 @@ struct qdf_mac_addr { u8 bytes[6]; };
 struct wlan_objmgr_pdev { int refs; struct wlan_objmgr_psoc *psoc; };
 struct hdd_context { struct device *parent_dev; struct wlan_objmgr_psoc *psoc; struct wlan_objmgr_pdev *pdev; };
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
-struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; };
+struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; unsigned long pause_map; };
 struct hdd_adapter_create_param { int num_sessions; };
 struct osif_vdev_sync { int id; };
 static bool rtnl_owned=true, parent_owned=true, identity_refusal_expected;
@@ -70,6 +71,7 @@ static void pins_empty(void) { assert(!device_pins && !psoc_pins && !pdev_pins &
 static char trace[256];
 static struct hdd_adapter *active;
 static struct osif_vdev_sync *registered;
+bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter);
 static const u8 mac[6]={2,3,4,5,6,7};
 static void event(char c) { size_t n=strlen(trace);assert(n+1<sizeof(trace));trace[n]=c;trace[n+1]=0; }
 static void reset(int fail) { assert(!runtime_tokens);pins_empty();assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
@@ -92,7 +94,7 @@ static void rtnl_unlock(void) { assert(parent_owned && rtnl_owned);rtnl_owned=fa
 static void idle_cleanup_boundary(void) { assert((!native_idle_active || idle_retirement_expected) && "EXPECTED_IDLE_OWNERSHIP"); }
 static int wlan_hdd_validate_context(struct hdd_context *h) { assert(h && !identity_refusal_expected && "EXPECTED_PARENT_IDENTITY");validations++;event('V');return failure==4?-ENODEV:0; }
 static struct hdd_adapter *hdd_get_adapter(struct hdd_context *h,int mode) { assert(h && mode==17);event('L');return failure==5?(struct hdd_adapter*)1:active; }
-static int osif_vdev_sync_create(struct device *d,struct osif_vdev_sync **s) { assert(d && parent_owned && mishare_wonder_host_psoc_busy(expected_psoc));pins_live();event('S');if(failure==2)return -ENOMEM;*s=calloc(1,sizeof(**s));return 0; }
+static int osif_vdev_sync_create(struct device *d,struct osif_vdev_sync **s) { assert(d && parent_owned && mishare_wonder_host_psoc_busy(expected_psoc));pins_live();assert(!mishare_wonder_host_adapter_owned(NULL) && "EXPECTED_NULL_ADAPTER_QUERY");event('S');if(failure==2)return -ENOMEM;*s=calloc(1,sizeof(**s));return 0; }
 static void osif_vdev_sync_destroy(struct osif_vdev_sync *s) { assert(s && s!=registered && mishare_wonder_host_psoc_busy(expected_psoc));pins_live();event('D');free(s); }
 static void osif_vdev_sync_register(struct net_device *d,struct osif_vdev_sync *s) { assert(d && s && !registered);registered=s;event('R'); }
 static struct osif_vdev_sync *osif_vdev_sync_unregister(struct net_device *d) { assert(d);struct osif_vdev_sync *s=registered;registered=NULL;pins_live();event('U');return s; }
@@ -161,6 +163,114 @@ static void idle_check(struct hdd_context *h,int rc,const char *trace) {
  assert(!rtnl_owned && "EXPECTED_IDLE_UNLOCK");
  assert(actual==rc && !parent_owned && !strcmp(idle_trace,trace) && "EXPECTED_IDLE_RESULT");
  parent_owned=true;rtnl_owned=true;
+}
+'''
+
+RESET_MODELS = r'''
+static int handoff_from_temporary(struct mishare_wonder_host **owner);
+typedef int QDF_STATUS;
+#define hdd_debug(...) ((void)0)
+#define QDF_STA_MODE 0
+#define QDF_P2P_CLIENT_MODE 1
+#define QDF_SAP_MODE 2
+#define WMM_INIT_DONE 3
+#define WLAN_DATA_FLOW_CONTROL 4
+#define WLAN_CONTROL_PATH 5
+#define WLAN_STOP_ALL_NETIF_QUEUE 20
+#define WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER 21
+#define WLAN_START_ALL_NETIF_QUEUE 22
+#define WLAN_OSIF_TDLS_ID 23
+#define NET_DEV_HOLD_RESET_ALL_ADAPTERS 31
+#define wlan_hdd_link_info link_info
+struct wlan_objmgr_vdev {int dummy;};
+static struct wlan_objmgr_vdev reset_vdev;
+static struct hdd_adapter *reset_slots[5],*reset_current;
+static int reset_refs[5],reset_stops[5],reset_index,reset_holds,reset_puts;
+static int reset_vdev_refs,reset_vdev_gets,reset_tdls,reset_twt,reset_stop_only,reset_stop_carrier,reset_start_queue;
+static bool reset_sap_restart,reset_vdev_present;
+static int reset_slot(struct hdd_adapter *a) {for(int i=0;i<5;i++)if(reset_slots[i]==a)return i;abort();}
+static void reset_hold(struct hdd_adapter *a) {if(a){int i=reset_slot(a);assert(!reset_refs[i]);reset_refs[i]++;reset_holds++;}}
+static void reset_begin(struct hdd_context *h,struct hdd_adapter **a,struct hdd_adapter **n,int id) {
+ assert(h && parent_owned && id==31);reset_index=0;*a=reset_slots[0];*n=reset_slots[1];reset_hold(*a);reset_hold(*n);
+}
+static void reset_advance(struct hdd_adapter **a,struct hdd_adapter **n,int id) {
+ assert(id==31 && !reset_refs[reset_slot(*a)] && "EXPECTED_RESET_ITERATOR_BALANCE");
+ *a=*n;reset_index++;*n=reset_index+1<5?reset_slots[reset_index+1]:NULL;reset_hold(*n);
+}
+static void hdd_adapter_dev_put_debug(struct hdd_adapter *a,int id) {int i=reset_slot(a);assert(id==31 && reset_refs[i]==1 && "EXPECTED_RESET_ITERATOR_BALANCE");reset_refs[i]--;reset_puts++;}
+#define hdd_for_each_adapter_dev_held_safe(h,a,n,id) for(reset_begin(h,&(a),&(n),id);(a);reset_advance(&(a),&(n),id))
+#define hdd_adapter_for_each_active_link_info(a,l) for((l)=(a)->deflink;(l);(l)=NULL)
+static void ucfg_mlme_get_sap_internal_restart(struct wlan_objmgr_psoc *p,bool *v) {assert(p==expected_psoc);*v=reset_sap_restart;}
+static void hdd_adapter_abort_tx_flow(struct hdd_adapter *a) {assert(!mishare_wonder_host_adapter_owned(a) && "EXPECTED_PRIVATE_RESET_SKIP");reset_current=a;}
+static void hdd_send_twt_del_all_sessions_to_userspace(struct link_info *l) {assert(l==reset_current->deflink);reset_twt++;}
+static struct wlan_objmgr_vdev *hdd_objmgr_get_vdev_by_user(struct link_info *l,int id) {assert(l==reset_current->deflink && id==23);reset_vdev_gets++;if(!reset_vdev_present)return NULL;reset_vdev_refs++;return &reset_vdev;}
+static void hdd_notify_tdls_reset_adapter(struct wlan_objmgr_vdev *v) {assert(v==&reset_vdev && reset_vdev_refs==1);reset_tdls++;}
+static void hdd_objmgr_put_vdev_by_user(struct wlan_objmgr_vdev *v,int id) {assert(v==&reset_vdev && id==23 && reset_vdev_refs==1);reset_vdev_refs--;}
+static void hdd_medium_assess_ssr_enable_flag(void) {assert(reset_current->device_mode==2 && reset_sap_restart);}
+static void wlan_hdd_netif_queue_control(struct hdd_adapter *a,int op,int reason) {
+ assert(a==reset_current && !mishare_wonder_host_adapter_owned(a));
+ if(op==22){assert(reason==4);reset_start_queue++;}
+ else {assert(reason==5);if(op==20)reset_stop_only++;else{assert(op==21);reset_stop_carrier++;}}
+}
+static void hdd_reset_scan_operation(struct link_info *l) {assert(l==reset_current->deflink);}
+static void hdd_wmm_adapter_close(struct hdd_adapter *a) {assert(a==reset_current);}
+static void clear_bit(unsigned bit,unsigned long *flags) {*flags &= ~(1UL<<bit);}
+static void hdd_stop_adapter(struct hdd_context *h,struct hdd_adapter *a) {assert(h && a==reset_current);reset_stops[reset_slot(a)]++;}
+NATIVE_RESET
+#undef hdd_for_each_adapter_dev_held_safe
+#undef hdd_adapter_for_each_active_link_info
+#undef wlan_hdd_link_info
+
+static void reset_matrix_one(struct hdd_context *h,struct hdd_adapter *private,int position,bool restart,bool vdev,bool owned)
+{
+ struct hdd_adapter ordinary[4]={0};struct net_device netdev[4]={0};struct link_info links[4]={0};
+ int modes[4]={QDF_STA_MODE,QDF_P2P_CLIENT_MODE,QDF_SAP_MODE,QDF_PASSTHRU_MODE};
+ assert(private && mishare_wonder_host_adapter_owned(private)==owned && "EXPECTED_ADAPTER_OWNER_QUERY");
+ for(int i=0;i<4;i++) {ordinary[i].dev=&netdev[i];ordinary[i].deflink=&links[i];ordinary[i].device_mode=modes[i];ordinary[i].event_flags=(1UL<<WMM_INIT_DONE)|0x100;ordinary[i].pause_map=1UL<<WLAN_DATA_FLOW_CONTROL;}
+ memcpy(ordinary[3].mac_addr.bytes,private->mac_addr.bytes,6);
+ assert(!mishare_wonder_host_adapter_owned(&ordinary[3]) && "EXPECTED_ADAPTER_OWNER_QUERY");
+ for(int i=0,j=0;i<5;i++)reset_slots[i]=i==position?private:&ordinary[j++];
+ memset(reset_refs,0,sizeof(reset_refs));memset(reset_stops,0,sizeof(reset_stops));
+ reset_holds=reset_puts=reset_vdev_refs=reset_vdev_gets=reset_tdls=reset_twt=reset_stop_only=reset_stop_carrier=reset_start_queue=0;
+ reset_sap_restart=restart;reset_vdev_present=vdev;unsigned long flags=private->event_flags;
+ assert(parent_owned && rtnl_owned);rtnl_owned=false;
+ assert(hdd_reset_all_adapters(h)==QDF_STATUS_SUCCESS);rtnl_owned=true;
+ for(int i=0;i<5;i++) {
+  assert(!reset_refs[i] && "EXPECTED_RESET_ITERATOR_BALANCE");
+  if(i==position && owned)assert(!reset_stops[i] && private->event_flags==flags && "EXPECTED_PRIVATE_RESET_SKIP");
+  else assert(reset_stops[i]==1 && reset_slots[i]->event_flags==0x100 && "EXPECTED_UNOWNED_RESET");
+ }
+ assert(reset_holds==5 && reset_puts==5 && !reset_vdev_refs && "EXPECTED_RESET_ITERATOR_BALANCE");
+ assert(reset_vdev_gets==2 && reset_tdls==(vdev?2:0) && reset_twt==2 && reset_stop_only==(restart?1:0) && reset_stop_carrier==((owned?4:5)-(restart?1:0)) && reset_start_queue==(owned?4:5) && "EXPECTED_UNOWNED_RESET");
+ reset_current=NULL;memset(reset_slots,0,sizeof(reset_slots));
+}
+static void reset_owned_cases(struct hdd_context *h,struct wireless_dev *wdev)
+{
+ assert(!mishare_wonder_host_adapter_owned(NULL) && "EXPECTED_NULL_ADAPTER_QUERY");
+ for(int state=0;state<4;state++) {
+  struct mishare_wonder_host *owner=NULL;reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));
+  active->dev->ieee80211_ptr=wdev;
+  if(state)assert(!mishare_wonder_host_vdev_create_locked(owner));
+  if(state==2){runtime_busy=1;assert(mishare_wonder_host_destroy_locked(&owner)==-EINPROGRESS);runtime_busy=0;}
+  bool handed=state==3;if(handed)assert(!handoff_from_temporary(&owner));
+  struct hdd_adapter *private=active;
+  if(state==1) {
+   pid_t child=fork();assert(child>=0);
+   if(!child){runtime_error=-EUCLEAN;assert(mishare_wonder_host_destroy_locked(&owner)==-EUCLEAN);runtime_ssr=true;reset_matrix_one(h,private,2,true,true,true);pins_live();_Exit(0);}
+   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+  }
+  runtime_ssr=true;
+  if(handed){batch_rc=-EINPROGRESS;assert(mishare_wonder_host_reclaim_handoff_ssr_locked(h)==-EINPROGRESS);batch_rc=0;}
+  for(int pos=0;pos<3;pos++)for(int sap=0;sap<2;sap++)for(int v=0;v<2;v++) {trace[0]=0;reset_matrix_one(h,private,pos*2,sap,v,true);pins_live();}
+  trace[0]=0;if(handed)assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));else assert(!mishare_wonder_host_reclaim_ssr_locked(&owner));
+  runtime_ssr=false;assert(!active && !registered);pins_empty();
+ }
+ /* With an empty host registry all adapters, including PAS, keep native reset. */
+ struct net_device dev={0};struct link_info link={0};struct hdd_adapter unowned={.dev=&dev,.deflink=&link,.device_mode=QDF_PASSTHRU_MODE,.pause_map=1UL<<WLAN_DATA_FLOW_CONTROL};
+ runtime_ssr=true;
+ for(int pos=0;pos<3;pos++)for(int sap=0;sap<2;sap++)for(int v=0;v<2;v++) {unowned.event_flags=(1UL<<WMM_INIT_DONE)|0x100;reset_matrix_one(h,&unowned,pos*2,sap,v,false);}
+ reset_holds=reset_puts=0;rtnl_owned=false;assert(!hdd_reset_all_adapters(h));rtnl_owned=true;
+ assert(!reset_holds && !reset_puts);runtime_ssr=false;
 }
 '''
 
@@ -423,6 +533,7 @@ int main(void)
  assert(waitpid(quarantine,&child_status,0)==quarantine && WIFEXITED(child_status) && !WEXITSTATUS(child_status));
  idle_retirement_expected=true;trace[0]=0;idle_stop_result=-EIO;idle_check(&h,-EIO,"CBSWIMTE");idle_stop_result=0;idle_retirement_expected=false;pins_empty();
  reclaim_handoff_ssr_cases(&h,&wdev);
+ reset_owned_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
@@ -465,7 +576,12 @@ def run(wlan, output):
     request_model='#pragma GCC diagnostic push\n#pragma GCC diagnostic ignored "-Wunused-variable"\n'+request_prefix+'\treturn 104; /* reached first adapter/timer side-effect boundary */\n}\n#pragma GCC diagnostic pop\n'
     mode += '\n'+request_model
     mode = '#pragma GCC diagnostic push\n#pragma GCC diagnostic ignored \"-Wunused-parameter\"\n'+mode+'\n#pragma GCC diagnostic pop\n'
-    code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle+'\n'+mode) + HARNESS.replace('\n GUARD\n','\n '+guard+'\n').replace('\n ROLLBACK\n','\n '+rollback+'\n')
+    reset_native = extract(main, r'^QDF_STATUS hdd_reset_all_adapters\([^;{]+?\)\s*\{.*?^\}')
+    original_main = subprocess.check_output(['git','-C',str(wlan),'show','HEAD:qcacld-3.0/core/hdd/src/wlan_hdd_main.c'],text=True)
+    reset_original = extract(original_main, r'^QDF_STATUS hdd_reset_all_adapters\([^;{]+?\)\s*\{.*?^\}')
+    assert remove_parent_additions(reset_native) == reset_original, 'Unbounded native adapter reset delta'
+    assert reset_native.index('mishare_wonder_host_adapter_owned(') < reset_native.index('hdd_adapter_for_each_active_link_info(')
+    code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle+'\n'+mode) + RESET_MODELS.replace('NATIVE_RESET',reset_native) + HARNESS.replace('\n GUARD\n','\n '+guard+'\n').replace('\n ROLLBACK\n','\n '+rollback+'\n')
     production = ROOT/'kernel/popsicle-hdd'
     hashes = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in production.glob('*') if p.is_file()}
     with tempfile.TemporaryDirectory() as tmp:
@@ -580,10 +696,38 @@ def run(wlan, output):
         bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
         assert bad.returncode == -6 and 'EXPECTED_IDLE_RESULT' in bad.stderr, (bad.returncode, bad.stderr[-1000:])
 
-    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
-            'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),
-            'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded', 'qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership', 'SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots', 'empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances', 'explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address', 'native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted', 'RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins', 'post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup', 'device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
-            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. It is not wired into automatic SSR/remove shutdown, and does not certify native kernel locking, teardown or radio validation.'}
+        # New reset controls must fail behavior/ownership assertions after compiling.
+        source.write_text(code)
+        query = extract(host_source, r'^bool mishare_wonder_host_adapter_owned\([^;{]+?\)\s*\{.*?^\}')
+        query_controls = [
+            (query.replace('if (!adapter)', 'if (false && !adapter)', 1), 'EXPECTED_NULL_ADAPTER_QUERY'),
+            (query.replace('host->adapter == adapter', 'false && host->adapter == adapter', 1), 'EXPECTED_ADAPTER_OWNER_QUERY'),
+        ]
+        for changed, marker in query_controls:
+            (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(query, changed, 1))
+            subprocess.run(command, check=True)
+            bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
+            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+        (d/'wlan_hdd_mishare_host.c').unlink()
+        needle = 'mishare_wonder_host_adapter_owned(adapter)'
+        assert reset_native.count(needle) == 1
+        put = 'hdd_adapter_dev_put_debug(adapter,\n\t\t\t\t\t\t  NET_DEV_HOLD_RESET_ALL_ADAPTERS);'
+        assert reset_native.count(put) == 1
+        reset_controls = [
+            (reset_native.replace(needle, 'false && '+needle, 1), 'EXPECTED_PRIVATE_RESET_SKIP'),
+            (reset_native.replace(put, '/* omitted iterator put */', 1), 'EXPECTED_RESET_ITERATOR_BALANCE'),
+            (reset_native.replace(needle, '(adapter->device_mode == QDF_PASSTHRU_MODE || '+needle+')', 1), 'EXPECTED_UNOWNED_RESET'),
+        ]
+        for changed, marker in reset_controls:
+            source.write_text(code.replace(reset_native, changed, 1))
+            subprocess.run(command, check=True)
+            bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
+            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+
+    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
+            'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),'native_reset_sha256':hashlib.sha256(reset_native.encode()).hexdigest(),'native_reset_original_sha256':hashlib.sha256(reset_original.encode()).hexdigest(),
+            'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['native hdd_reset_all_adapters skips exact registered private adapters before any link reset and balances current/next iterator references', 'caller-owned, runtime-attached, pending ordinary drain and handed-off pending SSR hosts retain ownership through native reset; modeled quarantine child also skips reset', 'empty registry and mixed STA/P2P/SAP/unowned PAS preserve native queue/WMM/scan/stop and VDEV reference boundaries; owned pointer at first/middle/last position', 'NULL lookup during pre-adapter construction is false; publication and global ownership lookup use the same registry lock', 'same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded', 'qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership', 'SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots', 'empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances', 'explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address', 'native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted', 'RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins', 'post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup', 'device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
+            'sanitizers':['address','undefined','leak detection'],'limitations':'Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. It is not wired into automatic SSR/remove shutdown, and does not certify native kernel locking, teardown or radio validation.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(stdout,end='')
 
 

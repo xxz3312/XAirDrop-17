@@ -1,0 +1,18 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -11018,6 +11018,15 @@
+ 
+ 	hdd_for_each_adapter_dev_held_safe(hdd_ctx, adapter, next_adapter,
+ 					   NET_DEV_HOLD_RESET_ALL_ADAPTERS) {
++
++/* MISHARE_PARENT_BEGIN:hdd_adapter_reset */
++		/* Private host/runtime resources have their own qualified retirement. */
++		if (mishare_wonder_host_adapter_owned(adapter)) {
++			hdd_adapter_dev_put_debug(adapter,
++						  NET_DEV_HOLD_RESET_ALL_ADAPTERS);
++			continue;
++		}
++/* MISHARE_PARENT_END:hdd_adapter_reset */
+ 		hdd_info("[SSR] reset adapter with device mode %s(%d)",
+ 			 qdf_opmode_str(adapter->device_mode),
+ 			 adapter->device_mode);

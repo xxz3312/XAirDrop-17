@@ -1,8 +1,14 @@
-## 最新阶段 0107（快速验证通过，完整构建运行中）
+## 最新阶段 0108（代码完成，等待编译验证）
+
+补丁 0040 在原生 SSR 的适配器重置遍历中跳过登记表仍持有的私有 host，并归还当前迭代引用；普通 STA/P2P/SAP 和未登记 PAS 保留原处理。新增准确适配器指针归属查询，并使 host 的适配器发布与全局查询使用同一登记表锁，避免跨 PSOC 查询与发布并发。
+
+53 项 Python 检查通过，62 组原生重置合同和五项新增变异控制等待 Actions 执行。新插入可完整还原至原生函数与既有全文件审计哈希。后续限定 SSR 回收调用、上层错误传播、异步重试与物理 remove/close 协调仍待接入，backend 保持关闭。见 [0108 说明](POPSICLE-ADAPTER-RESET-0108.md)。
+
+## 阶段 0107（离线验收完成）
 
 新增已交还 host 的显式 SSR 回收入口：不需要旧调用方槽位，沿用现有严格 SSR 回收桥推进 registry owner；覆盖不完整、等待、隔离错误和 sync 失败均保留 owner/更新后的 runtime token。修复同一 HDD 更换 PSOC 后可能被准确 PSOC 扫描漏掉的情况，普通 idle 与模式停机准入均拒绝父身份变化。
 
-53 项 Python 检查通过，[Actions 41875529467](https://github.com/xxz3312/XAirDrop-17/actions/runs/41875529467)（`0e57e50`）生产 C 快速作业已通过：六项新增、26 项既有变异控制、36 次父身份拒绝及 SSR 回收序列通过。报告生产源码、重新生成的夹具哈希和 ZIP 摘要已核对；完整构建仍在运行。完整原生 SSR/remove 上层调用、异步重试和父组件保留仍待接入；backend 保持关闭。见 [0107 说明](POPSICLE-HANDOFF-SSR-0107.md)。
+[Actions 41875529467](https://github.com/xxz3312/XAirDrop-17/actions/runs/41875529467)（`0e57e50`）七项作业全部通过：53 项 Python 检查、生产 host/runtime 快速夹具、32 项变异控制、36 次父身份拒绝及 SSR 序列、完整 WLAN 编译、CNSS、严格链接、七项布局与模块记录检查通过。快速/完整构建报告一致，57 份含生产源码的报告、七份精简 ZIP 摘要和新增 SSR API 的最终模块符号已核对。 完整原生 SSR/remove 上层调用、异步重试和父组件保留仍待接入；backend 保持关闭。见 [0107 说明](POPSICLE-HANDOFF-SSR-0107.md)。
 
 ## 阶段 0106（离线验收完成）
 

@@ -1,8 +1,8 @@
-"""Remove only bounded parent-teardown window closure additions."""
+"""Remove only bounded parent-teardown and owned-adapter reset additions."""
 import re
 
 TAGS = ('cds_dp_close', 'hdd_pdev_close', 'dispatcher_include',
-        'dispatcher_pdev_close')
+        'dispatcher_pdev_close', 'hdd_adapter_reset')
 
 
 def remove_parent_additions(text):

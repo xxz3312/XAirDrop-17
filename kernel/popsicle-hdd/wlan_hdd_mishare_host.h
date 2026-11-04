@@ -13,6 +13,13 @@ struct wlan_objmgr_psoc;
  * Not a reference, SSR/remove barrier, firmware or radio readiness predicate.
  */
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
+/* Exact registered adapter-pointer ownership only; NULL/pending adapter is not
+ * a match. No adapter/HDD dereference, allocation or cleanup. Caller retains
+ * its adapter/netdev reference and serializes parent transitions through the
+ * resulting reset decision. Covers caller-owned and handed-off hosts until
+ * registry retirement. Not a lease, radio readiness or SSR/remove clearance.
+ */
+bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter);
 /* Idle/mode-change stop admission only. Caller drains operations and holds
  * the exclusive driver/psoc transition through the native stop call. Covers
  * hosts before runtime creation AND standalone runtime owners. EBUSY retains

@@ -107,6 +107,25 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
     return busy;
 }
 
+bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+    bool owned = false;
+
+    if (!adapter)
+        return false;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->adapter == adapter) {
+            owned = true;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return owned;
+}
+
 static bool mishare_host_hdd_mismatch(struct hdd_context *hdd)
 {
     struct mishare_wonder_host *host;
@@ -287,6 +306,8 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
                                     struct mishare_wonder_host **owner)
 {
     struct mishare_wonder_host *host;
+    struct hdd_adapter *adapter;
+    unsigned long flags;
     u8 address[ETH_ALEN];
     int ret;
 
@@ -315,11 +336,17 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
     if (ret)
         goto free_host;
     ether_addr_copy(address, mac);
-    host->adapter = hdd_mishare_host_adapter_open(hdd, address);
-    if (!host->adapter) {
+    adapter = hdd_mishare_host_adapter_open(hdd, address);
+    if (!adapter) {
         ret = -ENODEV;
         goto destroy_sync;
     }
+    /* Global reset lookups can observe other PSOCs. Publish the adapter under
+     * the same registry lock they use, not just this PSOC's transition.
+     */
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    host->adapter = adapter;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
     osif_vdev_sync_register(host->adapter->dev, host->sync);
     *owner = host;
     return 0;
