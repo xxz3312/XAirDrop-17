@@ -81,7 +81,7 @@ static struct wlan_objmgr_psoc *wlan_pdev_get_psoc(struct wlan_objmgr_pdev *p) {
 static bool is_valid_ether_addr(const u8 *a) { u8 v=0;for(int i=0;i<6;i++)v|=a[i];return v && !(a[0]&1); }
 static void ether_addr_copy(u8 *d,const u8 *s) { memcpy(d,s,6); }
 static void *kzalloc(size_t n,int flags) { (void)flags;event('A');return failure==1?NULL:calloc(1,n); }
-static void kfree(void *p) { event('F');free(p); }
+static void kfree(void *p) { pins_empty();event('F');free(p); }
 static bool test_bit(unsigned n,const unsigned long *p) { return !!(*p & (1UL<<n)); }
 static bool netif_running(struct net_device *d) { return d->running; }
 static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && rtnl_owned && parent_owned);event('P'); }
