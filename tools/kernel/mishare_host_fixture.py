@@ -365,7 +365,14 @@ static int ssr_stop_model(struct hdd_context *h,bool ftm) {assert(h==ssr_ctx && 
 #define hdd_objmgr_get_vdev_by_user ssr_power_vdev_get
 #define hdd_objmgr_put_vdev_by_user ssr_power_vdev_put
 #define hdd_wlan_stop_modules ssr_stop_model
+#define hdd_mishare_resume_shutdown ssr_production_resume_shutdown
 NATIVE_POWER_COMPLETION
+#undef hdd_mishare_resume_shutdown
+int hdd_mishare_resume_shutdown(struct hdd_context *h)
+{
+ bool previous=ssr_resume_tail_expected;ssr_resume_tail_expected=true;
+ int result=ssr_production_resume_shutdown(h);ssr_resume_tail_expected=previous;return result;
+}
 NATIVE_POWER_SHUTDOWN
 #undef hdd_wlan_stop_modules
 #undef hdd_get_adapter
@@ -430,6 +437,7 @@ static void ssr_stop_case(struct hdd_context *h,struct wireless_dev *wdev,int ki
  memset(reset_slots,0,sizeof(reset_slots));idle_trace[0]=0;
  int blocked_errno=(kind==4 || kind==5 || kind==13)?-ENOENT:kind==6?-EOPNOTSUPP:-EBUSY;
  int result=hdd_soc_recovery_reinit(h->parent_dev,NULL,NULL,SSR_IPCI);
+ if(kind==6)assert(result==-EOPNOTSUPP && "EXPECTED_SSR_RESUME_MODE");
  assert(result==(blocked?blocked_errno:ssr_inner_result) && ssr_inner_reinits==(blocked?0:1) && "EXPECTED_NO_PRIVATE_REINIT");
  assert(ssr_start_calls==1 && ssr_start_status==(blocked?blocked_errno:0) && "EXPECTED_SSR_FAILURE_NOTIFICATION");
  assert(parent_owned==blocked && !rtnl_owned && "EXPECTED_PRIVATE_TRANSITION_RETAINED");parent_owned=true;rtnl_owned=true;
@@ -1264,7 +1272,7 @@ def run(wlan, output):
         native_resume_mutate(module_begin,'goto mishare_post_disable_resume;',
                              'if (false) goto mishare_post_disable_resume;','EXPECTED_SSR_RESUME_COMPLETE')
         native_resume_mutate(module_resume,'hdd_mishare_stop_modules(hdd_ctx, false, true)',
-                             'hdd_mishare_stop_modules(hdd_ctx, false, false)','EXPECTED_SSR_RESUME_COMPLETE')
+                             'hdd_mishare_stop_modules(hdd_ctx, false, false)','EXPECTED_NO_PRIVATE_REINIT')
         native_resume_mutate(post_native,'int stop_ret = mishare_wonder_host_ssr_prepare_locked(hdd_ctx);',
                              'int stop_ret = mishare_resume ? 0 : mishare_wonder_host_ssr_prepare_locked(hdd_ctx);','EXPECTED_PARENT_BOUNDARY')
         assert len(native_resume_controls)==4
