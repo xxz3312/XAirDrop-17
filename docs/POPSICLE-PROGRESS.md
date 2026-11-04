@@ -1,4 +1,12 @@
-## 最新阶段 0102（离线验收完成）
+## 最新阶段 0103（离线验收完成）
+
+0103 已完成离线验收：[CI 41782619036](https://github.com/xxz3312/XAirDrop-17/actions/runs/41782619036)（`af57774`）六项作业成功。88 项残留缓冲区检查（72 项独立、16 项停止链集成）、116 项失败控制及全部旧组合通过；53 项 Python 检查、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。十二份组合源码、两个原生清理函数、55 份报告中的生产源码、37 个路径别名及六份验证 ZIP 摘要均已核对。
+
+原生 RX/TX 清理函数通过模型 CE 撤销/取消队列执行；DMA unmap、direct-link pages 和 TX completion 仍为模型。HTT/无回调缓冲区按原路径保留归属，断言完成后由模型所有者清理。HTT 控制包在真实流程中可能已由其他路径释放；夹具使用活体宿主缓冲区记录归属，未重放此前释放历史。真实环/DMA、原生 HTT TX completion、物理 HTT free 和生产父资源停机协调仍待继续。backend 保持关闭，手机无需操作。
+
+见[0103 说明](POPSICLE-CE-BUFFERS-0103.md)。
+
+## 阶段 0102（离线验收完成）
 
 在既有 HTC stop → multibus HIF stop 路径中接入原生 `hif_ce_stop()`、`hif_disable_isr()`、`hif_ipci_disable_isr()`、`hif_destroy_oom_work()` 和 `hif_buffer_cleanup()`。原生 IPCI 顺序为 exec kill、屏蔽中断、CE tasklet kill、总中断 tasklet kill、计数清零，再进入 OOM 工作与 CE 资源清理。模型 CE tasklet-kill 原语放行并 join 一条真实主机线程，消息通过原生回调和生产解析器结束后才允许清理；这仍是模型同步合同。
 
