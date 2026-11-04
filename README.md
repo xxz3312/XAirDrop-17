@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0108 私有适配器的原生 SSR 重置保护](docs/POPSICLE-ADAPTER-RESET-0108.md)生产 C 快速验证通过，[完整构建仍在运行](https://github.com/xxz3312/XAirDrop-17/actions/runs/41901539216)。原生重置遍历按登记表归属跳过私有 host，保留迭代引用平衡和普通适配器行为；host 指针发布与查询使用同一锁。前一阶段 [0107](docs/POPSICLE-HANDOFF-SSR-0107.md) 已完成七项 CI 作业和离线验收。完整 SSR/remove 协调与真实无线后端仍待接入；手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0109 私有 SSR 停止错误与父资源保护](docs/POPSICLE-SSR-STOP-0109.md)代码完成，等待编译验证。私有 owner 未回收或停机失败时拒绝继续关闭后续父资源，向上报告错误并阻止重复停机/错误重初始化。前一阶段 [0108](docs/POPSICLE-ADAPTER-RESET-0108.md) 已完成七项 CI 作业和离线验收。限定回收、异步恢复与物理 remove 协调仍待接入；无线后端关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)

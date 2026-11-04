@@ -88,6 +88,7 @@ on:
       - tools/kernel/mishare_txn_fixture.py
       - tools/kernel/mishare_mlme_fixture.py
       - tools/kernel/mishare_host_fixture.py
+      - tools/kernel/mishare_ssr_stop_origins.py
       - tools/kernel/mishare_session_driver_fixture.py
       - tools/kernel/wonder_managed_fixture.py
       - tools/kernel/wonder_provider_fixture.py

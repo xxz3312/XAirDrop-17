@@ -1,0 +1,138 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -18542,9 +18542,24 @@
+ 			hdd_err("Failed to process post CDS disable! :%d",
+ 				qdf_status);
+ 			ret = -EINVAL;
++
++/* MISHARE_SSR_STOP_BEGIN:post_error */
++			if (is_recovery_stop &&
++			    mishare_wonder_host_stop_ready_locked(hdd_ctx))
++				return ret;
++/* MISHARE_SSR_STOP_END:post_error */
+ 			QDF_ASSERT(0);
+ 		}
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:post_ready */
++		if (is_recovery_stop) {
++			int stop_ret = mishare_wonder_host_stop_ready_locked(hdd_ctx);
++
++			if (stop_ret)
++				return stop_ret;
++		}
++/* MISHARE_SSR_STOP_END:post_ready */
+ 		hdd_unregister_notifiers(hdd_ctx);
+ 		/* De-register the SME callbacks */
+ 		hdd_deregister_cb(hdd_ctx);
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_power.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_power.c
+@@ -41,6 +41,10 @@
+ #include <mac_init_api.h>
+ #include <wlan_qct_sys.h>
+ #include <wlan_hdd_main.h>
++
++/* MISHARE_SSR_STOP_BEGIN:power_include */
++#include "wlan_hdd_mishare_host.h"
++/* MISHARE_SSR_STOP_END:power_include */
+ #include <wlan_hdd_assoc.h>
+ #include <wlan_nlink_srv.h>
+ #include <wlan_hdd_misc.h>
+@@ -2028,7 +2032,16 @@
+ 	/* De-register the HDD callbacks */
+ 	hdd_deregister_cb(hdd_ctx);
+ 
+-	hdd_wlan_stop_modules(hdd_ctx, false);
++
++/* MISHARE_SSR_STOP_BEGIN:power_stop */
++	{
++		bool private_stop = !!mishare_wonder_host_stop_ready_locked(hdd_ctx);
++		int stop_ret = hdd_wlan_stop_modules(hdd_ctx, false);
++
++		if (stop_ret && private_stop)
++			return qdf_status_from_os_return(stop_ret);
++	}
++/* MISHARE_SSR_STOP_END:power_stop */
+ 
+ 	hdd_lpass_notify_stop(hdd_ctx);
+ 
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -29,6 +29,13 @@
+ #include "epping_main.h"
+ #include "osif_sync.h"
+ #include "wlan_hdd_main.h"
++
++/* MISHARE_SSR_STOP_BEGIN:ops_state */
++#include "wlan_hdd_mishare_host.h"
++/* Armed only for a private-owner shutdown; failure cannot resume/reinitialize
++ * a partially stopped parent. No force-clear or retry coordinator is added. */
++static bool mishare_ssr_stop_blocked;
++/* MISHARE_SSR_STOP_END:ops_state */
+ #include "wlan_hdd_mishare_backend.h"
+ 
+ /* MISHARE_SHUTDOWN_BEGIN:platform */
+@@ -1025,11 +1032,18 @@
+ 	if (errno)
+ 		return errno;
+ 
+-	errno = __hdd_soc_recovery_reinit(dev, bdev, bid, bus_type);
++
++/* MISHARE_SSR_STOP_BEGIN:reinit_call */
++	errno = mishare_ssr_stop_blocked ? -EBUSY :
++		__hdd_soc_recovery_reinit(dev, bdev, bid, bus_type);
++/* MISHARE_SSR_STOP_END:reinit_call */
+ 
+ 
+ 	osif_psoc_sync_trans_stop(psoc_sync);
+-	hdd_start_complete(0);
++
++/* MISHARE_SSR_STOP_BEGIN:reinit_complete */
++	hdd_start_complete(mishare_ssr_stop_blocked ? errno : 0);
++/* MISHARE_SSR_STOP_END:reinit_complete */
+ 
+ 	return errno;
+ }
+@@ -1115,12 +1129,25 @@
+ 	struct hdd_context *hdd_ctx;
+ 	void *hif_ctx;
+ 
++/* MISHARE_SSR_STOP_BEGIN:shutdown_local */
++	bool mishare_private_stop;
++/* MISHARE_SSR_STOP_END:shutdown_local */
++
+ 	/* recovery starts via firmware down indication; ensure we got one */
+ 	QDF_BUG(cds_is_driver_recovering());
+ 
+ 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+ 	if (!hdd_ctx)
+ 		return;
++
++/* MISHARE_SSR_STOP_BEGIN:shutdown_begin */
++	/* Do not replay CDS teardown after a retained private stop failure. */
++	if (mishare_ssr_stop_blocked)
++		return;
++	mishare_private_stop = !!mishare_wonder_host_stop_ready_locked(hdd_ctx);
++	if (mishare_private_stop)
++		mishare_ssr_stop_blocked = true;
++/* MISHARE_SSR_STOP_END:shutdown_begin */
+ 
+ 	/*
+ 	 * Perform SSR related cleanup if it has not already been done as a
+@@ -1143,7 +1170,15 @@
+ 
+ 	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
+ 		hif_disable_isr(hif_ctx);
+-		hdd_wlan_shutdown();
++
++/* MISHARE_SSR_STOP_BEGIN:shutdown_call */
++		{
++			QDF_STATUS status = hdd_wlan_shutdown();
++
++			if (mishare_private_stop && QDF_IS_STATUS_SUCCESS(status))
++				mishare_ssr_stop_blocked = false;
++		}
++/* MISHARE_SSR_STOP_END:shutdown_call */
+ 	}
+ }
+ 
