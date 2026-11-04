@@ -1,0 +1,93 @@
+{
+  "stage": "0105 host parent allocation references",
+  "source_commit": "b09a4a94a573e6a050a61888cd708e8f2b795f96",
+  "workflow_run": 41851852074,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41851852074",
+  "stage_offline_acceptance_complete": false,
+  "status": "production host sanitizer validation passed; full diagnostic build and remaining regressions in progress",
+  "python_regression_checks": 53,
+  "fast_validation_artifact": {
+    "id": 13336211578,
+    "name": "popsicle-stop-admission-41851852074-1",
+    "size_in_bytes": 4103,
+    "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13336211578",
+    "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13336211578/zip",
+    "expired": false,
+    "created_at": "2026-11-04T14:53:02Z",
+    "expires_at": "2026-11-11T14:53:02Z",
+    "updated_at": "2026-11-04T14:53:02Z",
+    "digest": "sha256:a89045cd2a5f903ac89a63556c60f13299031f90533ebe43fe45c3bd1b177743",
+    "workflow_run": {
+      "id": 41851852074,
+      "repository_id": 1433402945,
+      "head_repository_id": 1433402945,
+      "head_branch": "main",
+      "head_sha": "b09a4a94a573e6a050a61888cd708e8f2b795f96"
+    }
+  },
+  "fast_artifact_digest_verified": true,
+  "production_host_hashes_verified_against_local_source": true,
+  "parent_identity_rejections": 30,
+  "negative_parent_controls_rejected": 7,
+  "negative_stop_controls_rejected": 6,
+  "jobs_at_checkpoint": [
+    {
+      "id": 126650325272,
+      "name": "htt-callbacks",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126650325607,
+      "name": "ce-stop",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126650325623,
+      "name": "diagnostic",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126650325668,
+      "name": "stop-admission",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126650325753,
+      "name": "ce-buffers",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126650325812,
+      "name": "transport-stop",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126650325826,
+      "name": "parent-peer-composite",
+      "status": "in_progress",
+      "conclusion": null
+    }
+  ],
+  "reference_primitives_are_models": true,
+  "native_parent_shutdown_coordinator_implemented": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "separate_namespace_check": {
+    "passed": false,
+    "preexisting_unchanged_files": [
+      "tools/coex-build-na20.py",
+      "third-party/xairdrop15/reference/action.sh.txt"
+    ]
+  },
+  "superseded_runs": [
+    41851200735,
+    41851519017
+  ]
+}

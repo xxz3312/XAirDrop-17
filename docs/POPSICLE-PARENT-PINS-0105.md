@@ -10,10 +10,14 @@ All five later host operations assert the transition against the pinned device a
 
 ## Verification
 
-Pending Actions execution. The existing production-host sanitizer fixture now covers all acquisition failures, inconsistent PDEV ancestry, reverse release and retention through pending/error exits. Each of three replaced identities is checked at all five operations, both before and after a runtime token exists (30 refusals). Seven new mutation controls remove an identity check, an unpin or the PDEV-parent check; six existing idle/mode mutation controls remain.
+Production host/runtime fast validation passed in [Actions 41851852074](https://github.com/xxz3312/XAirDrop-17/actions/runs/41851852074) on `b09a4a9`; full diagnostic build and remaining regressions are still running. The host report confirms 30 identity refusals, seven new parent mutation controls and six existing stop mutation controls. The compact artifact digest and all production file hashes in the host report match the local source. This is not full offline acceptance.
+
+The existing production-host sanitizer fixture now covers all acquisition failures, inconsistent PDEV ancestry, reverse release and retention through pending/error exits. Each of three replaced identities is checked at all five operations, both before and after a runtime token exists (30 refusals). Seven new mutation controls remove an identity check, an unpin or the PDEV-parent check; six existing idle/mode mutation controls remain.
 
 The full diagnostic build continues to compile the actual production helper into WLAN and checks module linking/dependencies. Reference primitives in the host fixture are modeled; they do not execute native physical object deletion.
 
 ## Remaining boundary
 
 These references retain allocations only. They do not retain HDD context, native component state, firmware, IRQ/DMA or transport readiness. The caller must retain HDD and serialize the complete native parent lifetime throughout every call and between asynchronous polls. Holding object-manager references can delay deletion; an automatic teardown caller must first retire the host through a qualified coordinator. No native remove/SSR caller or backend activation is added here. Standalone runtime owners are unchanged and still require their caller's lifetime contract. Real NDI/Wonder init, complete AWDL RX/TX and Apple discovery/handshake/file transfer remain pending. No phone operation is needed for this stage.
+
+See [validation checkpoint](research/popsicle-parent-pins-0105-validation.json). Two earlier runs passed production positive cases but failed mutation-test marker expectations; downstream-entry and pre-free ownership assertions were added, without changing production C. A separate whole-tree namespace check flags legacy names in two unchanged files (`tools/coex-build-na20.py` and `third-party/xairdrop15/reference/action.sh.txt`); those findings remain open.
