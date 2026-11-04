@@ -41,7 +41,7 @@ static void h103_tx_complete(void *context,qdf_nbuf_t b,unsigned id,unsigned has
 NATIVE_RX
 NATIVE_TX
 static void h103_setup(void) {
- h103_pipe=&h101_hif.ce.pipe_info[2];h101_hif.htc_htt_tx_endpoint=6;
+ h103_pipe=&h101_hif.ce.pipe_info[2];h103_pipe->pipe_num=2;h101_hif.htc_htt_tx_endpoint=6;
  for(unsigned i=0;i<16;i++){h101_hif.ce.pipe_info[i].HIF_CE_state=&h101_hif.ce;}
  h103_pipe->pipe_callbacks.Context=h103_pipe;h103_pipe->pipe_callbacks.txCompletionHandler=h103_txmode==2?NULL:h103_tx_complete;h103_allocate();
 }
