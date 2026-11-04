@@ -10,7 +10,7 @@ Immediate qualified completion can now continue native parent stop through the r
 
 ## Validation status
 
-Implementation complete; production C and full Actions validation pending. 53 Python checks passed. The host fixture now lets the actual native post-disable section invoke production preparation and qualified reclamation. The fake CDS callback only supplies modeled qualification outcomes; it no longer performs retirement itself. The immediate-success and metadata-retired/pending-parent cases therefore depend on the installed production call.
+Production C fast validation passed in [Actions 41917643897](https://github.com/xxz3312/XAirDrop-17/actions/runs/41917643897) on `6f80bff`: 18 wrapper cases, seven new and 45 previous mutation controls, and existing host/native cases passed with sanitizers. 53 Python checks passed. Compact ZIP digest, production/native hashes, regenerated fixture and wrapper hash, bounded patch 0042 and inherited source audits match. Full diagnostic build and remaining regressions are still running; this is not full offline acceptance. The host fixture now lets the actual native post-disable section invoke production preparation and qualified reclamation. The fake CDS callback only supplies modeled qualification outcomes; it no longer performs retirement itself. The immediate-success and metadata-retired/pending-parent cases therefore depend on the installed production call.
 
 Eighteen direct wrapper cases cover empty/invalid/standalone/caller-owned/changed-parent admission, non-recovery refusal, already-held or contended RTNL, three qualification/error results, incomplete coverage, token retention, sync mismatch after runtime retirement and a later complete close. Seven new controls target lock/error/recovery/ownership admission, qualified-vs-ordinary cleanup, unlock and replacing the native callback with a snapshot. Previous 45 controls, 62 native adapter reset cases, 15 native shutdown/reinit scenarios and 36 direct host identity refusals remain.
 
@@ -19,3 +19,5 @@ Qualification primitives, runtime batch completion, real lock/IRQ/DMA timing and
 ## Remaining integration
 
 Automatic backend handoff is not installed; active caller-owned sessions remain protected rather than seized. Native runtime policy still rejects unsupported active START/UP or quarantine states. A pending qualified retirement must later resume the partially completed stop without replaying CDS teardown, complete parent destruction and acknowledge completion before the 0109 failure gate can safely permit reinit. No automatic async resume or force-clear is added. Physical remove/close and complete parent-component lifetime coordination remain pending. The radio backend remains disabled; no phone operation or Apple discovery/handshake/two-way file result is enabled.
+
+See [validation checkpoint](research/popsicle-ssr-prepare-0110-validation.json).
