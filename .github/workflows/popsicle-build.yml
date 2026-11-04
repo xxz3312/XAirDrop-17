@@ -51,6 +51,7 @@ on:
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
+      - tools/kernel/mishare_native_ce_buffers_fixture.py
       - tools/kernel/mishare_native_ce_stop_fixture.py
       - tools/kernel/mishare_native_transport_stop_fixture.py
       - tools/kernel/mishare_native_htt_callbacks_fixture.py
@@ -112,6 +113,32 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  ce-buffers:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch pinned WLAN and apply existing patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/ce-buffers-wlan"
+          git -C "$RUNNER_TEMP/ce-buffers-wlan" remote add origin https://github.com/MiCode/vendor_qcom_opensource_wlan.git
+          git -C "$RUNNER_TEMP/ce-buffers-wlan" fetch --depth=1 origin 36df473046706a5259942e1bf7222108dbbb860f
+          git -C "$RUNNER_TEMP/ce-buffers-wlan" checkout --detach FETCH_HEAD
+          for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
+            git -C "$RUNNER_TEMP/ce-buffers-wlan" apply "$patch"
+          done
+      - name: Native residual CE RX and TX cleanup with sanitizers
+        run: python3 tools/kernel/mishare_native_ce_buffers_fixture.py --wlan "$RUNNER_TEMP/ce-buffers-wlan" --output native-ce-buffers.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-ce-buffers-${{ github.run_id }}-${{ github.run_attempt }}
+          path: native-ce-buffers.json
+          if-no-files-found: error
+          retention-days: 7
+
   ce-stop:
     runs-on: ubuntu-24.04
     steps:
