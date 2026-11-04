@@ -26,6 +26,7 @@ struct mishare_wonder_host {
     struct osif_vdev_sync *sync;
     struct mishare_runtime_owner *runtime;
     struct mishare_session session;
+    bool idle_owned;
 };
 
 /* The psoc transition serializes allocation/retirement against idle shutdown.
@@ -118,6 +119,113 @@ int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd)
         mishare_runtime_psoc_busy(hdd->psoc))
         return -EBUSY;
     return 0;
+}
+
+int mishare_wonder_host_handoff_idle_locked(struct mishare_wonder_host **owner)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+    int ret;
+
+    if (!owner)
+        return -EINVAL;
+    host = *owner;
+    if (!host)
+        return 0;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (host->idle_owned) {
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return -EBUSY;
+    }
+    /* Transfer the sole owner, not the address of the caller's possibly
+     * temporary slot. The host registry now retains this closing session.
+     */
+    host->session.closing = true;
+    host->idle_owned = true;
+    *owner = NULL;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return 0;
+}
+
+/* Exclusive PSOC transition serializes host publication/retirement. Preflight
+ * ALL matching hosts before doing anything: never steal a caller's owner or
+ * use another HDD/device/PDEV. No native function runs under this list lock.
+ */
+static int mishare_host_idle_candidate(struct hdd_context *hdd,
+                                      struct mishare_wonder_host **candidate)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+    int ret = 0;
+
+    *candidate = NULL;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->psoc != hdd->psoc)
+            continue;
+        if (host->hdd != hdd || host->parent_dev != hdd->parent_dev ||
+            host->pdev != hdd->pdev) {
+            ret = -EUCLEAN;
+            break;
+        }
+        if (!host->idle_owned) {
+            ret = -EBUSY;
+            break;
+        }
+        if (!*candidate)
+            *candidate = host;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret;
+}
+
+int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd)
+{
+    struct mishare_wonder_host *host;
+    int ret;
+
+    if (!hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    ret = mishare_host_idle_candidate(hdd, &host);
+    if (ret)
+        return ret;
+    if (!host)
+        return mishare_wonder_host_stop_ready_locked(hdd);
+    if (cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    /* Native idle already holds the exclusive PSOC transition. Creation may
+     * acquire RTNL first: NEVER wait for RTNL in the reverse order here.
+     * Contention defers idle; it cannot justify freeing or stopping anything.
+     */
+    if (!rtnl_trylock())
+        return -EAGAIN;
+    do {
+        ret = mishare_wonder_host_destroy_locked(&host);
+        if (ret)
+            break;
+        ret = mishare_host_idle_candidate(hdd, &host);
+    } while (!ret && host);
+    rtnl_unlock();
+    if (ret)
+        return ret;
+    /* Standalone runtime owners may still exist. They are never adopted by
+     * this host-only coordinator and continue to block native module stop.
+     */
+    return mishare_wonder_host_stop_ready_locked(hdd);
 }
 
 static void mishare_host_track(struct mishare_wonder_host *host,

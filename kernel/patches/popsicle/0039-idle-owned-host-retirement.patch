@@ -1,0 +1,11 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -15478,7 +15478,7 @@
+ 
+ /* MISHARE_IDLE_BEGIN:host_guard */
+ 	/* PAS host stays DOWN even while its dedicated radio owns resources. */
+-	if (mishare_wonder_host_stop_ready_locked(hdd_ctx)) {
++	if (mishare_wonder_host_idle_prepare_locked(hdd_ctx)) {
+ 		hdd_info("MiShare host/runtime retained, defer idle shutdown");
+ 		errno = -EAGAIN;
+ 	} else

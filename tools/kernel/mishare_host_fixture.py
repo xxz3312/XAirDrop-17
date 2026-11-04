@@ -58,6 +58,8 @@ struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned
 struct hdd_adapter_create_param { int num_sessions; };
 struct osif_vdev_sync { int id; };
 static bool rtnl_owned=true, parent_owned=true, identity_refusal_expected;
+static bool rtnl_contended, native_idle_active, idle_retirement_expected;
+static int rtnl_attempts;
 static struct wlan_objmgr_psoc *expected_psoc;
 static int failure, validations, closed, dp_destroyed;
 static int device_pins, psoc_pins, pdev_pins;
@@ -84,7 +86,10 @@ static void *kzalloc(size_t n,int flags) { (void)flags;event('A');return failure
 static void kfree(void *p) { pins_empty();event('F');free(p); }
 static bool test_bit(unsigned n,const unsigned long *p) { return !!(*p & (1UL<<n)); }
 static bool netif_running(struct net_device *d) { return d->running; }
-static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && rtnl_owned && parent_owned);event('P'); }
+static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && parent_owned);event('P'); }
+static bool rtnl_trylock(void) { assert(parent_owned);rtnl_attempts++;if(rtnl_contended || rtnl_owned)return false;rtnl_owned=true;return true; }
+static void rtnl_unlock(void) { assert(parent_owned && rtnl_owned);rtnl_owned=false; }
+static void idle_cleanup_boundary(void) { assert((!native_idle_active || idle_retirement_expected) && "EXPECTED_IDLE_OWNERSHIP"); }
 static int wlan_hdd_validate_context(struct hdd_context *h) { assert(h && !identity_refusal_expected && "EXPECTED_PARENT_IDENTITY");validations++;event('V');return failure==4?-ENODEV:0; }
 static struct hdd_adapter *hdd_get_adapter(struct hdd_context *h,int mode) { assert(h && mode==17);event('L');return failure==5?(struct hdd_adapter*)1:active; }
 static int osif_vdev_sync_create(struct device *d,struct osif_vdev_sync **s) { assert(d && parent_owned && mishare_wonder_host_psoc_busy(expected_psoc));pins_live();event('S');if(failure==2)return -ENOMEM;*s=calloc(1,sizeof(**s));return 0; }
@@ -98,7 +103,7 @@ static void qdf_copy_macaddr(struct qdf_mac_addr *d,const struct qdf_mac_addr *s
 static void ucfg_dp_destroy_intf(void *p,struct qdf_mac_addr *a) { assert(p && !memcmp(a->bytes,mac,6));event('X');dp_destroyed++; }
 #include "wlan_hdd_mishare_runtime.h"
 struct mishare_runtime_owner { int dummy; };
-static int runtime_busy,runtime_closed;
+static int runtime_busy,runtime_closed,runtime_error;
 static struct wlan_objmgr_psoc *runtime_registry_psoc;
 bool mishare_runtime_psoc_busy(struct wlan_objmgr_psoc *p) {assert(parent_owned);return p && p==runtime_registry_psoc;}
 static bool runtime_ssr,batch_extra;
@@ -113,7 +118,7 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,struct mishare_r
  return 0;
 }
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev,const u8 *address,void *osif,struct wireless_dev *wdev,struct mishare_runtime_owner **owner) { pins_live();assert(pdev && pdev->refs==1 && address && osif && wdev);if(*owner)return -EBUSY;*owner=calloc(1,sizeof(**owner));return 0; }
-int mishare_runtime_destroy(struct mishare_runtime_owner **owner) { pins_live();if(!*owner)return 0;if(runtime_ssr)return -EUCLEAN;if(runtime_busy)return -EINPROGRESS;free(*owner);*owner=NULL;runtime_closed++;return 0; }
+int mishare_runtime_destroy(struct mishare_runtime_owner **owner) { idle_cleanup_boundary();pins_live();if(!*owner)return 0;if(runtime_ssr)return -EUCLEAN;if(runtime_error)return runtime_error;if(runtime_busy)return -EINPROGRESS;free(*owner);*owner=NULL;runtime_closed++;return 0; }
 int mishare_runtime_snapshot(struct mishare_runtime_owner *o,struct mishare_runtime_status *s) { (void)o;(void)s;return -EOPNOTSUPP; }
 int mishare_runtime_ndi_create(struct mishare_runtime_owner *o,u8 a,u8 b) { (void)o;(void)a;(void)b;return -EOPNOTSUPP; }
 int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *o) { (void)o;return -EOPNOTSUPP; }
@@ -151,7 +156,10 @@ static int hdd_wlan_stop_modules(struct hdd_context *h,bool ftm) {assert(h && pa
 NATIVE_IDLE
 static void idle_check(struct hdd_context *h,int rc,const char *trace) {
  assert(parent_owned && rtnl_owned);parent_owned=false;rtnl_owned=false;idle_trace[0]=0;
- assert(__hdd_psoc_idle_shutdown(h)==rc && !parent_owned && !strcmp(idle_trace,trace));
+ native_idle_active=true;
+ int actual=__hdd_psoc_idle_shutdown(h);native_idle_active=false;
+ assert(!rtnl_owned && "EXPECTED_IDLE_UNLOCK");
+ assert(actual==rc && !parent_owned && !strcmp(idle_trace,trace) && "EXPECTED_IDLE_RESULT");
  parent_owned=true;rtnl_owned=true;
 }
 '''
@@ -171,6 +179,14 @@ static struct hdd_adapter *factory_rollback(struct hdd_context *hdd_ctx,struct h
  ROLLBACK
  abort();
 }
+static int handoff_from_temporary(struct mishare_wonder_host **owner)
+{
+ struct mishare_wonder_host *temporary=*owner;*owner=NULL;
+ int ret=mishare_wonder_host_handoff_idle_locked(&temporary);
+ if(ret)*owner=temporary;
+ else assert(!temporary && "EXPECTED_IDLE_HANDOFF");
+ return ret;
+}
 static void reject_replaced_parent(struct hdd_context *h,struct mishare_wonder_host **owner)
 {
  struct device *dev=h->parent_dev;struct wlan_objmgr_psoc *psoc=h->psoc;struct wlan_objmgr_pdev *pdev=h->pdev;
@@ -184,8 +200,9 @@ static void reject_replaced_parent(struct hdd_context *h,struct mishare_wonder_h
   assert(mishare_wonder_host_session_step_locked(*owner,5240,1,2)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(mishare_wonder_host_destroy_locked(owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(mishare_wonder_host_reclaim_ssr_locked(owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
+  assert(mishare_wonder_host_handoff_idle_locked(owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(*owner && (*owner)->runtime==token && (*owner)->session.closing==closing && closed==prior_closed && batch_calls==prior_batches && active && registered);
-  identity_refusal_expected=false;assert(!strcmp(trace,"PPPPP"));pins_live();
+  identity_refusal_expected=false;assert(!strcmp(trace,"PPPPPP"));pins_live();
  }
  h->parent_dev=dev;h->psoc=psoc;h->pdev=pdev;trace[0]=0;
 }
@@ -294,6 +311,59 @@ int main(void)
  idle_check(&h,-EAGAIN,"CBSWTE");batch_extra=false;
  assert(!mishare_wonder_host_reclaim_ssr_locked(&owner) && !owner && !active && !registered);runtime_ssr=false;
  idle_check(&h,0,"CBSWIMTE");
+ /* Explicit transfer lets ordinary native idle retire only its own sessions. */
+ assert(mishare_wonder_host_handoff_idle_locked(NULL)==-EINVAL);
+ assert(!mishare_wonder_host_handoff_idle_locked(&owner));
+ reset(0);assert(!mishare_wonder_host_create_locked(&h,mac,&owner));
+ struct mishare_wonder_host *retained=owner;
+ runtime_ssr=true;assert(mishare_wonder_host_handoff_idle_locked(&owner)==-ESHUTDOWN && owner==retained && !owner->session.closing);runtime_ssr=false;
+ failure=4;assert(mishare_wonder_host_handoff_idle_locked(&owner)==-ENODEV && owner==retained && !owner->idle_owned);failure=0;
+ active->dev->running=true;assert(mishare_wonder_host_handoff_idle_locked(&owner)==-EBUSY && owner==retained);active->dev->running=false;
+ active->event_flags=1UL<<DEVICE_IFACE_OPENED;assert(mishare_wonder_host_handoff_idle_locked(&owner)==-EBUSY && owner==retained);active->event_flags=0;
+ active->deflink->link_flags[0]=1UL<<SME_SESSION_OPENED;assert(mishare_wonder_host_handoff_idle_locked(&owner)==-EBUSY && owner==retained);active->deflink->link_flags[0]=0;
+ int attempts=rtnl_attempts,prior_closed=closed;
+ idle_check(&h,-EAGAIN,"CBSWTE");assert(owner==retained && !owner->session.closing && closed==prior_closed && rtnl_attempts==attempts);
+ assert(!handoff_from_temporary(&owner));
+ assert(!owner && retained->idle_owned && retained->session.closing && active && registered && "EXPECTED_IDLE_HANDOFF");pins_live();
+ /* A stale duplicate cannot transfer the already-transferred owner again. */
+ struct mishare_wonder_host *alias=retained;
+ assert(mishare_wonder_host_handoff_idle_locked(&alias)==-EBUSY && alias==retained);alias=NULL;
+ struct hdd_context same_psoc_other_hdd=h;attempts=rtnl_attempts;
+ idle_check(&same_psoc_other_hdd,-EAGAIN,"CBSWTE");assert(rtnl_attempts==attempts && "EXPECTED_IDLE_PREFLIGHT");
+ struct device *saved_dev=h.parent_dev;h.parent_dev=NULL;
+ assert(mishare_wonder_host_idle_prepare_locked(&h)==-EINVAL);h.parent_dev=saved_dev;
+ struct device another_dev={0};struct wlan_objmgr_pdev another_pdev={.psoc=&psoc};
+ h.parent_dev=&another_dev;idle_check(&h,-EAGAIN,"CBSWTE");h.parent_dev=saved_dev;
+ assert(rtnl_attempts==attempts && "EXPECTED_IDLE_PREFLIGHT");
+ h.pdev=&another_pdev;idle_check(&h,-EAGAIN,"CBSWTE");h.pdev=&pdev;
+ assert(rtnl_attempts==attempts && "EXPECTED_IDLE_PREFLIGHT");
+ runtime_ssr=true;idle_check(&h,-EAGAIN,"CBSWTE");runtime_ssr=false;
+ assert(rtnl_attempts==attempts && closed==prior_closed);
+ rtnl_contended=true;idle_check(&h,-EAGAIN,"CBSWTE");rtnl_contended=false;
+ assert(active && registered && closed==prior_closed && retained->idle_owned);pins_live();
+ idle_retirement_expected=true;
+ idle_open=true;idle_check(&h,-EAGAIN,"CBSWITE");idle_open=false;assert(!active && !registered && closed==prior_closed+1 && !mishare_wonder_host_psoc_busy(&psoc));pins_empty();
+ idle_retirement_expected=false;
+ /* Pending runtime and a later sync failure retain coordinator ownership. */
+ reset(0);assert(!mishare_wonder_host_create_locked(&h,mac,&owner));active->dev->ieee80211_ptr=&wdev;
+ assert(!mishare_wonder_host_vdev_create_locked(owner));retained=owner;
+ assert(!mishare_wonder_host_handoff_idle_locked(&owner) && !owner && retained->idle_owned && retained->session.closing && "EXPECTED_IDLE_HANDOFF");
+ idle_retirement_expected=true;runtime_busy=1;prior_closed=closed;
+ for(int poll=0;poll<3;poll++) {trace[0]=0;idle_check(&h,-EAGAIN,"CBSWTE");assert(active && registered && closed==prior_closed && retained->runtime && retained->idle_owned);pins_live();}
+ runtime_busy=0;original=registered;registered=&foreign;trace[0]=0;
+ idle_check(&h,-EAGAIN,"CBSWTE");assert(active && registered==&foreign && !retained->runtime && retained->idle_owned && closed==prior_closed);pins_live();registered=original;
+ /* Host close alone must not grant module stop while another runtime exists. */
+ runtime_registry_psoc=&psoc;trace[0]=0;idle_check(&h,-EAGAIN,"CBSWTE");
+ assert(!active && !registered && !mishare_wonder_host_psoc_busy(&psoc));pins_empty();
+ runtime_registry_psoc=NULL;idle_retirement_expected=false;idle_check(&h,0,"CBSWIMTE");
+ /* Quarantine cannot be converted to successful idle cleanup. */
+ reset(0);assert(!mishare_wonder_host_create_locked(&h,mac,&owner));active->dev->ieee80211_ptr=&wdev;
+ assert(!mishare_wonder_host_vdev_create_locked(owner));retained=owner;
+ assert(!mishare_wonder_host_handoff_idle_locked(&owner));
+ pid_t quarantine=fork();assert(quarantine>=0);
+ if(!quarantine) {runtime_error=-EUCLEAN;idle_retirement_expected=true;idle_check(&h,-EAGAIN,"CBSWTE");assert(active && registered && retained->runtime && retained->idle_owned);pins_live();_Exit(0);}
+ assert(waitpid(quarantine,&child_status,0)==quarantine && WIFEXITED(child_status) && !WEXITSTATUS(child_status));
+ idle_retirement_expected=true;trace[0]=0;idle_stop_result=-EIO;idle_check(&h,-EIO,"CBSWIMTE");idle_stop_result=0;idle_retirement_expected=false;pins_empty();
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
@@ -328,7 +398,7 @@ def run(wlan, output):
     idle = extract(main, r'^static int __hdd_psoc_idle_shutdown\([^;{]+?\)\s*\{.*?^\}')
     if hashlib.sha256(remove_idle_additions(idle).encode()).hexdigest() != '0d61f49fb96d09d35afb587284e02951aaeb996620ae669cfbacb756f63c6b54':
         raise ValueError('Unbounded native idle shutdown delta')
-    assert idle.index('osif_psoc_sync_wait_for_ops(') < idle.index('mishare_wonder_host_stop_ready_locked(') < idle.index('hdd_wlan_stop_modules(') < idle.index('osif_psoc_sync_trans_stop(')
+    assert idle.index('osif_psoc_sync_wait_for_ops(') < idle.index('mishare_wonder_host_idle_prepare_locked(') < idle.index('hdd_wlan_stop_modules(') < idle.index('osif_psoc_sync_trans_stop(')
     mode = '\n'.join(extract(main, r'^static int\s+'+name+r'\([^;{]+?\)\s*\{.*?^\}') for name in ['__hdd_mode_change_psoc_idle_shutdown','hdd_mode_change_psoc_idle_shutdown'])
     request_body=extract(main,r'^static int __hdd_driver_mode_change\([^;{]+?\)\s*\{.*?^\}')
     request_prefix=request_body[:request_body.index('\thdd_psoc_idle_timer_stop(hdd_ctx);')]
@@ -383,19 +453,57 @@ def run(wlan, output):
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
             assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+        handoff = extract(host_source, r'^int mishare_wonder_host_handoff_idle_locked\([^;{]+?\)\s*\{.*?^\}')
+        prepare = extract(host_source, r'^int mishare_wonder_host_idle_prepare_locked\([^;{]+?\)\s*\{.*?^\}')
+        candidate = extract(host_source, r'^static int mishare_host_idle_candidate\([^;{]+?\)\s*\{.*?^\}')
+        idle_controls = []
+        def mutate_body(body, needle, replacement, marker):
+            assert body.count(needle) == 1, needle
+            idle_controls.append((host_source.replace(body, body.replace(needle, replacement, 1), 1), marker))
+        for needle in ['host->idle_owned = true;', 'host->session.closing = true;', '*owner = NULL;']:
+            mutate_body(handoff, needle, '/* omitted by mutation */', 'EXPECTED_IDLE_HANDOFF')
+        for needle, marker in [
+            ('!host->idle_owned', 'EXPECTED_IDLE_OWNERSHIP'),
+            ('host->hdd != hdd', 'EXPECTED_IDLE_OWNERSHIP'),
+            ('host->parent_dev != hdd->parent_dev', 'EXPECTED_IDLE_PREFLIGHT'),
+            ('host->pdev != hdd->pdev', 'EXPECTED_IDLE_PREFLIGHT'),
+            ('host->psoc != hdd->psoc', 'EXPECTED_IDLE_RESULT'),
+        ]:
+            mutate_body(candidate, needle, '(false && ('+needle+'))', marker)
+        mutate_body(prepare, 'return -EAGAIN;', 'return 0;', 'EXPECTED_STOP_ADMISSION')
+        mutate_body(prepare, 'if (ret)\n            break;', 'if (ret) { rtnl_unlock(); return 0; }', 'EXPECTED_STOP_ADMISSION')
+        mutate_body(prepare, '    rtnl_unlock();', '    if (ret) rtnl_unlock();', 'EXPECTED_IDLE_UNLOCK')
+        final = '    return mishare_wonder_host_stop_ready_locked(hdd);'
+        index = prepare.rindex(final)
+        changed = prepare[:index] + prepare[index:].replace(final, '    return 0;', 1)
+        idle_controls.append((host_source.replace(prepare, changed, 1), 'EXPECTED_STOP_ADMISSION'))
+        assert len(idle_controls) == 12
+        for mutation, marker in idle_controls:
+            (d/'wlan_hdd_mishare_host.c').write_text(mutation)
+            subprocess.run(command, check=True)
+            bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
+            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         bodies=[idle,request_prefix]+[extract(main,r'^static int\s+'+name+r'\([^;{]+?\)\s*\{.*?^\}') for name in ['__hdd_mode_change_psoc_idle_shutdown','hdd_mode_change_psoc_idle_shutdown']]
         for body in bodies:
-            needle='mishare_wonder_host_stop_ready_locked(hdd_ctx)';assert body.count(needle)==1 and code.count(body)==1
+            needle='mishare_wonder_host_idle_prepare_locked(hdd_ctx)' if body==idle else 'mishare_wonder_host_stop_ready_locked(hdd_ctx)';assert body.count(needle)==1 and code.count(body)==1
             source.write_text(code.replace(body,body.replace(needle,'0'),1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             marker='EXPECTED_MODE_REQUEST_ADMISSION' if body==request_prefix else 'EXPECTED_STOP_ADMISSION'
             assert bad.returncode==-6 and marker in bad.stderr,(bad.returncode,bad.stderr[-1000:])
 
-    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'parent_identity_rejections':30,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
+        # A snapshot-only gate would keep handed-off owners permanently busy.
+        needle = 'mishare_wonder_host_idle_prepare_locked(hdd_ctx)'
+        assert idle.count(needle) == 1
+        source.write_text(code.replace(idle, idle.replace(needle, 'mishare_wonder_host_stop_ready_locked(hdd_ctx)', 1), 1))
+        subprocess.run(command, check=True)
+        bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
+        assert bad.returncode == -6 and 'EXPECTED_IDLE_RESULT' in bad.stderr, (bad.returncode, bad.stderr[-1000:])
+
+    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
             'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),
-            'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all five host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
-            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. This does not certify a native teardown coordinator or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. This is not an SSR/remove coordinator, native kernel locking, teardown or radio validation.'}
+            'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address', 'native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted', 'RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins', 'post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup', 'device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
+            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. This is not an SSR/remove coordinator, native kernel locking, teardown or radio validation.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(stdout,end='')
 
 

@@ -10,7 +10,7 @@ All five later host operations assert the transition against the pinned device a
 
 ## Verification
 
-Production host/runtime fast validation passed in [Actions 41851852074](https://github.com/xxz3312/XAirDrop-17/actions/runs/41851852074) on `b09a4a9`; full diagnostic build and remaining regressions are still running. The host report confirms 30 identity refusals, seven new parent mutation controls and six existing stop mutation controls. The compact artifact digest and all production file hashes in the host report match the local source. This is not full offline acceptance.
+[CI 41851852074](https://github.com/xxz3312/XAirDrop-17/actions/runs/41851852074)（`b09a4a9`）七项作业通过：生产 host 的引用回滚与保留、30 次父身份拒绝、七项新增及六项既有变异控制、53 项 Python 检查、既有组合、完整 WLAN 编译、CNSS、严格链接、七项选定布局及模块记录检查通过。快速作业与完整构建中的 host/runtime 报告一致，七份精简验证 ZIP 摘要和报告中的生产源码哈希已核对。
 
 The existing production-host sanitizer fixture now covers all acquisition failures, inconsistent PDEV ancestry, reverse release and retention through pending/error exits. Each of three replaced identities is checked at all five operations, both before and after a runtime token exists (30 refusals). Seven new mutation controls remove an identity check, an unpin or the PDEV-parent check; six existing idle/mode mutation controls remain.
 
@@ -21,3 +21,7 @@ The full diagnostic build continues to compile the actual production helper into
 These references retain allocations only. They do not retain HDD context, native component state, firmware, IRQ/DMA or transport readiness. The caller must retain HDD and serialize the complete native parent lifetime throughout every call and between asynchronous polls. Holding object-manager references can delay deletion; an automatic teardown caller must first retire the host through a qualified coordinator. No native remove/SSR caller or backend activation is added here. Standalone runtime owners are unchanged and still require their caller's lifetime contract. Real NDI/Wonder init, complete AWDL RX/TX and Apple discovery/handshake/file transfer remain pending. No phone operation is needed for this stage.
 
 See [validation checkpoint](research/popsicle-parent-pins-0105-validation.json). Two earlier runs passed production positive cases but failed mutation-test marker expectations; downstream-entry and pre-free ownership assertions were added, without changing production C. A separate whole-tree namespace check flags legacy names in two unchanged files (`tools/coex-build-na20.py` and `third-party/xairdrop15/reference/action.sh.txt`); those findings remain open.
+
+## 验证记录
+
+见[0105 验收记录](research/popsicle-parent-pins-0105-validation.json)。前两次运行的生产正常/错误路径已通过，但新增变异控制先触发下游或 trace 断言；补上明确的下游准入断言和 owner 释放前引用断言后，全部控制通过。生产 C 源码未因此修改。全树名称检查仍报告两个未改动的既有文件含旧名称，已单独记录；不计入通过项目。

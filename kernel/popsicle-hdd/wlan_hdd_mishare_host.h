@@ -20,6 +20,24 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
  * Zero is a serialized empty-registry observation, not SSR/remove clearance.
  */
 int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd);
+/* Explicit ordinary-idle ownership handoff. Same RTNL/exclusive parent
+ * transition and lifetime contract as create/destroy. Success closes admission,
+ * transfers the sole owner into the host registry and NULLs the caller slot;
+ * caller must discard all aliases. It does not start/wait for cleanup or retain
+ * the slot address. Invalid/recovering/open adapters leave ownership unchanged.
+ * HDD/native components must remain alive until the registry is empty.
+ * No automatic transfer is installed in Wonder or any other session caller.
+ */
+int mishare_wonder_host_handoff_idle_locked(struct mishare_wonder_host **owner);
+/* Native ordinary idle entry only: caller holds exclusive PSOC transition and
+ * has drained operations. Every exact-PSOC host must have explicitly handed
+ * off ownership and still match this HDD/device/PDEV. Uses RTNL trylock only;
+ * contention or asynchronous cleanup defers idle. Never steal ordinary owners,
+ * clear quarantine, adopt standalone runtimes or authorize SSR/remove. Errors
+ * retain registry ownership and pins; parent teardown remains blocked. Success
+ * includes the existing host/runtime empty-registry admission check.
+ */
+int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;

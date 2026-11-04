@@ -1,0 +1,21 @@
+# 0106 Explicit host handoff and ordinary-idle retirement
+
+## Production path
+
+`mishare_wonder_host_handoff_idle_locked()` is an explicit ownership transfer under RTNL and the exclusive parent PSOC transition. It validates pinned parents, native context, recovery state and DOWN/unopened adapter state before changing anything. Success permanently closes host session admission, marks the host as owned by idle retirement, and NULLs the caller slot. The registry holds the owner itself, never the address of the caller slot; callers must discard aliases. An already-transferred alias is rejected. No firmware command, cleanup wait or idle scheduling occurs during handoff.
+
+Patch 0039 replaces only the existing ordinary-idle admission call with `mishare_wonder_host_idle_prepare_locked()`. Mode-change gates keep the existing empty-registry snapshot. Ordinary idle holds its original exclusive PSOC transition and drains operations before the new call. Every exact-PSOC host must have explicitly transferred ownership and match the exact HDD, device and PDEV before any retirement is attempted. Foreign PSOCs are excluded; caller-owned or mismatched hosts block idle without adoption.
+
+If a matching transferred host exists, recovering state is rejected and RTNL is acquired using **trylock only**. This avoids waiting for RTNL while already holding the PSOC transition, since creation may take those locks in the other order. Contention defers idle. Cleanup invokes the existing production host destroy path, outside the registry lock, and releases RTNL on every return. Asynchronous runtime destruction, quarantine and sync mismatch retain registry ownership and allocation pins. There is no timeout, polling loop waiting for completion, forced free or fabricated firmware completion.
+
+After successful cleanup, the existing combined host/runtime empty-registry check still runs: a standalone runtime must continue to block module stop. The native open-interface gate and original module-stop result remain in effect. Pending/error results are mapped by the original idle caller to EAGAIN. Subsequent native idle invocations can advance an incomplete ordinary cleanup.
+
+## Verification status
+
+Code complete; production C sanitizer execution and full Actions build pending. The host fixture now covers temporary-slot handoff; refused recovery/context/open-state transfer; untransferred/foreign-parent retention; RTNL contention; asynchronous runtime polls; sync mismatch after runtime retirement; post-cleanup standalone runtime refusal; ordinary quarantine retention; and original open-interface/native-stop-error behavior. All six host operations are checked against each replaced parent identity before and after runtime creation (36 refusals). Thirteen additional mutation controls exercise handoff ownership/closing/slot clearing, preflight identity, RTNL/error/last-runtime boundaries and the actual native idle call site. Seven existing parent and six stop controls remain.
+
+The host fixture executes production host C and the complete patched native idle function. Runtime drain results, kernel RTNL/PSOC primitives and object/device references remain models in this fixture. Existing independent runtime/native cleanup fixtures continue separately; this is not one end-to-end native parent teardown execution. Full WLAN builds require both new production API symbols in the final object/module. No local C compilation is used.
+
+## Boundaries
+
+No backend or other session caller is made to transfer ownership automatically. This API does not schedule an idle callback or guarantee a cleanup deadline; the caller must arrange subsequent native idle invocations and retain HDD/native parent components until registry emptiness. References retain allocations, not components or firmware. Physical remove and SSR remain unconnected; SSR after handoff retains the owner and requires a future qualified coordinator. The existing idle/mode gates cannot make upper callers that ignore stop errors safe. No standalone runtime adoption, quarantine reset, radio activation or phone operation is added. Complete AWDL RX/TX, discovery, handshake and two-way files remain pending.
