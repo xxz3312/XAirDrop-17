@@ -1,0 +1,21 @@
+# 0112 Explicit native module-stop continuation
+
+Patch 0044 shares the original module-stop body between the ordinary `hdd_wlan_stop_modules()` wrapper and the new explicit `hdd_mishare_resume_stop_modules()` entry. Only the resume entry can consume an eligible journal pause and jump directly to the post-disable preparation boundary. It skips module-stop prefix work, CDS deconfiguration and `cds_post_disable()`; qualified host/runtime retirement still runs before the existing native parent-close suffix.
+
+Only EAGAIN/EINPROGRESS returned by qualified preparation at POST_DISABLED can pause. The wait is separate from `first_error`. Each resume consumes the pause under the journal lock; another pending qualified result can pause again. The exact HDD/device/PSOC/PDEV identities, captured driver status, recovering flag and mission mode must still match. A consumed claim, prefix failure, hard preparation error, parent-close failure or completed/empty journal cannot be resumed. Private initial module stop in another mode is refused before prefix side effects. Ordinary non-private mode behavior remains native.
+
+This is an explicit module-level continuation, not a complete asynchronous SSR coordinator. There is no automatic caller, worker or retry schedule. The caller must retain the original exclusive PSOC transition with drained operations and the complete native parent lifetime throughout the wait. The record holds borrowed identities, not component leases. The original qualified SSR window and runtime rules are rechecked by the production bridge; no new window, reset or forced cleanup is synthesized.
+
+Successful module continuation clears only its own journal. The power shutdown completion tail has not run through this new entry, and the SoC blocked/reinit gate remains set. A future upper caller must complete and acknowledge that tail before permitting reinit. Physical remove/close, automatic owner handoff and the radio backend remain unconnected. Apple discovery, handshake and two-way file transfer are not verified.
+
+## Verification
+
+Production source `a45b1a6bc17abd7ad2df749379782e457e653b2a`, verification source `4e0d5cb3a18873843d7f089d6b4ec41f42e69160`; [Actions 41928166595](https://github.com/xxz3312/XAirDrop-17/actions/runs/41928166595) passed production C fast validation: 17 continuation scenarios, all 70 mutation controls and inherited cases passed with ASan/UBSan and leak detection. Compact ZIP digest, production/native hashes, regenerated fixture and actual native entry/finish/resume-wrapper hashes match. Full WLAN diagnostic build and remaining regressions are still running; this is not full offline acceptance. Locally, 53 Python checks, Python syntax, fixture source assembly, inherited parent fixture assembly, whole native source restoration, patch reverse check and whitespace check passed. C compilation remains Actions-only.
+
+The host fixture adds 17 explicit continuation scenarios: repeated waits and RTNL contention; foreign/replaced identities and changed driver status; recovery/mode/FTM refusal; qualified hard errors; sync mismatch after runtime retirement; duplicate claim; parent-suffix error; and a host already retired before native continuation. The actual native entry, continuation wrapper, post-disable section and completion fragment execute against modeled parent-close/qualification boundaries. Prefix and CDS call counts must stay at one, and successful module completion must leave the independent SoC gate blocked and power completion tail untouched.
+
+Ten new mutation controls target wait classification, error separation, identity/status/recovery/claim gates, mode checks, the native jump and wrapper, and qualified polling on resume. The previous 60 controls and native cases remain. Real parent teardown, scheduler timing, IRQ/DMA draining and physical SSR are not certified by this host fixture.
+
+The first run (41927874060) passed positive production C cases but an identity mutation reached a later continuation-completion assertion instead of the expected immediate refusal marker. The test was strengthened to require a rejected identity/status/recovery entry to retain its pause and zero first-error at that point. No production code changed in that correction.
+
+See the [validation checkpoint](research/popsicle-ssr-resume-0112-validation.json).
