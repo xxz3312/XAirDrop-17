@@ -13,7 +13,7 @@ IPCI='qca-wifi-host-cmn/hif/src/ipcie/if_ipci.c'
 BINDING='qca-wifi-host-cmn/hif/src/dispatcher/multibus_ipci.c'
 NAMES=[(CE,'hif_ce_stop'),(CE,'hif_destroy_oom_work'),(CE,'hif_buffer_cleanup'),(BUS,'hif_disable_isr'),(IPCI,'hif_ipci_disable_isr')]
 TYPES=r'''
-struct hif_opaque_softc {unsigned token;};
+struct hif_opaque_softc {int status;};
 struct h102_lock {unsigned id,kind;bool destroyed;};
 struct h102_timer {bool stopped,freed;};
 struct h102_work {unsigned id;bool destroyed;};
@@ -109,6 +109,7 @@ static void h102_contracts(void) {
 '''
 def fixture(root):
     s,exits,stubbed=previous.fixture(root)
+    s=owner.replace_once(s,'struct hif_opaque_softc {int status;};','/* HIF model definition moved before native transport models. */')
     s=owner.replace_once(s,'struct HIF_CE_pipe_info {',TYPES+'\nstruct HIF_CE_pipe_info {struct CE_handle *ce_hdl;struct h102_lock completion_freeq_lock,recv_bufs_needed_lock;')
     s=owner.replace_once(s,'struct HIF_CE_state {','struct HIF_CE_state {bool started,sleep_timer_init;struct h102_timer sleep_timer;struct CE_handle *ce_diag;struct CE_attr host_ce_config[16];')
     s=owner.replace_once(s,'struct hif_softc {','struct hif_softc {struct hif_opaque_softc osc;uint8_t ce_count;void *qdf_dev;bool hif_init_done,athdiag_procfs_inited;int active_tasklet_cnt,active_grp_tasklet_cnt,active_oom_work_cnt;struct CE_state *ce_id_to_state[16];')
