@@ -110,7 +110,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: popsicle-diagnostic-${{ github.ref }}
+  group: popsicle-diagnostic-${{ github.ref }}-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:

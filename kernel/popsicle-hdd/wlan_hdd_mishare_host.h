@@ -47,6 +47,15 @@ int mishare_wonder_host_handoff_idle_locked(struct mishare_wonder_host **owner);
  * includes the existing host/runtime empty-registry admission check.
  */
 int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd);
+/* Native recovery post-disable entry, after successful CDS post-disable and
+ * before DP/PDEV/PSOC close. Caller retains the exclusive PSOC transition and
+ * all exact native parents. Empty registries preserve the original stop path;
+ * only explicitly handed-off hosts can enter qualified SSR reclamation. Uses
+ * RTNL trylock only and releases it on every result. Pending/error retains the
+ * authoritative registry tokens and must prevent parent close/reinit. This
+ * does not schedule retries, resume a partial stop or clear failure admission.
+ */
+int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;
@@ -59,7 +68,7 @@ int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd);
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
                                     struct mishare_wonder_host **owner);
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
-/* Explicit SSR-only retirement bridge; no automatic shutdown caller. Same
+/* Qualified SSR-only retirement bridge, used by post-disable preparation. Same
  * RTNL/exclusive psoc serialization as create/destroy. Retain exact parents
  * and serialize teardown through EVERY asynchronous poll. Requires native
  * SSR qualification; a recovering flag alone is not an IRQ/MC/DP barrier.
@@ -89,7 +98,8 @@ int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner);
  * registry coverage, pending cleanup and errors preserve authoritative host
  * ownership and updated runtime tokens for a later qualified poll. Success
  * includes empty runtime-batch preflight and combined registry admission.
- * No native SSR/remove caller, scheduling or blocking wait is installed.
+ * Native post-disable reaches this through ssr_prepare_locked; no automatic
+ * retry, blocking wait or physical-remove coordinator is installed.
  */
 int mishare_wonder_host_reclaim_handoff_ssr_locked(struct hdd_context *hdd);
 /* Optional host vdev attachment. Retain host/adapter on EINPROGRESS/EUCLEAN;

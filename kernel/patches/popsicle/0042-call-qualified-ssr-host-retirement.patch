@@ -1,0 +1,11 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -18554,7 +18554,7 @@
+ 
+ /* MISHARE_SSR_STOP_BEGIN:post_ready */
+ 		if (is_recovery_stop) {
+-			int stop_ret = mishare_wonder_host_stop_ready_locked(hdd_ctx);
++			int stop_ret = mishare_wonder_host_ssr_prepare_locked(hdd_ctx);
+ 
+ 			if (stop_ret)
+ 				return stop_ret;

@@ -177,6 +177,7 @@ def check_mishare_host_symbols(work, module, report_name):
     names = ['mishare_wonder_host_create_locked', 'mishare_wonder_host_destroy_locked',
              'mishare_wonder_host_handoff_idle_locked',
              'mishare_wonder_host_idle_prepare_locked',
+             'mishare_wonder_host_ssr_prepare_locked',
              'mishare_wonder_host_reclaim_handoff_ssr_locked',
              'mishare_wonder_host_adapter_owned',
              'hdd_wlan_shutdown',

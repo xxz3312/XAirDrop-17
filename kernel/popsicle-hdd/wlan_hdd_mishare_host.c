@@ -275,6 +275,37 @@ int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd)
     return mishare_wonder_host_stop_ready_locked(hdd);
 }
 
+int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd)
+{
+    struct mishare_wonder_host *host;
+    int ret;
+
+    if (!hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    ret = mishare_wonder_host_stop_ready_locked(hdd);
+    if (ret != -EBUSY)
+        return ret;
+    if (!cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    ret = mishare_host_idle_candidate(hdd, &host);
+    if (ret)
+        return ret;
+    if (!host)
+        return -EBUSY; /* Do not adopt a standalone runtime owner. */
+    /* The native post-disable caller already owns the PSOC transition. Never
+     * wait for RTNL in the reverse of the host-create lock order.
+     */
+    if (!rtnl_trylock())
+        return -EAGAIN;
+    ret = mishare_wonder_host_reclaim_handoff_ssr_locked(hdd);
+    rtnl_unlock();
+    /* The qualified bridge preserves registry ownership and updated tokens
+     * on pending/error results; success includes both registries empty.
+     */
+    return ret;
+}
+
 static void mishare_host_track(struct mishare_wonder_host *host,
                                 struct hdd_context *hdd)
 {
