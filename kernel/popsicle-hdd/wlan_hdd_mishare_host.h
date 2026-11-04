@@ -22,6 +22,11 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
+ * Host holds device/PSOC/PDEV allocation references until successful close;
+ * all three HDD identities must still match at every subsequent entry. Failed
+ * creation unwinds pins; pending/error destruction retains them with the host.
+ * References do not retain HDD, component state, firmware or transport. Caller
+ * must prevent native parent teardown, including between asynchronous polls.
  * Success means a DOWN host adapter only, never Wonder/radio initialization.
  */
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
@@ -46,7 +51,8 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * stays unsupported.
  * Errors retain host and the updated runtime token; EINPROGRESS needs polling
  * after releasing locks. This permanently closes the session on admission.
- * This does not hold parents, reset quarantine or authorize physical remove.
+ * Allocation pins do not hold native components, reset quarantine or authorize
+ * physical remove; caller must still retain the full native parent lifetime.
  */
 int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner);
 /* Optional host vdev attachment. Retain host/adapter on EINPROGRESS/EUCLEAN;

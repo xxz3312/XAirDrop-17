@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0103 原生残留 CE 收发缓冲区清理](docs/POPSICLE-CE-BUFFERS-0103.md)已完成离线验收。[CI 41782619036](https://github.com/xxz3312/XAirDrop-17/actions/runs/41782619036)（`af57774`）六项作业成功。88 项残留缓冲区检查（72 项独立、16 项停止链集成）、116 项失败控制及全部旧组合通过；53 项 Python 检查、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。十二份组合源码、两个原生清理函数、55 份报告中的生产源码、37 个路径别名及六份验证 ZIP 摘要均已核对。 原生 RX/TX 清理函数通过模型 CE 撤销/取消队列执行；DMA unmap、direct-link pages 和 TX completion 仍为模型。HTT/无回调缓冲区按原路径保留归属，断言完成后由模型所有者清理。HTT 控制包在真实流程中可能已由其他路径释放；夹具使用活体宿主缓冲区记录归属，未重放此前释放历史。真实环/DMA、原生 HTT TX completion、物理 HTT free 和生产父资源停机协调仍待继续。backend 保持关闭，手机无需操作。 完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0105 host 父对象引用](docs/POPSICLE-PARENT-PINS-0105.md)代码完成，等待编译验证。创建时持有 device/PSOC/PDEV 引用，失败逆序回滚；等待和错误保留引用，完整关闭后释放。后续入口拒绝父对象替换。引用不保留 HDD、原生组件或固件，完整 remove/SSR 协调与无线后端仍待接入。前一阶段 [0104](docs/POPSICLE-STOP-ADMISSION-0104.md) 已通过七项 CI 作业。backend 保持关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)

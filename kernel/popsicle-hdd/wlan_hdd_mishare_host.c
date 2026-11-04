@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Owned host lifetime and explicit NDI session progression. No auto caller. */
 #include <linux/errno.h>
+#include <linux/device.h>
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/slab.h>
@@ -9,6 +10,8 @@
 #include "wlan_hdd_main.h"
 #include "osif_psoc_sync.h"
 #include "osif_vdev_sync.h"
+#include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
 #include "wlan_hdd_mishare_host.h"
 #include "wlan_hdd_mishare_runtime.h"
 #include "wlan_hdd_mishare_session.h"
@@ -16,6 +19,8 @@
 struct mishare_wonder_host {
     struct mishare_wonder_host *next;
     struct wlan_objmgr_psoc *psoc;
+    struct wlan_objmgr_pdev *pdev;
+    struct device *parent_dev;
     struct hdd_context *hdd;
     struct hdd_adapter *adapter;
     struct osif_vdev_sync *sync;
@@ -29,6 +34,58 @@ struct mishare_wonder_host {
  */
 static DEFINE_SPINLOCK(mishare_host_lock);
 static struct mishare_wonder_host *mishare_hosts;
+
+/* Object references retain allocations, NOT HDD/component/firmware readiness.
+ * The caller must still retain HDD and serialize native teardown throughout
+ * every asynchronous poll. Never use these pins to authorize SSR or remove.
+ */
+static int mishare_host_pin_parents(struct mishare_wonder_host *host,
+                                   struct hdd_context *hdd)
+{
+    struct device *parent = get_device(hdd->parent_dev);
+
+    if (!parent)
+        return -ENODEV;
+    if (wlan_objmgr_psoc_try_get_ref(hdd->psoc, WLAN_HDD_ID_OBJ_MGR) !=
+        QDF_STATUS_SUCCESS)
+        goto put_parent;
+    if (wlan_objmgr_pdev_try_get_ref(hdd->pdev, WLAN_HDD_ID_OBJ_MGR) !=
+        QDF_STATUS_SUCCESS)
+        goto put_psoc;
+    if (wlan_pdev_get_psoc(hdd->pdev) != hdd->psoc) {
+        wlan_objmgr_pdev_release_ref(hdd->pdev, WLAN_HDD_ID_OBJ_MGR);
+        wlan_objmgr_psoc_release_ref(hdd->psoc, WLAN_HDD_ID_OBJ_MGR);
+        put_device(parent);
+        return -EUCLEAN;
+    }
+    host->parent_dev = parent;
+    host->psoc = hdd->psoc;
+    host->pdev = hdd->pdev;
+    return 0;
+
+put_psoc:
+    wlan_objmgr_psoc_release_ref(hdd->psoc, WLAN_HDD_ID_OBJ_MGR);
+put_parent:
+    put_device(parent);
+    return -ESHUTDOWN;
+}
+
+static void mishare_host_unpin_parents(struct mishare_wonder_host *host)
+{
+    wlan_objmgr_pdev_release_ref(host->pdev, WLAN_HDD_ID_OBJ_MGR);
+    wlan_objmgr_psoc_release_ref(host->psoc, WLAN_HDD_ID_OBJ_MGR);
+    put_device(host->parent_dev);
+}
+
+static int mishare_host_parent_identity(struct mishare_wonder_host *host)
+{
+    /* Assert against the pinned device, never a replacement read from HDD. */
+    osif_psoc_sync_assert_trans_protected(host->parent_dev);
+    if (host->hdd->parent_dev != host->parent_dev ||
+        host->hdd->psoc != host->psoc || host->hdd->pdev != host->pdev)
+        return -EUCLEAN;
+    return 0;
+}
 
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
 {
@@ -69,7 +126,6 @@ static void mishare_host_track(struct mishare_wonder_host *host,
     unsigned long flags;
 
     host->hdd = hdd;
-    host->psoc = hdd->psoc;
     spin_lock_irqsave(&mishare_host_lock, flags);
     host->next = mishare_hosts;
     mishare_hosts = host;
@@ -98,7 +154,7 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
     u8 address[ETH_ALEN];
     int ret;
 
-    if (!owner || !hdd || !hdd->parent_dev || !hdd->psoc ||
+    if (!owner || !hdd || !hdd->parent_dev || !hdd->psoc || !hdd->pdev ||
         !mac || !is_valid_ether_addr(mac))
         return -EINVAL;
     if (*owner)
@@ -113,6 +169,11 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
     host = kzalloc(sizeof(*host), GFP_KERNEL);
     if (!host)
         return -ENOMEM;
+    ret = mishare_host_pin_parents(host, hdd);
+    if (ret) {
+        kfree(host);
+        return ret;
+    }
     mishare_host_track(host, hdd);
     ret = osif_vdev_sync_create(hdd->parent_dev, &host->sync);
     if (ret)
@@ -130,6 +191,7 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
 destroy_sync:
     osif_vdev_sync_destroy(host->sync);
 free_host:
+    mishare_host_unpin_parents(host);
     mishare_host_untrack(host);
     kfree(host);
     return ret;
@@ -143,7 +205,9 @@ int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host)
     if (!host)
         return -EINVAL;
     ASSERT_RTNL();
-    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
     ret = wlan_hdd_validate_context(host->hdd);
     if (ret)
         return ret;
@@ -154,17 +218,21 @@ int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host)
         test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
         test_bit(SME_SESSION_OPENED, adapter->deflink->link_flags))
         return -EBUSY;
-    return mishare_runtime_create(host->hdd->pdev, adapter->mac_addr.bytes,
+    return mishare_runtime_create(host->pdev, adapter->mac_addr.bytes,
                                    adapter->deflink, adapter->dev->ieee80211_ptr,
                                    &host->runtime);
 }
 
 int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host)
 {
+    int ret;
+
     if (!host)
         return -EINVAL;
     ASSERT_RTNL();
-    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
     if (netif_running(host->adapter->dev) ||
         test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
         test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
@@ -181,7 +249,9 @@ int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
     if (!host)
         return -EINVAL;
     ASSERT_RTNL();
-    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
     if (host->session.closing)
         return -ESHUTDOWN;
     ret = wlan_hdd_validate_context(host->hdd);
@@ -208,7 +278,9 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
     if (!host)
         return 0;
     ASSERT_RTNL();
-    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
     adapter = host->adapter;
     /* Never treat a started adapter as a disposable host allocation. */
     if (netif_running(adapter->dev) ||
@@ -230,6 +302,7 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
     /* Closing reclaims adapter/netdev: do not dereference either afterwards. */
     hdd_close_adapter(host->hdd, adapter, true);
     osif_vdev_sync_destroy(sync);
+    mishare_host_unpin_parents(host);
     mishare_host_untrack(host);
     kfree(host);
     *owner = NULL;
@@ -249,11 +322,11 @@ int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner)
     if (!host)
         return 0;
     ASSERT_RTNL();
-    osif_psoc_sync_assert_trans_protected(host->hdd->parent_dev);
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
     if (!cds_is_driver_recovering())
         return -ESHUTDOWN;
-    if (host->psoc != host->hdd->psoc)
-        return -EUCLEAN;
     adapter = host->adapter;
     if (netif_running(adapter->dev) ||
         test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
