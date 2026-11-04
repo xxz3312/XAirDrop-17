@@ -57,7 +57,7 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; };
 struct hdd_adapter_create_param { int num_sessions; };
 struct osif_vdev_sync { int id; };
-static bool rtnl_owned=true, parent_owned=true;
+static bool rtnl_owned=true, parent_owned=true, identity_refusal_expected;
 static struct wlan_objmgr_psoc *expected_psoc;
 static int failure, validations, closed, dp_destroyed;
 static int device_pins, psoc_pins, pdev_pins;
@@ -85,7 +85,7 @@ static void kfree(void *p) { event('F');free(p); }
 static bool test_bit(unsigned n,const unsigned long *p) { return !!(*p & (1UL<<n)); }
 static bool netif_running(struct net_device *d) { return d->running; }
 static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && rtnl_owned && parent_owned);event('P'); }
-static int wlan_hdd_validate_context(struct hdd_context *h) { assert(h);validations++;event('V');return failure==4?-ENODEV:0; }
+static int wlan_hdd_validate_context(struct hdd_context *h) { assert(h && !identity_refusal_expected && "EXPECTED_PARENT_IDENTITY");validations++;event('V');return failure==4?-ENODEV:0; }
 static struct hdd_adapter *hdd_get_adapter(struct hdd_context *h,int mode) { assert(h && mode==17);event('L');return failure==5?(struct hdd_adapter*)1:active; }
 static int osif_vdev_sync_create(struct device *d,struct osif_vdev_sync **s) { assert(d && parent_owned && mishare_wonder_host_psoc_busy(expected_psoc));pins_live();event('S');if(failure==2)return -ENOMEM;*s=calloc(1,sizeof(**s));return 0; }
 static void osif_vdev_sync_destroy(struct osif_vdev_sync *s) { assert(s && s!=registered && mishare_wonder_host_psoc_busy(expected_psoc));pins_live();event('D');free(s); }
@@ -178,14 +178,14 @@ static void reject_replaced_parent(struct hdd_context *h,struct mishare_wonder_h
  for(int identity=0;identity<3;identity++) {
   h->parent_dev=identity==0?&foreign_dev:dev;h->psoc=identity==1?&foreign_psoc:psoc;h->pdev=identity==2?&foreign_pdev:pdev;
   struct mishare_runtime_owner *token=(*owner)->runtime;bool closing=(*owner)->session.closing;int prior_closed=closed,prior_batches=batch_calls;
-  trace[0]=0;
+  trace[0]=0;identity_refusal_expected=true;
   assert(mishare_wonder_host_vdev_create_locked(*owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(mishare_wonder_host_vdev_destroy_locked(*owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(mishare_wonder_host_session_step_locked(*owner,5240,1,2)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(mishare_wonder_host_destroy_locked(owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(mishare_wonder_host_reclaim_ssr_locked(owner)==-EUCLEAN && "EXPECTED_PARENT_IDENTITY");
   assert(*owner && (*owner)->runtime==token && (*owner)->session.closing==closing && closed==prior_closed && batch_calls==prior_batches && active && registered);
-  assert(!strcmp(trace,"PPPPP"));pins_live();
+  identity_refusal_expected=false;assert(!strcmp(trace,"PPPPP"));pins_live();
  }
  h->parent_dev=dev;h->psoc=psoc;h->pdev=pdev;trace[0]=0;
 }
