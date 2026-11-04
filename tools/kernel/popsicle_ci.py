@@ -184,6 +184,7 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_ssr_stop_pause_locked',
              'mishare_ssr_stop_resume_locked',
              'hdd_mishare_resume_stop_modules',
+             'hdd_mishare_resume_shutdown',
              'mishare_wonder_host_reclaim_handoff_ssr_locked',
              'mishare_wonder_host_adapter_owned',
              'hdd_wlan_shutdown',

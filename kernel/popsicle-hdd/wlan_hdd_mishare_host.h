@@ -108,6 +108,12 @@ int mishare_ssr_stop_resume_locked(struct mishare_ssr_stop_checkpoint *checkpoin
  * with drained operations and full native parents, in recovering mission mode.
  */
 int hdd_mishare_resume_stop_modules(struct hdd_context *hdd);
+/* Native power-layer continuation: module suffix success followed by the same
+ * LPASS/SMMU completion tail as ordinary shutdown. Returns the original errno;
+ * an empty module journal is not completion. Called by native recovery reinit
+ * under its retained transition; no worker, timer or forced reset is installed.
+ */
+int hdd_mishare_resume_shutdown(struct hdd_context *hdd);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;

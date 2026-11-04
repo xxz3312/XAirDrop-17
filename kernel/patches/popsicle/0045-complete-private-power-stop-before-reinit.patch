@@ -1,0 +1,114 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_power.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_power.c
+@@ -1966,6 +1966,29 @@
+ 	hdd_exit();
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:power_complete_helpers */
++static void hdd_mishare_shutdown_complete(struct hdd_context *hdd_ctx)
++{
++	hdd_lpass_notify_stop(hdd_ctx);
++
++	qdf_set_smmu_fault_state(false);
++	hdd_info("WLAN driver shutdown complete");
++}
++
++int hdd_mishare_resume_shutdown(struct hdd_context *hdd_ctx)
++{
++	int ret;
++
++	if (!hdd_ctx)
++		return -EINVAL;
++	ret = hdd_mishare_resume_stop_modules(hdd_ctx);
++	if (ret)
++		return ret;
++	hdd_mishare_shutdown_complete(hdd_ctx);
++	return 0;
++}
++/* MISHARE_SSR_STOP_END:power_complete_helpers */
+ QDF_STATUS hdd_wlan_shutdown(void)
+ {
+ 	struct hdd_context *hdd_ctx;
+@@ -2043,10 +2066,10 @@
+ 	}
+ /* MISHARE_SSR_STOP_END:power_stop */
+ 
+-	hdd_lpass_notify_stop(hdd_ctx);
+-
+-	qdf_set_smmu_fault_state(false);
+-	hdd_info("WLAN driver shutdown complete");
++
++/* MISHARE_SSR_STOP_BEGIN:power_complete */
++	hdd_mishare_shutdown_complete(hdd_ctx);
++/* MISHARE_SSR_STOP_END:power_complete */
+ 
+ 	return QDF_STATUS_SUCCESS;
+ }
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -32,8 +32,9 @@
+ 
+ /* MISHARE_SSR_STOP_BEGIN:ops_state */
+ #include "wlan_hdd_mishare_host.h"
+-/* Armed only for a private-owner shutdown; failure cannot resume/reinitialize
+- * a partially stopped parent. No force-clear or retry coordinator is added. */
++/* Armed for private shutdown. Reinit polls a qualified module continuation
++ * and completes the power tail before clearing this gate. Hard failures retain
++ * the native transition; there is no worker, timer or force-clear path. */
+ static bool mishare_ssr_stop_blocked;
+ /* MISHARE_SSR_STOP_END:ops_state */
+ #include "wlan_hdd_mishare_backend.h"
+@@ -1020,6 +1021,10 @@
+ 	struct osif_psoc_sync *psoc_sync;
+ 	int errno;
+ 
++/* MISHARE_SSR_STOP_BEGIN:reinit_local */
++	bool mishare_private_resume;
++/* MISHARE_SSR_STOP_END:reinit_local */
++
+ 	/* if driver is unloading, there is no need to do SSR */
+ 	if (qdf_is_driver_unloading()) {
+ 		hdd_info("driver is unloading, avoid SSR");
+@@ -1034,15 +1039,37 @@
+ 
+ 
+ /* MISHARE_SSR_STOP_BEGIN:reinit_call */
+-	errno = mishare_ssr_stop_blocked ? -EBUSY :
+-		__hdd_soc_recovery_reinit(dev, bdev, bid, bus_type);
++	mishare_private_resume = mishare_ssr_stop_blocked;
++	errno = 0;
++	if (mishare_private_resume) {
++		struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
++
++		if (!hdd_ctx)
++			errno = -ENODEV;
++		else if (hdd_ctx->parent_dev != dev)
++			errno = -EUCLEAN;
++		else
++			errno = hdd_mishare_resume_shutdown(hdd_ctx);
++		/* Only module continuation AND the power completion tail ACK
++		 * release the upper failure gate. Empty owner metadata is no ACK.
++		 */
++		if (!errno)
++			mishare_ssr_stop_blocked = false;
++	}
++	if (!errno)
++		errno = __hdd_soc_recovery_reinit(dev, bdev, bid, bus_type);
+ /* MISHARE_SSR_STOP_END:reinit_call */
+ 
+ 
+-	osif_psoc_sync_trans_stop(psoc_sync);
++
++/* MISHARE_SSR_STOP_BEGIN:reinit_transition */
++	/* Retain the original transition across private pending/hard failures. */
++	if (!mishare_ssr_stop_blocked)
++		osif_psoc_sync_trans_stop(psoc_sync);
++/* MISHARE_SSR_STOP_END:reinit_transition */
+ 
+ /* MISHARE_SSR_STOP_BEGIN:reinit_complete */
+-	hdd_start_complete(mishare_ssr_stop_blocked ? errno : 0);
++	hdd_start_complete(mishare_private_resume ? errno : 0);
+ /* MISHARE_SSR_STOP_END:reinit_complete */
+ 
+ 	return errno;
