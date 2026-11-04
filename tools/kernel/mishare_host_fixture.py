@@ -87,6 +87,8 @@ static void ucfg_dp_destroy_intf(void *p,struct qdf_mac_addr *a) { assert(p && !
 #include "wlan_hdd_mishare_runtime.h"
 struct mishare_runtime_owner { int dummy; };
 static int runtime_busy,runtime_closed;
+static struct wlan_objmgr_psoc *runtime_registry_psoc;
+bool mishare_runtime_psoc_busy(struct wlan_objmgr_psoc *p) {assert(parent_owned);return p && p==runtime_registry_psoc;}
 static bool runtime_ssr,batch_extra;
 static int batch_rc,batch_calls;
 static bool cds_is_driver_recovering(void) { return runtime_ssr; }
@@ -116,6 +118,10 @@ static struct osif_psoc_sync idle_sync;
 static char idle_trace[64];
 static bool idle_trans_failure, idle_open;
 static int idle_stop_result;
+static struct hdd_context *mode_context;
+static bool is_mode_change_psoc_idle_shutdown, mode_ftm;
+#define QDF_MODULE_ID_HDD 11
+static void *cds_get_context(int id) {assert(id==QDF_MODULE_ID_HDD);return mode_context;}
 #define QCA_WLAN_IDLE_SHUTDOWN_STARTED 1
 #define QCA_WLAN_IDLE_SHUTDOWN_COMPLETED 2
 static void idle_event(char c) {size_t n=strlen(idle_trace);assert(n+1<sizeof(idle_trace));idle_trace[n]=c;idle_trace[n+1]=0;}
@@ -125,7 +131,7 @@ static int osif_psoc_sync_trans_start(struct device *d,struct osif_psoc_sync **s
 static void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *s) {assert(s==&idle_sync && parent_owned);idle_event('W');}
 static void osif_psoc_sync_trans_stop(struct osif_psoc_sync *s) {assert(s==&idle_sync && parent_owned);idle_event('T');parent_owned=false;}
 static bool hdd_is_any_interface_open(struct hdd_context *h) {assert(h && parent_owned);idle_event('I');return idle_open;}
-static int hdd_wlan_stop_modules(struct hdd_context *h,bool ftm) {assert(h && parent_owned && !ftm && !mishare_wonder_host_psoc_busy(h->psoc));idle_event('M');return idle_stop_result;}
+static int hdd_wlan_stop_modules(struct hdd_context *h,bool ftm) {assert(h && parent_owned && !mishare_wonder_host_psoc_busy(h->psoc) && !mishare_runtime_psoc_busy(h->psoc) && "EXPECTED_STOP_ADMISSION");mode_ftm=ftm;idle_event('M');return idle_stop_result;}
 NATIVE_IDLE
 static void idle_check(struct hdd_context *h,int rc,const char *trace) {
  assert(parent_owned && rtnl_owned);parent_owned=false;rtnl_owned=false;idle_trace[0]=0;
@@ -157,6 +163,16 @@ int main(void)
  idle_stop_result=-EIO;idle_check(&h,-EIO,"CBSWIMTE");idle_stop_result=0;
  idle_open=true;idle_check(&h,-EAGAIN,"CBSWITE");idle_open=false;
  idle_trans_failure=true;idle_check(&h,-EAGAIN,"CBSE");idle_trans_failure=false;
+ assert(mishare_wonder_host_stop_ready_locked(NULL)==-EINVAL);
+ struct hdd_context invalid_h=h;invalid_h.psoc=NULL;assert(mishare_wonder_host_stop_ready_locked(&invalid_h)==-EINVAL);invalid_h=h;invalid_h.parent_dev=NULL;assert(mishare_wonder_host_stop_ready_locked(&invalid_h)==-EINVAL);
+ runtime_registry_psoc=&psoc;assert(mishare_wonder_host_stop_ready_locked(&h)==-EBUSY && "EXPECTED_RUNTIME_STOP_GUARD");idle_check(&h,-EAGAIN,"CBSWTE");
+ mode_context=&h;is_mode_change_psoc_idle_shutdown=true;idle_trace[0]=0;
+ assert(__hdd_mode_change_psoc_idle_shutdown(&h)==-EBUSY && is_mode_change_psoc_idle_shutdown && !idle_trace[0]);
+ assert(hdd_mode_change_psoc_idle_shutdown(&dev)==-EBUSY && !idle_trace[0]);
+ runtime_registry_psoc=&other_psoc;assert(!mishare_wonder_host_stop_ready_locked(&h));runtime_registry_psoc=NULL;
+ idle_stop_result=-EIO;assert(__hdd_mode_change_psoc_idle_shutdown(&h)==-EIO && !is_mode_change_psoc_idle_shutdown && mode_ftm);idle_trace[0]=0;assert(hdd_mode_change_psoc_idle_shutdown(&dev)==-EIO && mode_ftm && !strcmp(idle_trace,"M"));idle_stop_result=0;
+ mode_context=NULL;assert(hdd_mode_change_psoc_idle_shutdown(&dev)==-EINVAL);mode_context=&h;
+
  assert(mishare_wonder_host_create_locked(&h,mac,NULL)==-EINVAL);
  u8 invalid[6]={1,2,3,4,5,6};assert(mishare_wonder_host_create_locked(&h,invalid,&owner)==-EINVAL);
  assert(mishare_wonder_host_destroy_locked(NULL)==-EINVAL);
@@ -169,6 +185,8 @@ int main(void)
  assert(!mishare_wonder_host_psoc_busy(&psoc));idle_check(&h,0,"CBSWIMTE");
  reset(0);assert(mishare_wonder_host_create_locked(&h,mac,&owner)==0 && owner && active && registered);assert(!strcmp(trace,"PVLASHR"));
  assert(mishare_wonder_host_psoc_busy(&psoc) && !mishare_wonder_host_psoc_busy(&other_psoc));
+ assert(mishare_wonder_host_stop_ready_locked(&h)==-EBUSY && "EXPECTED_HOST_STOP_GUARD");
+ idle_trace[0]=0;is_mode_change_psoc_idle_shutdown=true;assert(__hdd_mode_change_psoc_idle_shutdown(&h)==-EBUSY && is_mode_change_psoc_idle_shutdown && !idle_trace[0]);assert(hdd_mode_change_psoc_idle_shutdown(&dev)==-EBUSY && !idle_trace[0]);
  idle_check(&h,-EAGAIN,"CBSWTE");
  struct hdd_context foreign_hdd=h;foreign_hdd.psoc=&other_psoc;idle_check(&foreign_hdd,0,"CBSWIMTE");
  trace[0]=0;assert(mishare_wonder_host_create_locked(&h,mac,&owner)==-EBUSY && trace[0]==0);
@@ -268,8 +286,10 @@ def run(wlan, output):
     idle = extract(main, r'^static int __hdd_psoc_idle_shutdown\([^;{]+?\)\s*\{.*?^\}')
     if hashlib.sha256(remove_idle_additions(idle).encode()).hexdigest() != '0d61f49fb96d09d35afb587284e02951aaeb996620ae669cfbacb756f63c6b54':
         raise ValueError('Unbounded native idle shutdown delta')
-    assert idle.index('osif_psoc_sync_wait_for_ops(') < idle.index('mishare_wonder_host_psoc_busy(') < idle.index('hdd_wlan_stop_modules(') < idle.index('osif_psoc_sync_trans_stop(')
-    code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle) + HARNESS.replace('GUARD',guard).replace('ROLLBACK',rollback)
+    assert idle.index('osif_psoc_sync_wait_for_ops(') < idle.index('mishare_wonder_host_stop_ready_locked(') < idle.index('hdd_wlan_stop_modules(') < idle.index('osif_psoc_sync_trans_stop(')
+    mode = '\n'.join(extract(main, r'^static int\s+'+name+r'\([^;{]+?\)\s*\{.*?^\}') for name in ['__hdd_mode_change_psoc_idle_shutdown','hdd_mode_change_psoc_idle_shutdown'])
+    mode = '#pragma GCC diagnostic push\n#pragma GCC diagnostic ignored \"-Wunused-parameter\"\n'+mode+'\n#pragma GCC diagnostic pop\n'
+    code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle+'\n'+mode) + HARNESS.replace('\n GUARD\n','\n '+guard+'\n').replace('\n ROLLBACK\n','\n '+rollback+'\n')
     production = ROOT/'kernel/popsicle-hdd'
     hashes = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in production.glob('*') if p.is_file()}
     with tempfile.TemporaryDirectory() as tmp:
@@ -279,14 +299,32 @@ def run(wlan, output):
             p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('/* declarations supplied by fixture.h */\n')
         source=d/'test.c';source.write_text(code)
         exe=d/'test'
-        subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-pthread',
-                        '-include',str(d/'fixture.h'),'-I'+str(d),'-I'+str(production),str(source),'-o',str(exe)],check=True)
+        command=['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-pthread',
+                        '-include',str(d/'fixture.h'),'-I'+str(d),'-I'+str(production),str(source),'-o',str(exe)]
+        subprocess.run(command,check=True)
         env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',UBSAN_OPTIONS='halt_on_error=1')
         stdout=subprocess.check_output([exe],text=True,env=env,timeout=10)
-    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
+        # Mutation controls must reach behavior assertions, not fail compilation.
+        host_source=(production/'wlan_hdd_mishare_host.c').read_text()
+        stop_helper=extract(host_source, r'^int mishare_wonder_host_stop_ready_locked\([^;{]+?\)\s*\{.*?^\}')
+        for needle,marker in [('mishare_runtime_psoc_busy(hdd->psoc)','EXPECTED_RUNTIME_STOP_GUARD'),('mishare_wonder_host_psoc_busy(hdd->psoc)','EXPECTED_HOST_STOP_GUARD')]:
+            assert stop_helper.count(needle)==1
+            (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(stop_helper,stop_helper.replace(needle,'false'),1))
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+        (d/'wlan_hdd_mishare_host.c').unlink()
+        bodies=[idle]+[extract(main,r'^static int\s+'+name+r'\([^;{]+?\)\s*\{.*?^\}') for name in ['__hdd_mode_change_psoc_idle_shutdown','hdd_mode_change_psoc_idle_shutdown']]
+        for body in bodies:
+            needle='mishare_wonder_host_stop_ready_locked(hdd_ctx)';assert body.count(needle)==1 and code.count(body)==1
+            source.write_text(code.replace(body,body.replace(needle,'0'),1));subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode==-6 and 'EXPECTED_STOP_ADMISSION' in bad.stderr,(bad.returncode,bad.stderr[-1000:])
+
+    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':5,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
             'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),
-            'checks':['SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
-            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. This does not certify a native teardown coordinator or prepared/UP recovery. Registry mutexes model spinlocks. This guards only the native idle route under its exclusive transition; it is not an SSR/remove parent lease, native kernel locking, teardown or radio validation.'}
+            'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'checks':['idle and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
+            'sanitizers':['address','undefined','leak detection'],'limitations':'Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. This does not certify a native teardown coordinator or prepared/UP recovery. Registry mutexes model spinlocks. This guards idle and mode-change admission under the caller exclusive transition; it is not an SSR/remove parent lease, native kernel locking, teardown or radio validation.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(stdout,end='')
 
 

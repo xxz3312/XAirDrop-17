@@ -113,6 +113,36 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  stop-admission:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch pinned WLAN and apply existing patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/stop-admission-wlan"
+          git -C "$RUNNER_TEMP/stop-admission-wlan" remote add origin https://github.com/MiCode/vendor_qcom_opensource_wlan.git
+          git -C "$RUNNER_TEMP/stop-admission-wlan" fetch --depth=1 origin 36df473046706a5259942e1bf7222108dbbb860f
+          git -C "$RUNNER_TEMP/stop-admission-wlan" checkout --detach FETCH_HEAD
+          for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
+            git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
+          done
+      - name: Production host and runtime stop admission with sanitizers
+        run: |
+          python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
+          python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-stop-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stop-host.json
+            stop-runtime.json
+          if-no-files-found: error
+          retention-days: 7
+
   ce-buffers:
     runs-on: ubuntu-24.04
     steps:

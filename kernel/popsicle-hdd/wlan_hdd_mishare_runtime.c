@@ -111,6 +111,25 @@ void mishare_runtime_radio_init_rejected(struct wlan_objmgr_psoc *psoc,
     mishare_runtime_radio_cancel_origin(psoc, vdev, owner, radio_token, MISHARE_CANCEL_INIT_REJECT);
 }
 
+bool mishare_runtime_psoc_busy(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    bool busy = false;
+
+    if (!psoc)
+        return false;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry->psoc == psoc) {
+            busy = true;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return busy;
+}
+
 unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
                                           enum mishare_quiesce_reason reason)
 {

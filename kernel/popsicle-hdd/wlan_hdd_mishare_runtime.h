@@ -67,6 +67,11 @@ unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
                                           enum mishare_quiesce_reason reason);
 /* Native HDD health check; not a reference, exclusive transition or lease. */
 bool mishare_runtime_platform_available(struct wlan_objmgr_psoc *psoc);
+/* Exact-psoc registry observation including constructing, draining and
+ * quarantined owners. Caller serializes create/retire and the stop decision
+ * with an exclusive parent transition. Not a reference or teardown barrier.
+ */
+bool mishare_runtime_psoc_busy(struct wlan_objmgr_psoc *psoc);
 /* Called only after native scheduler_disable returns success. Records a
  * per-owner MC observation; readiness also requires every reservation to exit.
  * Does not acknowledge firmware, stop IRQ/timers or free native NDI resources.

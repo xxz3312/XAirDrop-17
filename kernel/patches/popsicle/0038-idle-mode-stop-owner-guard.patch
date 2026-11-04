@@ -1,0 +1,43 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -15478,8 +15478,8 @@
+ 
+ /* MISHARE_IDLE_BEGIN:host_guard */
+ 	/* PAS host stays DOWN even while its dedicated radio owns resources. */
+-	if (mishare_wonder_host_psoc_busy(hdd_ctx->psoc)) {
+-		hdd_info("MiShare host retained, defer idle shutdown");
++	if (mishare_wonder_host_stop_ready_locked(hdd_ctx)) {
++		hdd_info("MiShare host/runtime retained, defer idle shutdown");
+ 		errno = -EAGAIN;
+ 	} else
+ /* MISHARE_IDLE_END:host_guard */
+@@ -15502,6 +15502,14 @@
+ 
+ static int __hdd_mode_change_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
+ {
++/* MISHARE_IDLE_BEGIN:mode_inner */
++	{
++		int ret = mishare_wonder_host_stop_ready_locked(hdd_ctx);
++
++		if (ret)
++			return ret;
++	}
++/* MISHARE_IDLE_END:mode_inner */
+ 	is_mode_change_psoc_idle_shutdown = false;
+ 	return hdd_wlan_stop_modules(hdd_ctx, true);
+ }
+@@ -21694,6 +21702,14 @@
+ 	if (!hdd_ctx)
+ 		return -EINVAL;
+ 
++/* MISHARE_IDLE_BEGIN:mode_change */
++	{
++		int ret = mishare_wonder_host_stop_ready_locked(hdd_ctx);
++
++		if (ret)
++			return ret;
++	}
++/* MISHARE_IDLE_END:mode_change */
+ 	return hdd_wlan_stop_modules(hdd_ctx, true);
+ }
+ 

@@ -176,6 +176,11 @@ static int create(struct mishare_runtime_owner **o) { return mishare_runtime_cre
 static struct mishare_runtime_status state(struct mishare_runtime_owner *o) { struct mishare_runtime_status s;assert(!mishare_runtime_snapshot(o,&s));return s; }
 int main(void) {
  struct mishare_runtime_owner *o=NULL,*other=NULL;
+ struct wlan_objmgr_psoc foreign_psoc={0};
+ assert(!mishare_runtime_psoc_busy(NULL) && !mishare_runtime_psoc_busy(&psoc));
+ struct mishare_runtime_owner pending={.psoc=&psoc};assert(!mishare_runtime_owners);mishare_runtime_owners=&pending;
+ assert(mishare_runtime_psoc_busy(&psoc) && !mishare_runtime_psoc_busy(&foreign_psoc));pending.state.draining=true;pending.state.blocked=true;pending.state.freed=true;pending.state.reclaim_error=-EUCLEAN;assert(mishare_runtime_psoc_busy(&psoc));mishare_runtime_owners=NULL;
+
  assert(mishare_runtime_destroy(NULL)==-EINVAL && !mishare_runtime_destroy(&o));
  assert(mishare_runtime_create(NULL,mac,&pdev,&wdev,&o)==-EINVAL);
  assert(mishare_runtime_create(&pdev,NULL,&pdev,&wdev,&o)==-EINVAL);
@@ -185,6 +190,7 @@ int main(void) {
  reset();fail_alloc_at=1;assert(create(&o)==-ENOMEM && !o && !objects_live);
  reset();create_fault=1;assert(create(&o)==-EIO && !o && object_calls==1);
  reset();assert(!create(&o) && o && objects_live==1 && allocations==2 && last_vdev->refs==3);
+ assert(mishare_runtime_psoc_busy(&psoc) && !mishare_runtime_psoc_busy(&foreign_psoc));
  assert(last_vdev->osif.wdev==&wdev && last_vdev->osif.legacy_osif_priv==&pdev);
  assert(state(o).allocated && !state(o).freed && !state(o).draining && !state(o).blocked);
  assert(create(&o)==-EBUSY && create(&other)==-EEXIST && !other);
@@ -192,7 +198,7 @@ int main(void) {
  /* A recycled object address cannot stand in for the stable owner token. */
  mishare_runtime_freed(&psoc,(unsigned long)last_vdev);assert(!state(o).freed);
  assert(!mishare_runtime_destroy(&o) && !o && delete_calls==1 && !objects_live && !allocations);
- assert(!mishare_runtime_destroy(&o));
+ assert(!mishare_runtime_destroy(&o) && !mishare_runtime_psoc_busy(&psoc));
  /* Binding failure reverses both observer and owner references before free. */
  reset();fail_ref_at=1;assert(create(&o)==-EIO && !o && !objects_live && !allocations);
  reset();fail_ref_at=2;assert(create(&o)==-ENODEV && !o && !objects_live && !allocations);
@@ -201,9 +207,10 @@ int main(void) {
  /* Normal destruction cannot free the adapter while another ref remains. */
  reset();defer_ref=1;assert(!create(&o));struct wlan_objmgr_vdev *v=last_vdev;
  assert(mishare_runtime_destroy(&o)==-EINPROGRESS && o && allocations==1 && v->refs==1);
+ assert(mishare_runtime_psoc_busy(&psoc));
  assert(state(o).draining && !state(o).freed && !mishare_event_owners);
  assert(mishare_runtime_destroy(&o)==-EINPROGRESS && delete_calls==1);
- wlan_objmgr_vdev_release_ref(v,2);assert(!objects_live && state(o).freed);
+ wlan_objmgr_vdev_release_ref(v,2);assert(!objects_live && state(o).freed && mishare_runtime_psoc_busy(&psoc));
  assert(!mishare_runtime_destroy(&o) && !o && !allocations);
  /* Constructor NULL can leave an asynchronously referenced partial object. */
  reset();create_fault=2;defer_ref=1;assert(create(&o)==-EINPROGRESS && o && objects_live==1);

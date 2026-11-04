@@ -13,6 +13,13 @@ struct wlan_objmgr_psoc;
  * Not a reference, SSR/remove barrier, firmware or radio readiness predicate.
  */
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
+/* Idle/mode-change stop admission only. Caller drains operations and holds
+ * the exclusive driver/psoc transition through the native stop call. Covers
+ * hosts before runtime creation AND standalone runtime owners. EBUSY retains
+ * every object; no cleanup, firmware command or quarantine reset is attempted.
+ * Zero is a serialized empty-registry observation, not SSR/remove clearance.
+ */
+int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Success means a DOWN host adapter only, never Wonder/radio initialization.

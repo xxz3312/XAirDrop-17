@@ -49,6 +49,20 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
     return busy;
 }
 
+int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd)
+{
+    if (!hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    /* The caller's exclusive parent/driver transition spans BOTH snapshots
+     * and the native stop decision. Never nest the two registry locks.
+     * Any owner counts, even before VDEV allocation or after a failed delete.
+     */
+    if (mishare_wonder_host_psoc_busy(hdd->psoc) ||
+        mishare_runtime_psoc_busy(hdd->psoc))
+        return -EBUSY;
+    return 0;
+}
+
 static void mishare_host_track(struct mishare_wonder_host *host,
                                 struct hdd_context *hdd)
 {

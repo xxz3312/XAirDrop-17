@@ -214,7 +214,7 @@ def check_mishare_host_symbols(work, module, report_name):
     names += ['mishare_runtime_recovery_candidates', 'mishare_runtime_recovery_open',
               'mishare_runtime_recovery_close', 'mishare_runtime_reclaim_ndi',
               'mishare_ndi_recovery_timer_deinit', 'mishare_ndi_recovery_dp_detach']
-    names += ['mishare_runtime_reclaim_batch', 'mishare_wonder_host_psoc_busy',
+    names += ['mishare_runtime_psoc_busy', 'mishare_wonder_host_stop_ready_locked', 'mishare_runtime_reclaim_batch', 'mishare_wonder_host_psoc_busy',
               'mishare_wonder_host_reclaim_ssr_locked',
               'mishare_ndi_reset_context_release', 'mishare_ndi_reset_context_check',
               'mishare_ndi_reset_pe_check', 'mishare_ndi_reset_pe_release',
