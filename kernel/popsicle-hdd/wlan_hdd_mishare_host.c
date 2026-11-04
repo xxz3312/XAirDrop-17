@@ -306,6 +306,126 @@ int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd)
     return ret;
 }
 
+static bool mishare_ssr_checkpoint_matches(struct mishare_ssr_stop_checkpoint *c,
+                                           struct hdd_context *hdd,
+                                           bool parents_may_be_closed)
+{
+    return c->hdd == hdd && c->parent_dev == hdd->parent_dev &&
+           c->psoc == hdd->psoc &&
+           (c->pdev == hdd->pdev || (parents_may_be_closed && !hdd->pdev));
+}
+
+int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *c,
+                                 struct hdd_context *hdd, bool *tracked)
+{
+    unsigned long flags;
+    int ret;
+
+    if (!c || !tracked)
+        return -EINVAL;
+    *tracked = false;
+    if (!hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    /* Check retained state even outside recovery, before any prefix side
+     * effect. Host retirement cannot erase this independent journal. */
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (c->phase != MISHARE_SSR_STOP_EMPTY) {
+        ret = mishare_ssr_checkpoint_matches(c, hdd, false) ? -EBUSY : -EUCLEAN;
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return ret;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    if (!cds_is_driver_recovering())
+        return 0;
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    ret = mishare_wonder_host_stop_ready_locked(hdd);
+    if (ret != -EBUSY)
+        return ret;
+    if (!hdd->pdev)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (c->phase != MISHARE_SSR_STOP_EMPTY) {
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return -EBUSY;
+    }
+    c->hdd = hdd;
+    c->parent_dev = hdd->parent_dev;
+    c->psoc = hdd->psoc;
+    c->pdev = hdd->pdev;
+    c->first_error = 0;
+    c->phase = MISHARE_SSR_STOP_PREFIX;
+    *tracked = true;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return 0;
+}
+
+int mishare_ssr_stop_step_locked(struct mishare_ssr_stop_checkpoint *c,
+                                struct hdd_context *hdd,
+                                enum mishare_ssr_stop_phase phase,
+                                int result, bool tracked)
+{
+    unsigned long flags;
+    int ret = 0;
+
+    if (!tracked)
+        return result;
+    if (!c || !hdd || !c->parent_dev)
+        return -EINVAL;
+    osif_psoc_sync_assert_trans_protected(c->parent_dev);
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    /* PDEV may disappear only after entering the native parent-close suffix.
+     * Repeating that phase records errors; it never authorizes replay. */
+    if (!mishare_ssr_checkpoint_matches(c, hdd,
+                                       c->phase == MISHARE_SSR_STOP_PARENTS))
+        ret = -EUCLEAN;
+    else if (!((c->phase == MISHARE_SSR_STOP_PREFIX &&
+                phase == MISHARE_SSR_STOP_POST_DISABLED) ||
+               (c->phase == MISHARE_SSR_STOP_POST_DISABLED &&
+                phase == MISHARE_SSR_STOP_PARENTS) ||
+               (c->phase == MISHARE_SSR_STOP_PARENTS &&
+                phase == MISHARE_SSR_STOP_PARENTS)))
+        ret = -EPROTO;
+    if (!c->first_error)
+        c->first_error = ret ? ret : result;
+    if (!ret)
+        c->phase = phase;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret ? ret : result;
+}
+
+int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *c,
+                                  struct hdd_context *hdd, int result,
+                                  bool modules_closed, bool tracked)
+{
+    unsigned long flags;
+    int ret;
+
+    if (!tracked)
+        return result;
+    if (!c || !hdd || !c->parent_dev)
+        return -EINVAL;
+    osif_psoc_sync_assert_trans_protected(c->parent_dev);
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    ret = mishare_ssr_checkpoint_matches(c, hdd,
+                           c->phase == MISHARE_SSR_STOP_PARENTS) ? result : -EUCLEAN;
+    if (!ret && (c->phase != MISHARE_SSR_STOP_PARENTS || !modules_closed))
+        ret = -EIO;
+    if (!c->first_error)
+        c->first_error = ret;
+    ret = c->first_error;
+    if (!ret) {
+        /* Only native completion of this invocation may release the slot.
+         * In particular, empty ownership registries are not an ACK. */
+        c->phase = MISHARE_SSR_STOP_EMPTY;
+        c->hdd = NULL;
+        c->parent_dev = NULL;
+        c->psoc = NULL;
+        c->pdev = NULL;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret;
+}
+
 static void mishare_host_track(struct mishare_wonder_host *host,
                                 struct hdd_context *hdd)
 {

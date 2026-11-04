@@ -1,0 +1,114 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -18442,6 +18442,10 @@
+ }
+ #endif
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:journal_state */
++static struct mishare_ssr_stop_checkpoint mishare_module_stop;
++/* MISHARE_SSR_STOP_END:journal_state */
+ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
+ {
+ 	void *hif_ctx;
+@@ -18453,11 +18457,23 @@
+ 	struct target_psoc_info *tgt_hdl;
+ 	struct bbm_params param = {0};
+ 
++/* MISHARE_SSR_STOP_BEGIN:journal_local */
++	bool mishare_tracked;
++	int mishare_gate;
++/* MISHARE_SSR_STOP_END:journal_local */
++
+ 	hdd_enter();
+ 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+ 	if (!qdf_ctx)
+ 		return -EINVAL;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:journal_begin */
++	mishare_gate = mishare_ssr_stop_begin_locked(&mishare_module_stop,
++						   hdd_ctx, &mishare_tracked);
++	if (mishare_gate)
++		return mishare_gate;
++/* MISHARE_SSR_STOP_END:journal_begin */
+ 	cds_set_driver_state_module_stop(true);
+ 
+ 	debugfs_threads = hdd_return_debugfs_threads_count();
+@@ -18546,20 +18562,38 @@
+ /* MISHARE_SSR_STOP_BEGIN:post_error */
+ 			if (is_recovery_stop &&
+ 			    mishare_wonder_host_stop_ready_locked(hdd_ctx))
+-				return ret;
++				return mishare_ssr_stop_finish_locked(
++					&mishare_module_stop, hdd_ctx, ret,
++					false, mishare_tracked);
+ /* MISHARE_SSR_STOP_END:post_error */
+ 			QDF_ASSERT(0);
+ 		}
+ 
+ 
++/* MISHARE_SSR_STOP_BEGIN:journal_post */
++		if (mishare_tracked && mishare_ssr_stop_step_locked(&mishare_module_stop, hdd_ctx,
++				MISHARE_SSR_STOP_POST_DISABLED, ret, mishare_tracked))
++			return mishare_ssr_stop_finish_locked(&mishare_module_stop,
++						hdd_ctx, ret ? ret : -EUCLEAN,
++						false, mishare_tracked);
++/* MISHARE_SSR_STOP_END:journal_post */
++
+ /* MISHARE_SSR_STOP_BEGIN:post_ready */
+ 		if (is_recovery_stop) {
+ 			int stop_ret = mishare_wonder_host_ssr_prepare_locked(hdd_ctx);
+ 
+ 			if (stop_ret)
+-				return stop_ret;
++				return mishare_ssr_stop_finish_locked(
++					&mishare_module_stop, hdd_ctx, stop_ret,
++					false, mishare_tracked);
+ 		}
+ /* MISHARE_SSR_STOP_END:post_ready */
++
++/* MISHARE_SSR_STOP_BEGIN:journal_parents */
++		if (mishare_ssr_stop_step_locked(&mishare_module_stop, hdd_ctx,
++				MISHARE_SSR_STOP_PARENTS, 0, mishare_tracked))
++			return -EUCLEAN;
++/* MISHARE_SSR_STOP_END:journal_parents */
+ 		hdd_unregister_notifiers(hdd_ctx);
+ 		/* De-register the SME callbacks */
+ 		hdd_deregister_cb(hdd_ctx);
+@@ -18575,12 +18609,22 @@
+ 
+ 		hdd_component_pdev_close(hdd_ctx->pdev);
+ 		dispatcher_pdev_close(hdd_ctx->pdev);
++
++/* MISHARE_SSR_STOP_BEGIN:journal_dp_error */
++		mishare_ssr_stop_step_locked(&mishare_module_stop, hdd_ctx,
++				MISHARE_SSR_STOP_PARENTS, ret, mishare_tracked);
++/* MISHARE_SSR_STOP_END:journal_dp_error */
+ 		ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+ 		if (ret) {
+ 			hdd_err("Failed to destroy pdev; errno:%d", ret);
+ 			QDF_ASSERT(0);
+ 		}
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:journal_pdev_error */
++		mishare_ssr_stop_step_locked(&mishare_module_stop, hdd_ctx,
++				MISHARE_SSR_STOP_PARENTS, ret, mishare_tracked);
++/* MISHARE_SSR_STOP_END:journal_pdev_error */
+ 		qdf_status = cds_close(hdd_ctx->psoc);
+ 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+ 			hdd_warn("Failed to stop CDS: %d", qdf_status);
+@@ -18677,6 +18721,12 @@
+ done:
+ 	hdd_exit();
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:journal_finish */
++	ret = mishare_ssr_stop_finish_locked(&mishare_module_stop, hdd_ctx,
++				ret, hdd_ctx->driver_status == DRIVER_MODULES_CLOSED,
++				mishare_tracked);
++/* MISHARE_SSR_STOP_END:journal_finish */
+ 	return ret;
+ }
+ 

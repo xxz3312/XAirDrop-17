@@ -6,6 +6,8 @@ struct hdd_context;
 struct hdd_adapter;
 struct mishare_wonder_host;
 struct wlan_objmgr_psoc;
+struct wlan_objmgr_pdev;
+struct device;
 /* Host lifetime observation for the native idle-shutdown path. The caller must
  * hold the exclusive psoc transition after draining operations, through its
  * decision and module stop. Creation/retirement use that same transition.
@@ -56,6 +58,37 @@ int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd);
  * does not schedule retries, resume a partial stop or clear failure admission.
  */
 int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd);
+enum mishare_ssr_stop_phase {
+    MISHARE_SSR_STOP_EMPTY,
+    MISHARE_SSR_STOP_PREFIX,
+    MISHARE_SSR_STOP_POST_DISABLED,
+    MISHARE_SSR_STOP_PARENTS,
+};
+/* Native module-stop journal, initially zero. One native slot deliberately
+ * fails closed for a second HDD while a private stop is retained. Serialized
+ * internally against other PSOCs; the caller also owns its exclusive PSOC
+ * transition and retains HDD/native parents. These are borrowed identities,
+ * not allocation/component leases. Never copy, zero or reuse a retained slot.
+ * No retry/resume/reset interface: only the same successful native invocation
+ * may finish it. The SoC/power completion gate remains separately authoritative.
+ */
+struct mishare_ssr_stop_checkpoint {
+    struct hdd_context *hdd;
+    struct device *parent_dev;
+    struct wlan_objmgr_psoc *psoc;
+    struct wlan_objmgr_pdev *pdev;
+    enum mishare_ssr_stop_phase phase;
+    int first_error;
+};
+int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
+                                 struct hdd_context *hdd, bool *tracked);
+int mishare_ssr_stop_step_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
+                                struct hdd_context *hdd,
+                                enum mishare_ssr_stop_phase phase,
+                                int result, bool tracked);
+int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
+                                  struct hdd_context *hdd, int result,
+                                  bool modules_closed, bool tracked);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;
