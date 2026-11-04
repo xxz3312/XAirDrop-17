@@ -17,6 +17,8 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
  * the exclusive driver/psoc transition through the native stop call. Covers
  * hosts before runtime creation AND standalone runtime owners. EBUSY retains
  * every object; no cleanup, firmware command or quarantine reset is attempted.
+ * EUCLEAN rejects a retained host whose same HDD now names different parents,
+ * including PSOC migration that would otherwise evade an exact-PSOC scan.
  * Zero is a serialized empty-registry observation, not SSR/remove clearance.
  */
 int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd);
@@ -73,6 +75,16 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);
  * physical remove; caller must still retain the full native parent lifetime.
  */
 int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner);
+/* Explicit SSR poll for hosts already handed off to the registry by the idle
+ * handoff API. Requires RTNL, exclusive PSOC transition, exact HDD/parents and
+ * the full native SSR qualification/lifetime contract of reclaim_ssr_locked.
+ * Never adopts caller-owned hosts or standalone runtime tokens. Incomplete
+ * registry coverage, pending cleanup and errors preserve authoritative host
+ * ownership and updated runtime tokens for a later qualified poll. Success
+ * includes empty runtime-batch preflight and combined registry admission.
+ * No native SSR/remove caller, scheduling or blocking wait is installed.
+ */
+int mishare_wonder_host_reclaim_handoff_ssr_locked(struct hdd_context *hdd);
 /* Optional host vdev attachment. Retain host/adapter on EINPROGRESS/EUCLEAN;
  * destroy_locked also drains this attachment before freeing the netdev.
  * No SME session, firmware CREATE/DELETE, START/STOP or radio operation.

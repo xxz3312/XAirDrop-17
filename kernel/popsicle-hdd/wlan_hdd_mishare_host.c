@@ -107,10 +107,31 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
     return busy;
 }
 
+static bool mishare_host_hdd_mismatch(struct hdd_context *hdd)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+    bool mismatch = false;
+
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->hdd == hdd &&
+            (host->psoc != hdd->psoc || host->parent_dev != hdd->parent_dev ||
+             host->pdev != hdd->pdev)) {
+            mismatch = true;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return mismatch;
+}
+
 int mishare_wonder_host_stop_ready_locked(struct hdd_context *hdd)
 {
     if (!hdd || !hdd->parent_dev || !hdd->psoc)
         return -EINVAL;
+    if (mishare_host_hdd_mismatch(hdd))
+        return -EUCLEAN;
     /* The caller's exclusive parent/driver transition spans BOTH snapshots
      * and the native stop decision. Never nest the two registry locks.
      * Any owner counts, even before VDEV allocation or after a failed delete.
@@ -174,6 +195,13 @@ static int mishare_host_idle_candidate(struct hdd_context *hdd,
     *candidate = NULL;
     spin_lock_irqsave(&mishare_host_lock, flags);
     for (host = mishare_hosts; host; host = host->next) {
+        /* A retained HDD cannot silently migrate its old hosts to a new
+         * PSOC. Still exclude genuinely foreign HDD/PSOC pairs below.
+         */
+        if (host->hdd == hdd && hdd->psoc != host->psoc) {
+            ret = -EUCLEAN;
+            break;
+        }
         if (host->psoc != hdd->psoc)
             continue;
         if (host->hdd != hdd || host->parent_dev != hdd->parent_dev ||
@@ -459,4 +487,39 @@ int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner)
      * Ordinary host close now has no runtime/firmware cleanup to submit.
      */
     return mishare_wonder_host_destroy_locked(owner);
+}
+
+int mishare_wonder_host_reclaim_handoff_ssr_locked(struct hdd_context *hdd)
+{
+    struct mishare_wonder_host *host;
+    int ret;
+
+    if (!hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    if (!cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    ret = mishare_host_idle_candidate(hdd, &host);
+    if (ret)
+        return ret;
+    while (host) {
+        /* The registry, not a discarded caller slot, owns the host here.
+         * The existing bridge restores updated runtime tokens on EVERY
+         * result and admits only qualified, exact-registry SSR retirement.
+         */
+        ret = mishare_wonder_host_reclaim_ssr_locked(&host);
+        if (ret)
+            return ret;
+        ret = mishare_host_idle_candidate(hdd, &host);
+        if (ret)
+            return ret;
+    }
+    /* No host is not proof of no runtime. Empty-batch preflight rejects an
+     * omitted standalone owner; it never takes over another owner's token.
+     */
+    ret = mishare_runtime_reclaim_batch(hdd->psoc, NULL, 0);
+    if (ret)
+        return ret;
+    return mishare_wonder_host_stop_ready_locked(hdd);
 }

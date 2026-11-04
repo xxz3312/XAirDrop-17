@@ -1,8 +1,14 @@
-## 最新阶段 0106（快速验证通过，完整构建运行中）
+## 最新阶段 0107（代码完成，等待编译验证）
+
+新增已交还 host 的显式 SSR 回收入口：不需要旧调用方槽位，沿用现有严格 SSR 回收桥推进 registry owner；覆盖不完整、等待、隔离错误和 sync 失败均保留 owner/更新后的 runtime token。修复同一 HDD 更换 PSOC 后可能被准确 PSOC 扫描漏掉的情况，普通 idle 与模式停机准入均拒绝父身份变化。
+
+53 项 Python 检查通过，新增六项变异控制和 SSR 回收序列等待 Actions 执行。完整原生 SSR/remove 上层调用、异步重试和父组件保留仍待接入；backend 保持关闭。见 [0107 说明](POPSICLE-HANDOFF-SSR-0107.md)。
+
+## 阶段 0106（离线验收完成）
 
 新增显式 host 所有权交还：关闭会话准入后将唯一 owner 留在登记表，并清空调用方槽位。补丁 0039 接入原生普通 idle 入口，只回收准确匹配且已交还的 host；RTNL 只尝试加锁，竞争、异步等待、隔离错误和 sync 异常均推迟停机并保留引用。回收后仍检查独立 runtime，原生接口打开检查和停止返回值保留。
 
-代码与生产夹具已完成，53 项 Python 检查通过；[Actions 41857539940](https://github.com/xxz3312/XAirDrop-17/actions/runs/41857539940)（`688330f`）的生产 C 快速作业已通过：13 项新增、13 项既有变异控制与 36 次父身份拒绝通过。ZIP 摘要、生产源码哈希、重新生成的夹具哈希与补丁 0039 的有界原生改动已核对。完整构建和其余回归仍在运行。完整 SSR/remove 协调、调用方自动交还及 idle 调度尚未接入，backend 继续关闭。见 [0106 说明](POPSICLE-IDLE-RETIRE-0106.md)。
+[Actions 41857539940](https://github.com/xxz3312/XAirDrop-17/actions/runs/41857539940)（`688330f`）七项作业全部通过：53 项 Python 检查、生产 host/runtime 快速夹具、26 项变异控制、36 次父身份拒绝、完整 WLAN 编译、CNSS、严格链接、七项布局与模块记录检查通过。快速/完整构建报告一致，57 份含生产源码的报告、七份精简 ZIP 摘要和两项新增 API 的最终模块符号已核对。 完整 SSR/remove 协调、调用方自动交还及 idle 调度尚未接入，backend 继续关闭。见 [0106 说明](POPSICLE-IDLE-RETIRE-0106.md)。
 
 ## 阶段 0105（离线验收完成）
 
