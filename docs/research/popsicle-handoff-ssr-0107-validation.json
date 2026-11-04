@@ -1,0 +1,171 @@
+{
+  "source_commit": "0e57e501286f6a30b7165cd8c8dc44079b056a1f",
+  "workflow_run": 41875529467,
+  "fast_artifact": {
+    "id": 13345698132,
+    "name": "popsicle-stop-admission-41875529467-1",
+    "size_in_bytes": 4700,
+    "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13345698132",
+    "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13345698132/zip",
+    "expired": false,
+    "created_at": "2026-11-04T17:15:27Z",
+    "expires_at": "2026-11-11T17:15:26Z",
+    "updated_at": "2026-11-04T17:15:27Z",
+    "digest": "sha256:695f5e8c978e6d704e6a551240d1de986adcf25ab38d0f9dcd3e5f1c0e56a8af",
+    "workflow_run": {
+      "id": 41875529467,
+      "repository_id": 1433402945,
+      "head_repository_id": 1433402945,
+      "head_branch": "main",
+      "head_sha": "0e57e501286f6a30b7165cd8c8dc44079b056a1f"
+    }
+  },
+  "jobs": [
+    {
+      "id": 126734385198,
+      "name": "ce-stop",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126734385697,
+      "name": "transport-stop",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126734385785,
+      "name": "stop-admission",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126734386083,
+      "name": "ce-buffers",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126734386270,
+      "name": "parent-peer-composite",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126734386328,
+      "name": "htt-callbacks",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "id": 126734387245,
+      "name": "diagnostic",
+      "status": "in_progress",
+      "conclusion": null
+    }
+  ],
+  "stage": "0107 qualified handed-off SSR retirement and migrated-parent stop admission",
+  "stage_offline_acceptance_complete": false,
+  "status": "production C fast validation passed; full build and remaining regressions in progress",
+  "host_validation": {
+    "status": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "negative_stop_controls_rejected": 6,
+    "negative_parent_controls_rejected": 7,
+    "negative_idle_controls_rejected": 13,
+    "negative_handoff_ssr_controls_rejected": 6,
+    "parent_identity_rejections": 36,
+    "production_sha256": {
+      "wlan_hdd_mishare_backend.c": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375",
+      "wlan_hdd_mishare_backend.h": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9",
+      "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+      "wlan_hdd_mishare_runtime.h": "84c30baca92ad85c46f57a3790e0dfc76a31b40de57c1aadf62caf4d8f169b06",
+      "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108",
+      "wlan_mishare_mgmt_diag.h": "f267795df26a37cce53a081d58e022bb420bcb0fbd0879376e30f5ac32656eb3",
+      "wma_mishare_raw_tx.h": "77b49a549e52eaa185218c8685f01b8a4f7b856932d4c3a48f38d0c2073801ce",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8",
+      "wlan_hdd_mishare_radio_mlme.h": "10423cc042ae3d061efe316733d1d582ddc4b287f692beca42757d9962ad33c3",
+      "mishare_raw_protocol.h": "d0a99550d621d1d146bd4c0b54375b1d049a1808f234556500f512e4aa335d4e",
+      "wlan_hdd_mishare_events.h": "6ee0f88ea590f972c754cf2318bba94bf03e2881edd7ba08a49ab45ce10f066d",
+      "wlan_hdd_mishare_events.c": "68c7c0cf267ebf9ccd4517a90909e262e3c586a98e29f2cf77c2afc0896fe442",
+      "wlan_hdd_mishare_commands.c": "adc1b5eb12937bde9d3beae7d6ac37c44fe0d8d235edd7726252dca034a5972c",
+      "wlan_hdd_mishare_host.c": "bda1f1721aa439c4ae6c255881a1704f3b1948442819f59944f178e44c284f9b",
+      "wlan_hdd_mishare_runtime.c": "6773fff8789fda5c2ccf31c93725dd8d9fc9fd74b6ebcfcb636cb71b203be0c7",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_mgmt_rx.h": "393f834a40f05832b74618c495509d3ba7c5d7401e54d27a7051bbc61dea1472",
+      "wlan_hdd_mishare_session.h": "59ce9373d9832718108c36d1bfe48ffe9d581197a547ef63ef78589c904b09ef",
+      "wlan_hdd_mishare_host.h": "05865a9d256ddf7baed92eb91e17b450a07b4fdfbf60071a13aaaaa530149220",
+      "wlan_hdd_mishare_mgmt_rx.c": "68f65a3aaebab333c15de683129b7e57c1a6017d5a72b3a4e59e29bb80d876e3",
+      "wlan_hdd_mishare_commands.h": "c692a595444c79be0b9ba4835311563c513c47d0ecf1a84f5b7efe8c416a5fe8",
+      "wlan_hdd_mishare_raw_tx.h": "b92a492c9661004fa1e010525fb26d33822f47ce5cb164a1e3ac497e38fe21a3",
+      "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f"
+    },
+    "fixture_sha256": "3591c6eacf22ce60f33e548ddc03f545e6ba9a123e59e30426d2e6c48edc36b1",
+    "native_idle_sha256": "8c0e3f8f4ec0a56b19972a3cf6e6ad4f1846def6cd18ef0f252cd7477120f912",
+    "native_mode_stop_sha256": "f9686d00c6211df39eb994f34fd792b7407cbd1113a4fbccb37e6efc248f37d0",
+    "native_mode_request_prefix_sha256": "9dee78cb845d8b3bc58af1ba1d23748ce6993b13500117ed923448a86bae0eb1",
+    "checks": [
+      "same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded",
+      "qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership",
+      "SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots",
+      "empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances",
+      "explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address",
+      "native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted",
+      "RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins",
+      "post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup",
+      "device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back",
+      "pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once",
+      "all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token",
+      "idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors",
+      "SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff",
+      "runtime token restored on incomplete coverage, asynchronous wait and policy rejection",
+      "host and idle inhibition retained after runtime retirement if sync close fails",
+      "runtime-free host still requires exact-psoc registry emptiness",
+      "complete native idle shutdown defers tracked DOWN host before module stop",
+      "host tracked before sync/adapter allocation and retained through adapter/sync close",
+      "failed create rolls back idle inhibition",
+      "pending runtime drain and sync mismatch retain idle inhibition",
+      "foreign psoc and no owner preserve native idle stop result",
+      "failed psoc transition and open-interface paths preserve native flow",
+      "invalid input",
+      "owner allocation failure",
+      "sync allocation failure",
+      "adapter creation failure",
+      "context rejection",
+      "existing adapter rejection",
+      "duplicate owner rejection",
+      "running/open/session rejection retaining owner",
+      "sync registry mismatch retaining owner",
+      "unregister/drain/close/destroy ordering",
+      "repeat destroy",
+      "ordinary wrapper rejection",
+      "ndo_open rejection",
+      "factory registered-netdev failure rollback"
+    ],
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "limitations": "Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. It is not wired into automatic SSR/remove shutdown, and does not certify native kernel locking, teardown or radio validation."
+  },
+  "python_regression_checks": 53,
+  "fast_artifact_digest_verified": true,
+  "production_host_hashes_verified_against_local_source": true,
+  "host_fixture_hash_independently_regenerated": true,
+  "same_HDD_migrated_parent_guard_in_idle_and_mode_admission": true,
+  "explicit_handed_off_SSR_poll_implemented": true,
+  "automatic_SSR_remove_coordinator_implemented": false,
+  "caller_handoff_installed_in_backend": false,
+  "runtime_batch_and_reference_primitives_are_models_in_host_fixture": true,
+  "local_C_compilation_executed": false,
+  "radio_backend_activation_enabled": false,
+  "phone_executed": false,
+  "airdrop_verified": false,
+  "superseded_runs": [
+    {
+      "run": 41875217066,
+      "source": "f9b2c6f2dbef1e59897cdd8ddceea030ed43a414",
+      "reason": "Production positive cases passed; deliberate SSR error suppression hit an earlier adapter-running assertion without the expected marker. Marker added and all controls reran; production C unchanged."
+    }
+  ]
+}
