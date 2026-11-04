@@ -353,6 +353,8 @@ int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *c,
     c->psoc = hdd->psoc;
     c->pdev = hdd->pdev;
     c->first_error = 0;
+    c->driver_status = hdd->driver_status;
+    c->paused = false;
     c->phase = MISHARE_SSR_STOP_PREFIX;
     *tracked = true;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
@@ -413,6 +415,7 @@ int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *c,
     if (!c->first_error)
         c->first_error = ret;
     ret = c->first_error;
+    c->paused = false;
     if (!ret) {
         /* Only native completion of this invocation may release the slot.
          * In particular, empty ownership registries are not an ACK. */
@@ -421,6 +424,68 @@ int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *c,
         c->parent_dev = NULL;
         c->psoc = NULL;
         c->pdev = NULL;
+        c->driver_status = 0;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret;
+}
+
+int mishare_ssr_stop_pause_locked(struct mishare_ssr_stop_checkpoint *c,
+                                 struct hdd_context *hdd, int result, bool tracked)
+{
+    unsigned long flags;
+
+    if (!tracked)
+        return result;
+    if (!c || !hdd || !c->parent_dev)
+        return -EINVAL;
+    osif_psoc_sync_assert_trans_protected(c->parent_dev);
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if ((result == -EINPROGRESS || result == -EAGAIN) &&
+        c->phase == MISHARE_SSR_STOP_POST_DISABLED && !c->first_error &&
+        !c->paused && mishare_ssr_checkpoint_matches(c, hdd, false) &&
+        c->driver_status == hdd->driver_status && cds_is_driver_recovering()) {
+        c->paused = true;
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return result;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    /* A wait elsewhere is not proof that the native prefix can be skipped. */
+    return mishare_ssr_stop_finish_locked(c, hdd, result ? result : -EIO,
+                                         false, tracked);
+}
+
+int mishare_ssr_stop_resume_locked(struct mishare_ssr_stop_checkpoint *c,
+                                  struct hdd_context *hdd, bool *tracked)
+{
+    unsigned long flags;
+    int ret = 0;
+
+    if (!c || !tracked)
+        return -EINVAL;
+    *tracked = false;
+    if (!hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    /* Assert the retained transition, never one selected by a replacement HDD. */
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (c->phase == MISHARE_SSR_STOP_EMPTY) {
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return -ENOENT;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    osif_psoc_sync_assert_trans_protected(c->parent_dev);
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (!mishare_ssr_checkpoint_matches(c, hdd, false) ||
+        c->driver_status != hdd->driver_status)
+        ret = -EUCLEAN;
+    else if (!cds_is_driver_recovering())
+        ret = -ESHUTDOWN;
+    else if (c->phase != MISHARE_SSR_STOP_POST_DISABLED ||
+             c->first_error || !c->paused)
+        ret = -EBUSY;
+    if (!ret) {
+        c->paused = false;
+        *tracked = true;
     }
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     return ret;

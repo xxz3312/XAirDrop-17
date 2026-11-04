@@ -5,6 +5,8 @@ ORIGINALS = {'post_error': '',
  'post_ready': '',
  'power_include': '',
  'ops_state': '',
+ 'resume_label': '',
+ 'resume_wrappers': '',
  'power_stop': '\thdd_wlan_stop_modules(hdd_ctx, false);\n',
  'shutdown_local': '',
  'shutdown_begin': '',
@@ -13,6 +15,8 @@ ORIGINALS = {'post_error': '',
  'reinit_complete': '\thdd_start_complete(0);\n'}
 
 def remove_ssr_stop_additions(text):
+    text = text.replace('static int hdd_mishare_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode,\n\t\t\t\t    bool mishare_resume)',
+                        'int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)')
     # Journal tags may precede a complete native function. Remove each exact
     # bounded insertion before restoring the inherited SSR stop tags.
     for tag in ['state', 'local', 'begin', 'post', 'parents', 'dp_error',

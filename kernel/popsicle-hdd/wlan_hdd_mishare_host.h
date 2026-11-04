@@ -69,8 +69,8 @@ enum mishare_ssr_stop_phase {
  * internally against other PSOCs; the caller also owns its exclusive PSOC
  * transition and retains HDD/native parents. These are borrowed identities,
  * not allocation/component leases. Never copy, zero or reuse a retained slot.
- * No retry/resume/reset interface: only the same successful native invocation
- * may finish it. The SoC/power completion gate remains separately authoritative.
+ * A qualified POST_DISABLED wait may explicitly resume the native suffix.
+ * No reset interface; the SoC/power completion gate is separately authoritative.
  */
 struct mishare_ssr_stop_checkpoint {
     struct hdd_context *hdd;
@@ -79,6 +79,8 @@ struct mishare_ssr_stop_checkpoint {
     struct wlan_objmgr_pdev *pdev;
     enum mishare_ssr_stop_phase phase;
     int first_error;
+    int driver_status;
+    bool paused;
 };
 int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
                                  struct hdd_context *hdd, bool *tracked);
@@ -89,6 +91,23 @@ int mishare_ssr_stop_step_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
 int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
                                   struct hdd_context *hdd, int result,
                                   bool modules_closed, bool tracked);
+/* Only EINPROGRESS/EAGAIN at POST_DISABLED is retryable. Pause retains the
+ * phase and exact native parents without turning a wait into a permanent
+ * failure. Resume atomically consumes that wait; a second claimant, earlier
+ * prefix failure, parent-close failure or changed native state is refused.
+ * Caller retains the original exclusive transition/full parent lifetime;
+ * these APIs do not schedule work or establish a new recovery window.
+ */
+int mishare_ssr_stop_pause_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
+                                 struct hdd_context *hdd, int result, bool tracked);
+int mishare_ssr_stop_resume_locked(struct mishare_ssr_stop_checkpoint *checkpoint,
+                                  struct hdd_context *hdd, bool *tracked);
+/* Explicit native module suffix only. Does not replay CDS/power/SoC prefixes,
+ * run the remaining power-completion tail, clear the SoC blocked flag or
+ * authorize reinit/remove. Must be called under the retained native transition
+ * with drained operations and full native parents, in recovering mission mode.
+ */
+int hdd_mishare_resume_stop_modules(struct hdd_context *hdd);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;

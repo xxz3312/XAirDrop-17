@@ -122,7 +122,9 @@ def fixture(root):
                        ('NATIVE_DISPATCHER_CLOSE','dispatcher_green_ap_pdev_close(')]:
         assert functions[key].index('mishare_runtime_recovery_close(')<functions[key].index(first)
     # Complete unchanged HDD stop/error functions establish both parent orderings.
-    stop=recovery.function(main, 'hdd_wlan_stop_modules')
+    stop=recovery.function(main, 'hdd_mishare_stop_modules' if
+                           'static int hdd_mishare_stop_modules(' in main else
+                           'hdd_wlan_stop_modules')
     start=recovery.function(main, 'hdd_wlan_start_modules')
     assert stop.index('cds_post_disable()')<stop.index('cds_dp_close(')<stop.index('hdd_component_pdev_close(')<stop.index('dispatcher_pdev_close(')<stop.index('hdd_objmgr_release_and_destroy_pdev(')<stop.index('cds_close(')
     unwind=start[start.index('sched_disable:'):]
