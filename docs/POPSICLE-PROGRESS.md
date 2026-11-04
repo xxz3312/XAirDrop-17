@@ -1,4 +1,12 @@
-## 最新阶段 0101（离线验收完成）
+## 最新阶段 0102（离线验收完成）
+
+在既有 HTC stop → multibus HIF stop 路径中接入原生 `hif_ce_stop()`、`hif_disable_isr()`、`hif_ipci_disable_isr()`、`hif_destroy_oom_work()` 和 `hif_buffer_cleanup()`。原生 IPCI 顺序为 exec kill、屏蔽中断、CE tasklet kill、总中断 tasklet kill、计数清零，再进入 OOM 工作与 CE 资源清理。模型 CE tasklet-kill 原语放行并 join 一条真实主机线程，消息通过原生回调和生产解析器结束后才允许清理；这仍是模型同步合同。
+
+[CI 41778488794](https://github.com/xxz3312/XAirDrop-17/actions/runs/41778488794)（`99d3f8d`）五项作业成功：256 组受控线程停止检查、192 组组合、64 项回调检查、303 项解析检查、32 组停止顺序和 8 项 CE 长度检查、110 项失败控制、十项既有独立组合、53 项 Python 检查、完整 WLAN 编译、CNSS、严格链接、七项布局及模块记录检查通过。十一份组合源码和五个新增原生函数、54 份报告中的生产源码、37 个路径别名及五份 ZIP digest 均独立核对。首次夹具 HIF 类型重复定义已修正并记录；未新增生产补丁。见[0102 说明](POPSICLE-CE-STOP-0102.md)及[验收记录](research/popsicle-ce-stop-0102-validation.json)。
+
+256 项独立选择 SG、WDI、6/16 pipes、started、diagnostic handle、sleep timer、procfs 和 NSS；消息格式/对齐随其中两个维度选择，不代表手机实际配置。原生循环覆盖空 CE state、NSS buffer gate、有/无 CE handle、source-entry lock、句柄/大小清零与 timer 条件。中断、tasklet、work、残留收发清理、CE fini、锁和 timer 底层仍为模型；受控 pthread 不代表真实内核并发或 DMA 排空。回调指针仍保留，物理 HTT free、生产父资源停机及整机验证继续待办。backend 保持关闭，手机无需操作。
+
+## 阶段 0101（离线验收完成）
 
 接入原生 HIF `hif_update_pipe_callback()` 回调保存、`hif_ce_do_recv()` 长度设置/超长释放、multibus `hif_stop()` 转发、`htc_stop()` 两个 SG 分支和 `reset_endpoint_states()`。原生 CE 收包通过保存的 HP 回调进入 HTT 适配、生产解析器及既有释放链。停止函数先清理 endpoint RX/TX 和 polling timer，再调用下层 HIF，随后按 WMI/control/非轮询 HTT 策略清理 lookup queue、排空 SG 并重置 endpoint。
 

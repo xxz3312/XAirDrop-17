@@ -4,7 +4,7 @@
 
 **当前为手动实机测试阶段，尚无可日用的 AirDrop 整合安装包。17 Pro Max 已验证自编译 WLAN 启动/联网、原生 LPC → Wonder 收包和一次实验 vendor Action token 完成回写。Apple 发现与文件互传未实现/验证；其他机型（包括 17 Pro）未认证。**
 
-最新进展：[0101 原生 HIF 收包与 HTC 停止顺序](docs/POPSICLE-TRANSPORT-STOP-0101.md)已完成离线验收。[CI 41665851697](https://github.com/xxz3312/XAirDrop-17/actions/runs/41665851697) 四项作业通过：32 组停止合同、8 项 CE 长度/所有权检查、192 组组合、64 项回调合同、303 项解析合同、94 项失败控制、九项既有独立组合、53 项 Python 检查、完整 WLAN 编译、严格链接和七项布局。五个原生函数、十份组合源码及 53 份报告中的生产源码已核对，见[验收记录](docs/research/popsicle-transport-stop-0101-validation.json)。原生 HIF/CE 收包与 HTC 停止调用顺序已在模型合同下执行；下层总线排空、真实并发/迟到回调安全和物理 HTT 释放仍未验证，生产停机协调仍待实现。backend 保持关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
+最新进展：[0102 原生 CE 停止与 IPCI 关闭路径](docs/POPSICLE-CE-STOP-0102.md)已完成离线验收。[CI 41778488794](https://github.com/xxz3312/XAirDrop-17/actions/runs/41778488794) 五项作业通过：256 组受控线程停止检查、192 组组合、64 项回调检查、303 项解析检查、既有停止/长度检查、110 项失败控制、十项独立旧组合、53 项 Python 检查、完整 WLAN 编译、严格链接和七项布局。五个新增原生函数、十一份组合源码及 54 份报告中的生产源码已核对，见[验收记录](docs/research/popsicle-ce-stop-0102-validation.json)。原生 CE/IPCI 停止流程和清理循环在模型底层原语下执行；真实中断/DMA/tasklet 排空、完整残留收发清理、物理 HTT 释放和生产停机协调仍待验证或实现。backend 保持关闭，手机无需操作。完整状态见[进度表](docs/POPSICLE-PROGRESS.md)。
 
 - [小米 17 适配进度、离线审计与待办](docs/POPSICLE-PORT.md)
 - [小米 15 → 17 的复用与构建入口](docs/XIAOMI15-TO-17.md)
