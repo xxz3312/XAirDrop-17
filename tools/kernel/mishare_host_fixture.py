@@ -766,7 +766,7 @@ static void unload_cases(struct hdd_context *h,struct wireless_dev *wdev)
   assert(!memcmp(journal,&mishare_module_stop,sizeof(journal)) && "EXPECTED_UNLOAD_JOURNAL_RETAINED");
   if(kind==1 || kind==2 || kind==11 || kind==16)assert(active && registered && "EXPECTED_UNLOAD_OWNER_RETAINED");
   unload_owned=false;runtime_registry_psoc=NULL;mishare_module_stop=(struct mishare_ssr_stop_checkpoint){0};mishare_ssr_stop_blocked=false;
-  if(kind==16){idle_retirement_expected=true;assert(!mishare_wonder_host_idle_prepare_locked(h));idle_retirement_expected=false;}
+  if(kind==16){rtnl_owned=false;idle_retirement_expected=true;assert(!mishare_wonder_host_idle_prepare_locked(h));idle_retirement_expected=false;rtnl_owned=true;}
   else if(owner)assert(!mishare_wonder_host_destroy_locked(&owner));
  }
 }
