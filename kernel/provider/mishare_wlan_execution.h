@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef MISHARE_WLAN_EXECUTION_H
 #define MISHARE_WLAN_EXECUTION_H
+#include <linux/types.h>
 struct module;
 struct device;
 
@@ -26,4 +27,12 @@ int opairshare_wlan_execution_reinit(struct device *dev);
 void opairshare_wlan_execution_shutdown(struct device *dev);
 int opairshare_wlan_execution_idle_restart(struct device *dev);
 int opairshare_wlan_execution_idle_shutdown(struct device *dev);
+/* Only a native unregister caller retaining WLAN execution through the whole
+ * ICNSS drain may request borrowed_exit. GOING cannot acquire a new reference.
+ * A live failure keeps its scope pin; no force-reset API is provided.
+ */
+int opairshare_wlan_execution_unregister_begin(struct module *owner, bool borrowed_exit);
+int opairshare_wlan_execution_unregister_end(struct module *owner);
+int opairshare_wlan_execution_remove_begin(struct module *owner, struct device *dev, bool *recorded);
+int opairshare_wlan_execution_remove_end(struct module *owner, struct device *dev, int result);
 #endif

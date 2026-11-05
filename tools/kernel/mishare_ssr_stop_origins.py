@@ -1,7 +1,7 @@
 """Restore only bounded private SSR stop/error/reinit changes."""
 import re
 
-ORIGINALS = {'execution_idle_slots': '\t.idle_restart = pld_ipci_idle_restart_cb,\n\t.idle_shutdown = pld_ipci_idle_shutdown_cb,\n',
+ORIGINALS = {'unregister_ipci_checked': '', 'remove_receipt_begin': '', 'remove_receipt_transition': '\tif (errno)\n\t\treturn;\n', 'remove_receipt_context': '\tif (!pld_context)\n\t\tgoto out;\n', 'remove_receipt_finish': '', 'unregister_ipci_stub': '', 'unregister_ipci_decl': '', 'unregister_common_checked': 'void pld_unregister_driver(void)\n{\n\tstruct pld_context *pld_context;\n\n\tpld_context = pld_get_global_context();\n\n\tif (!pld_context) {\n\t\tpr_err("global context is NULL\\n");\n\t\treturn;\n\t}\n\n\tif (!pld_context->ops) {\n\t\tpr_err("driver not registered\\n");\n\t\treturn;\n\t}\n\n\tpld_pcie_unregister_driver();\n\tpld_snoc_fw_sim_unregister_driver();\n\tpld_pcie_fw_sim_unregister_driver();\n\tpld_snoc_unregister_driver();\n\tpld_sdio_unregister_driver();\n\tpld_usb_unregister_driver();\n\tpld_ipci_unregister_driver();\n\n\tpld_context->pld_driver_state = 0;\n\n\tpld_context->ops = NULL;\n}\n', 'unregister_common_decl': '', 'unregister_hdd_checked': 'void wlan_hdd_unregister_driver(void)\n{\n\tpld_unregister_driver();\n}\n', 'unregister_hdd_decl': '', 'unload_checked_unregister': '\twlan_hdd_unregister_driver();\n','execution_idle_slots': '\t.idle_restart = pld_ipci_idle_restart_cb,\n\t.idle_shutdown = pld_ipci_idle_shutdown_cb,\n',
  'execution_idle_guard': '\tif (pld_context->ops->shutdown)\n',
  'execution_include': '',
  'execution_descriptor': '',

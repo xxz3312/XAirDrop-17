@@ -73,6 +73,8 @@ static int module_refs,module_get_calls,module_put_calls;
 static bool module_going;
 
 #define THIS_MODULE (&module_identity)
+int opairshare_wlan_execution_remove_begin(struct module *owner,struct device *dev,bool *recorded) {assert(owner==THIS_MODULE && dev && recorded);*recorded=false;return 0;}
+int opairshare_wlan_execution_remove_end(struct module *owner,struct device *dev,int result) {assert(owner==THIS_MODULE && dev);return result;}
 static int execution_close_result,execution_close_calls;
 int opairshare_wlan_execution_close(struct module *owner) {assert(owner==THIS_MODULE);execution_close_calls++;return execution_close_result;}
 static bool try_module_get(void *module) {
@@ -1283,7 +1285,7 @@ def run(wlan, output):
     unload_native=extract(main,r'^static void hdd_driver_unload_internal\([^;{]+?\)\s*\{.*?^\}')
     unload_helper=extract(main,r'^int hdd_mishare_module_unload_ready\([^;{]+?\)\s*\{.*?^\}')
     assert remove_ssr_stop_additions(unload_native) in original_main, 'Unbounded native unload delta'
-    assert unload_native.index('osif_driver_sync_wait_for_ops(')<unload_native.index('hdd_mishare_unload_ready(')<unload_native.index('cds_set_driver_loaded(false)')<unload_native.index('wlan_hdd_unregister_driver(')<unload_native.index('hdd_component_deinit(')
+    assert unload_native.index('osif_driver_sync_wait_for_ops(')<unload_native.index('hdd_mishare_unload_ready(')<unload_native.index('cds_set_driver_loaded(false)')<unload_native.index('wlan_hdd_unregister_driver_checked(')<unload_native.index('hdd_component_deinit(')
     unload_prefix=unload_native[:unload_native.index('\thif_ctx = cds_get_context(QDF_MODULE_ID_HIF);')]+ '\tunload_reached++;\n}\n'
     unload_wrappers=extract(main,r'^void hdd_driver_unload\([^;{]+?\)\s*\{.*?^\}')+'\n'+extract(main,r'^static void hdd_wlan_soft_driver_unload\([^;{]+?\)\s*\{.*?^\}')
     assert remove_ssr_stop_additions(extract(main,r'^static void hdd_wlan_soft_driver_unload\([^;{]+?\)\s*\{.*?^\}')) in original_main

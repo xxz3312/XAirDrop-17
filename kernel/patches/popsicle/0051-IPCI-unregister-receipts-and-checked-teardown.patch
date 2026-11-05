@@ -1,0 +1,257 @@
+From: XAirDrop-17
+Subject: [PATCH] Preserve IPCI unregister receipts and propagate refusal
+
+--- a/qcacld-3.0/core/pld/src/pld_ipci.c
++++ b/qcacld-3.0/core/pld/src/pld_ipci.c
+@@ -94,11 +94,26 @@
+ 	int errno;
+ 	struct osif_psoc_sync *psoc_sync;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:remove_receipt_begin */
++	bool recorded;
++	int result = 0;
++
++	errno = opairshare_wlan_execution_remove_begin(THIS_MODULE, dev, &recorded);
++	if (errno)
++		return;
++/* MISHARE_SSR_STOP_END:remove_receipt_begin */
+ 	cds_set_driver_loaded(false);
+ 	cds_set_unload_in_progress(true);
+ 	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
+-	if (errno)
++
++/* MISHARE_SSR_STOP_BEGIN:remove_receipt_transition */
++	if (errno) {
++		if (recorded)
++			opairshare_wlan_execution_remove_end(THIS_MODULE, dev, errno);
+ 		return;
++	}
++/* MISHARE_SSR_STOP_END:remove_receipt_transition */
+ 
+ 
+ /* MISHARE_SSR_STOP_BEGIN:remove_admission */
+@@ -106,6 +121,8 @@
+ 	osif_psoc_sync_wait_for_ops(psoc_sync);
+ 	errno = hdd_mishare_remove_prepare(dev);
+ 	if (errno) {
++		if (recorded)
++			opairshare_wlan_execution_remove_end(THIS_MODULE, dev, errno);
+ 		pr_err("MiShare: IPCI remove retained private lifetime (%d)\n", errno);
+ 		/* Keep lookup/transition/HDD. A void bus remove cannot certify
+ 		 * hot-unplug safety; do not destroy synchronization underneath it.
+@@ -118,8 +135,13 @@
+ 
+ 	pld_context = pld_get_global_context();
+ 
+-	if (!pld_context)
++
++/* MISHARE_SSR_STOP_BEGIN:remove_receipt_context */
++	if (!pld_context) {
++		result = -ENODEV;
+ 		goto out;
++	}
++/* MISHARE_SSR_STOP_END:remove_receipt_context */
+ 
+ 	pld_context->ops->remove(dev, PLD_BUS_TYPE_SNOC);
+ 
+@@ -128,6 +150,11 @@
+ out:
+ 	osif_psoc_sync_trans_stop(psoc_sync);
+ 	osif_psoc_sync_destroy(psoc_sync);
++
++/* MISHARE_SSR_STOP_BEGIN:remove_receipt_finish */
++	if (recorded)
++		opairshare_wlan_execution_remove_end(THIS_MODULE, dev, result);
++/* MISHARE_SSR_STOP_END:remove_receipt_finish */
+ }
+ 
+ /**
+@@ -607,20 +634,29 @@
+ /* MISHARE_SSR_STOP_END:execution_register */
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_ipci_checked */
++int pld_ipci_unregister_driver_checked(void)
++{
++	int ret;
++
++	ret = opairshare_wlan_execution_unregister_begin(THIS_MODULE,
++						      !module_is_live(THIS_MODULE));
++	if (ret)
++		return ret;
++	/* ICNSS must drain synchronous remove callbacks before returning. */
++	icnss_unregister_driver(&pld_ipci_ops);
++	return opairshare_wlan_execution_unregister_end(THIS_MODULE);
++}
++/* MISHARE_SSR_STOP_END:unregister_ipci_checked */
+ void pld_ipci_unregister_driver(void)
+ {
+ 
+ /* MISHARE_SSR_STOP_BEGIN:execution_unregister */
+-	int ret = opairshare_wlan_execution_close(THIS_MODULE);
+-
+-	if (ret) {
+-		pr_err("MiShare: IPCI execution callbacks retained (%d)\n", ret);
+-		return;
+-	}
+-	icnss_unregister_driver(&pld_ipci_ops);
+-	ret = opairshare_wlan_execution_unregister(THIS_MODULE);
++	int ret = pld_ipci_unregister_driver_checked();
++
+ 	if (ret)
+-		pr_err("MiShare: IPCI execution registration retained (%d)\n", ret);
++		pr_err("MiShare: IPCI unregister retained (%d)\n", ret);
+ /* MISHARE_SSR_STOP_END:execution_unregister */
+ }
+ 
+--- a/qcacld-3.0/core/pld/src/pld_ipci.h
++++ b/qcacld-3.0/core/pld/src/pld_ipci.h
+@@ -35,6 +35,13 @@
+ 	return 0;
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_ipci_stub */
++static inline int pld_ipci_unregister_driver_checked(void)
++{
++	return 0;
++}
++/* MISHARE_SSR_STOP_END:unregister_ipci_stub */
+ static inline void pld_ipci_unregister_driver(void)
+ {
+ }
+@@ -311,6 +318,10 @@
+  *
+  * Return: void
+  */
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_ipci_decl */
++int pld_ipci_unregister_driver_checked(void);
++/* MISHARE_SSR_STOP_END:unregister_ipci_decl */
+ void pld_ipci_unregister_driver(void);
+ 
+ /**
+--- a/qcacld-3.0/core/pld/src/pld_common.c
++++ b/qcacld-3.0/core/pld/src/pld_common.c
+@@ -336,34 +336,49 @@
+ 	return ret;
+ }
+ 
+-void pld_unregister_driver(void)
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_common_checked */
++int pld_unregister_driver_checked(void)
+ {
+ 	struct pld_context *pld_context;
++	int ret;
+ 
+ 	pld_context = pld_get_global_context();
+ 
+ 	if (!pld_context) {
+ 		pr_err("global context is NULL\n");
+-		return;
++		return -ENODEV;
+ 	}
+ 
+ 	if (!pld_context->ops) {
+ 		pr_err("driver not registered\n");
+-		return;
+-	}
+-
++		return -ENODEV;
++	}
++
++	ret = pld_ipci_unregister_driver_checked();
++	if (ret)
++		return ret;
+ 	pld_pcie_unregister_driver();
+ 	pld_snoc_fw_sim_unregister_driver();
+ 	pld_pcie_fw_sim_unregister_driver();
+ 	pld_snoc_unregister_driver();
+ 	pld_sdio_unregister_driver();
+ 	pld_usb_unregister_driver();
+-	pld_ipci_unregister_driver();
+ 
+ 	pld_context->pld_driver_state = 0;
+ 
+ 	pld_context->ops = NULL;
+-}
++	return 0;
++}
++
++void pld_unregister_driver(void)
++{
++	int ret = pld_unregister_driver_checked();
++
++	if (ret)
++		pr_err("MiShare: PLD unregister retained (%d)\n", ret);
++}
++/* MISHARE_SSR_STOP_END:unregister_common_checked */
+ 
+ int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+ 		    enum pld_driver_mode mode)
+--- a/qcacld-3.0/core/pld/inc/pld_common.h
++++ b/qcacld-3.0/core/pld/inc/pld_common.h
+@@ -709,6 +709,10 @@
+  *
+  * Return: void
+  */
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_common_decl */
++int pld_unregister_driver_checked(void);
++/* MISHARE_SSR_STOP_END:unregister_common_decl */
+ void pld_unregister_driver(void);
+ 
+ /**
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -2529,7 +2529,15 @@
+ 	return pld_register_driver(&wlan_drv_ops);
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_hdd_checked */
++int wlan_hdd_unregister_driver_checked(void)
++{
++	return pld_unregister_driver_checked();
++}
++
+ void wlan_hdd_unregister_driver(void)
+ {
+ 	pld_unregister_driver();
+ }
++/* MISHARE_SSR_STOP_END:unregister_hdd_checked */
+--- a/qcacld-3.0/core/hdd/inc/wlan_hdd_driver_ops.h
++++ b/qcacld-3.0/core/hdd/inc/wlan_hdd_driver_ops.h
+@@ -57,6 +57,10 @@
+  * Return: void
+  */
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unregister_hdd_decl */
++int wlan_hdd_unregister_driver_checked(void);
++/* MISHARE_SSR_STOP_END:unregister_hdd_decl */
+ void wlan_hdd_unregister_driver(void);
+ 
+ /**
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -22375,7 +22375,15 @@
+ 	}
+ 
+ 	/* trigger SoC remove */
+-	wlan_hdd_unregister_driver();
++
++/* MISHARE_SSR_STOP_BEGIN:unload_checked_unregister */
++	mishare_ret = wlan_hdd_unregister_driver_checked();
++	if (mishare_ret) {
++		hdd_err("MiShare: unregister retained before component teardown (%d)",
++			mishare_ret);
++		return;
++	}
++/* MISHARE_SSR_STOP_END:unload_checked_unregister */
+ 
+ 	if (!cds_is_pcie_link_resume_fail()) {
+ 		status = osif_driver_sync_trans_start_wait(&driver_sync);

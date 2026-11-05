@@ -644,7 +644,9 @@ def modules(work, link_only=False):
                     required = ['opairshare_wlan_execution_register_v2',
                                 'opairshare_wlan_execution_close', 'opairshare_wlan_execution_unregister',
                                 'opairshare_wlan_execution_reinit', 'opairshare_wlan_execution_shutdown',
-                                'opairshare_wlan_execution_idle_restart', 'opairshare_wlan_execution_idle_shutdown']
+                                'opairshare_wlan_execution_idle_restart', 'opairshare_wlan_execution_idle_shutdown',
+                                'opairshare_wlan_execution_unregister_begin', 'opairshare_wlan_execution_unregister_end',
+                                'opairshare_wlan_execution_remove_begin', 'opairshare_wlan_execution_remove_end']
                     missing = sorted(symbol for symbol in required
                                      if symbol not in defined or '__ksymtab_' + symbol not in defined)
                     v1_alias = '__ksymtab_opairshare_wlan_execution_register' in defined

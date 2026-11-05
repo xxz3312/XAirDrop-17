@@ -10,6 +10,10 @@ static DEFINE_MUTEX(execution_lock);
 static struct mishare_wlan_execution_ops execution_ops;
 static unsigned int execution_active;
 static bool execution_closing;
+static bool unregister_scope, unregister_pin;
+static struct device *unregister_remove_dev;
+static int unregister_error;
+
 
 int opairshare_wlan_execution_register_v2(const struct mishare_wlan_execution_ops *ops)
 {
@@ -50,7 +54,9 @@ int opairshare_wlan_execution_close(struct module *owner)
         ret = -EBUSY;
     else if (execution_ops.owner) {
         execution_closing = true;
-        if (execution_active)
+        if (unregister_scope)
+            ret = unregister_error ? unregister_error : -EBUSY;
+        else if (execution_active)
             ret = -EBUSY;
     }
     mutex_unlock(&execution_lock);
@@ -69,7 +75,9 @@ int opairshare_wlan_execution_unregister(struct module *owner)
         ret = -EBUSY;
     else if (execution_ops.owner) {
         execution_closing = true;
-        if (execution_active)
+        if (unregister_scope)
+            ret = unregister_error ? unregister_error : -EBUSY;
+        else if (execution_active)
             ret = -EBUSY;
         else {
             memset(&execution_ops, 0, sizeof(execution_ops));
@@ -170,3 +178,121 @@ int opairshare_wlan_execution_idle_shutdown(struct device *dev)
     return ret;
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_idle_shutdown);
+
+
+int opairshare_wlan_execution_unregister_begin(struct module *owner, bool borrowed_exit)
+{
+    int ret = 0;
+
+    if (!owner)
+        return -EINVAL;
+    mutex_lock(&execution_lock);
+    if (!execution_ops.owner)
+        ret = -ENOENT;
+    else if (execution_ops.owner != owner)
+        ret = -EBUSY;
+    else if (unregister_scope)
+        ret = unregister_error ? unregister_error : -EBUSY;
+    else {
+        execution_closing = true;
+        if (execution_active)
+            ret = -EBUSY;
+        else if (borrowed_exit != !module_is_live(owner))
+            ret = -EINVAL;
+        else if (!borrowed_exit && !try_module_get(owner))
+            ret = -ESHUTDOWN;
+        else {
+            unregister_pin = !borrowed_exit;
+            unregister_error = 0;
+            unregister_remove_dev = NULL;
+            unregister_scope = true;
+        }
+    }
+    mutex_unlock(&execution_lock);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_unregister_begin);
+
+int opairshare_wlan_execution_remove_begin(struct module *owner, struct device *dev, bool *recorded)
+{
+    int ret = 0;
+
+    if (!recorded)
+        return -EINVAL;
+    *recorded = false;
+    if (!owner || !dev)
+        return -EINVAL;
+    mutex_lock(&execution_lock);
+    if (execution_ops.owner != owner)
+        ret = -ENOENT;
+    else if (unregister_scope) {
+        if (unregister_error)
+            ret = unregister_error;
+        else if (unregister_remove_dev) {
+            ret = -EBUSY;
+            unregister_error = ret;
+        }
+        else {
+            unregister_remove_dev = dev;
+            *recorded = true;
+        }
+    }
+    /* Outside the native unregister scope, no receipt or borrowed permission
+     * is invented. The existing physical-remove path retains its own contract.
+     */
+    mutex_unlock(&execution_lock);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_remove_begin);
+
+int opairshare_wlan_execution_remove_end(struct module *owner, struct device *dev, int result)
+{
+    int ret = result;
+
+    mutex_lock(&execution_lock);
+    if (!unregister_scope || execution_ops.owner != owner)
+        ret = -ENOENT;
+    else if (!dev || unregister_remove_dev != dev) {
+        ret = -EUCLEAN;
+        if (!unregister_error)
+            unregister_error = ret;
+    } else {
+        unregister_remove_dev = NULL;
+        if (result && !unregister_error)
+            unregister_error = result;
+        ret = unregister_error;
+    }
+    mutex_unlock(&execution_lock);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_remove_end);
+
+int opairshare_wlan_execution_unregister_end(struct module *owner)
+{
+    bool release = false;
+    int ret = 0;
+
+    if (!owner)
+        return -EINVAL;
+    mutex_lock(&execution_lock);
+    if (!unregister_scope || execution_ops.owner != owner)
+        ret = -ENOENT;
+    else if (unregister_remove_dev || execution_active)
+        ret = -EINPROGRESS;
+    else if (unregister_error)
+        ret = unregister_error;
+    else {
+        release = unregister_pin;
+        unregister_pin = unregister_scope = false;
+        memset(&execution_ops, 0, sizeof(execution_ops));
+        execution_closing = false;
+    }
+    mutex_unlock(&execution_lock);
+    /* Live callers retain their own native/file/export execution contract;
+     * borrowed exit callers rely on module-exit through the ICNSS drain.
+     */
+    if (release)
+        module_put(owner);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_unregister_end);
