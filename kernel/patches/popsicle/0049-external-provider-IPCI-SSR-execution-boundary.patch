@@ -1,0 +1,101 @@
+--- a/qcacld-3.0/core/pld/src/pld_ipci.c
++++ b/qcacld-3.0/core/pld/src/pld_ipci.c
+@@ -22,6 +22,10 @@
+ #include <linux/list.h>
+ #include <linux/slab.h>
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:execution_include */
++#include "mishare_wlan_execution.h"
++/* MISHARE_SSR_STOP_END:execution_include */
+ #ifdef CONFIG_PLD_IPCI_ICNSS
+ #ifdef CONFIG_CNSS_OUT_OF_TREE
+ #include "icnss2.h"
+@@ -547,8 +551,11 @@
+ #endif
+ 	.probe      = pld_ipci_probe,
+ 	.remove     = pld_ipci_remove,
+-	.shutdown   = pld_ipci_shutdown,
+-	.reinit     = pld_ipci_reinit,
++
++/* MISHARE_SSR_STOP_BEGIN:execution_slots */
++	.shutdown   = opairshare_wlan_execution_shutdown,
++	.reinit     = opairshare_wlan_execution_reinit,
++/* MISHARE_SSR_STOP_END:execution_slots */
+ 	.crash_shutdown = pld_ipci_crash_shutdown,
+ 	.pm_suspend = pld_ipci_pm_suspend,
+ 	.pm_resume  = pld_ipci_pm_resume,
+@@ -565,14 +572,48 @@
+ 	.set_therm_cdev_state = pld_ipci_set_thermal_state,
+ };
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:execution_descriptor */
++static const struct mishare_wlan_execution_ops pld_ipci_execution = {
++	.owner = THIS_MODULE,
++	.reinit = pld_ipci_reinit,
++	.shutdown = pld_ipci_shutdown,
++};
++/* MISHARE_SSR_STOP_END:execution_descriptor */
+ int pld_ipci_register_driver(void)
+ {
+-	return icnss_register_driver(&pld_ipci_ops);
++
++/* MISHARE_SSR_STOP_BEGIN:execution_register */
++	int ret, cleanup;
++
++	ret = opairshare_wlan_execution_register(&pld_ipci_execution);
++	if (ret)
++		return ret;
++	ret = icnss_register_driver(&pld_ipci_ops);
++	if (ret) {
++		cleanup = opairshare_wlan_execution_unregister(THIS_MODULE);
++		if (cleanup)
++			return cleanup;
++	}
++	return ret;
++/* MISHARE_SSR_STOP_END:execution_register */
+ }
+ 
+ void pld_ipci_unregister_driver(void)
+ {
++
++/* MISHARE_SSR_STOP_BEGIN:execution_unregister */
++	int ret = opairshare_wlan_execution_close(THIS_MODULE);
++
++	if (ret) {
++		pr_err("MiShare: IPCI execution callbacks retained (%d)\n", ret);
++		return;
++	}
+ 	icnss_unregister_driver(&pld_ipci_ops);
++	ret = opairshare_wlan_execution_unregister(THIS_MODULE);
++	if (ret)
++		pr_err("MiShare: IPCI execution registration retained (%d)\n", ret);
++/* MISHARE_SSR_STOP_END:execution_unregister */
+ }
+ 
+ #ifdef CONFIG_SHADOW_V3
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -32,6 +32,7 @@
+ 
+ /* MISHARE_SSR_STOP_BEGIN:ops_state */
+ #include "wlan_hdd_mishare_host.h"
++#include "mishare_wlan_execution.h"
+ /* Armed for private shutdown. Reinit polls a qualified module continuation
+  * and completes the power tail before clearing this gate. Hard failures retain
+  * the native transition; there is no worker, timer or force-clear path. */
+@@ -1084,7 +1085,12 @@
+ /* MISHARE_SSR_STOP_BEGIN:unload_upper */
+ int hdd_mishare_unload_ready(void)
+ {
+-	return hdd_mishare_module_unload_ready(mishare_ssr_stop_blocked);
++	int ret = hdd_mishare_module_unload_ready(mishare_ssr_stop_blocked);
++
++	if (ret)
++		return ret;
++	/* Close external callback admission before unregister/global teardown. */
++	return opairshare_wlan_execution_close(THIS_MODULE);
+ }
+ /* MISHARE_SSR_STOP_END:unload_upper */
+ 

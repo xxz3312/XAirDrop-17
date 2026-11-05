@@ -1,7 +1,12 @@
 """Restore only bounded private SSR stop/error/reinit changes."""
 import re
 
-ORIGINALS = {'unload_helper': '',
+ORIGINALS = {'execution_include': '',
+ 'execution_descriptor': '',
+ 'execution_slots': '\t.shutdown   = pld_ipci_shutdown,\n\t.reinit     = pld_ipci_reinit,\n',
+ 'execution_register': '\treturn icnss_register_driver(&pld_ipci_ops);\n',
+ 'execution_unregister': '\ticnss_unregister_driver(&pld_ipci_ops);\n',
+ 'unload_helper': '',
  'unload_upper': '',
  'unload_forward': '',
  'unload_soft_local': '',

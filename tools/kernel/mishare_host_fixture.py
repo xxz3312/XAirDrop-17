@@ -67,9 +67,13 @@ static int failure, validations, closed, dp_destroyed;
 static int device_pins, psoc_pins, pdev_pins, runtime_tokens;
 
 /* Model the module API, not the kernel module loader or module-exit timing. */
-static int module_identity,module_refs,module_get_calls,module_put_calls;
+struct module {int id;};
+static struct module module_identity;
+static int module_refs,module_get_calls,module_put_calls;
 static bool module_going;
+
 #define THIS_MODULE (&module_identity)
+int opairshare_wlan_execution_close(struct module *owner) {assert(owner==THIS_MODULE);return 0;}
 static bool try_module_get(void *module) {
  assert(module==THIS_MODULE);module_get_calls++;
  if(module_going)return false;
@@ -1323,7 +1327,7 @@ def run(wlan, output):
         source=d/'test.c';source.write_text(code)
         exe=d/'test'
         command=['cc','-std=c11','-Wall','-Wextra','-Werror','-fsanitize=address,undefined','-fno-omit-frame-pointer','-pthread',
-                        '-include',str(d/'fixture.h'),'-I'+str(d),'-I'+str(production),str(source),'-o',str(exe)]
+                        '-include',str(d/'fixture.h'),'-I'+str(d),'-I'+str(production),'-I'+str(ROOT/'kernel/provider'),str(source),'-o',str(exe)]
         subprocess.run(command,check=True)
         env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',UBSAN_OPTIONS='halt_on_error=1')
         stdout=subprocess.check_output([exe],text=True,env=env,timeout=10)

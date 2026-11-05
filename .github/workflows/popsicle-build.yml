@@ -87,6 +87,7 @@ on:
       - tools/kernel/mishare_response_fixture.py
       - tools/kernel/mishare_txn_fixture.py
       - tools/kernel/mishare_mlme_fixture.py
+      - tools/kernel/mishare_execution_fixture.py
       - tools/kernel/mishare_host_fixture.py
       - tools/kernel/mishare_ssr_stop_origins.py
       - tools/kernel/mishare_session_driver_fixture.py
@@ -135,12 +136,14 @@ jobs:
         run: |
           python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
           python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
+          python3 tools/kernel/mishare_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-execution.json
       - uses: actions/upload-artifact@v4
         with:
           name: popsicle-stop-admission-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             stop-host.json
             stop-runtime.json
+            stop-execution.json
           if-no-files-found: error
           retention-days: 7
 

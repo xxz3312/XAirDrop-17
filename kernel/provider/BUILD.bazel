@@ -2,7 +2,7 @@ load("//build/kernel/kleaf:kernel.bzl", "ddk_module")
 
 ddk_module(
     name = "opairshare_wonder_provider",
-    srcs = ["provider.c", "wondertap.h"],
+    srcs = ["provider.c", "wondertap.h", "execution.c", "mishare_wlan_execution.h"],
     out = "opairshare_wonder_provider.ko",
     kernel_build = "//msm-kernel:sun_perf",
     deps = ["//msm-kernel:all_headers"],
