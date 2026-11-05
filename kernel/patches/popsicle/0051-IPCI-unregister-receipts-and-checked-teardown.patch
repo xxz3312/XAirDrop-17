@@ -82,8 +82,8 @@ Subject: [PATCH] Preserve IPCI unregister receipts and propagate refusal
 +	if (ret)
 +		return ret;
 +	/* ICNSS must drain synchronous remove callbacks before returning. */
-+	icnss_unregister_driver(&pld_ipci_ops);
-+	return opairshare_wlan_execution_unregister_end(THIS_MODULE);
++	ret = icnss_unregister_driver(&pld_ipci_ops);
++	return opairshare_wlan_execution_unregister_end(THIS_MODULE, ret);
 +}
 +/* MISHARE_SSR_STOP_END:unregister_ipci_checked */
  void pld_ipci_unregister_driver(void)

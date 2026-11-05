@@ -8,6 +8,8 @@ Transition failure, private cleanup refusal and missing context are recorded. Ou
 
 The v2 descriptor layout is unchanged; four additive receipt/scope exports bring the required execution exports to eleven. Matched provider/WLAN builds remain required.
 
-Local 53 Python tests, fixture assembly, restoration and patch checks pass. Pending Actions validation executes provider C, full native remove/checked functions and the extracted late unload guard with modeled synchronization, module API, ICNSS and vendor callbacks. New scenarios cover success, borrowed mode, failures, no replay, pending/mismatched/overlapping receipts. Five mutation controls cover swallowed cleanup error, premature completion, leaked live reference, PLD ignored refusal and late unload bypass; inherited host/runtime and concurrent SSR/idle regressions remain required.
+Local 53 Python tests, fixture assembly, restoration and patch checks pass. Pending Actions validation executes provider C, full native remove/checked functions and the extracted late unload guard with modeled synchronization, module API, ICNSS and vendor callbacks. New scenarios cover success, borrowed mode, failures, no replay, pending/mismatched/overlapping receipts. Six mutation controls cover swallowed cleanup error, premature completion, leaked live reference, PLD ignored refusal and late unload bypass; inherited host/runtime and concurrent SSR/idle regressions remain required.
 
 No real ICNSS drain, failed-init teardown, module loader, firmware, physical disappearance or forced-unload certification. No phone operation, Apple discovery, handshake or transfer is enabled.
+
+ICNSS unregister errno is recorded before scope completion; an event-post failure retains registration and the live reference without attempting a replay.

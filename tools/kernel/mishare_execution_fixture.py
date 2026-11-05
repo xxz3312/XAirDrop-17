@@ -98,13 +98,13 @@ NATIVE_IDLE_RESTART
 NATIVE_IDLE_SHUTDOWN
 struct icnss_driver_ops {void (*shutdown)(struct device *);int (*reinit)(struct device *);int (*idle_restart)(struct device *);int (*idle_shutdown)(struct device *);};
 static struct icnss_driver_ops pld_ipci_ops={NATIVE_SLOTS NATIVE_IDLE_SLOTS};
-static int native_register_result,native_registers,native_unregisters;
+static int native_register_result,native_registers,native_unregisters,native_unregister_result;
 static bool native_remove_enabled;
 static int icnss_register_driver(struct icnss_driver_ops *ops) {
  assert(ops==&pld_ipci_ops && ops->shutdown==opairshare_wlan_execution_shutdown && ops->reinit==opairshare_wlan_execution_reinit && ops->idle_restart==opairshare_wlan_execution_idle_restart && ops->idle_shutdown==opairshare_wlan_execution_idle_shutdown && "EXPECTED_EXTERNAL_SLOTS");
  native_registers++;return native_register_result;
 }
-static void icnss_unregister_driver(struct icnss_driver_ops *ops) {assert(ops==&pld_ipci_ops && !execution_active && "EXPECTED_UNREGISTER_DRAIN");native_unregisters++;if(native_remove_enabled)pld_ipci_remove(&dev);}
+static int icnss_unregister_driver(struct icnss_driver_ops *ops) {assert(ops==&pld_ipci_ops && !execution_active && "EXPECTED_UNREGISTER_DRAIN");native_unregisters++;if(native_remove_enabled && !native_unregister_result)pld_ipci_remove(&dev);return native_unregister_result;}
 NATIVE_DESCRIPTOR
 NATIVE_REGISTER
 NATIVE_CHECKED
@@ -128,7 +128,7 @@ NATIVE_LATE_GUARD
 static int thread_kind;
 static void prepare(int private_count) {
  assert(!execution_ops.owner && !execution_active && !atomic_load(&wlan_module.refs));
- native_remove_enabled=false;native_context.ops=&native_ops;native_context.pld_driver_state=1;native_ops.remove=vendor_remove;remove_result=remove_trans_result=removed=sync_destroyed=other_bus_calls=0;
+ native_unregister_result=0;native_remove_enabled=false;native_context.ops=&native_ops;native_context.pld_driver_state=1;native_ops.remove=vendor_remove;remove_result=remove_trans_result=removed=sync_destroyed=other_bus_calls=0;
  thread_kind=0;context_missing=false;private_refs=private_count;atomic_store(&wlan_module.refs,private_count);atomic_store(&wlan_module.deny,false);
  expect_final_return=false;callback_returned=false;in_wlan=false;blocking=entered=allow_return=false;callback_calls=0;callback_result=0;native_register_result=0;
 }
@@ -146,9 +146,10 @@ static void unregister_failure_case(int kind) {
  if(kind==1)remove_result=-EUCLEAN;
  if(kind==2)remove_trans_result=-EBUSY;
  if(kind==3)context_missing=true;
- if(kind<3) {
+ if(kind==4)native_unregister_result=-ENOMEM;
+ if(kind<3 || kind==4) {
   component_deinits=0;native_late_unload();assert(!component_deinits && "EXPECTED_LATE_UNLOAD_RETAINED");
-  int expected=kind==0?-EINPROGRESS:kind==1?-EUCLEAN:-EBUSY;
+  int expected=kind==0?-EINPROGRESS:kind==1?-EUCLEAN:kind==4?-ENOMEM:-EBUSY;
   assert(wlan_hdd_unregister_driver_checked()==expected && "EXPECTED_CHECKED_REMOVE_ERROR");
   assert(!other_bus_calls && native_context.ops && native_context.pld_driver_state==1 && !removed && !sync_destroyed && "EXPECTED_GLOBAL_RETAINED");
   assert(unregister_scope && atomic_load(&wlan_module.refs)==1 && "EXPECTED_FAILED_SCOPE_PIN");
@@ -157,11 +158,11 @@ static void unregister_failure_case(int kind) {
  } else {
   assert(!opairshare_wlan_execution_unregister_begin(THIS_MODULE,false));
   pld_ipci_remove(&dev);
-  assert(opairshare_wlan_execution_unregister_end(THIS_MODULE)==-ENODEV && !removed && sync_destroyed==1 && "EXPECTED_REMOVE_CONTEXT_ERROR");
+  assert(opairshare_wlan_execution_unregister_end(THIS_MODULE,0)==-ENODEV && !removed && sync_destroyed==1 && "EXPECTED_REMOVE_CONTEXT_ERROR");
  }
 }
 static void unregister_cases(void) {
- for(int k=0;k<4;k++) {
+ for(int k=0;k<5;k++) {
   pid_t child=fork();assert(child>=0);if(!child){unregister_failure_case(k);_Exit(0);}
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status) && "EXPECTED_REMOVE_FAILURE_CHILD");
  }
@@ -174,17 +175,17 @@ static void unregister_cases(void) {
  assert(opairshare_wlan_execution_unregister_begin(THIS_MODULE,true)==-EINVAL);
  assert(!opairshare_wlan_execution_unregister_begin(THIS_MODULE,false));bool recorded=false;
  assert(!opairshare_wlan_execution_remove_begin(THIS_MODULE,&dev,&recorded) && recorded);
- assert(opairshare_wlan_execution_unregister_end(THIS_MODULE)==-EINPROGRESS && "EXPECTED_PENDING_RECEIPT");
+ assert(opairshare_wlan_execution_unregister_end(THIS_MODULE,0)==-EINPROGRESS && "EXPECTED_PENDING_RECEIPT");
  assert(opairshare_wlan_execution_unregister(THIS_MODULE)==-EBUSY && execution_ops.owner);
  assert(!opairshare_wlan_execution_remove_end(THIS_MODULE,&dev,0));
- assert(!opairshare_wlan_execution_unregister_end(THIS_MODULE) && !execution_ops.owner && !atomic_load(&wlan_module.refs));
+ assert(!opairshare_wlan_execution_unregister_end(THIS_MODULE,0) && !execution_ops.owner && !atomic_load(&wlan_module.refs));
  for(int kind=0;kind<2;kind++) {
   pid_t child=fork();assert(child>=0);if(!child) {
    prepare(0);assert(!pld_ipci_register_driver());assert(!opairshare_wlan_execution_unregister_begin(THIS_MODULE,false));
    bool rec=false;assert(!opairshare_wlan_execution_remove_begin(THIS_MODULE,&dev,&rec) && rec);
    if(kind==0){struct device wrong={2};assert(opairshare_wlan_execution_remove_end(THIS_MODULE,&wrong,0)==-EUCLEAN);}
    else assert(opairshare_wlan_execution_remove_begin(THIS_MODULE,&dev,&rec)==-EBUSY && !rec);
-   assert(!(!opairshare_wlan_execution_unregister_end(THIS_MODULE)) && execution_ops.owner && atomic_load(&wlan_module.refs)==1 && "EXPECTED_RECEIPT_FAIL_CLOSED");_Exit(0);
+   assert(!(!opairshare_wlan_execution_unregister_end(THIS_MODULE,0)) && execution_ops.owner && atomic_load(&wlan_module.refs)==1 && "EXPECTED_RECEIPT_FAIL_CLOSED");_Exit(0);
   }
   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
  }
@@ -307,17 +308,18 @@ def run(wlan,output):
         ]
         mutations += [
             (provider.replace('if (result && !unregister_error)','if (false && result && !unregister_error)',1),code,'EXPECTED_LATE_UNLOAD_RETAINED'),
-            (provider.replace('else if (unregister_remove_dev || execution_active)','else if (false && (unregister_remove_dev || execution_active))',1),code,'EXPECTED_PENDING_RECEIPT'),
+            (provider.replace('if (unregister_remove_dev || execution_active)','if (false && (unregister_remove_dev || execution_active))',1),code,'EXPECTED_PENDING_RECEIPT'),
             (provider.replace('release = unregister_pin;','release = false;',1),code,'EXPECTED_CHECKED_REMOVE_SUCCESS'),
             (provider,code.replace(fragments['NATIVE_COMMON_CHECKED'],fragments['NATIVE_COMMON_CHECKED'].replace('if (ret)\n\t\treturn ret;','if (false && ret)\n\t\treturn ret;',1),1),'EXPECTED_LATE_UNLOAD_RETAINED'),
             (provider,code.replace(fragments['NATIVE_LATE_GUARD'],fragments['NATIVE_LATE_GUARD'].replace('if (mishare_ret)','if (false && mishare_ret)',1),1),'EXPECTED_LATE_UNLOAD_RETAINED'),
         ]
+        mutations.append((provider,code.replace('opairshare_wlan_execution_unregister_end(THIS_MODULE, ret)','opairshare_wlan_execution_unregister_end(THIS_MODULE, 0)',1),'EXPECTED_LATE_UNLOAD_RETAINED'))
         for changed,changed_code,marker in mutations:
             assert changed!=provider or changed_code!=code
             (d/'execution.c').write_text(changed);source.write_text(changed_code);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=20)
             assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[:2000])
-    report={'status':'MISHARE_EXTERNAL_EXECUTION_FIXTURE_PASS_ONLY','source_commit':subprocess.check_output(['git','-C',str(wlan),'rev-parse','HEAD'],text=True).strip(),'fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256((ROOT/'kernel/provider/mishare_wlan_execution.h').read_bytes()).hexdigest(),'native_ipci_sha256':hashlib.sha256(native.encode()).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'negative_controls_rejected':len(mutations),'idle_specific_controls_rejected':3,'unregister_receipt_scenarios':11,'retained_failure_child_universes':6,'concurrent_callback_kinds':['SSR reinit','idle shutdown','idle restart'],'registration_export':'opairshare_wlan_execution_register_v2','registration_v1_alias_exported':False,'sanitizers':['address','undefined','leak detection'],'limitations':'Production external provider and full native IPCI register/unregister/reinit/shutdown functions execute with modeled module loader, ICNSS registration and vendor callbacks. Real pthread close versus callback overlap is exercised; native DSC, firmware, real rmmod and ICNSS unregister/error-path drain contracts are not executed. SSR shutdown/reinit and idle shutdown/restart slots use this boundary; physical remove outside unregister, crash shutdown, other native callback types and managed metadata self-detach remain outside certification. Checked IPCI/PLD/HDD unregister now propagates receipts before global clearing; native module-exit cannot veto loader unload; no hot-unplug or forced-unload safety.'}
+    report={'status':'MISHARE_EXTERNAL_EXECUTION_FIXTURE_PASS_ONLY','source_commit':subprocess.check_output(['git','-C',str(wlan),'rev-parse','HEAD'],text=True).strip(),'fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256((ROOT/'kernel/provider/mishare_wlan_execution.h').read_bytes()).hexdigest(),'native_ipci_sha256':hashlib.sha256(native.encode()).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'negative_controls_rejected':len(mutations),'idle_specific_controls_rejected':3,'unregister_receipt_scenarios':12,'retained_failure_child_universes':7,'concurrent_callback_kinds':['SSR reinit','idle shutdown','idle restart'],'registration_export':'opairshare_wlan_execution_register_v2','registration_v1_alias_exported':False,'sanitizers':['address','undefined','leak detection'],'limitations':'Production external provider and full native IPCI register/unregister/reinit/shutdown functions execute with modeled module loader, ICNSS registration and vendor callbacks. Real pthread close versus callback overlap is exercised; native DSC, firmware, real rmmod and ICNSS unregister/error-path drain contracts are not executed. SSR shutdown/reinit and idle shutdown/restart slots use this boundary; physical remove outside unregister, crash shutdown, other native callback types and managed metadata self-detach remain outside certification. Checked IPCI/PLD/HDD unregister now propagates receipts before global clearing; native module-exit cannot veto loader unload; no hot-unplug or forced-unload safety.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(out,end='')
 
 if __name__=='__main__':

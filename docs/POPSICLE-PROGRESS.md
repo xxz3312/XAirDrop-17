@@ -2,7 +2,7 @@
 
 补丁 0051 在 ICNSS 注销前建立 provider 作用域。正常运行另取模块引用；GOING 时只记录调用方持有的 module-exit 执行资格。remove 的失败和未完成回执阻止作用域释放，live 失败引用保留且不提供重置接口。
 
-checked IPCI→PLD→HDD 返回链在其他总线注销、清空 PLD 状态及组件拆除前传播拒绝，主卸载路径检查返回值。公共 void 兼容接口仍存在，忽略结果的旧调用方不获认证。新增完整原生 remove/checked 函数场景与五项错误注入。53 项 Python 检查、源码组装、还原及补丁正反检查通过，C 和完整目标链接待 CI。
+checked IPCI→PLD→HDD 返回链在其他总线注销、清空 PLD 状态及组件拆除前传播拒绝，主卸载路径检查返回值。公共 void 兼容接口仍存在，忽略结果的旧调用方不获认证。新增完整原生 remove/checked 函数场景与六项错误注入。53 项 Python 检查、源码组装、还原及补丁正反检查通过，C 和完整目标链接待 CI。
 
 真实 ICNSS 排空、模块加载器、失败 module-exit、物理热拔插与其他回调仍未验收。无线后端关闭，手机无需操作。见 [0120 说明](POPSICLE-UNREGISTER-RECEIPTS-0120.md)。
 
@@ -517,3 +517,5 @@ Public Action 实机提交返回 cookie=256，iw 观察到 cookie 0x100 的 acke
 ## 0046 参考小米 15 的运行时切换流程
 
 重新核对 Leekin2/XAirDrop 当前 main（eb1fe215c6473a8dbcc6edf6cf1e67d93f250f76）的 action/service/customize 实现。按其 Wi-Fi/HAL 停止、RAM 中正常切换驱动、失败恢复流程适配 17；初次测试仅手动触发，不启用上游 boot_completed 后自动调用。原系统模块/启动文件不修改，重启仍走系统原驱动。controller 6f1e2bff9c75c6564879c98213c8ad2b26f38be9，10 个实际 shell 模拟路径通过；打包构建 40844885387 成功，原生 WLAN 仍来自 0045 已通过的构建。只在 CI 移除调试信息，模块约 21.5 MB，测试 ZIP 约 7.4 MB。实机驱动切换、固件 Action、PAS/NDI 与 Apple 互传仍未验证。详见 [0046 手动测试与恢复](POPSICLE-WLAN-TRIAL-0046.md)。
+
+ICNSS unregister errno is recorded before scope completion; an event-post failure retains registration and the live reference without attempting a replay.

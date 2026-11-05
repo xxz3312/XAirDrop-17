@@ -267,7 +267,7 @@ int opairshare_wlan_execution_remove_end(struct module *owner, struct device *de
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_remove_end);
 
-int opairshare_wlan_execution_unregister_end(struct module *owner)
+int opairshare_wlan_execution_unregister_end(struct module *owner, int result)
 {
     bool release = false;
     int ret = 0;
@@ -277,15 +277,19 @@ int opairshare_wlan_execution_unregister_end(struct module *owner)
     mutex_lock(&execution_lock);
     if (!unregister_scope || execution_ops.owner != owner)
         ret = -ENOENT;
-    else if (unregister_remove_dev || execution_active)
-        ret = -EINPROGRESS;
-    else if (unregister_error)
-        ret = unregister_error;
     else {
-        release = unregister_pin;
-        unregister_pin = unregister_scope = false;
-        memset(&execution_ops, 0, sizeof(execution_ops));
-        execution_closing = false;
+        if (result && !unregister_error)
+            unregister_error = result;
+        if (unregister_remove_dev || execution_active)
+            ret = -EINPROGRESS;
+        else if (unregister_error)
+            ret = unregister_error;
+        else {
+            release = unregister_pin;
+            unregister_pin = unregister_scope = false;
+            memset(&execution_ops, 0, sizeof(execution_ops));
+            execution_closing = false;
+        }
     }
     mutex_unlock(&execution_lock);
     /* Live callers retain their own native/file/export execution contract;

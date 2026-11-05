@@ -32,7 +32,7 @@ int opairshare_wlan_execution_idle_shutdown(struct device *dev);
  * A live failure keeps its scope pin; no force-reset API is provided.
  */
 int opairshare_wlan_execution_unregister_begin(struct module *owner, bool borrowed_exit);
-int opairshare_wlan_execution_unregister_end(struct module *owner);
+int opairshare_wlan_execution_unregister_end(struct module *owner, int result);
 int opairshare_wlan_execution_remove_begin(struct module *owner, struct device *dev, bool *recorded);
 int opairshare_wlan_execution_remove_end(struct module *owner, struct device *dev, int result);
 #endif
