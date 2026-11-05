@@ -1,8 +1,8 @@
-## 最新阶段 0119（IPCI idle 回调外部执行引用，源码完成／CI 待验）
+## 最新阶段 0119（IPCI idle 回调外部执行引用，生产 C 快速验证通过）
 
 补丁 0050 将 idle shutdown/restart 直接接到外部 provider，覆盖空闲回收释放最后主机引用后仍需返回 WLAN 调用栈的窗口。原生 idle shutdown 的指针检查从无关的 `shutdown` 修正为实际调用的 `idle_shutdown`；保留上下文缺失、回调缺失及原生 errno 传播。
 
-回调表扩展为 v2，使用独立登记导出名，不提供 v1 别名；provider/WLAN 需要同源配对构建。新增目标 provider 导出检查，要求七个执行接口并拒绝旧登记别名。53 项 Python 检查、源码组装、完整原生源码还原和补丁正反向检查通过；新增 idle 场景、三类 pthread 关闭重叠及三项新增错误注入待 CI，尚未宣称 C 或完整链接通过。见 [0119 说明](POPSICLE-IDLE-EXECUTION-0119.md)。
+回调表扩展为 v2，使用独立登记导出名，不提供 v1 别名；provider/WLAN 需要同源配对构建。新增目标 provider 导出检查，要求七个执行接口并拒绝旧登记别名。53 项 Python 检查、源码组装、完整原生源码还原和补丁正反向检查通过；[Actions 42008448819](https://github.com/xxz3312/XAirDrop-17/actions/runs/42008448819) 生产 C 快速作业通过：idle 最后私有引用/错误码/回调 guard/缺失路径、三类真实 pthread 回调与关闭重叠、八项外部错误注入（含三项新增）及既有主机/runtime/上层回归全部成功（ASan/UBSan 与 leak detection）。紧凑 ZIP 摘要、三套重新组装夹具、provider/shared header/原生 IPCI 哈希及 v2 登记协议已核对。完整目标链接、新的 ELF 导出检查及其余回归仍在运行，0119 尚未完整离线验收。见 [0119 说明](POPSICLE-IDLE-EXECUTION-0119.md)。
 
 remove 的模块注销期资格、其他原生回调和 metadata 自身解绑仍待协调。无线后端保持关闭，手机无需操作。
 

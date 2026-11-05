@@ -10,7 +10,7 @@ The copied execution descriptor now includes both idle callback pointers. Regist
 
 ## Verification checkpoint
 
-Locally, 53 Python tests, Python syntax, host/external fixture source assembly, complete native IPCI restoration and patch forward/reverse checks passed. C and full target linking require Actions and are not yet claimed.
+Locally, 53 Python tests, Python syntax, host/external fixture source assembly, complete native IPCI restoration and patch forward/reverse checks passed. [Actions 42008448819](https://github.com/xxz3312/XAirDrop-17/actions/runs/42008448819), source `bb8c8a514cee3a9da9b5403ace6e99021fa04d5d`, passed the production host/runtime/external C fast job with ASan/UBSan and leak detection. All added idle scenarios, three concurrent callback kinds, eight external mutation controls and inherited upper/host/runtime regressions passed. ZIP digest, regenerated three fixtures, provider/shared-header/native-PLD hashes and v2 registration identity match. Full target linking, its new ELF export check and remaining regressions are still running; this is not complete stage offline acceptance. See the [validation checkpoint](research/popsicle-idle-execution-0119-validation.json).
 
 The existing fixture adds full native idle callback execution, final private-reference release and exact EAGAIN/EINPROGRESS propagation, missing native context/callbacks, the corrected unrelated-shutdown-pointer case, module refusal and closed-channel refusal. Real pthread overlap now runs separately for SSR reinit, idle shutdown and idle restart. Three new mutation controls cover premature idle execution put, a native slot bypassing provider, and restoring the incorrect idle callback guard. Five existing external mutations and native upper unload tests remain.
 
