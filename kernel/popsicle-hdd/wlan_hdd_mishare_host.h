@@ -114,6 +114,14 @@ int hdd_mishare_resume_stop_modules(struct hdd_context *hdd);
  * under its retained transition; no worker, timer or forced reset is installed.
  */
 int hdd_mishare_resume_shutdown(struct hdd_context *hdd);
+/* IPCI remove admission only, BEFORE PSOC sync unregister and after native
+ * exclusive transition/operation drain. Does not reclaim an owner or bless
+ * hot unplug. Failure retains the registered sync/transition and HDD parents.
+ */
+int mishare_ssr_stop_remove_ready_locked(struct mishare_ssr_stop_checkpoint *c,
+                                        struct hdd_context *hdd);
+int hdd_mishare_module_remove_ready(struct hdd_context *hdd);
+int hdd_mishare_remove_prepare(struct device *dev);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;

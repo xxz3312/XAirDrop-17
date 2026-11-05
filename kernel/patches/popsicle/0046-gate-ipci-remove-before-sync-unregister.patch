@@ -1,0 +1,83 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -18759,6 +18759,13 @@
+ }
+ /* MISHARE_SSR_STOP_END:resume_wrappers */
+ 
++/* MISHARE_SSR_STOP_BEGIN:remove_module */
++int hdd_mishare_module_remove_ready(struct hdd_context *hdd_ctx)
++{
++	return mishare_ssr_stop_remove_ready_locked(&mishare_module_stop, hdd_ctx);
++}
++/* MISHARE_SSR_STOP_END:remove_module */
++
+ #ifdef WLAN_FEATURE_MEMDUMP_ENABLE
+ /**
+  * hdd_state_info_dump() - prints state information of hdd layer
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -1075,6 +1075,31 @@
+ 	return errno;
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:remove_prepare */
++int hdd_mishare_remove_prepare(struct device *dev)
++{
++	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
++	int ret;
++
++	if (!dev || !hdd_ctx)
++		return -EINVAL;
++	if (hdd_ctx->parent_dev != dev)
++		return -EUCLEAN;
++	/* PLD must call before unregistering the device's sync lookup. */
++	osif_psoc_sync_assert_trans_protected(dev);
++	if (mishare_ssr_stop_blocked)
++		return -EBUSY;
++	ret = hdd_mishare_module_remove_ready(hdd_ctx);
++	if (ret)
++		return ret;
++	ret = mishare_wonder_host_stop_ready_locked(hdd_ctx);
++	if (ret)
++		return ret;
++	/* Detach failure retains the managed owner and must retain its HDD. */
++	return mishare_wonder_backend_unregister(hdd_ctx);
++}
++/* MISHARE_SSR_STOP_END:remove_prepare */
+ static void __hdd_soc_remove(struct device *dev)
+ {
+ 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+--- a/qcacld-3.0/core/pld/src/pld_ipci.c
++++ b/qcacld-3.0/core/pld/src/pld_ipci.c
+@@ -35,6 +35,10 @@
+ #include "osif_psoc_sync.h"
+ #include "cds_api.h"
+ 
++/* MISHARE_SSR_STOP_BEGIN:remove_include */
++#include "wlan_hdd_mishare_host.h"
++/* MISHARE_SSR_STOP_END:remove_include */
++
+ #ifdef CONFIG_PLD_IPCI_ICNSS
+ 
+ #define WCN6750_DEVICE_ID 0x6750
+@@ -92,6 +96,19 @@
+ 	if (errno)
+ 		return;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:remove_admission */
++	/* Drain while the original PSOC lookup is still registered. */
++	osif_psoc_sync_wait_for_ops(psoc_sync);
++	errno = hdd_mishare_remove_prepare(dev);
++	if (errno) {
++		pr_err("MiShare: IPCI remove retained private lifetime (%d)\n", errno);
++		/* Keep lookup/transition/HDD. A void bus remove cannot certify
++		 * hot-unplug safety; do not destroy synchronization underneath it.
++		 */
++		return;
++	}
++/* MISHARE_SSR_STOP_END:remove_admission */
+ 	osif_psoc_sync_unregister(dev);
+ 	osif_psoc_sync_wait_for_ops(psoc_sync);
+ 

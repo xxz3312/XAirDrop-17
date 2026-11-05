@@ -59,7 +59,7 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; unsigned long pause_map; };
 struct hdd_adapter_create_param { int num_sessions; };
 struct osif_vdev_sync { int id; };
-static bool rtnl_owned=true, parent_owned=true, identity_refusal_expected;
+static bool rtnl_owned=true, parent_owned=true, identity_refusal_expected,remove_sync_unregistered;
 static bool rtnl_contended, native_idle_active, idle_retirement_expected;
 static int rtnl_attempts;
 static struct wlan_objmgr_psoc *expected_psoc;
@@ -89,7 +89,7 @@ static void *kzalloc(size_t n,int flags) { (void)flags;event('A');return failure
 static void kfree(void *p) { pins_empty();event('F');free(p); }
 static bool test_bit(unsigned n,const unsigned long *p) { return !!(*p & (1UL<<n)); }
 static bool netif_running(struct net_device *d) { return d->running; }
-static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && parent_owned);event('P'); }
+static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && parent_owned);assert(!remove_sync_unregistered && "EXPECTED_REMOVE_LOOKUP_LIFETIME");event('P'); }
 static bool rtnl_trylock(void) { assert(parent_owned);rtnl_attempts++;if(rtnl_contended || rtnl_owned)return false;rtnl_owned=true;return true; }
 static void rtnl_unlock(void) { assert(parent_owned && rtnl_owned);rtnl_owned=false; }
 static void idle_cleanup_boundary(void) { assert((!native_idle_active || idle_retirement_expected) && "EXPECTED_IDLE_OWNERSHIP"); }
@@ -664,6 +664,92 @@ static void ssr_upper_cases(struct hdd_context *h,struct wireless_dev *wdev)
   runtime_ssr=false;mishare_module_stop=(struct mishare_ssr_stop_checkpoint){0};mishare_ssr_stop_blocked=false;
  }
 }
+
+static int remove_backend_result,remove_backend_calls,remove_drains,remove_callbacks,remove_deletes,remove_destroys,remove_unregistrations;
+static bool remove_start_failure,remove_context_missing,remove_unload_flag;
+static struct device *remove_device;
+static int mishare_wonder_backend_unregister(struct hdd_context *h) {assert(h==ssr_ctx && parent_owned && !remove_sync_unregistered);remove_backend_calls++;return remove_backend_result;}
+NATIVE_MODULE_REMOVE
+#define cds_get_context ssr_get_context
+NATIVE_REMOVE_PREPARE
+#undef cds_get_context
+static int remove_start_wait(struct device *d,struct osif_psoc_sync **s) {assert(d==remove_device && !parent_owned && !rtnl_owned && !remove_sync_unregistered);if(remove_start_failure)return -EAGAIN;parent_owned=true;*s=&idle_sync;return 0;}
+static void remove_wait_ops(struct osif_psoc_sync *s) {assert(s==&idle_sync && parent_owned);remove_drains++;}
+static void remove_unregister(struct device *d) {assert(d==remove_device && parent_owned && remove_drains && !remove_sync_unregistered);remove_sync_unregistered=true;remove_unregistrations++;}
+static void remove_destroy_sync(struct osif_psoc_sync *s) {assert(s==&idle_sync && !parent_owned);assert(remove_sync_unregistered && "EXPECTED_REMOVE_SYNC_RETAINED");remove_destroys++;}
+static void remove_loaded(bool value) {assert(!value);}
+static void remove_unloading(bool value) {assert(value);remove_unload_flag=true;}
+#define PLD_BUS_TYPE_SNOC 73
+struct remove_ops {void (*remove)(struct device *,int);};
+struct pld_context {struct remove_ops *ops;};
+static void remove_hdd_callback(struct device *d,int bus) {
+ assert(d==ssr_ctx->parent_dev && "EXPECTED_REMOVE_CALLBACK_DEVICE");assert(bus==73 && parent_owned && remove_sync_unregistered);
+ assert(!mishare_wonder_host_stop_ready_locked(ssr_ctx) && !mishare_ssr_stop_blocked && mishare_module_stop.phase==MISHARE_SSR_STOP_EMPTY && !mishare_module_stop.first_error && !mishare_module_stop.paused && !remove_backend_result && "EXPECTED_REMOVE_CALLBACK_ADMISSION");
+ remove_callbacks++;
+ assert(!ssr_stop_section(ssr_ctx,false,false)); /* native module entry/post fragments, later parent/free is modeled */
+}
+static struct remove_ops remove_ops={.remove=remove_hdd_callback};
+static struct pld_context remove_context={.ops=&remove_ops};
+static struct pld_context *pld_get_global_context(void) {return remove_context_missing?NULL:&remove_context;}
+static void pld_del_dev(struct pld_context *p,struct device *d) {assert(p==&remove_context && d==remove_device && remove_callbacks==1);remove_deletes++;}
+#define osif_psoc_sync_trans_start_wait remove_start_wait
+#define osif_psoc_sync_wait_for_ops remove_wait_ops
+#define osif_psoc_sync_unregister remove_unregister
+#define osif_psoc_sync_destroy remove_destroy_sync
+#define cds_set_driver_loaded remove_loaded
+#define cds_set_unload_in_progress remove_unloading
+#define pr_err(...) ((void)0)
+NATIVE_IPCI_REMOVE
+#undef pr_err
+#undef cds_set_unload_in_progress
+#undef cds_set_driver_loaded
+#undef osif_psoc_sync_destroy
+#undef osif_psoc_sync_unregister
+#undef osif_psoc_sync_wait_for_ops
+#undef osif_psoc_sync_trans_start_wait
+
+static void remove_cases(struct hdd_context *h,struct wireless_dev *wdev)
+{
+ assert(mishare_ssr_stop_remove_ready_locked(NULL,h)==-EINVAL);
+ for(int kind=0;kind<17;kind++) {
+  struct mishare_wonder_host *owner=NULL;struct device other_dev={0};struct wlan_objmgr_psoc other_psoc={0},*psoc=h->psoc;
+  bool owned=kind==1 || kind==2 || kind==16,allowed=kind==0 || kind==14 || kind==15;
+  reset(0);ssr_ctx=h;mishare_module_stop=(struct mishare_ssr_stop_checkpoint){0};mishare_ssr_stop_blocked=kind==8;
+  ssr_lookup_missing=ssr_epping=ssr_resume_tail_expected=false;ssr_transition_dev=NULL;ssr_unloading=false;
+  remove_sync_unregistered=remove_unload_flag=false;remove_device=kind==12?&other_dev:h->parent_dev;
+  remove_backend_result=kind==9?-EINPROGRESS:kind==10?-EUCLEAN:0;
+  remove_backend_calls=remove_drains=remove_callbacks=remove_deletes=remove_destroys=remove_unregistrations=0;
+  remove_start_failure=kind==13;remove_context_missing=kind==14;
+  ssr_stop_force=ssr_after_retire_force=ssr_module_prefixes=ssr_post_calls=ssr_parent_closes=ssr_tail=0;
+  ssr_post_status=QDF_STATUS_SUCCESS;ssr_qualification_ready=true;ssr_qualified_wait=0;
+  if(owned){assert(!mishare_wonder_host_create_locked(h,mac,&owner));active->dev->ieee80211_ptr=wdev;if(kind==2){assert(!mishare_wonder_host_vdev_create_locked(owner));assert(!handoff_from_temporary(&owner));}}
+  if(kind==3)runtime_registry_psoc=h->psoc;
+  if(kind>=4 && kind<=7) {
+   mishare_module_stop=(struct mishare_ssr_stop_checkpoint){.hdd=h,.parent_dev=h->parent_dev,.psoc=h->psoc,.pdev=h->pdev,.phase=kind==4?MISHARE_SSR_STOP_PREFIX:kind==5?MISHARE_SSR_STOP_POST_DISABLED:kind==6?MISHARE_SSR_STOP_PARENTS:MISHARE_SSR_STOP_EMPTY,.first_error=kind==5?0:-EIO,.paused=kind==5};
+  }
+  if(kind==11)ssr_lookup_missing=true;
+  if(kind==16)h->psoc=&other_psoc;
+  unsigned char journal_before[sizeof(mishare_module_stop)];memcpy(journal_before,&mishare_module_stop,sizeof(journal_before));
+  runtime_ssr=kind==15;parent_owned=false;rtnl_owned=false;idle_trace[0]=0;trace[0]=0;
+  pld_ipci_remove(remove_device);
+  assert(remove_unload_flag);
+  if(allowed) {
+   assert(!parent_owned && remove_sync_unregistered && remove_unregistrations==1 && remove_destroys==1 && remove_drains==2 && remove_callbacks==(kind==14?0:1) && remove_deletes==(kind==14?0:1) && "EXPECTED_REMOVE_NATIVE_EMPTY");
+   assert(remove_backend_calls==1 && !active);
+  } else if(kind==13)assert(!parent_owned && !remove_sync_unregistered && !remove_drains && !remove_backend_calls && !remove_destroys && !remove_callbacks && "EXPECTED_REMOVE_START_REFUSAL");
+  else {
+   assert(parent_owned && !remove_sync_unregistered && !remove_unregistrations && !remove_destroys && !remove_callbacks && !remove_deletes && remove_drains==1 && "EXPECTED_REMOVE_SYNC_RETAINED");
+   assert(remove_backend_calls==((kind==9 || kind==10)?1:0) && "EXPECTED_REMOVE_PRECHECK_ORDER");
+   assert(!memcmp(journal_before,&mishare_module_stop,sizeof(journal_before)) && "EXPECTED_REMOVE_JOURNAL_RETAINED");
+   assert(!ssr_module_prefixes && !ssr_post_calls && !ssr_parent_closes && "EXPECTED_REMOVE_NO_TEARDOWN");
+  }
+  remove_sync_unregistered=false;parent_owned=true;rtnl_owned=true;h->psoc=psoc;ssr_lookup_missing=false;runtime_registry_psoc=NULL;runtime_ssr=false;
+  if(kind==2){runtime_ssr=true;batch_rc=0;assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));runtime_ssr=false;}
+  else if(owner){assert(!mishare_wonder_host_destroy_locked(&owner));}
+  pins_empty();
+  mishare_module_stop=(struct mishare_ssr_stop_checkpoint){0};mishare_ssr_stop_blocked=false;
+ }
+}
 '''
 
 HARNESS = r'''
@@ -931,6 +1017,7 @@ int main(void)
  ssr_stop_cases(&h,&wdev);
  ssr_resume_cases(&h,&wdev);
  ssr_upper_cases(&h,&wdev);
+ remove_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
@@ -982,6 +1069,13 @@ def run(wlan, output):
     ops_path='qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c'
     qdf_path='qca-wifi-host-cmn/qdf/linux/src/qdf_status.c'
     power=(wlan/power_path).read_text();ops=(wlan/ops_path).read_text()
+    remove_path='qcacld-3.0/core/pld/src/pld_ipci.c'
+    remove_source=(wlan/remove_path).read_text()
+    assert remove_ssr_stop_additions(remove_source)==subprocess.check_output(['git','-C',str(wlan),'show','HEAD:'+remove_path],text=True)
+    ipci_remove=extract(remove_source,r'^static void pld_ipci_remove\([^;{]+?\)\s*\{.*?^\}')
+    remove_prepare=extract(ops,r'^int hdd_mishare_remove_prepare\([^;{]+?\)\s*\{.*?^\}')
+    module_remove=extract(main,r'^int hdd_mishare_module_remove_ready\([^;{]+?\)\s*\{.*?^\}')
+    assert ipci_remove.index('osif_psoc_sync_wait_for_ops(')<ipci_remove.index('hdd_mishare_remove_prepare(')<ipci_remove.index('osif_psoc_sync_unregister(')<ipci_remove.index('pld_context->ops->remove(')<ipci_remove.index('osif_psoc_sync_destroy(')
     sync_path='qcacld-3.0/os_if/sync/src/osif_psoc_sync.c'
     sync_source=(wlan/sync_path).read_text()
     assert sync_source==subprocess.check_output(['git','-C',str(wlan),'show','HEAD:'+sync_path],text=True)
@@ -1012,7 +1106,7 @@ def run(wlan, output):
     qdf_from_os=extract((wlan/qdf_path).read_text(),r'^QDF_STATUS qdf_status_from_os_return\([^;{]+?\)\s*\{.*?^\}')
     assert qdf_from_os in subprocess.check_output(['git','-C',str(wlan),'show','HEAD:'+qdf_path],text=True)
     ssr_models=SSR_STOP_MODELS
-    for tag, body in [('NATIVE_QDF_FROM_OS',qdf_from_os),('NATIVE_SSR_STATE',state_native),('NATIVE_MODULE_STATE',module_state),('NATIVE_MODULE_BEGIN',module_begin),('NATIVE_MODULE_FINISH',module_finish),('NATIVE_MODULE_RESUME',module_resume),('NATIVE_POST_DISABLE',post_native),('NATIVE_POWER_COMPLETION',power_completion),('NATIVE_POWER_SHUTDOWN',power_native),('NATIVE_SOC_SHUTDOWN',soc_native),('NATIVE_SOC_REINIT',reinit_native)]:
+    for tag, body in [('NATIVE_QDF_FROM_OS',qdf_from_os),('NATIVE_SSR_STATE',state_native),('NATIVE_MODULE_STATE',module_state),('NATIVE_MODULE_BEGIN',module_begin),('NATIVE_MODULE_FINISH',module_finish),('NATIVE_MODULE_RESUME',module_resume),('NATIVE_POST_DISABLE',post_native),('NATIVE_POWER_COMPLETION',power_completion),('NATIVE_POWER_SHUTDOWN',power_native),('NATIVE_SOC_SHUTDOWN',soc_native),('NATIVE_SOC_REINIT',reinit_native),('NATIVE_MODULE_REMOVE',module_remove),('NATIVE_REMOVE_PREPARE',remove_prepare),('NATIVE_IPCI_REMOVE',ipci_remove)]:
         ssr_models=ssr_models.replace(tag,body)
     code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle+'\n'+mode) + RESET_MODELS.replace('NATIVE_QDF_STATUS',qdf_enum).replace('NATIVE_RESET',reset_native) + ssr_models + HARNESS.replace('\n GUARD\n','\n '+guard+'\n').replace('\n ROLLBACK\n','\n '+rollback+'\n')
     production = ROOT/'kernel/popsicle-hdd'
@@ -1314,10 +1408,48 @@ def run(wlan, output):
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
 
-    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'negative_ssr_stop_controls_rejected':8,'negative_ssr_prepare_controls_rejected':7,'ssr_prepare_contract_cases':18,'ssr_journal_scenarios':8,'ssr_resume_scenarios':17,'ssr_upper_scenarios':16,'native_sync_resume_sha256':hashlib.sha256(sync_resume.encode()).hexdigest(),'native_sync_source_sha256':hashlib.sha256(sync_source.encode()).hexdigest(),'negative_ssr_upper_controls_rejected':10,'negative_ssr_resume_controls_rejected':10,'negative_ssr_journal_controls_rejected':8,'native_module_begin_sha256':hashlib.sha256(module_begin.encode()).hexdigest(),'native_module_finish_sha256':hashlib.sha256(module_finish.encode()).hexdigest(),'native_module_resume_sha256':hashlib.sha256(module_resume.encode()).hexdigest(),'ssr_stop_contract_cases':15,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
+        remove_controls=[]
+        def remove_mutate(body,needle,replacement,marker):
+            assert body.count(needle)==1,needle
+            remove_controls.append((code.replace(body,body.replace(needle,replacement,1),1),marker))
+        remove_mutate(remove_prepare,'if (mishare_ssr_stop_blocked)', 'if (false && mishare_ssr_stop_blocked)','EXPECTED_REMOVE_CALLBACK_ADMISSION')
+        remove_mutate(remove_prepare,'ret = hdd_mishare_module_remove_ready(hdd_ctx);', 'ret = 0 * hdd_mishare_module_remove_ready(hdd_ctx);','EXPECTED_REMOVE_CALLBACK_ADMISSION')
+        remove_mutate(remove_prepare,'ret = mishare_wonder_host_stop_ready_locked(hdd_ctx);','ret = 0 * mishare_wonder_host_stop_ready_locked(hdd_ctx);','EXPECTED_REMOVE_CALLBACK_ADMISSION')
+        remove_mutate(remove_prepare,'return mishare_wonder_backend_unregister(hdd_ctx);','return 0 * mishare_wonder_backend_unregister(hdd_ctx);','EXPECTED_REMOVE_CALLBACK_ADMISSION')
+        remove_gate=extract(ipci_remove,r'/\* MISHARE_SSR_STOP_BEGIN:remove_admission \*/\n.*?/\* MISHARE_SSR_STOP_END:remove_admission \*/')
+        remove_mutate(remove_gate,'if (errno)', 'if (false && errno)','EXPECTED_REMOVE_CALLBACK_ADMISSION')
+        remove_mutate(remove_gate,'\t\treturn;', '\t\tgoto out;','EXPECTED_REMOVE_SYNC_RETAINED')
+        remove_mutate(remove_prepare,'if (hdd_ctx->parent_dev != dev)', 'if (false && hdd_ctx->parent_dev != dev)','EXPECTED_REMOVE_CALLBACK_DEVICE')
+        assert len(remove_controls)==7
+        for changed,marker in remove_controls:
+            source.write_text(changed)
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+        remove_host_controls=[]
+        def remove_host_mutate(body,needle,replacement,marker):
+            assert body.count(needle)==1,needle
+            remove_host_controls.append((host_source.replace(body,body.replace(needle,replacement,1),1),marker))
+        begin_body=extract(host_source,r'^int mishare_ssr_stop_begin_locked\([^;{]+?\)\s*\{.*?^\}')
+        remove_query=extract(host_source,r'^int mishare_ssr_stop_remove_ready_locked\([^;{]+?\)\s*\{.*?^\}')
+        remove_host_mutate(prepare_ssr,'ret = mishare_wonder_host_stop_ready_locked(hdd);',
+                          'osif_psoc_sync_assert_trans_protected(hdd->parent_dev);\n    ret = mishare_wonder_host_stop_ready_locked(hdd);','EXPECTED_REMOVE_LOOKUP_LIFETIME')
+        remove_host_mutate(begin_body,'if (!mishare_host_hdd_mismatch(hdd) &&',
+                          'if (false && !mishare_host_hdd_mismatch(hdd) &&','EXPECTED_REMOVE_LOOKUP_LIFETIME')
+        remove_host_mutate(remove_query,'c->phase == MISHARE_SSR_STOP_EMPTY && !c->first_error && !c->paused',
+                          'c->phase == MISHARE_SSR_STOP_EMPTY','EXPECTED_REMOVE_CALLBACK_ADMISSION')
+        source.write_text(code)
+        for changed,marker in remove_host_controls:
+            (d/'wlan_hdd_mishare_host.c').write_text(changed)
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+        (d/'wlan_hdd_mishare_host.c').unlink()
+
+    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'negative_ssr_stop_controls_rejected':8,'negative_ssr_prepare_controls_rejected':7,'ssr_prepare_contract_cases':18,'ssr_journal_scenarios':8,'ssr_resume_scenarios':17,'ssr_upper_scenarios':16,'remove_scenarios':17,'negative_remove_controls_rejected':10,'native_remove_source_sha256':hashlib.sha256(remove_source.encode()).hexdigest(),'native_remove_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_mishare_module_remove_ready',module_remove),('hdd_mishare_remove_prepare',remove_prepare),('pld_ipci_remove',ipci_remove)]},'native_sync_resume_sha256':hashlib.sha256(sync_resume.encode()).hexdigest(),'native_sync_source_sha256':hashlib.sha256(sync_source.encode()).hexdigest(),'negative_ssr_upper_controls_rejected':10,'negative_ssr_resume_controls_rejected':10,'negative_ssr_journal_controls_rejected':8,'native_module_begin_sha256':hashlib.sha256(module_begin.encode()).hexdigest(),'native_module_finish_sha256':hashlib.sha256(module_finish.encode()).hexdigest(),'native_module_resume_sha256':hashlib.sha256(module_resume.encode()).hexdigest(),'ssr_stop_contract_cases':15,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
             'production_ssr_prepare_sha256':hashlib.sha256(prepare_ssr.encode()).hexdigest(),'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),'native_reset_sha256':hashlib.sha256(reset_native.encode()).hexdigest(),'native_reset_original_sha256':hashlib.sha256(reset_original.encode()).hexdigest(),'native_ssr_source_sha256':{name:hashlib.sha256((wlan/name).read_bytes()).hexdigest() for name in ['qcacld-3.0/core/hdd/src/wlan_hdd_main.c',power_path,ops_path,qdf_path]},'native_ssr_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_wlan_shutdown',power_native),('__hdd_soc_recovery_shutdown',soc_native),('hdd_soc_recovery_reinit',reinit_native),('qdf_status_from_os_return',qdf_from_os),('post_disable_section',post_native),('power_completion_helpers',power_completion)]},
             'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['actual native post-disable calls production SSR preparation and qualified host reclamation; failed CDS disable never admits cleanup', 'SSR prepare uses RTNL trylock, preserves empty/standalone/caller-owned/foreign-parent admission and exact recovery qualification, and unlocks on every pending/error/success result', 'asynchronous runtime token, quarantine policy and sync-close failure retain registry authority for later qualified polling', 'native SSR post-disable prefix refuses retained owners before modeled parent close and preserves CDS failure instead of entering its assert/teardown continuation', 'complete native power shutdown and SoC shutdown/reinit functions propagate private stop errors, retain failure across owner retirement, reject duplicate stop and block reinit with failure notification', 'native QDF errno-to-status converter executes unchanged; production post-disable qualified retirement success permits normal completion under modeled qualification, but metadata retirement plus pending parent stop still blocks', 'no-private-owner recovery, legacy status handling, HIF-missing and EPPING behavior preserved; suspended/IPA/capture power branches execute with modeled primitives', 'native hdd_reset_all_adapters skips exact registered private adapters before any link reset and balances current/next iterator references', 'caller-owned, runtime-attached, pending ordinary drain and handed-off pending SSR hosts retain ownership through native reset; modeled quarantine child also skips reset', 'empty registry and mixed STA/P2P/SAP/unowned PAS preserve native queue/WMM/scan/stop and VDEV reference boundaries; owned pointer at first/middle/last position', 'NULL lookup during pre-adapter construction is false; publication and global ownership lookup use the same registry lock', 'same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded', 'qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership', 'SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots', 'empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances', 'explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address', 'native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted', 'RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins', 'post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup', 'device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
-            'sanitizers':['address','undefined','leak detection'],'limitations':'Complete native power shutdown/internal SoC shutdown/reinit and a bounded post-disable section execute against modeled CDS/parent-stop/probe/IRQ primitives. The native post-disable call now invokes production host preparation and qualified reclamation. SSR qualification results and later parent/probe operations remain models; no fake CDS callback performs retirement. Only explicit POST_DISABLED transient waits have a native module-suffix resume API; the native reinit callback performs one qualified module poll and the shared power tail before clearing the upper gate; pending/hard failures retain the transition; no independent worker/timer is installed; hard failures have no reset API; this is failure admission/propagation, not a complete recovery coordinator. Physical remove/close is unchanged. Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. Native SSR post-disable now reaches the qualified bridge; native reinit-triggered continuation is installed; independent retry scheduling and physical-remove coordination remain unconnected. This does not certify native kernel locking, teardown or radio validation.'}
+            'sanitizers':['address','undefined','leak detection'],'limitations':'Complete native power shutdown/internal SoC shutdown/reinit and a bounded post-disable section execute against modeled CDS/parent-stop/probe/IRQ primitives. The native post-disable call now invokes production host preparation and qualified reclamation. SSR qualification results and later parent/probe operations remain models; no fake CDS callback performs retirement. Only explicit POST_DISABLED transient waits have a native module-suffix resume API; the native reinit callback performs one qualified module poll and the shared power tail before clearing the upper gate; pending/hard failures retain the transition; no independent worker/timer is installed; hard failures have no reset API; this is failure admission/propagation, not a complete recovery coordinator. IPCI remove preflight now refuses private lifetimes before sync unregister and preserves the transition; its actual callback, hardware disappearance and complete module unload remain uncoordinated and modeled here. Other bus remove paths are unchanged. Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. Native SSR post-disable now reaches the qualified bridge; native reinit-triggered continuation is installed; independent retry scheduling and physical-remove coordination remain unconnected. This does not certify native kernel locking, teardown or radio validation.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(stdout,end='')
 
 

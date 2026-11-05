@@ -282,10 +282,10 @@ int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd)
 
     if (!hdd || !hdd->parent_dev || !hdd->psoc)
         return -EINVAL;
-    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
     ret = mishare_wonder_host_stop_ready_locked(hdd);
     if (ret != -EBUSY)
         return ret;
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
     if (!cds_is_driver_recovering())
         return -ESHUTDOWN;
     ret = mishare_host_idle_candidate(hdd, &host);
@@ -336,6 +336,16 @@ int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *c,
     }
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     if (!cds_is_driver_recovering())
+        return 0;
+    /* Native PLD remove unregisters the PSOC lookup before HDD module stop.
+     * Its preflight has already drained operations under the retained native
+     * transition. A genuinely empty private lifetime needs no lookup/assert;
+     * any host/runtime or migrated HDD still takes the protected path below.
+     * This snapshot alone never authorizes parent teardown or owner adoption.
+     */
+    if (!mishare_host_hdd_mismatch(hdd) &&
+        !mishare_wonder_host_psoc_busy(hdd->psoc) &&
+        !mishare_runtime_psoc_busy(hdd->psoc))
         return 0;
     osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
     ret = mishare_wonder_host_stop_ready_locked(hdd);
@@ -487,6 +497,24 @@ int mishare_ssr_stop_resume_locked(struct mishare_ssr_stop_checkpoint *c,
         c->paused = false;
         *tracked = true;
     }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret;
+}
+
+int mishare_ssr_stop_remove_ready_locked(struct mishare_ssr_stop_checkpoint *c,
+                                        struct hdd_context *hdd)
+{
+    unsigned long flags;
+    int ret;
+
+    if (!c || !hdd || !hdd->parent_dev || !hdd->psoc)
+        return -EINVAL;
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (c->phase == MISHARE_SSR_STOP_EMPTY && !c->first_error && !c->paused)
+        ret = 0;
+    else
+        ret = mishare_ssr_checkpoint_matches(c, hdd, false) ? -EBUSY : -EUCLEAN;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     return ret;
 }
