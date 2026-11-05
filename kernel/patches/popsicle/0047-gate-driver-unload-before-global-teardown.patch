@@ -1,9 +1,40 @@
 --- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
 +++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
-@@ -22260,6 +22260,14 @@
+@@ -20724,15 +20724,28 @@
+ 	return 0;
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unload_forward */
++static void hdd_driver_unload_internal(bool *private_refused);
++/* MISHARE_SSR_STOP_END:unload_forward */
+ static void hdd_wlan_soft_driver_unload(void)
+ {
++
++/* MISHARE_SSR_STOP_BEGIN:unload_soft_local */
++	bool private_refused;
++/* MISHARE_SSR_STOP_END:unload_soft_local */
+ 	if (g_soft_unload) {
+ 		hdd_debug_rl("WiFi is already disabled");
+ 		return;
+ 	}
+ 	hdd_debug("Initiating soft driver unload\n");
+ 	g_soft_unload = true;
+-	hdd_driver_unload();
++
++/* MISHARE_SSR_STOP_BEGIN:unload_soft_call */
++	hdd_driver_unload_internal(&private_refused);
++	if (private_refused)
++		g_soft_unload = false;
++/* MISHARE_SSR_STOP_END:unload_soft_call */
+ }
+ 
+ static int hdd_wlan_idle_shutdown(struct hdd_context *hdd_ctx)
+@@ -22260,13 +22273,28 @@
  	hdd_sysfs_destroy_wifi_root_obj();
  }
  
+-void hdd_driver_unload(void)
 +
 +/* MISHARE_SSR_STOP_BEGIN:unload_helper */
 +int hdd_mishare_module_unload_ready(bool upper_blocked)
@@ -12,21 +43,24 @@
 +						 upper_blocked);
 +}
 +/* MISHARE_SSR_STOP_END:unload_helper */
- void hdd_driver_unload(void)
++static void hdd_driver_unload_internal(bool *private_refused)
  {
  	struct osif_driver_sync *driver_sync = NULL;
-@@ -22267,6 +22275,10 @@
+ 	struct hdd_context *hdd_ctx;
  	QDF_STATUS status;
  	void *hif_ctx;
  	bool soft_unload;
 +
 +/* MISHARE_SSR_STOP_BEGIN:unload_local */
 +	int mishare_ret;
++
++	if (private_refused)
++		*private_refused = false;
 +/* MISHARE_SSR_STOP_END:unload_local */
  
  	soft_unload = hdd_get_wlan_driver_status();
  	if (soft_unload) {
-@@ -22296,6 +22308,19 @@
+@@ -22296,6 +22324,21 @@
  		}
  	}
  
@@ -36,6 +70,8 @@
 +		osif_driver_sync_wait_for_ops(driver_sync);
 +	mishare_ret = hdd_mishare_unload_ready();
 +	if (mishare_ret) {
++		if (private_refused)
++			*private_refused = true;
 +		hdd_err("MiShare: unload refused before global teardown (%d)",
 +			mishare_ret);
 +		if (driver_sync)
@@ -46,6 +82,20 @@
  	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
  	if (hif_ctx) {
  		/*
+@@ -22366,6 +22409,13 @@
+ 	qdf_mem_check_prealloc_leaks();
+ 	hdd_place_marker(NULL, "UNLOAD DONE", NULL);
+ }
++
++/* MISHARE_SSR_STOP_BEGIN:unload_wrapper */
++void hdd_driver_unload(void)
++{
++	hdd_driver_unload_internal(NULL);
++}
++/* MISHARE_SSR_STOP_END:unload_wrapper */
+ 
+ 
+ #ifdef FEATURE_WLAN_RESIDENT_DRIVER
 --- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
 +++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
 @@ -1075,6 +1075,13 @@

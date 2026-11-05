@@ -2,7 +2,7 @@
 
 补丁 0047 在 `hdd_driver_unload()` 获得 driver transition 后，先排空操作并检查全局主机/运行时归属、模块停机记录和上层电源保护。有私有对象、跨 PSOC 归属、失败/等待/残留记录时，在修改 loaded/unloading 标志、注销总线、拆除组件之前返回，并释放本次取得的 driver transition。该检查不依赖当前 HDD 查找，不能用空 HDD 或切换父身份绕过。
 
-新增 17 组上层卸载场景、8 项错误注入待 CI 执行；53 项 Python 检查、源码组装、完整原生卸载体还原及补丁反向检查已通过。此时尚未宣称 C 或完整 WLAN 构建通过。见 [0115 说明](POPSICLE-DRIVER-UNLOAD-0115.md)。
+保留公开 void 接口，并通过逐次调用的拒绝结果恢复软卸载调用方预先设置的 `g_soft_unload`，避免拒绝后误报“已禁用”。新增 17 组上层卸载场景、4 组真实软卸载调用场景及 9 项错误注入待 CI 执行；53 项 Python 检查、源码组装、完整原生卸载体还原及补丁反向检查已通过。此时尚未宣称 C 或完整 WLAN 构建通过。见 [0115 说明](POPSICLE-DRIVER-UNLOAD-0115.md)。
 
 这是可返回的显式 driver unload 路径保护。内核 module_exit 返回无法取消模块移除；模块代码引用、外部物理卸载、既有 SSR transition 等待及完整卸载后半段仍未验收。radio 后端保持关闭，手机无需操作。
 

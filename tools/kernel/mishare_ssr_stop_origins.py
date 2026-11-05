@@ -3,6 +3,10 @@ import re
 
 ORIGINALS = {'unload_helper': '',
  'unload_upper': '',
+ 'unload_forward': '',
+ 'unload_soft_local': '',
+ 'unload_soft_call': '\thdd_driver_unload();\n',
+ 'unload_wrapper': '',
  'unload_local': '',
  'unload_admission': '',
  'post_error': '',
@@ -27,6 +31,8 @@ ORIGINALS = {'unload_helper': '',
  'reinit_complete': '\thdd_start_complete(0);\n'}
 
 def remove_ssr_stop_additions(text):
+    text = text.replace('static void hdd_driver_unload_internal(bool *private_refused)\n{',
+                        'void hdd_driver_unload(void)\n{')
     text = text.replace('static int hdd_mishare_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode,\n\t\t\t\t    bool mishare_resume)',
                         'int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)')
     # Journal tags may precede a complete native function. Remove each exact
