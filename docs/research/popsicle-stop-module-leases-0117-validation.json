@@ -8,38 +8,38 @@
     {
       "id": 127119755748,
       "name": "ce-buffers",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 127119755975,
       "name": "parent-peer-composite",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 127119756061,
       "name": "transport-stop",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 127119756063,
       "name": "ce-stop",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 127119756069,
       "name": "htt-callbacks",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 127119756127,
       "name": "diagnostic",
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success"
     },
     {
       "id": 127119756182,
@@ -48,7 +48,7 @@
       "conclusion": "success"
     }
   ],
-  "stage_offline_acceptance_complete": false,
+  "stage_offline_acceptance_complete": true,
   "fast_production_C_validation_passed": true,
   "artifact": {
     "id": 13397642719,
@@ -282,5 +282,141 @@
       "run": 41989858085,
       "reason": "Premature journal put mutation rejected at native resume completion rather than its old marker. Added paused-boundary lease assertion and precise expected markers."
     }
-  ]
+  ],
+  "full_diagnostic_report_artifact": {
+    "id": 13399407352,
+    "name": "popsicle-validation-41990018323-1",
+    "size_in_bytes": 121744,
+    "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13399407352",
+    "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13399407352/zip",
+    "expired": false,
+    "created_at": "2026-11-05T08:26:18Z",
+    "expires_at": "2026-11-12T08:26:17Z",
+    "updated_at": "2026-11-05T08:26:18Z",
+    "digest": "sha256:f7fca340ec11db3b3687637f1089330599b214ead008a6bdd0e11c6d68a5ad60",
+    "workflow_run": {
+      "id": 41990018323,
+      "repository_id": 1433402945,
+      "head_repository_id": 1433402945,
+      "head_branch": "main",
+      "head_sha": "726c9a2b042f7df8857bbf565b8a320afba7dc76"
+    }
+  },
+  "full_diagnostic_digest_verified": true,
+  "full_diagnostic_host_matches_fast": true,
+  "linked_module_sha256": "9b78f8654884e3974320a41b36d4844b0a4dda841f76b86c14f41c97abf7f196",
+  "recorded_loader_checks": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "modules": {
+      "wonder_sysctl": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+        "version_records": 6,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "opairshare_wonder_provider": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "8c2eab57990250393fe96011b09727a86f4d12bb27bb0d790662bebaed11da3c",
+        "version_records": 11,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "opairshare_route_b_probe": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+        "version_records": 3,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wonder": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+        "version_records": 110,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wlan": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "9b78f8654884e3974320a41b36d4844b0a4dda841f76b86c14f41c97abf7f196",
+        "version_records": 589,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      }
+    },
+    "wlan_unresolved": [],
+    "limitations": "Diagnostic .ko files only. No independent C type, private layout, KCFI, BTF, GKI access, firmware, loading or AirDrop certification."
+  },
+  "selected_layouts_status": "SELECTED_LAYOUTS_MATCH_ONLY",
+  "large_diagnostic_archive_downloaded": false
 }
