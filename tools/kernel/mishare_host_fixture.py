@@ -1520,8 +1520,8 @@ def run(wlan, output):
         journal_mutate('if (!ret && (c->phase != MISHARE_SSR_STOP_PARENTS || !modules_closed))',
                        'if (false && !ret && (c->phase != MISHARE_SSR_STOP_PARENTS || !modules_closed))', 'EXPECTED_JOURNAL_ACK')
         journal_mutate('ret = c->first_error;', 'ret = result;', 'EXPECTED_JOURNAL_FIRST_ERROR')
-        journal_mutate('if (c->phase != MISHARE_SSR_STOP_EMPTY) {\n        ret = mishare_ssr_checkpoint_matches',
-                       'if (cds_is_driver_recovering() && c->phase != MISHARE_SSR_STOP_EMPTY) {\n        ret = mishare_ssr_checkpoint_matches', 'EXPECTED_JOURNAL_REPLAY')
+        journal_mutate('if (c->phase != MISHARE_SSR_STOP_EMPTY || c->module_lease.held) {\n        ret = mishare_ssr_checkpoint_matches',
+                       'if (cds_is_driver_recovering() && (c->phase != MISHARE_SSR_STOP_EMPTY || c->module_lease.held)) {\n        ret = mishare_ssr_checkpoint_matches', 'EXPECTED_JOURNAL_REPLAY')
         assert len(journal_controls)==7
         source.write_text(code)
         for changed,marker in journal_controls:
