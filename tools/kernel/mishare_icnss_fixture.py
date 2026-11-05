@@ -87,6 +87,7 @@ static void prepare(bool going) {
  posts=post_error=power_offs=blocks=unblocks=status_calls=0;context_missing=platform_missing=swap_before_worker=false;sync_state.active=0;
  assert(!opairshare_wlan_execution_register_v2(&execution_descriptor));
  assert(!opairshare_wlan_execution_unregister_begin(THIS_MODULE,going));
+ assert(opairshare_wlan_execution_unregister_begin(&foreign_module,false)==-EBUSY);
 }
 /* Native remove receives the platform device; the fixture redirects identity
  * at assembly, preserving the production function body byte-for-byte.
