@@ -1,8 +1,8 @@
-## 最新阶段 0121（可选 ICNSS 注销扩展源码，待 CI 验证）
+## 最新阶段 0121（可选 ICNSS 注销扩展源码，生产 C 联合验证通过）
 
 补丁 0052 为锁定平台源码增加独立 `icnss_unregister_driver_checked_v1`，不扩展原生 ops 结构体。同步、不可中断事件携带本次归属和外部回执查询；remove 返回后先检查结果，失败保留 ops/PROBED/UNLOADING/关机阻塞，设置终止状态位并拒绝后续 checked/legacy 注销重放。无 probe 的 checked 清理暂时拒绝，未提供强制恢复接口。
 
-provider 增加只读、按设备身份检查的 remove 回执查询，未开始/未完成/失败不返回成功，不释放模块引用。新增联合夹具执行真实 provider、完整原生 PLD remove、平台 handler/新旧注销入口，以真实 pthread 模拟同步事件投递，并要求八项错误注入被拒绝。53 项 Python 检查、源码组装、三份平台源码完整还原及补丁正反检查通过，生产 C 待 CI。
+provider 增加只读、按设备身份检查的 remove 回执查询，未开始/未完成/失败不返回成功，不释放模块引用。新增联合夹具执行真实 provider、完整原生 PLD remove、平台 handler/新旧注销入口，以真实 pthread 模拟同步事件投递，并要求八项错误注入被拒绝。53 项 Python 检查、源码组装、三份平台源码完整还原及补丁正反检查通过，最新 [Actions 42105131303](https://github.com/xxz3312/XAirDrop-17/actions/runs/42105131303) 生产 C 快速作业通过：两组成功、12 组隔离 remove 失败、7 组准入拒绝、旧接口限制用例及八项错误注入通过，原有主机/runtime/外部执行回归通过（ASan/UBSan 与 leak detection）。紧凑 ZIP 摘要、重新组装的四套夹具和生产/原生哈希已核对。完整目标构建和其余作业仍在运行；平台二进制不属于本次构建。
 
 这是可选平台接口的实现和离线验证阶段：当前目标构建仍沿用原厂 ICNSS，WLAN 的现有注销调用方尚未改用新接口。平台二进制未构建/安装，新保护尚未作用于手机。需要完成平台构建/ABI/部署方案和消费者接入后，才能称作目标路径修复。其他电源/恢复入口与 module-exit 失败仍未协调；无线后端保持关闭。见 [0121 说明](POPSICLE-ICNSS-CHECKED-0121.md)。
 
