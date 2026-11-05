@@ -29,15 +29,15 @@ struct mutex {pthread_mutex_t value;};
 static void mutex_lock(struct mutex *m) {assert(!pthread_mutex_lock(&m->value));}
 static void mutex_unlock(struct mutex *m) {assert(!pthread_mutex_unlock(&m->value));}
 static _Thread_local bool in_wlan,expect_final_return,callback_returned;
-static atomic_int gets,puts;
+static atomic_int execution_get_count,execution_put_count;
 static bool try_module_get(struct module *m) {
- assert(m);atomic_fetch_add(&gets,1);if(atomic_load(&m->deny))return false;
+ assert(m);atomic_fetch_add(&execution_get_count,1);if(atomic_load(&m->deny))return false;
  atomic_fetch_add(&m->refs,1);return true;
 }
 static void module_put(struct module *m) {
  int previous=atomic_fetch_sub(&m->refs,1);assert(previous>0 && "EXPECTED_EXEC_PUT_BALANCE");
  if(previous==1 && expect_final_return)assert(!in_wlan && callback_returned && "EXPECTED_EXTERNAL_RETURN");
- atomic_fetch_add(&puts,1);
+ atomic_fetch_add(&execution_put_count,1);
 }
 #define EXPORT_SYMBOL(x)
 #define pr_err(...) ((void)0)
@@ -158,7 +158,7 @@ def run(wlan,output):
     provider=(ROOT/'kernel/provider/execution.c').read_text()
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
-        for name in ['module.h','mutex.h','errno.h','string.h']:(d/'linux'/name).write_text('/* boundary models */\n')
+        for name in ['module.h','mutex.h','string.h']:(d/'linux'/name).write_text('/* boundary models */\n')
         (d/'execution.c').write_text(provider)
         (d/'mishare_wlan_execution.h').write_text((ROOT/'kernel/provider/mishare_wlan_execution.h').read_text())
         source=d/'test.c';source.write_text(code);exe=d/'test'
