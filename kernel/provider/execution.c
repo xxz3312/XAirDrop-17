@@ -11,17 +11,20 @@ static struct mishare_wlan_execution_ops execution_ops;
 static unsigned int execution_active;
 static bool execution_closing;
 
-int opairshare_wlan_execution_register(const struct mishare_wlan_execution_ops *ops)
+int opairshare_wlan_execution_register_v2(const struct mishare_wlan_execution_ops *ops)
 {
     int ret = 0;
 
-    if (!ops || !ops->owner || !ops->reinit || !ops->shutdown)
+    if (!ops || !ops->owner || !ops->reinit || !ops->shutdown ||
+        !ops->idle_restart || !ops->idle_shutdown)
         return -EINVAL;
     mutex_lock(&execution_lock);
     if (execution_ops.owner) {
         if (execution_ops.owner != ops->owner ||
             execution_ops.reinit != ops->reinit ||
-            execution_ops.shutdown != ops->shutdown)
+            execution_ops.shutdown != ops->shutdown ||
+            execution_ops.idle_restart != ops->idle_restart ||
+            execution_ops.idle_shutdown != ops->idle_shutdown)
             ret = -EBUSY;
         else if (execution_closing)
             ret = -ESHUTDOWN;
@@ -34,7 +37,7 @@ int opairshare_wlan_execution_register(const struct mishare_wlan_execution_ops *
     mutex_unlock(&execution_lock);
     return ret;
 }
-EXPORT_SYMBOL(opairshare_wlan_execution_register);
+EXPORT_SYMBOL(opairshare_wlan_execution_register_v2);
 
 int opairshare_wlan_execution_close(struct module *owner)
 {
@@ -134,3 +137,36 @@ void opairshare_wlan_execution_shutdown(struct device *dev)
     execution_leave(ops.owner);
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_shutdown);
+
+
+int opairshare_wlan_execution_idle_restart(struct device *dev)
+{
+    struct mishare_wlan_execution_ops ops;
+    int ret;
+
+    if (!dev)
+        return -EINVAL;
+    ret = execution_enter(&ops);
+    if (ret)
+        return ret;
+    ret = ops.idle_restart(dev);
+    execution_leave(ops.owner);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_idle_restart);
+
+int opairshare_wlan_execution_idle_shutdown(struct device *dev)
+{
+    struct mishare_wlan_execution_ops ops;
+    int ret;
+
+    if (!dev)
+        return -EINVAL;
+    ret = execution_enter(&ops);
+    if (ret)
+        return ret;
+    ret = ops.idle_shutdown(dev);
+    execution_leave(ops.owner);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_idle_shutdown);

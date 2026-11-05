@@ -1,0 +1,46 @@
+--- a/qcacld-3.0/core/pld/src/pld_ipci.c
++++ b/qcacld-3.0/core/pld/src/pld_ipci.c
+@@ -488,7 +488,10 @@
+ 	if (!pld_context)
+ 		return -EINVAL;
+ 
+-	if (pld_context->ops->shutdown)
++
++/* MISHARE_SSR_STOP_BEGIN:execution_idle_guard */
++	if (pld_context->ops->idle_shutdown)
++/* MISHARE_SSR_STOP_END:execution_idle_guard */
+ 		return pld_context->ops->idle_shutdown(dev,
+ 						       PLD_BUS_TYPE_IPCI);
+ 
+@@ -564,8 +567,11 @@
+ 	.runtime_suspend = pld_ipci_runtime_suspend,
+ 	.runtime_resume  = pld_ipci_runtime_resume,
+ 	.uevent = pld_ipci_uevent,
+-	.idle_restart = pld_ipci_idle_restart_cb,
+-	.idle_shutdown = pld_ipci_idle_shutdown_cb,
++
++/* MISHARE_SSR_STOP_BEGIN:execution_idle_slots */
++	.idle_restart = opairshare_wlan_execution_idle_restart,
++	.idle_shutdown = opairshare_wlan_execution_idle_shutdown,
++/* MISHARE_SSR_STOP_END:execution_idle_slots */
+ #ifdef WLAN_FEATURE_SSR_DRIVER_DUMP
+ 	.collect_driver_dump = pld_ipci_collect_driver_dump,
+ #endif
+@@ -578,6 +584,8 @@
+ 	.owner = THIS_MODULE,
+ 	.reinit = pld_ipci_reinit,
+ 	.shutdown = pld_ipci_shutdown,
++	.idle_restart = pld_ipci_idle_restart_cb,
++	.idle_shutdown = pld_ipci_idle_shutdown_cb,
+ };
+ /* MISHARE_SSR_STOP_END:execution_descriptor */
+ int pld_ipci_register_driver(void)
+@@ -586,7 +594,7 @@
+ /* MISHARE_SSR_STOP_BEGIN:execution_register */
+ 	int ret, cleanup;
+ 
+-	ret = opairshare_wlan_execution_register(&pld_ipci_execution);
++	ret = opairshare_wlan_execution_register_v2(&pld_ipci_execution);
+ 	if (ret)
+ 		return ret;
+ 	ret = icnss_register_driver(&pld_ipci_ops);

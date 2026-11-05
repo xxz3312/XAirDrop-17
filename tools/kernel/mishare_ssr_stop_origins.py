@@ -1,7 +1,9 @@
 """Restore only bounded private SSR stop/error/reinit changes."""
 import re
 
-ORIGINALS = {'execution_include': '',
+ORIGINALS = {'execution_idle_slots': '\t.idle_restart = pld_ipci_idle_restart_cb,\n\t.idle_shutdown = pld_ipci_idle_shutdown_cb,\n',
+ 'execution_idle_guard': '\tif (pld_context->ops->shutdown)\n',
+ 'execution_include': '',
  'execution_descriptor': '',
  'execution_slots': '\t.shutdown   = pld_ipci_shutdown,\n\t.reinit     = pld_ipci_reinit,\n',
  'execution_register': '\treturn icnss_register_driver(&pld_ipci_ops);\n',

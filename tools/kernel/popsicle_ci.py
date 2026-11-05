@@ -637,6 +637,25 @@ def modules(work, link_only=False):
             for name in names:
                 path = REPO / 'kernel' / directory / (name + '.ko')
                 produced.append(path)
+                if name == 'opairshare_wonder_provider':
+                    output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
+                                                      '--defined-only', str(path)], text=True)
+                    defined = {line.split()[-1] for line in output.splitlines() if line.split()}
+                    required = ['opairshare_wlan_execution_register_v2',
+                                'opairshare_wlan_execution_close', 'opairshare_wlan_execution_unregister',
+                                'opairshare_wlan_execution_reinit', 'opairshare_wlan_execution_shutdown',
+                                'opairshare_wlan_execution_idle_restart', 'opairshare_wlan_execution_idle_shutdown']
+                    missing = sorted(symbol for symbol in required
+                                     if symbol not in defined or '__ksymtab_' + symbol not in defined)
+                    v1_alias = '__ksymtab_opairshare_wlan_execution_register' in defined
+                    contract = {'status': 'PROVIDER_EXECUTION_V2_EXPORTS_PRESENT_ONLY'
+                                if not missing and not v1_alias else 'REJECT',
+                                'required': required, 'missing': missing, 'v1_registration_alias': v1_alias,
+                                'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+                                'limitations': 'Linked/exported private ABI names only; no callback, loader or radio certification.'}
+                    (reports / 'provider-execution-module.json').write_text(json.dumps(contract, indent=2) + '\n')
+                    if missing or v1_alias:
+                        raise ValueError('Provider execution v2 export contract failed')
                 if name == 'wonder':
                     # Check the actual linked table even if a compile-time
                     # assertion was accidentally put in an inactive Makefile.

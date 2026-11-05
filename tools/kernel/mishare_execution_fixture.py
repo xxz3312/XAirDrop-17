@@ -46,7 +46,7 @@ static void module_put(struct module *m) {
 HARNESS = r'''
 #include "execution.c"
 #define PLD_BUS_TYPE_IPCI 42
-struct pld_ops {int (*reinit)(struct device *,int,void *,void *);void (*shutdown)(struct device *,int);};
+struct pld_ops {int (*reinit)(struct device *,int,void *,void *);void (*shutdown)(struct device *,int);int (*idle_restart)(struct device *,int);int (*idle_shutdown)(struct device *,int);};
 struct pld_context {struct pld_ops *ops;};
 static struct device dev={1};
 static int callback_result,private_refs,callback_calls;
@@ -68,40 +68,53 @@ static int vendor_reinit(struct device *d,int bus,void *bdev,void *bid) {
  assert(d==&dev && bus==42 && !bdev && !bid);vendor_body();return callback_result;
 }
 static void vendor_shutdown(struct device *d,int bus) {assert(d==&dev && bus==42);vendor_body();}
-static struct pld_ops native_ops={vendor_reinit,vendor_shutdown};
+static int vendor_idle_restart(struct device *d,int bus) {assert(d==&dev && bus==42);vendor_body();return callback_result;}
+static int vendor_idle_shutdown(struct device *d,int bus) {assert(d==&dev && bus==42);vendor_body();return callback_result;}
+static struct pld_ops native_ops={.reinit=vendor_reinit,.shutdown=vendor_shutdown,.idle_restart=vendor_idle_restart,.idle_shutdown=vendor_idle_shutdown};
 static struct pld_context native_context={&native_ops};
-static struct pld_context *pld_get_global_context(void) {return &native_context;}
+static bool context_missing;
+static struct pld_context *pld_get_global_context(void) {return context_missing?NULL:&native_context;}
 NATIVE_REINIT
 NATIVE_SHUTDOWN
-struct icnss_driver_ops {void (*shutdown)(struct device *);int (*reinit)(struct device *);};
-static struct icnss_driver_ops pld_ipci_ops={NATIVE_SLOTS};
+NATIVE_IDLE_RESTART
+NATIVE_IDLE_SHUTDOWN
+struct icnss_driver_ops {void (*shutdown)(struct device *);int (*reinit)(struct device *);int (*idle_restart)(struct device *);int (*idle_shutdown)(struct device *);};
+static struct icnss_driver_ops pld_ipci_ops={NATIVE_SLOTS NATIVE_IDLE_SLOTS};
 static int native_register_result,native_registers,native_unregisters;
 static int icnss_register_driver(struct icnss_driver_ops *ops) {
- assert(ops==&pld_ipci_ops && ops->shutdown==opairshare_wlan_execution_shutdown && ops->reinit==opairshare_wlan_execution_reinit && "EXPECTED_EXTERNAL_SLOTS");
+ assert(ops==&pld_ipci_ops && ops->shutdown==opairshare_wlan_execution_shutdown && ops->reinit==opairshare_wlan_execution_reinit && ops->idle_restart==opairshare_wlan_execution_idle_restart && ops->idle_shutdown==opairshare_wlan_execution_idle_shutdown && "EXPECTED_EXTERNAL_SLOTS");
  native_registers++;return native_register_result;
 }
 static void icnss_unregister_driver(struct icnss_driver_ops *ops) {assert(ops==&pld_ipci_ops && !execution_active && "EXPECTED_UNREGISTER_DRAIN");native_unregisters++;}
 NATIVE_DESCRIPTOR
 NATIVE_REGISTER
 NATIVE_UNREGISTER
+static int thread_kind;
 static void prepare(int private_count) {
  assert(!execution_ops.owner && !execution_active && !atomic_load(&wlan_module.refs));
- private_refs=private_count;atomic_store(&wlan_module.refs,private_count);atomic_store(&wlan_module.deny,false);
+ thread_kind=0;context_missing=false;private_refs=private_count;atomic_store(&wlan_module.refs,private_count);atomic_store(&wlan_module.deny,false);
  expect_final_return=false;callback_returned=false;in_wlan=false;blocking=entered=allow_return=false;callback_calls=0;callback_result=0;native_register_result=0;
 }
 static void invoke_shutdown(void) {expect_final_return=true;callback_returned=false;pld_ipci_ops.shutdown(&dev);expect_final_return=false;}
 static int invoke_reinit(void) {expect_final_return=true;callback_returned=false;int ret=pld_ipci_ops.reinit(&dev);expect_final_return=false;return ret;}
-static void *run_callback(void *unused) {(void)unused;assert(invoke_reinit()==-EIO);return NULL;}
+static int invoke_idle(bool shutdown,bool vendor_expected) {
+ expect_final_return=vendor_expected;callback_returned=false;
+ int ret=shutdown?pld_ipci_ops.idle_shutdown(&dev):pld_ipci_ops.idle_restart(&dev);
+ expect_final_return=false;return ret;
+}
+static void *run_callback(void *unused) {(void)unused;int ret=thread_kind?invoke_idle(thread_kind==1,true):invoke_reinit();assert(ret==-EIO);return NULL;}
 int main(void) {
- assert(opairshare_wlan_execution_register(NULL)==-EINVAL);
+ assert(opairshare_wlan_execution_register_v2(NULL)==-EINVAL);
  assert(opairshare_wlan_execution_close(NULL)==-EINVAL && opairshare_wlan_execution_unregister(NULL)==-EINVAL);
  assert(opairshare_wlan_execution_reinit(NULL)==-EINVAL);
  assert(opairshare_wlan_execution_reinit(&dev)==-ENODEV);opairshare_wlan_execution_shutdown(NULL);opairshare_wlan_execution_shutdown(&dev);
  prepare(0);struct mishare_wlan_execution_ops bad=pld_ipci_execution;bad.reinit=NULL;
- assert(opairshare_wlan_execution_register(&bad)==-EINVAL);
+ assert(opairshare_wlan_execution_register_v2(&bad)==-EINVAL);
+ bad=pld_ipci_execution;bad.idle_shutdown=NULL;assert(opairshare_wlan_execution_register_v2(&bad)==-EINVAL);
+ bad=pld_ipci_execution;bad.idle_restart=NULL;assert(opairshare_wlan_execution_register_v2(&bad)==-EINVAL);
  assert(!pld_ipci_register_driver());int registrations=native_registers;
  assert(pld_ipci_register_driver()==-EALREADY && native_registers==registrations && "EXPECTED_REGISTER_OWNERSHIP");
- bad=pld_ipci_execution;bad.owner=&foreign_module;assert(opairshare_wlan_execution_register(&bad)==-EBUSY);
+ bad=pld_ipci_execution;bad.owner=&foreign_module;assert(opairshare_wlan_execution_register_v2(&bad)==-EBUSY);
  assert(opairshare_wlan_execution_close(&foreign_module)==-EBUSY && !execution_closing);
  assert(opairshare_wlan_execution_unregister(&foreign_module)==-EBUSY && !execution_closing);
  assert(invoke_reinit()==0 && callback_calls==1 && !atomic_load(&wlan_module.refs) && "EXPECTED_EXTERNAL_RETURN");
@@ -112,11 +125,27 @@ int main(void) {
  assert(invoke_reinit()==-ESHUTDOWN);invoke_shutdown();assert(!callback_calls && !execution_active && !atomic_load(&wlan_module.refs) && "EXPECTED_EXEC_REFUSAL");atomic_store(&wlan_module.deny,false);pld_ipci_unregister_driver();
  prepare(0);assert(!pld_ipci_register_driver());assert(!opairshare_wlan_execution_close(&wlan_module));
  assert(invoke_reinit()==-ESHUTDOWN && "EXPECTED_CLOSING_REFUSAL");invoke_shutdown();assert(!callback_calls && "EXPECTED_CLOSING_REFUSAL");
- assert(opairshare_wlan_execution_register(&pld_ipci_execution)==-ESHUTDOWN);pld_ipci_unregister_driver();
+ assert(opairshare_wlan_execution_register_v2(&pld_ipci_execution)==-ESHUTDOWN);pld_ipci_unregister_driver();
  prepare(0);native_register_result=-EIO;assert(pld_ipci_register_driver()==-EIO && !execution_ops.owner && "EXPECTED_REGISTER_ROLLBACK");
- prepare(0);struct mishare_wlan_execution_ops copy=pld_ipci_execution;assert(!opairshare_wlan_execution_register(&copy));memset(&copy,0,sizeof(copy));
+ prepare(0);struct mishare_wlan_execution_ops copy=pld_ipci_execution;assert(!opairshare_wlan_execution_register_v2(&copy));memset(&copy,0,sizeof(copy));
  assert(invoke_reinit()==0 && callback_calls==1 && "EXPECTED_DESCRIPTOR_COPY");assert(!opairshare_wlan_execution_unregister(&wlan_module));
- prepare(1);assert(!pld_ipci_register_driver());blocking=true;callback_result=-EIO;
+
+ for(int kind=0;kind<2;kind++) {
+  prepare(1);assert(!pld_ipci_register_driver());callback_result=kind?-EINPROGRESS:-EAGAIN;
+  assert(invoke_idle(kind==0,true)==callback_result && callback_calls==1 && !private_refs && !atomic_load(&wlan_module.refs) && "EXPECTED_IDLE_RETURN");
+  pld_ipci_unregister_driver();
+ }
+ prepare(0);assert(!pld_ipci_register_driver());callback_result=-EIO;native_ops.shutdown=NULL;
+ assert(invoke_idle(true,false)==-EIO && callback_calls==1 && !atomic_load(&wlan_module.refs) && "EXPECTED_IDLE_GUARD");native_ops.shutdown=vendor_shutdown;
+ native_ops.idle_shutdown=NULL;assert(invoke_idle(true,false)==-ENODEV && "EXPECTED_IDLE_MISSING_CALLBACK");native_ops.idle_shutdown=vendor_idle_shutdown;
+ native_ops.idle_restart=NULL;assert(invoke_idle(false,false)==-ENODEV);native_ops.idle_restart=vendor_idle_restart;
+ context_missing=true;assert(invoke_idle(true,false)==-EINVAL && invoke_idle(false,false)==-EINVAL);context_missing=false;
+ assert(opairshare_wlan_execution_idle_restart(NULL)==-EINVAL && opairshare_wlan_execution_idle_shutdown(NULL)==-EINVAL);
+ atomic_store(&wlan_module.deny,true);assert(invoke_idle(true,false)==-ESHUTDOWN && invoke_idle(false,false)==-ESHUTDOWN);atomic_store(&wlan_module.deny,false);
+ assert(!opairshare_wlan_execution_close(&wlan_module));assert(invoke_idle(true,false)==-ESHUTDOWN && invoke_idle(false,false)==-ESHUTDOWN && "EXPECTED_IDLE_CLOSING");
+ assert(callback_calls==1 && !atomic_load(&wlan_module.refs));pld_ipci_unregister_driver();
+ for(int kind=0;kind<3;kind++) {
+ prepare(1);assert(!pld_ipci_register_driver());thread_kind=kind;blocking=true;callback_result=-EIO;
  pthread_t thread;assert(!pthread_create(&thread,NULL,run_callback,NULL));
  assert(!pthread_mutex_lock(&block_lock));while(!entered)assert(!pthread_cond_wait(&block_cond,&block_lock));assert(!pthread_mutex_unlock(&block_lock));
  assert(opairshare_wlan_execution_close(&wlan_module)==-EBUSY && "EXPECTED_CLOSE_DRAIN");
@@ -126,6 +155,7 @@ int main(void) {
  assert(!pthread_mutex_lock(&block_lock));allow_return=true;pthread_cond_broadcast(&block_cond);assert(!pthread_mutex_unlock(&block_lock));
  assert(!pthread_join(thread,NULL));assert(!atomic_load(&wlan_module.refs) && !execution_active);
  pld_ipci_unregister_driver();assert(native_unregisters==before+1 && !execution_ops.owner);
+ }
  assert(!opairshare_wlan_execution_unregister(&wlan_module));
  assert(!atomic_load(&foreign_module.refs));
  puts("MISHARE_EXTERNAL_EXECUTION_FIXTURE_PASS_ONLY");return 0;
@@ -143,6 +173,9 @@ def assemble(wlan):
     fragments={
         'NATIVE_REINIT':extract(native,r'^static int pld_ipci_reinit\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_SHUTDOWN':extract(native,r'^static void pld_ipci_shutdown\([^;{]+?\)\s*\{.*?^\}'),
+        'NATIVE_IDLE_RESTART':extract(native,r'^static int pld_ipci_idle_restart_cb\([^;{]+?\)\s*\{.*?^\}'),
+        'NATIVE_IDLE_SHUTDOWN':extract(native,r'^static int pld_ipci_idle_shutdown_cb\([^;{]+?\)\s*\{.*?^\}'),
+        'NATIVE_IDLE_SLOTS':extract(native,r'/\* MISHARE_SSR_STOP_BEGIN:execution_idle_slots \*/.*?/\* MISHARE_SSR_STOP_END:execution_idle_slots \*/'),
         'NATIVE_REGISTER':extract(native,r'^int pld_ipci_register_driver\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_UNREGISTER':extract(native,r'^void pld_ipci_unregister_driver\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_DESCRIPTOR':extract(native,r'^static const struct mishare_wlan_execution_ops pld_ipci_execution\s*=\s*\{.*?^\};'),
@@ -156,6 +189,8 @@ def run(wlan,output):
     if os.environ.get('GITHUB_ACTIONS')!='true':raise ValueError('Native compilation runs only on Actions')
     code,fragments,native=assemble(wlan)
     provider=(ROOT/'kernel/provider/execution.c').read_text()
+    assert 'EXPORT_SYMBOL(opairshare_wlan_execution_register);' not in provider
+    assert 'EXPORT_SYMBOL(opairshare_wlan_execution_register_v2);' in provider
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         for name in ['module.h','mutex.h','string.h']:(d/'linux'/name).write_text('/* boundary models */\n')
@@ -173,12 +208,17 @@ def run(wlan,output):
             (provider.replace('else if (execution_closing)\n        ret = -ESHUTDOWN;','else if (false && execution_closing)\n        ret = -ESHUTDOWN;',1),code,'EXPECTED_CLOSING_REFUSAL'),
             (provider.replace('if (execution_active)\n            ret = -EBUSY;','if (false && execution_active)\n            ret = -EBUSY;'),code,'EXPECTED_CLOSE_DRAIN'),
         ]
+        mutations += [
+            (provider.replace('ret = ops.idle_shutdown(dev);\n    execution_leave(ops.owner);','execution_leave(ops.owner);\n    ret = ops.idle_shutdown(dev);',1),code,'EXPECTED_EXEC_PIN'),
+            (provider,code.replace(fragments['NATIVE_IDLE_SLOTS'],fragments['NATIVE_IDLE_SLOTS'].replace('opairshare_wlan_execution_idle_shutdown','pld_ipci_idle_shutdown_cb',1),1),'EXPECTED_EXTERNAL_SLOTS'),
+            (provider,code.replace(fragments['NATIVE_IDLE_SHUTDOWN'],fragments['NATIVE_IDLE_SHUTDOWN'].replace('if (pld_context->ops->idle_shutdown)','if (pld_context->ops->shutdown)',1),1),'EXPECTED_IDLE_GUARD'),
+        ]
         for changed,changed_code,marker in mutations:
-            assert changed!=provider
+            assert changed!=provider or changed_code!=code
             (d/'execution.c').write_text(changed);source.write_text(changed_code);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=20)
             assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[:2000])
-    report={'status':'MISHARE_EXTERNAL_EXECUTION_FIXTURE_PASS_ONLY','source_commit':subprocess.check_output(['git','-C',str(wlan),'rev-parse','HEAD'],text=True).strip(),'fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256((ROOT/'kernel/provider/mishare_wlan_execution.h').read_bytes()).hexdigest(),'native_ipci_sha256':hashlib.sha256(native.encode()).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'negative_controls_rejected':len(mutations),'sanitizers':['address','undefined','leak detection'],'limitations':'Production external provider and full native IPCI register/unregister/reinit/shutdown functions execute with modeled module loader, ICNSS registration and vendor callbacks. Real pthread close versus callback overlap is exercised; native DSC, firmware, real rmmod and ICNSS unregister/error-path drain contracts are not executed. Only SSR shutdown/reinit slots use this boundary; remove, crash shutdown, other native callback types and managed metadata self-detach remain outside certification. A void unregister refusal still needs its upper caller to honor preflight; no hot-unplug or forced-unload safety.'}
+    report={'status':'MISHARE_EXTERNAL_EXECUTION_FIXTURE_PASS_ONLY','source_commit':subprocess.check_output(['git','-C',str(wlan),'rev-parse','HEAD'],text=True).strip(),'fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256((ROOT/'kernel/provider/mishare_wlan_execution.h').read_bytes()).hexdigest(),'native_ipci_sha256':hashlib.sha256(native.encode()).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'negative_controls_rejected':len(mutations),'idle_specific_controls_rejected':3,'concurrent_callback_kinds':['SSR reinit','idle shutdown','idle restart'],'registration_export':'opairshare_wlan_execution_register_v2','registration_v1_alias_exported':False,'sanitizers':['address','undefined','leak detection'],'limitations':'Production external provider and full native IPCI register/unregister/reinit/shutdown functions execute with modeled module loader, ICNSS registration and vendor callbacks. Real pthread close versus callback overlap is exercised; native DSC, firmware, real rmmod and ICNSS unregister/error-path drain contracts are not executed. SSR shutdown/reinit and idle shutdown/restart slots use this boundary; remove, crash shutdown, other native callback types and managed metadata self-detach remain outside certification. A void unregister refusal still needs its upper caller to honor preflight; no hot-unplug or forced-unload safety.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(out,end='')
 
 if __name__=='__main__':

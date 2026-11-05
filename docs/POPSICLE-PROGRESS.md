@@ -1,8 +1,16 @@
-## 最新阶段 0118（IPCI SSR 的外部执行/返回边界，生产 C 快速验证通过）
+## 最新阶段 0119（IPCI idle 回调外部执行引用，源码完成／CI 待验）
+
+补丁 0050 将 idle shutdown/restart 直接接到外部 provider，覆盖空闲回收释放最后主机引用后仍需返回 WLAN 调用栈的窗口。原生 idle shutdown 的指针检查从无关的 `shutdown` 修正为实际调用的 `idle_shutdown`；保留上下文缺失、回调缺失及原生 errno 传播。
+
+回调表扩展为 v2，使用独立登记导出名，不提供 v1 别名；provider/WLAN 需要同源配对构建。新增目标 provider 导出检查，要求七个执行接口并拒绝旧登记别名。53 项 Python 检查、源码组装、完整原生源码还原和补丁正反向检查通过；新增 idle 场景、三类 pthread 关闭重叠及三项新增错误注入待 CI，尚未宣称 C 或完整链接通过。见 [0119 说明](POPSICLE-IDLE-EXECUTION-0119.md)。
+
+remove 的模块注销期资格、其他原生回调和 metadata 自身解绑仍待协调。无线后端保持关闭，手机无需操作。
+
+## 阶段 0118（IPCI SSR 的外部执行/返回边界，完整离线验收通过）
 
 补丁 0049 将 ICNSS 的 SSR shutdown/reinit 槽直接指向独立 provider。provider 在进入完整 WLAN/PLD 回调前取得模块引用，全部 WLAN 调用栈返回后才释放，再返回外部 ICNSS。上层显式卸载在拆除前关闭入口；仍有执行中的回调时返回 busy 并保留登记，后续可重试。没有永久登记引用，也没有新增自动重试/强制清理接口。
 
-新增执行边界夹具覆盖真实 pthread 回调/关闭重叠、最后私有引用释放、取引用失败、重复/外部归属、登记回滚及五项外部错误注入；另有两组真实上层卸载前缀场景和一项 busy 传播错误注入。53 项 Python 检查、主机/外部夹具组装、完整原生 IPCI 源码还原及补丁正反向检查通过；[Actions 41994547385](https://github.com/xxz3312/XAirDrop-17/actions/runs/41994547385) 生产 C 快速作业通过：主机/runtime 既有回归、两组上层 busy 场景、一项上层错误传播变异、外部真实 pthread 重叠场景及五项外部错误注入全部成功（ASan/UBSan 与 leak detection）。紧凑 ZIP 摘要、重新组装的三套夹具、生产/原生 IPCI/provider/shared header 哈希已核对。完整目标模块链接及其余回归仍在运行，0118 尚未完整离线验收。见 [0118 说明](POPSICLE-EXTERNAL-EXECUTION-0118.md)。
+新增执行边界夹具覆盖真实 pthread 回调/关闭重叠、最后私有引用释放、取引用失败、重复/外部归属、登记回滚及五项外部错误注入；另有两组真实上层卸载前缀场景和一项 busy 传播错误注入。53 项 Python 检查、主机/外部夹具组装、完整原生 IPCI 源码还原及补丁正反向检查通过；[Actions 41994547385](https://github.com/xxz3312/XAirDrop-17/actions/runs/41994547385) 生产 C 快速作业通过：主机/runtime 既有回归、两组上层 busy 场景、一项上层错误传播变异、外部真实 pthread 重叠场景及五项外部错误注入全部成功（ASan/UBSan 与 leak detection）。紧凑 ZIP 摘要、重新组装的三套夹具、生产/原生 IPCI/provider/shared header 哈希已核对。七项作业全部成功；完整目标模块链接、选定布局、记录范围内的加载器与符号检查通过。完整/快速主机报告一致，紧凑诊断包摘要及准确源码哈希已核对，0118 完整离线验收完成。大型诊断归档未下载。见 [0118 说明](POPSICLE-EXTERNAL-EXECUTION-0118.md)。
 
 只覆盖 IPCI SSR shutdown/reinit 的 WLAN 返回栈；物理 remove、其他原生回调、metadata 自身解绑及真实 ICNSS 排空/模块加载器契约仍待验收。无线后端保持关闭，手机无需操作。
 

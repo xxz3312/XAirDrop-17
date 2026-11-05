@@ -4,7 +4,10 @@
 struct module;
 struct device;
 
-/* Copied into the external provider; never retained by descriptor address.
+/* V2 registration has a distinct export: old three-entry descriptors must
+ * never be read as this larger callback table. Rebuild provider and WLAN as
+ * a matched pair; no v1 registration alias is exported.
+ * Copied into the external provider; never retained by descriptor address.
  * Native unregister must drain callbacks before WLAN code/data can disappear.
  * These entry points must be registered DIRECTLY with the external framework:
  * calling them through another WLAN trampoline would leave a WLAN return PC.
@@ -13,10 +16,14 @@ struct mishare_wlan_execution_ops {
     struct module *owner;
     int (*reinit)(struct device *dev);
     void (*shutdown)(struct device *dev);
+    int (*idle_restart)(struct device *dev);
+    int (*idle_shutdown)(struct device *dev);
 };
-int opairshare_wlan_execution_register(const struct mishare_wlan_execution_ops *ops);
+int opairshare_wlan_execution_register_v2(const struct mishare_wlan_execution_ops *ops);
 int opairshare_wlan_execution_close(struct module *owner);
 int opairshare_wlan_execution_unregister(struct module *owner);
 int opairshare_wlan_execution_reinit(struct device *dev);
 void opairshare_wlan_execution_shutdown(struct device *dev);
+int opairshare_wlan_execution_idle_restart(struct device *dev);
+int opairshare_wlan_execution_idle_shutdown(struct device *dev);
 #endif
