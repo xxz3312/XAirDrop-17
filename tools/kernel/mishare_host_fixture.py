@@ -1303,12 +1303,13 @@ def run(wlan, output):
         assert bad.returncode == -6 and 'EXPECTED_NATIVE_SSR_RETIRE' in bad.stderr,(bad.returncode,bad.stderr[-1000:])
 
         journal_controls=[]
-        def journal_mutate(needle, replacement, marker):
-            assert host_source.count(needle)==1, needle
-            journal_controls.append((host_source.replace(needle,replacement,1),marker))
+        def journal_mutate(needle, replacement, marker, body=host_source):
+            assert body.count(needle)==1, needle
+            journal_controls.append((host_source.replace(body,body.replace(needle,replacement,1),1),marker))
         journal_mutate('c->phase = MISHARE_SSR_STOP_PREFIX;', 'c->phase = MISHARE_SSR_STOP_EMPTY;', 'EXPECTED_JOURNAL_ARM')
         journal_mutate('mishare_ssr_checkpoint_matches(c, hdd, false) ? -EBUSY : -EUCLEAN',
-                       'mishare_ssr_checkpoint_matches(c, hdd, false) ? 0 : -EUCLEAN', 'EXPECTED_JOURNAL_REPLAY')
+                       'mishare_ssr_checkpoint_matches(c, hdd, false) ? 0 : -EUCLEAN', 'EXPECTED_JOURNAL_REPLAY',
+                       body=extract(host_source,r'^int mishare_ssr_stop_begin_locked\([^;{]+?\)\s*\{.*?^\}'))
         journal_mutate('c->psoc == hdd->psoc &&', '(true || c->psoc == hdd->psoc) &&', 'EXPECTED_JOURNAL_IDENTITY')
         journal_mutate('phase == MISHARE_SSR_STOP_POST_DISABLED) ||',
                        '(phase == MISHARE_SSR_STOP_POST_DISABLED || phase == MISHARE_SSR_STOP_PARENTS)) ||', 'EXPECTED_JOURNAL_ORDER')

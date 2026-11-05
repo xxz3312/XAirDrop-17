@@ -165,9 +165,13 @@ def fixture(root):
         if hashlib.sha256(source.encode()).hexdigest() != expected:
             raise ValueError('Unbounded shutdown source delta: '+path)
     ops=(root/OPS).read_text();main=(root/MAIN).read_text()
+    # The IPCI preflight also detaches an already empty backend. Check the
+    # original remove hook against teardown in its own native function.
+    remove_begin=ops.index('static void __hdd_soc_remove(')
+    remove_body=ops[remove_begin:ops.index('\n}',remove_begin)+2]
     # Hooks must precede ordinary notifier/backend/context teardown; stop hook
     # follows the native early EAGAIN return, before policy callback removal.
-    for tag,body,after in [('ssr',ops,'cds_shutdown_notifier_call();'),('remove',ops,'mishare_wonder_backend_unregister(hdd_ctx);'),('module_stop',main,'hdd_deregister_policy_manager_callback(hdd_ctx->psoc);')]:
+    for tag,body,after in [('ssr',ops,'cds_shutdown_notifier_call();'),('remove',remove_body,'mishare_wonder_backend_unregister(hdd_ctx);'),('module_stop',main,'hdd_deregister_policy_manager_callback(hdd_ctx->psoc);')]:
         if body.index('MISHARE_SHUTDOWN_BEGIN:'+tag)>body.index(after):raise ValueError('Late shutdown hook: '+tag)
     predicate=insertion(ops,'platform').replace('#include "wlan_hdd_mishare_runtime.h"\n','')
     models=MODELS.replace('NATIVE_PLATFORM',predicate)
