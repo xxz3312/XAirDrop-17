@@ -86,16 +86,16 @@
  	qdf_mem_check_prealloc_leaks();
  	hdd_place_marker(NULL, "UNLOAD DONE", NULL);
  }
-+
 +/* MISHARE_SSR_STOP_BEGIN:unload_wrapper */
 +void hdd_driver_unload(void)
 +{
 +	hdd_driver_unload_internal(NULL);
 +}
 +/* MISHARE_SSR_STOP_END:unload_wrapper */
- 
++
  
  #ifdef FEATURE_WLAN_RESIDENT_DRIVER
+ EXPORT_SYMBOL(hdd_driver_unload);
 --- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
 +++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
 @@ -1075,6 +1075,13 @@
