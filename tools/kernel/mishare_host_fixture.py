@@ -1607,7 +1607,7 @@ def run(wlan, output):
         (d/'wlan_hdd_mishare_host.c').unlink(missing_ok=True)
         source.write_text(code)
         module_controls=[
-            (host_source.replace('if (!try_module_get(THIS_MODULE))', 'if (false && !try_module_get(THIS_MODULE))',1),'EXPECTED_MODULE_LIVE'),
+            (host_source.replace('if (!try_module_get(THIS_MODULE))', 'if (false && !try_module_get(THIS_MODULE))',1),'EXPECTED_MODULE_PUT_BALANCE'),
             (host_source.replace('module_put(THIS_MODULE);','if (false) module_put(THIS_MODULE);'),'EXPECTED_MODULE_RELEASE'),
             (host_source.replace('    hdd_close_adapter(host->hdd, adapter, true);','    module_put(THIS_MODULE);\n    hdd_close_adapter(host->hdd, adapter, true);',1),'EXPECTED_MODULE_LIVE')]
         for changed,marker in module_controls:
