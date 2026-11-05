@@ -122,6 +122,14 @@ int mishare_ssr_stop_remove_ready_locked(struct mishare_ssr_stop_checkpoint *c,
                                         struct hdd_context *hdd);
 int hdd_mishare_module_remove_ready(struct hdd_context *hdd);
 int hdd_mishare_remove_prepare(struct device *dev);
+/* Admission for explicit driver unload under its exclusive transition after
+ * draining operations. Global registries and journal must be empty. This
+ * cannot veto the kernel module exit callback or prevent physical removal.
+ */
+int hdd_mishare_module_unload_ready(bool upper_blocked);
+int hdd_mishare_unload_ready(void);
+int mishare_ssr_stop_unload_ready_locked(struct mishare_ssr_stop_checkpoint *c,
+                                        bool upper_blocked);
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;

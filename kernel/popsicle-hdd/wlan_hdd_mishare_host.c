@@ -315,6 +315,29 @@ static bool mishare_ssr_checkpoint_matches(struct mishare_ssr_stop_checkpoint *c
            (c->pdev == hdd->pdev || (parents_may_be_closed && !hdd->pdev));
 }
 
+int mishare_ssr_stop_unload_ready_locked(struct mishare_ssr_stop_checkpoint *c,
+                                        bool upper_blocked)
+{
+    unsigned long flags;
+    bool busy;
+
+    if (!c)
+        return -EINVAL;
+    /* Caller retains the exclusive DRIVER transition and drains operations.
+     * Do not scope this check to a current HDD/PSOC lookup: it can be missing
+     * or replaced while a foreign owner or failed journal is still retained.
+     * Never nest host and runtime registry locks.
+     */
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    busy = upper_blocked || c->phase != MISHARE_SSR_STOP_EMPTY ||
+           c->first_error || c->paused || c->hdd || c->parent_dev ||
+           c->psoc || c->pdev || c->driver_status || mishare_hosts;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    if (busy || mishare_runtime_any_busy())
+        return -EBUSY;
+    return 0;
+}
+
 int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *c,
                                  struct hdd_context *hdd, bool *tracked)
 {

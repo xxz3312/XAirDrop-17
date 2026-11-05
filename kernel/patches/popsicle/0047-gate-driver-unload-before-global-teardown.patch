@@ -1,0 +1,64 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -22260,6 +22260,14 @@
+ 	hdd_sysfs_destroy_wifi_root_obj();
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unload_helper */
++int hdd_mishare_module_unload_ready(bool upper_blocked)
++{
++	return mishare_ssr_stop_unload_ready_locked(&mishare_module_stop,
++						 upper_blocked);
++}
++/* MISHARE_SSR_STOP_END:unload_helper */
+ void hdd_driver_unload(void)
+ {
+ 	struct osif_driver_sync *driver_sync = NULL;
+@@ -22267,6 +22275,10 @@
+ 	QDF_STATUS status;
+ 	void *hif_ctx;
+ 	bool soft_unload;
++
++/* MISHARE_SSR_STOP_BEGIN:unload_local */
++	int mishare_ret;
++/* MISHARE_SSR_STOP_END:unload_local */
+ 
+ 	soft_unload = hdd_get_wlan_driver_status();
+ 	if (soft_unload) {
+@@ -22296,6 +22308,19 @@
+ 		}
+ 	}
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unload_admission */
++	if (driver_sync)
++		osif_driver_sync_wait_for_ops(driver_sync);
++	mishare_ret = hdd_mishare_unload_ready();
++	if (mishare_ret) {
++		hdd_err("MiShare: unload refused before global teardown (%d)",
++			mishare_ret);
++		if (driver_sync)
++			osif_driver_sync_trans_stop(driver_sync);
++		return;
++	}
++/* MISHARE_SSR_STOP_END:unload_admission */
+ 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+ 	if (hif_ctx) {
+ 		/*
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -1075,6 +1075,13 @@
+ 	return errno;
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:unload_upper */
++int hdd_mishare_unload_ready(void)
++{
++	return hdd_mishare_module_unload_ready(mishare_ssr_stop_blocked);
++}
++/* MISHARE_SSR_STOP_END:unload_upper */
+ 
+ /* MISHARE_SSR_STOP_BEGIN:remove_prepare */
+ int hdd_mishare_remove_prepare(struct device *dev)

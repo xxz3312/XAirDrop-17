@@ -177,9 +177,10 @@ static struct mishare_runtime_status state(struct mishare_runtime_owner *o) { st
 int main(void) {
  struct mishare_runtime_owner *o=NULL,*other=NULL;
  struct wlan_objmgr_psoc foreign_psoc={0};
+ assert(!mishare_runtime_any_busy());
  assert(!mishare_runtime_psoc_busy(NULL) && !mishare_runtime_psoc_busy(&psoc));
- struct mishare_runtime_owner pending={.psoc=&psoc};assert(!mishare_runtime_owners);mishare_runtime_owners=&pending;
- assert(mishare_runtime_psoc_busy(&psoc) && !mishare_runtime_psoc_busy(&foreign_psoc));pending.state.draining=true;pending.state.blocked=true;pending.state.freed=true;pending.state.reclaim_error=-EUCLEAN;assert(mishare_runtime_psoc_busy(&psoc));mishare_runtime_owners=NULL;
+ struct mishare_runtime_owner pending={.psoc=&psoc};assert(!mishare_runtime_owners);mishare_runtime_owners=&pending;assert(mishare_runtime_any_busy());
+ assert(mishare_runtime_psoc_busy(&psoc) && !mishare_runtime_psoc_busy(&foreign_psoc));pending.state.draining=true;pending.state.blocked=true;pending.state.freed=true;pending.state.reclaim_error=-EUCLEAN;assert(mishare_runtime_psoc_busy(&psoc));mishare_runtime_owners=NULL;assert(!mishare_runtime_any_busy());
 
  assert(mishare_runtime_destroy(NULL)==-EINVAL && !mishare_runtime_destroy(&o));
  assert(mishare_runtime_create(NULL,mac,&pdev,&wdev,&o)==-EINVAL);

@@ -1,7 +1,11 @@
 """Restore only bounded private SSR stop/error/reinit changes."""
 import re
 
-ORIGINALS = {'post_error': '',
+ORIGINALS = {'unload_helper': '',
+ 'unload_upper': '',
+ 'unload_local': '',
+ 'unload_admission': '',
+ 'post_error': '',
  'post_ready': '',
  'power_include': '',
  'ops_state': '',

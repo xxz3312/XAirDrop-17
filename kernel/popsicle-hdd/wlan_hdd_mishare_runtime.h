@@ -72,6 +72,8 @@ bool mishare_runtime_platform_available(struct wlan_objmgr_psoc *psoc);
  * with an exclusive parent transition. Not a reference or teardown barrier.
  */
 bool mishare_runtime_psoc_busy(struct wlan_objmgr_psoc *psoc);
+/* Global unload admission includes standalone and foreign-PSOC owners. */
+bool mishare_runtime_any_busy(void);
 /* Called only after native scheduler_disable returns success. Records a
  * per-owner MC observation; readiness also requires every reservation to exit.
  * Does not acknowledge firmware, stop IRQ/timers or free native NDI resources.

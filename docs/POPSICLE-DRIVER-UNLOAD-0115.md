@@ -1,0 +1,17 @@
+# 0115 Explicit driver unload admission
+
+The IPCI remove callback is void. Returning early there does not stop its caller from continuing global teardown. Patch 0047 therefore checks admission earlier in `hdd_driver_unload()`, after acquiring the existing driver transition and draining operations, before HIF resume, unload flags, sysfs removal, driver unregister and component teardown. On refusal it releases the transition acquired by this invocation and returns without resetting the journal or retiring any private owner.
+
+Admission covers all host and runtime registry entries, regardless of current HDD/PSOC lookup, the module journal (including corrupt residual identities), and the separate upper power gate. Host and runtime registry locks are sampled separately under the caller's driver transition; locks are never nested. The pre-existing PCIe link-resume-failure path still lacks a driver transition; it receives only a locked global admission snapshot and gains no new concurrency certification.
+
+The native module-stop checkpoint remains in the main source and the upper power gate remains in driver-ops. Two small wrappers bridge their existing scopes. `mishare_runtime_any_busy()` adds a global registry query so foreign PSOCs and standalone owners cannot be hidden by a missing/replaced HDD. No new worker, timer, forced clear, implicit adoption or radio activation is installed.
+
+## Validation checkpoint
+
+Locally, 53 Python tests, Python syntax, source assembly, complete native unload restoration to the pinned original, patch reverse check and whitespace checks passed. The production host fixture adds seventeen explicit unload-prefix scenarios and eight mutation controls. These and full WLAN linking require Actions; they are not claimed as passing until an associated run is checked. The runtime fixture checks the new global query against empty and retained entries.
+
+The fixture executes the actual native function prefix through its admission point, with modeled driver synchronization, link status, logging and current mode. It checks normal/soft empty admission, driver transition failure, PCIe link-failure paths, caller-owned and handed-off hosts, local/foreign runtimes, active/error/paused/residual journals, upper gate retention, operation drain and refusal transition release. The remainder of `hdd_driver_unload()` is source-audited, not executed. Existing native teardown/SSR fixtures retain their separate limits.
+
+## Remaining lifetime work
+
+This guard protects an explicit unload caller that can return to its caller. Returning from a kernel module exit callback cannot cancel module removal. Normal module-text lifetime must be held by module references before that callback is eligible; forced unload and hardware disappearance need distinct handling. An existing held SSR child transition may also block the original driver transition wait before reaching this check. No module exit veto, module-text lease, complete unload coordinator, physical hot-unplug safety or Apple interoperability is certified. Radio stays disabled and no phone operation is required.
