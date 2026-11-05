@@ -12,6 +12,7 @@ static unsigned int execution_active;
 static bool execution_closing;
 static bool unregister_scope, unregister_pin;
 static struct device *unregister_remove_dev;
+static struct device *unregister_completed_dev;
 static int unregister_error;
 
 
@@ -205,6 +206,7 @@ int opairshare_wlan_execution_unregister_begin(struct module *owner, bool borrow
             unregister_pin = !borrowed_exit;
             unregister_error = 0;
             unregister_remove_dev = NULL;
+            unregister_completed_dev = NULL;
             unregister_scope = true;
         }
     }
@@ -234,6 +236,7 @@ int opairshare_wlan_execution_remove_begin(struct module *owner, struct device *
         }
         else {
             unregister_remove_dev = dev;
+            unregister_completed_dev = NULL;
             *recorded = true;
         }
     }
@@ -258,6 +261,7 @@ int opairshare_wlan_execution_remove_end(struct module *owner, struct device *de
             unregister_error = ret;
     } else {
         unregister_remove_dev = NULL;
+        unregister_completed_dev = dev;
         if (result && !unregister_error)
             unregister_error = result;
         ret = unregister_error;
@@ -300,3 +304,28 @@ int opairshare_wlan_execution_unregister_end(struct module *owner, int result)
     return ret;
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_unregister_end);
+
+/* Platform may observe a receipt before it clears ops or powers off. Never
+ * releases the scope or invokes WLAN. Exact device identity is required.
+ */
+int opairshare_wlan_execution_remove_status(struct device *dev)
+{
+    int ret = 0;
+
+    if (!dev)
+        return -EINVAL;
+    mutex_lock(&execution_lock);
+    if (!unregister_scope || !execution_ops.owner)
+        ret = -ENOENT;
+    else if (unregister_error)
+        ret = unregister_error;
+    else if (unregister_remove_dev || execution_active)
+        ret = -EINPROGRESS;
+    else if (!unregister_completed_dev)
+        ret = -ENODATA;
+    else if (unregister_completed_dev != dev)
+        ret = -EXDEV;
+    mutex_unlock(&execution_lock);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_remove_status);

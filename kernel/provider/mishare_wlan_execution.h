@@ -35,4 +35,6 @@ int opairshare_wlan_execution_unregister_begin(struct module *owner, bool borrow
 int opairshare_wlan_execution_unregister_end(struct module *owner, int result);
 int opairshare_wlan_execution_remove_begin(struct module *owner, struct device *dev, bool *recorded);
 int opairshare_wlan_execution_remove_end(struct module *owner, struct device *dev, int result);
+/* Read-only observation for a matched checked platform callback. */
+int opairshare_wlan_execution_remove_status(struct device *dev);
 #endif

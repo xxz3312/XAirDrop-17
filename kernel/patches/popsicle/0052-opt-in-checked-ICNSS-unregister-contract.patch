@@ -1,0 +1,136 @@
+From: XAirDrop-17
+Subject: [PATCH] Add opt-in checked ICNSS unregister platform contract
+
+--- a/platform/icnss2/main.c
++++ b/platform/icnss2/main.c
+@@ -2407,33 +2407,56 @@
+ 	return ret;
+ }
+ 
++
++/* MISHARE_ICNSS_BEGIN:handler */
++struct icnss_unregister_guard_v1 {
++	struct icnss_driver_ops *ops;
++	int (*remove_status)(struct device *dev);
++};
++
+ static int icnss_driver_event_unregister_driver(struct icnss_priv *priv,
+ 							 void *data)
+ {
++	struct icnss_unregister_guard_v1 *guard = data;
++	int ret;
++
++	/* A refused remove is terminal: legacy events must not bypass it. */
++	if (test_bit(ICNSS_DRIVER_UNREGISTER_FAILED, &priv->state))
++		return -ESHUTDOWN;
++	if (guard && (guard->ops != priv->ops || !guard->remove_status))
++		return -EINVAL;
++	/* No-probe cleanup needs a separate proof of empty private ownership. */
++	if (guard && (!test_bit(ICNSS_DRIVER_PROBED, &priv->state) ||
++		      !priv->ops || !priv->ops->remove))
++		return -ENODEV;
+ 	if (!test_bit(ICNSS_DRIVER_PROBED, &priv->state)) {
+ 		priv->ops = NULL;
+ 		goto out;
+ 	}
+ 
+ 	set_bit(ICNSS_DRIVER_UNLOADING, &priv->state);
+-
+ 	icnss_block_shutdown(true);
+-
+ 	if (priv->ops)
+ 		priv->ops->remove(&priv->pdev->dev);
+-
++	if (guard) {
++		ret = guard->remove_status(&priv->pdev->dev);
++		if (ret) {
++			/* Retain ops, PROBED, UNLOADING and shutdown block. There is
++			 * no retry/reset API and no power-off after this refusal.
++			 */
++			set_bit(ICNSS_DRIVER_UNREGISTER_FAILED, &priv->state);
++			return ret;
++		}
++	}
+ 	icnss_block_shutdown(false);
+-
+ 	clear_bit(ICNSS_DRIVER_UNLOADING, &priv->state);
+ 	clear_bit(ICNSS_DRIVER_PROBED, &priv->state);
+-
+ 	priv->ops = NULL;
+-
+ 	icnss_hw_power_off(priv);
+-
+ out:
+ 	return 0;
+ }
++/* MISHARE_ICNSS_END:handler */
+ 
+ static int icnss_fw_crashed(struct icnss_priv *priv,
+ 			    struct icnss_event_pd_service_down_data *event_data)
+@@ -4086,6 +4109,35 @@
+ }
+ EXPORT_SYMBOL(icnss_unregister_driver);
+ 
++/* MISHARE_ICNSS_BEGIN:checked_entry */
++/* The stack guard is valid only because event_post is uninterruptible and
++ * synchronous. The caller retains callback code/data until this returns.
++ * Do not convert to asynchronous posting or use the interruptible flag.
++ */
++int icnss_unregister_driver_checked_v1(struct icnss_driver_ops *ops,
++				    int (*remove_status)(struct device *dev))
++{
++	struct icnss_priv *priv = icnss_get_plat_priv();
++	struct icnss_unregister_guard_v1 guard = {
++		.ops = ops,
++		.remove_status = remove_status,
++	};
++
++	if (!ops || !remove_status)
++		return -EINVAL;
++	if (!priv || !priv->pdev)
++		return -ENODEV;
++	if (test_bit(ICNSS_DRIVER_UNREGISTER_FAILED, &priv->state))
++		return -ESHUTDOWN;
++	if (!priv->ops || priv->ops != ops)
++		return -ENOENT;
++	return icnss_driver_event_post(priv,
++				      ICNSS_DRIVER_EVENT_UNREGISTER_DRIVER,
++				      ICNSS_EVENT_SYNC_UNINTERRUPTIBLE, &guard);
++}
++EXPORT_SYMBOL(icnss_unregister_driver_checked_v1);
++/* MISHARE_ICNSS_END:checked_entry */
++
+ static struct icnss_msi_config msi_config_wcn6750 = {
+ 	.total_vectors = 28,
+ 	.total_users = MSI_USERS,
+--- a/platform/icnss2/main.h
++++ b/platform/icnss2/main.h
+@@ -197,6 +197,10 @@
+ 	ICNSS_LOW_POWER,
+ 	ICNSS_SOC_WAKE_DONE,
+ 	ICNSS_REBOOT_REGISTERED,
++
++/* MISHARE_ICNSS_BEGIN:failure_bit */
++	ICNSS_DRIVER_UNREGISTER_FAILED,
++/* MISHARE_ICNSS_END:failure_bit */
+ };
+ 
+ struct ce_irq_list {
+--- a/platform/inc/icnss2.h
++++ b/platform/inc/icnss2.h
+@@ -198,6 +198,15 @@
+ 				   struct module *owner, const char *mod_name);
+ 
+ extern int icnss_unregister_driver(struct icnss_driver_ops *ops);
++
++/* MISHARE_ICNSS_BEGIN:checked_decl */
++/* Optional platform extension. Requires a matched rebuilt ICNSS module.
++ * Callback must report the external unregister scope's completed remove;
++ * returning from the native void remove alone is not success evidence.
++ */
++extern int icnss_unregister_driver_checked_v1(struct icnss_driver_ops *ops,
++				    int (*remove_status)(struct device *dev));
++/* MISHARE_ICNSS_END:checked_decl */
+ 
+ extern int icnss_wlan_enable(struct device *dev,
+ 			     struct icnss_wlan_enable_cfg *config,
