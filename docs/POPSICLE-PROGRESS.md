@@ -1,8 +1,8 @@
-## 最新阶段 0116（主机与运行时对象的模块引用，源码完成／CI 待验）
+## 最新阶段 0116（主机与运行时模块引用，生产 C 快速验证通过）
 
 主机对象与独立 runtime owner 各自在分配/发布前通过 `try_module_get(THIS_MODULE)` 取得一份 WLAN 模块引用。模块已进入退出态时拒绝新建；分配失败、父引用失败、重复/隔离准入失败等回滚路径释放引用。异步删除、隔离保留、物理 VDEV 已释放但 owner 尚未退役时继续持有；仅最终登记移除与存储释放后 `module_put()`。host/runtime 可分别存活，不能互相替代引用。
 
-新增主机模块引用场景、主机与 runtime 各三项错误注入，以及最终回收引用边界断言待 CI 执行。53 项 Python 检查、主机及 runtime/radio/work/recovery/batch/completed/final 夹具源码组装、原生源码还原审计通过。尚未宣称本阶段 C 或完整链接通过。见 [0116 说明](POPSICLE-OWNER-MODULE-REFS-0116.md)。
+[Actions 41986954101](https://github.com/xxz3312/XAirDrop-17/actions/runs/41986954101) 生产 C 主机/runtime 快速作业通过：五项主机模块引用场景、主机与 runtime 各三项新增错误注入及既有场景通过（ASan/UBSan 与 leak detection）。紧凑 ZIP 摘要、生产源码及重新组装的主机/runtime 夹具哈希已核对。53 项 Python 检查通过；完整 WLAN 构建及其余回归仍在运行，本阶段尚未完整离线验收。首次运行的缺少 get 变异在回滚 module_put 平衡断言处提前捕获，现修正预期标记，生产代码未改。见 [0116 说明](POPSICLE-OWNER-MODULE-REFS-0116.md)。
 
 独立停机记录与上层电源保护在对象退役后仍可能存活，本阶段尚未为它们持有模块引用；整个 kernel module exit 协调尚未闭合。调用方继续负责原生执行与父资源同步，强制卸载和物理消失未获认证。无线后端保持关闭，手机无需操作。
 
