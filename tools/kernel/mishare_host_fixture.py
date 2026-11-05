@@ -604,7 +604,7 @@ static void ssr_resume_cases(struct hdd_context *h,struct wireless_dev *wdev)
   memset(reset_slots,0,sizeof(reset_slots));memset(reset_refs,0,sizeof(reset_refs));reset_holds=reset_puts=0;reset_slots[0]=active;
   runtime_ssr=true;rtnl_owned=false;rtnl_contended=kind==1;is_recovery_cleanup_done=0;trace[0]=0;
   __hdd_soc_recovery_shutdown();rtnl_contended=false;
-  assert(mishare_module_stop.phase==MISHARE_SSR_STOP_POST_DISABLED && mishare_module_stop.paused && !mishare_module_stop.first_error && "EXPECTED_SSR_WAIT_PAUSE");
+  assert(mishare_module_stop.phase==MISHARE_SSR_STOP_POST_DISABLED && mishare_module_stop.paused && mishare_module_stop.module_lease.held && !mishare_module_stop.first_error && "EXPECTED_SSR_WAIT_PAUSE");
   assert(mishare_ssr_stop_blocked && active && !ssr_tail && !ssr_parent_closes && ssr_module_prefixes==1 && ssr_post_calls==1);
   assert(reset_holds==1 && reset_puts==1 && !reset_refs[0]);memset(reset_slots,0,sizeof(reset_slots));
   batch_rc=0;int result=0;struct osif_vdev_sync *sync=registered,foreign_sync={0};
@@ -1696,7 +1696,7 @@ def run(wlan, output):
         for body,needle,replacement,markers in [
             (journal_begin,'ret = mishare_module_lease_get(&c->module_lease);','ret = 0;', ['EXPECTED_JOURNAL_MODULE_RETAINED','EXPECTED_JOURNAL_MODULE_REFUSAL','EXPECTED_JOURNAL_MODULE_WAIT']),
             (journal_finish,'mishare_module_lease_put(&completed_lease);','if (false) mishare_module_lease_put(&completed_lease);',['EXPECTED_JOURNAL_MODULE_RELEASE','EXPECTED_POWER_LEASE_WINDOW']),
-            (journal_pause,'c->paused = true;','c->paused = true;\n        mishare_module_lease_put(&c->module_lease);',['EXPECTED_JOURNAL_MODULE_WAIT','EXPECTED_UPPER_RESULT','EXPECTED_SSR_NATIVE_CONTINUATION'])]:
+            (journal_pause,'c->paused = true;','c->paused = true;\n        mishare_module_lease_put(&c->module_lease);',['EXPECTED_JOURNAL_MODULE_WAIT','EXPECTED_SSR_WAIT_PAUSE','EXPECTED_UPPER_RESULT','EXPECTED_SSR_RESUME_COMPLETE'])]:
             assert body.count(needle)==1
             lease_controls.append((code,host_source.replace(body,body.replace(needle,replacement,1),1),markers))
         for body,needle,replacement,markers in [
