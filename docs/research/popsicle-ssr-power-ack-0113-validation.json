@@ -4,7 +4,7 @@
   "production_source_commit": "1be753e25413e9b4ad343800b9675d4a1439270a",
   "workflow_run": 41930505140,
   "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/41930505140",
-  "stage_offline_acceptance_complete": false,
+  "stage_offline_acceptance_complete": true,
   "fast_production_C_validation_passed": true,
   "python_kernel_tests_passed": 53,
   "fast_artifact_metadata": {
@@ -180,5 +180,57 @@
       "source": "1be753e25413e9b4ad343800b9675d4a1439270a",
       "reason": "Normal production C passed; inherited mode mutation was caught earlier by connected native reinit. Explicit earlier mode assertion, upper-wrapper downgrade marker and power ACK instrumentation added. Production source unchanged."
     }
-  ]
+  ],
+  "jobs": [
+    {
+      "id": 126925887939,
+      "name": "parent-peer-composite",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126925888265,
+      "name": "ce-stop",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126925888320,
+      "name": "transport-stop",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126925888370,
+      "name": "diagnostic",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126925888403,
+      "name": "htt-callbacks",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126925888433,
+      "name": "stop-admission",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 126925888664,
+      "name": "ce-buffers",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "full_diagnostic_report_artifact": {
+    "id": 13373043405,
+    "digest": "sha256:9953552bb1df7404fc081514ada1723754180ca10e2e56aea3fa39f3015aa779",
+    "digest_verified": true
+  },
+  "full_diagnostic_host_report_matches_fast_report": true,
+  "full_diagnostic_module_checks_verified": true,
+  "large_diagnostic_archive_downloaded": false
 }
