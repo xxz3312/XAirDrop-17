@@ -343,6 +343,7 @@ static bool ssr_hif_missing,ssr_soc_present,ssr_epping,ssr_ipa,ssr_capture,ssr_m
 static bool ssr_qualification_ready,ssr_unloading,ssr_lookup_missing,ssr_resume_tail_expected;
 static struct device *ssr_transition_dev;
 static int ssr_smmu_completions;
+static bool ssr_repeat_forbidden;
 static QDF_STATUS ssr_post_status;
 static int ssr_stop_force,ssr_after_retire_force,ssr_last_stop_error,ssr_qualified_wait,ssr_module_prefixes;
 static int ssr_post_calls,ssr_parent_closes,ssr_tail,ssr_asserts,ssr_masks,ssr_isr_stops,ssr_cleanup_calls;
@@ -425,9 +426,9 @@ NATIVE_POWER_SHUTDOWN
 #undef hdd_objmgr_put_vdev_by_user
 static int qdf_atomic_read(int *p) {return *p;}
 static void qdf_atomic_set(int *p,int v) {*p=v;}
-static void hdd_soc_recovery_cleanup(void) {ssr_cleanup_calls++;}
+static void hdd_soc_recovery_cleanup(void) {assert(!ssr_repeat_forbidden && "EXPECTED_NO_STOP_REPLAY");ssr_cleanup_calls++;}
 static bool hdd_wait_for_debugfs_threads_completion(void) {return true;}
-static void hif_mask_interrupt_call(void *p) {assert(p==&ssr_hif_cookie);ssr_masks++;}
+static void hif_mask_interrupt_call(void *p) {assert(!ssr_repeat_forbidden && "EXPECTED_NO_STOP_REPLAY");assert(p==&ssr_hif_cookie);ssr_masks++;}
 static void hif_disable_isr(void *p) {assert(p==&ssr_hif_cookie);ssr_isr_stops++;}
 static bool cds_get_conparam(void) {return ssr_epping;}
 NATIVE_SOC_SHUTDOWN
@@ -475,7 +476,7 @@ static void ssr_stop_case(struct hdd_context *h,struct wireless_dev *wdev,int ki
  if(kind==1)assert(ssr_asserts==1); /* preserve ordinary vendor error behavior */
  if(kind==12)assert(ssr_ipa_forces==1 && ssr_scheduler_resumes==1 && ssr_capture_resumes==1 && !ssr_power_vdev_refs && !h->is_scheduler_suspended && !h->is_wiphy_suspended && !h->hdd_wlan_suspended);
  if(owned && !missing && !epping)assert(reset_holds==1 && reset_puts==1 && !reset_refs[0]);
- if(blocked){int calls=ssr_post_calls,masks=ssr_masks,stops=ssr_isr_stops,gets=lease_gets;__hdd_soc_recovery_shutdown();assert(ssr_post_calls==calls && ssr_masks==masks && ssr_isr_stops==stops && lease_gets==gets && "EXPECTED_NO_STOP_REPLAY");}
+ if(blocked){int calls=ssr_post_calls,masks=ssr_masks,stops=ssr_isr_stops,gets=lease_gets;ssr_repeat_forbidden=true;__hdd_soc_recovery_shutdown();ssr_repeat_forbidden=false;assert(ssr_post_calls==calls && ssr_masks==masks && ssr_isr_stops==stops && lease_gets==gets && "EXPECTED_NO_STOP_REPLAY");}
  if(mishare_module_stop.phase!=MISHARE_SSR_STOP_EMPTY) {
   int calls=ssr_post_calls;assert(ssr_stop_section(h,false,false)==-EBUSY && ssr_post_calls==calls && "EXPECTED_MODULE_NO_REPLAY");
  }
@@ -1334,7 +1335,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(stop_helper,stop_helper.replace(needle,'false'),1))
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
         identity = extract(host_source, r'^static int mishare_host_parent_identity\([^;{]+?\)\s*\{.*?^\}')
         unpin = extract(host_source, r'^static void mishare_host_unpin_parents\([^;{]+?\)\s*\{.*?^\}')
         parent_controls = []
@@ -1357,7 +1358,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(mutation)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
         handoff = extract(host_source, r'^int mishare_wonder_host_handoff_idle_locked\([^;{]+?\)\s*\{.*?^\}')
         prepare = extract(host_source, r'^int mishare_wonder_host_idle_prepare_locked\([^;{]+?\)\s*\{.*?^\}')
         candidate = extract(host_source, r'^static int mishare_host_idle_candidate\([^;{]+?\)\s*\{.*?^\}')
@@ -1387,7 +1388,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(mutation)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
         ssr = extract(host_source, r'^int mishare_wonder_host_reclaim_handoff_ssr_locked\([^;{]+?\)\s*\{.*?^\}')
         ssr_controls = []
         def ssr_mutate(body, needle, replacement, marker):
@@ -1408,7 +1409,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(mutation)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         bodies=[idle,request_prefix]+[extract(main,r'^static int\s+'+name+r'\([^;{]+?\)\s*\{.*?^\}') for name in ['__hdd_mode_change_psoc_idle_shutdown','hdd_mode_change_psoc_idle_shutdown']]
         for body in bodies:
@@ -1416,7 +1417,7 @@ def run(wlan, output):
             source.write_text(code.replace(body,body.replace(needle,'0'),1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             marker='EXPECTED_MODE_REQUEST_ADMISSION' if body==request_prefix else 'EXPECTED_STOP_ADMISSION'
-            assert bad.returncode==-6 and marker in bad.stderr,(bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode==-6 and marker in bad.stderr,(bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
 
         # A snapshot-only gate would keep handed-off owners permanently busy.
         needle = 'mishare_wonder_host_idle_prepare_locked(hdd_ctx)'
@@ -1424,7 +1425,7 @@ def run(wlan, output):
         source.write_text(code.replace(idle, idle.replace(needle, 'mishare_wonder_host_stop_ready_locked(hdd_ctx)', 1), 1))
         subprocess.run(command, check=True)
         bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-        assert bad.returncode == -6 and 'EXPECTED_IDLE_RESULT' in bad.stderr, (bad.returncode, bad.stderr[-1000:])
+        assert bad.returncode == -6 and 'EXPECTED_IDLE_RESULT' in bad.stderr, (bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
 
         # New reset controls must fail behavior/ownership assertions after compiling.
         source.write_text(code)
@@ -1437,7 +1438,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(query, changed, 1))
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         needle = 'mishare_wonder_host_adapter_owned(adapter)'
         assert reset_native.count(needle) == 1
@@ -1452,7 +1453,7 @@ def run(wlan, output):
             source.write_text(code.replace(reset_native, changed, 1))
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
 
         # Native stop/power/shutdown/reinit controls use fresh base code each time.
         ssr_chain_controls = []
@@ -1477,7 +1478,7 @@ def run(wlan, output):
             source.write_text(changed_code)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
 
         source.write_text(code)
         prepare_ssr = extract(host_source, r'^int mishare_wonder_host_ssr_prepare_locked\([^;{]+?\)\s*\{.*?^\}')
@@ -1496,14 +1497,14 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         needle='mishare_wonder_host_ssr_prepare_locked(hdd_ctx)'
         assert post_native.count(needle)==1
         source.write_text(code.replace(post_native,post_native.replace(needle,'mishare_wonder_host_stop_ready_locked(hdd_ctx)',1),1))
         subprocess.run(command,check=True)
         bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-        assert bad.returncode == -6 and 'EXPECTED_NATIVE_SSR_RETIRE' in bad.stderr,(bad.returncode,bad.stderr[-1000:])
+        assert bad.returncode == -6 and 'EXPECTED_NATIVE_SSR_RETIRE' in bad.stderr,(bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
 
         journal_controls=[]
         def journal_mutate(needle, replacement, marker, body=host_source):
@@ -1527,14 +1528,14 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         needle='mishare_gate = mishare_ssr_stop_begin_locked('
         assert module_begin.count(needle)==1
         source.write_text(code.replace(module_begin,module_begin.replace(needle,'mishare_gate = 0 * mishare_ssr_stop_begin_locked(',1),1))
         subprocess.run(command,check=True)
         bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-        assert bad.returncode == -6 and 'EXPECTED_MODULE_NO_REPLAY' in bad.stderr,(bad.returncode,bad.stderr[-1000:])
+        assert bad.returncode == -6 and 'EXPECTED_MODULE_NO_REPLAY' in bad.stderr,(bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
 
         pause_body=extract(host_source,r'^int mishare_ssr_stop_pause_locked\([^;{]+?\)\s*\{.*?^\}')
         resume_body=extract(host_source,r'^int mishare_ssr_stop_resume_locked\([^;{]+?\)\s*\{.*?^\}')
@@ -1559,7 +1560,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         native_resume_controls=[]
         def native_resume_mutate(body,needle,replacement,marker):
@@ -1578,7 +1579,7 @@ def run(wlan, output):
             source.write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
 
         power_resume=extract(power_completion,r'^int hdd_mishare_resume_shutdown\([^;{]+?\)\s*\{.*?^\}')
         upper_controls=[]
@@ -1610,7 +1611,7 @@ def run(wlan, output):
             source.write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
 
         remove_controls=[]
         def remove_mutate(body,needle,replacement,marker):
@@ -1629,7 +1630,7 @@ def run(wlan, output):
             source.write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
         remove_host_controls=[]
         def remove_host_mutate(body,needle,replacement,marker):
             assert body.count(needle)==1,needle
@@ -1647,7 +1648,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
 
         unload_controls=[]
@@ -1686,7 +1687,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=20)
-            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[:2400]+bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink(missing_ok=True)
         lease_controls=[]
         journal_begin=extract(host_source,r'^int mishare_ssr_stop_begin_locked\([^;{]+?\)\s*\{.*?^\}')
