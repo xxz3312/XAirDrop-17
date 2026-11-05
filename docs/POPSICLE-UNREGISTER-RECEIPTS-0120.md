@@ -8,8 +8,14 @@ Transition failure, private cleanup refusal and missing context are recorded. Ou
 
 The v2 descriptor layout is unchanged; four additive receipt/scope exports bring the required execution exports to eleven. Matched provider/WLAN builds remain required.
 
-Local 53 Python tests, fixture assembly, restoration and patch checks pass. Pending Actions validation executes provider C, full native remove/checked functions and the extracted late unload guard with modeled synchronization, module API, ICNSS and vendor callbacks. New scenarios cover success, borrowed mode, failures, no replay, pending/mismatched/overlapping receipts. Six mutation controls cover swallowed cleanup error, premature completion, leaked live reference, PLD ignored refusal and late unload bypass; inherited host/runtime and concurrent SSR/idle regressions remain required.
+Local 53 Python tests, fixture assembly, restoration and patch checks pass. Actions validation executes provider C, full native remove/checked functions and the extracted late unload guard with modeled synchronization, module API, ICNSS and vendor callbacks. New scenarios cover success, borrowed mode, failures, no replay, pending/mismatched/overlapping receipts. Six mutation controls cover swallowed cleanup error, premature completion, leaked live reference, PLD ignored refusal and late unload bypass; inherited host/runtime and concurrent SSR/idle regressions remain required.
 
 No real ICNSS drain, failed-init teardown, module loader, firmware, physical disappearance or forced-unload certification. No phone operation, Apple discovery, handshake or transfer is enabled.
 
 ICNSS unregister errno is recorded before scope completion; an event-post failure retains registration and the live reference without attempting a replay.
+
+## Locked platform source audit
+
+`platform/icnss2/main.c` returns int from `icnss_unregister_driver` and posts an uninterruptible synchronous unregister event. Its event handler still clears platform ops/probed state and powers off after the void remove returns, even if our receipt reports refusal. This stage prevents subsequent PLD/global component clearing, but cannot undo or veto that platform tail. Platform failure coordination remains an explicit next-stage requirement; no real ICNSS execution is claimed.
+
+Latest [Actions 42102327073](https://github.com/xxz3312/XAirDrop-17/actions/runs/42102327073), source `5960f32fdfd13306aa26842f26c3e42375f5e9b8`, passed the production C fast job: twelve receipt scenarios, fourteen external negative controls including six new ones, inherited host/runtime and real pthread SSR/idle regressions, with ASan/UBSan and leak detection. Compact ZIP digest and regenerated three fixtures, provider/header/native hashes match. Full target linking and remaining jobs are pending; stage offline acceptance is not complete. See [checkpoint](research/popsicle-unregister-receipts-0120-validation.json).
