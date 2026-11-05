@@ -3,6 +3,7 @@
 #include <linux/errno.h>
 #include <linux/etherdevice.h>
 #include <linux/slab.h>
+#include <linux/module.h>
 #include <linux/spinlock.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
@@ -483,6 +484,7 @@ static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bo
     *owner = NULL;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     kfree(entry);
+    module_put(THIS_MODULE);
     return 0;
 }
 
@@ -1092,8 +1094,10 @@ int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner)
     *owner = NULL;
 final_unlock:
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-    if (!ret)
+    if (!ret) {
         kfree(entry);
+        module_put(THIS_MODULE);
+    }
     return ret;
 }
 
@@ -1241,9 +1245,16 @@ int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
         return -ENODEV;
     if (!mishare_runtime_platform_available(psoc))
         return -ESHUTDOWN;
+    /* Standalone owners need their own module reference: a host lease cannot
+     * cover asynchronous runtime/final-free retention after host handoff.
+     */
+    if (!try_module_get(THIS_MODULE))
+        return -ESHUTDOWN;
     entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-    if (!entry)
+    if (!entry) {
+        module_put(THIS_MODULE);
         return -ENOMEM;
+    }
     entry->psoc = psoc;
     ether_addr_copy(entry->mac, mac);
     spin_lock_irqsave(&mishare_runtime_lock, flags);
@@ -1251,11 +1262,13 @@ int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
         if (other->psoc == psoc && other->state.quiesced) {
             spin_unlock_irqrestore(&mishare_runtime_lock, flags);
             kfree(entry);
+            module_put(THIS_MODULE);
             return -EUCLEAN;
         }
         if (other->psoc == psoc && ether_addr_equal(other->mac, mac)) {
             spin_unlock_irqrestore(&mishare_runtime_lock, flags);
             kfree(entry);
+            module_put(THIS_MODULE);
             return -EEXIST;
         }
     }

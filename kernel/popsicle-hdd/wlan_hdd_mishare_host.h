@@ -133,7 +133,9 @@ int mishare_ssr_stop_unload_ready_locked(struct mishare_ssr_stop_checkpoint *c,
 /* Caller owns RTNL and an exclusive parent psoc transition throughout each call.
  * Owner access is serialized by that caller. Destroy before HDD context teardown.
  * Host holds device/PSOC/PDEV allocation references until successful close;
- * all three HDD identities must still match at every subsequent entry. Failed
+ * Each host also owns one THIS_MODULE reference through final registry removal;
+ * this does not retain a standalone stop journal or upper power gate.
+ * All three HDD identities must still match at every subsequent entry. Failed
  * creation unwinds pins; pending/error destruction retains them with the host.
  * References do not retain HDD, component state, firmware or transport. Caller
  * must prevent native parent teardown, including between asynchronous polls.

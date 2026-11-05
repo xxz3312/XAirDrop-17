@@ -180,6 +180,11 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
  * retain all parent resources and poll destroy. EUCLEAN needs diagnosis/drain,
  * never a blind retry/delete/ref reset. No sleeping wait or automatic worker.
  */
+/* Each allocated runtime owner owns a module reference until actual registry
+ * retirement (ordinary destruction or qualified final reclaim). Pending/error
+ * paths retain it. Callers still retain native execution/parent serialization;
+ * this is not a journal/power-gate lease or physical hot-unplug contract.
+ */
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev, const u8 *mac,
                            void *osif, struct wireless_dev *wdev,
                            struct mishare_runtime_owner **owner);

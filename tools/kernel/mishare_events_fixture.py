@@ -204,7 +204,7 @@ def audit(root):
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;\ntypedef uint64_t u64;\n')
-        for n in ['linux/bug.h','linux/slab.h','linux/spinlock.h','wlan_objmgr_vdev_obj.h']:(d/n).write_text('/* supplied by fixture */\n')
+        for n in ['linux/bug.h','linux/module.h','linux/slab.h','linux/spinlock.h','wlan_objmgr_vdev_obj.h']:(d/n).write_text('/* supplied by fixture */\n')
         (d/'test.c').write_text(source);exe=d/'test'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(d/'test.c'),'-o',str(exe)],check=True)
         output=subprocess.check_output([exe],text=True,timeout=30,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})

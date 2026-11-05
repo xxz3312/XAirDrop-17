@@ -5,6 +5,7 @@
 #include <linux/etherdevice.h>
 #include <linux/rtnetlink.h>
 #include <linux/slab.h>
+#include <linux/module.h>
 #include <linux/spinlock.h>
 #include <cds_api.h>
 #include "wlan_hdd_main.h"
@@ -590,12 +591,21 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
         return ret;
     if (hdd_get_adapter(hdd, QDF_PASSTHRU_MODE))
         return -EBUSY;
+    /* Acquire before publishing any host/native callback. Normal module
+     * removal must refuse while this independently retained owner exists.
+     * Parent transitions still serialize final put/return against teardown.
+     */
+    if (!try_module_get(THIS_MODULE))
+        return -ESHUTDOWN;
     host = kzalloc(sizeof(*host), GFP_KERNEL);
-    if (!host)
+    if (!host) {
+        module_put(THIS_MODULE);
         return -ENOMEM;
+    }
     ret = mishare_host_pin_parents(host, hdd);
     if (ret) {
         kfree(host);
+        module_put(THIS_MODULE);
         return ret;
     }
     mishare_host_track(host, hdd);
@@ -624,6 +634,7 @@ free_host:
     mishare_host_unpin_parents(host);
     mishare_host_untrack(host);
     kfree(host);
+    module_put(THIS_MODULE);
     return ret;
 }
 
@@ -736,6 +747,7 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
     mishare_host_untrack(host);
     kfree(host);
     *owner = NULL;
+    module_put(THIS_MODULE);
     return 0;
 }
 

@@ -144,7 +144,7 @@ def audit(root, fixture_builder=None, extra_audit=None):
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir();(d/'dispatcher/inc').mkdir(parents=True);(d/'core/src').mkdir(parents=True)
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint32_t u32;typedef uint64_t u64;\n')
-        for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_vdev_mlme_api.h','wlan_vdev_mgr_tgt_if_rx_defs.h','wlan_osif_priv.h','qdf_status.h','scheduler_api.h','wmi_unified_param.h','core/src/vdev_mgr_ops.h']:(d/n).write_text('/* platform model */\n')
+        for n in ['linux/etherdevice.h','linux/module.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_vdev_mlme_api.h','wlan_vdev_mgr_tgt_if_rx_defs.h','wlan_osif_priv.h','qdf_status.h','scheduler_api.h','wmi_unified_param.h','core/src/vdev_mgr_ops.h']:(d/n).write_text('/* platform model */\n')
         (d/'qdf_types.h').write_text('#pragma once\ntypedef uint32_t u_int32_t;\n')
         (d/'qdf_atomic.h').write_text('#pragma once\ntypedef struct {int value;} qdf_atomic_t;\n#define qdf_atomic_read engine_atomic_read\n#define qdf_atomic_set engine_atomic_set\nstatic inline int engine_atomic_read(qdf_atomic_t *v) {return v->value;}\nstatic inline void engine_atomic_set(qdf_atomic_t *v,int n) {v->value=n;}\n')
         (d/'qdf_mem.h').write_text('#define qdf_mem_malloc engine_mem_malloc\n#define qdf_mem_free engine_mem_free\n')

@@ -23,6 +23,21 @@ COMMON=r'''
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+/* Model the module API, not the kernel module loader or module-exit timing. */
+static int module_identity,module_refs,module_get_calls,module_put_calls;
+static bool module_going;
+#define THIS_MODULE (&module_identity)
+static bool try_module_get(void *module) {
+ assert(module==THIS_MODULE);module_get_calls++;
+ if(module_going)return false;
+ module_refs++;return true;
+}
+static void module_put(void *module) {
+ assert(module==THIS_MODULE && module_refs>0 && "EXPECTED_MODULE_PUT_BALANCE");
+ module_refs--;module_put_calls++;
+}
+
 #include "wlan_hdd_mishare_runtime.h"
 #include "wlan_hdd_mishare_events.h"
 #define QDF_STATUS_SUCCESS 0
@@ -169,6 +184,7 @@ HARNESS=r'''
 static struct wlan_objmgr_psoc psoc={1};static struct wlan_objmgr_pdev pdev={&psoc};static struct wireless_dev wdev;
 static const u8 mac[6]={2,3,4,5,6,7};
 static void reset(void) {
+ assert(!module_refs && "EXPECTED_MODULE_RELEASE");
  assert(!objects_live && !allocations && !mishare_runtime_owners && !mishare_event_owners);
  alloc_calls=fail_alloc_at=create_fault=ref_calls=fail_ref_at=object_calls=delete_calls=delete_fail=defer_ref=leak_component=detach_fail=0;
 }
@@ -177,6 +193,10 @@ static struct mishare_runtime_status state(struct mishare_runtime_owner *o) { st
 int main(void) {
  struct mishare_runtime_owner *o=NULL,*other=NULL;
  struct wlan_objmgr_psoc foreign_psoc={0};
+ module_going=true;int module_before=object_calls;
+ assert(create(&o)==-ESHUTDOWN && !o && !module_refs && object_calls==module_before && "EXPECTED_MODULE_REFUSAL");
+ module_going=false;
+
  assert(!mishare_runtime_any_busy());
  assert(!mishare_runtime_psoc_busy(NULL) && !mishare_runtime_psoc_busy(&psoc));
  struct mishare_runtime_owner pending={.psoc=&psoc};assert(!mishare_runtime_owners);mishare_runtime_owners=&pending;assert(mishare_runtime_any_busy());
@@ -191,6 +211,7 @@ int main(void) {
  reset();fail_alloc_at=1;assert(create(&o)==-ENOMEM && !o && !objects_live);
  reset();create_fault=1;assert(create(&o)==-EIO && !o && object_calls==1);
  reset();assert(!create(&o) && o && objects_live==1 && allocations==2 && last_vdev->refs==3);
+ assert(module_refs==1 && "EXPECTED_MODULE_LIVE");
  assert(mishare_runtime_psoc_busy(&psoc) && !mishare_runtime_psoc_busy(&foreign_psoc));
  assert(last_vdev->osif.wdev==&wdev && last_vdev->osif.legacy_osif_priv==&pdev);
  assert(state(o).allocated && !state(o).freed && !state(o).draining && !state(o).blocked);
@@ -208,10 +229,12 @@ int main(void) {
  /* Normal destruction cannot free the adapter while another ref remains. */
  reset();defer_ref=1;assert(!create(&o));struct wlan_objmgr_vdev *v=last_vdev;
  assert(mishare_runtime_destroy(&o)==-EINPROGRESS && o && allocations==1 && v->refs==1);
+ assert(module_refs==1 && "EXPECTED_MODULE_PENDING");
  assert(mishare_runtime_psoc_busy(&psoc));
  assert(state(o).draining && !state(o).freed && !mishare_event_owners);
  assert(mishare_runtime_destroy(&o)==-EINPROGRESS && delete_calls==1);
  wlan_objmgr_vdev_release_ref(v,2);assert(!objects_live && state(o).freed && mishare_runtime_psoc_busy(&psoc));
+ assert(module_refs==1 && "EXPECTED_MODULE_PHYSICAL_FREE_NOT_RETIREMENT");
  assert(!mishare_runtime_destroy(&o) && !o && !allocations);
  /* Constructor NULL can leave an asynchronously referenced partial object. */
  reset();create_fault=2;defer_ref=1;assert(create(&o)==-EINPROGRESS && o && objects_live==1);
@@ -239,6 +262,7 @@ int main(void) {
  if(!child){assert(!create(&o));delete_fail=1;v=last_vdev;assert(mishare_runtime_destroy(&o)==-EUCLEAN && state(o).blocked && v->refs==3 && allocations==2 && objects_live==1);_Exit(0);}
  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && WEXITSTATUS(status)==0);
  reset();assert(final_free_calls>0);
+ assert(!module_refs && module_get_calls==module_put_calls+1 && "EXPECTED_MODULE_RELEASE");
  puts("MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -271,13 +295,26 @@ def audit(root):
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint32_t u32;typedef uint64_t u64;\n')
-        for n in ['linux/etherdevice.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h','qdf_status.h']:(d/n).write_text('/* boundary declarations */\n')
+        for n in ['linux/etherdevice.h','linux/module.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_osif_priv.h','qdf_status.h']:(d/n).write_text('/* boundary declarations */\n')
         p=d/'owner.c';p.write_text(source);exe=d/'owner'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(p),'-o',str(exe)],check=True)
         out=subprocess.check_output([exe],text=True,timeout=20,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})
         if out.strip()!='MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY':raise ValueError('Unexpected test output')
+        original=(production/'wlan_hdd_mishare_runtime.c').read_text()
+        pending='    if (entry->state.allocated && !entry->state.freed) {\n        spin_unlock_irqrestore(&mishare_runtime_lock, flags);\n        return -EINPROGRESS;\n    }'
+        assert original.count(pending)==1
+        controls=[
+            (original.replace('if (!try_module_get(THIS_MODULE))','if (false && !try_module_get(THIS_MODULE))',1),'EXPECTED_MODULE_REFUSAL'),
+            (original.replace('module_put(THIS_MODULE);','if (false) module_put(THIS_MODULE);'),'EXPECTED_MODULE_RELEASE'),
+            (original.replace(pending,pending.replace('        return -EINPROGRESS;', '        module_put(THIS_MODULE);\n        return -EINPROGRESS;'),1),'EXPECTED_MODULE_PENDING')]
+        for changed,marker in controls:
+            (d/'wlan_hdd_mishare_runtime.c').write_text(changed)
+            subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(p),'-o',str(exe)],check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,timeout=20,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})
+            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+        (d/'wlan_hdd_mishare_runtime.c').unlink()
     names=['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_events.c','wlan_hdd_mishare_events.h','wlan_hdd_mishare_txn.c','wlan_hdd_mishare_txn.h']
-    return {'status':'MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY','source_commit':PIN,'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'object_manager_sha256':hashlib.sha256((root/OBJ).read_bytes()).hexdigest(),'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in names},
+    return {'status':'MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY','module_api_is_modeled':True,'negative_module_controls_rejected':3,'source_commit':PIN,'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'object_manager_sha256':hashlib.sha256((root/OBJ).read_bytes()).hexdigest(),'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in names},
       'checks':['native origin edits exclusively restored to pinned baseline','allocation observation before component dispatch','free veto before parent detach','completion strictly after native storage free','actual production owner/events/transaction C','owned and observer references unwind outside registry lock','constructor NULL before and after observation','duplicate owner and duplicate MAC rejection','reference/bind/allocation and MLME validation failures','nonblocking delayed-reference cleanup retains owner','failed attached component quarantines before free/ID detach','parent detach failure retains owner','unknown delete failure retains all references in isolated child'],
       'limitations':'Owner, event and transaction C plus complete native final-free function with object-manager creation/components/ref/synchronization/parent-detach stubs. No full object-manager/component construction or native locking/scheduler, actual recovery/drain, ID reuse, firmware, module load or radio certification. Quarantined child intentionally retains resources until process exit; modeled component/parent cleanup retry does not certify a production recovery API.'}
 

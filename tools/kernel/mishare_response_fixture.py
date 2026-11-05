@@ -201,7 +201,7 @@ def audit(root):
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp); (d/'linux').mkdir()
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;\ntypedef uint64_t u64;\n')
-        for name in ['linux/bug.h','linux/slab.h','linux/spinlock.h','wlan_objmgr_vdev_obj.h']:
+        for name in ['linux/bug.h','linux/module.h','linux/slab.h','linux/spinlock.h','wlan_objmgr_vdev_obj.h']:
             (d/name).write_text('/* supplied by fixture */\n')
         (d/'test.c').write_text(source); exe=d/'test'
         subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unused-function','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),str(d/'test.c'),'-o',str(exe)],check=True)
