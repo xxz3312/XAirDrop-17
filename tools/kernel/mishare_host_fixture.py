@@ -729,12 +729,14 @@ static void osif_driver_sync_trans_stop(struct osif_driver_sync *s) {
 }
 #define QDF_IS_STATUS_ERROR(s) ((s)!=QDF_STATUS_SUCCESS)
 #define pr_info(...) ((void)0)
+#define QDF_BUG(x) do {if(!(x))ssr_asserts++;} while(0)
 NATIVE_UNLOAD_HELPER
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 NATIVE_UNLOAD_PREFIX
 #pragma GCC diagnostic pop
 #undef pr_info
+#undef QDF_BUG
 static void unload_cases(struct hdd_context *h,struct wireless_dev *wdev)
 {
  assert(mishare_ssr_stop_unload_ready_locked(NULL,false)==-EINVAL);
