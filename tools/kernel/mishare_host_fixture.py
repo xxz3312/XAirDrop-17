@@ -475,7 +475,7 @@ static void ssr_stop_case(struct hdd_context *h,struct wireless_dev *wdev,int ki
  if(kind==1)assert(ssr_asserts==1); /* preserve ordinary vendor error behavior */
  if(kind==12)assert(ssr_ipa_forces==1 && ssr_scheduler_resumes==1 && ssr_capture_resumes==1 && !ssr_power_vdev_refs && !h->is_scheduler_suspended && !h->is_wiphy_suspended && !h->hdd_wlan_suspended);
  if(owned && !missing && !epping)assert(reset_holds==1 && reset_puts==1 && !reset_refs[0]);
- if(blocked){int calls=ssr_post_calls,masks=ssr_masks,stops=ssr_isr_stops;__hdd_soc_recovery_shutdown();assert(ssr_post_calls==calls && ssr_masks==masks && ssr_isr_stops==stops && "EXPECTED_NO_STOP_REPLAY");}
+ if(blocked){int calls=ssr_post_calls,masks=ssr_masks,stops=ssr_isr_stops,gets=lease_gets;__hdd_soc_recovery_shutdown();assert(ssr_post_calls==calls && ssr_masks==masks && ssr_isr_stops==stops && lease_gets==gets && "EXPECTED_NO_STOP_REPLAY");}
  if(mishare_module_stop.phase!=MISHARE_SSR_STOP_EMPTY) {
   int calls=ssr_post_calls;assert(ssr_stop_section(h,false,false)==-EBUSY && ssr_post_calls==calls && "EXPECTED_MODULE_NO_REPLAY");
  }
