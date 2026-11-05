@@ -332,7 +332,8 @@ int mishare_ssr_stop_unload_ready_locked(struct mishare_ssr_stop_checkpoint *c,
     spin_lock_irqsave(&mishare_host_lock, flags);
     busy = upper_blocked || c->phase != MISHARE_SSR_STOP_EMPTY ||
            c->first_error || c->paused || c->hdd || c->parent_dev ||
-           c->psoc || c->pdev || c->driver_status || mishare_hosts;
+           c->psoc || c->pdev || c->driver_status || c->module_lease.held ||
+           mishare_hosts;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     if (busy || mishare_runtime_any_busy())
         return -EBUSY;
@@ -353,7 +354,7 @@ int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *c,
     /* Check retained state even outside recovery, before any prefix side
      * effect. Host retirement cannot erase this independent journal. */
     spin_lock_irqsave(&mishare_host_lock, flags);
-    if (c->phase != MISHARE_SSR_STOP_EMPTY) {
+    if (c->phase != MISHARE_SSR_STOP_EMPTY || c->module_lease.held) {
         ret = mishare_ssr_checkpoint_matches(c, hdd, false) ? -EBUSY : -EUCLEAN;
         spin_unlock_irqrestore(&mishare_host_lock, flags);
         return ret;
@@ -378,9 +379,14 @@ int mishare_ssr_stop_begin_locked(struct mishare_ssr_stop_checkpoint *c,
     if (!hdd->pdev)
         return -EINVAL;
     spin_lock_irqsave(&mishare_host_lock, flags);
-    if (c->phase != MISHARE_SSR_STOP_EMPTY) {
+    if (c->phase != MISHARE_SSR_STOP_EMPTY || c->module_lease.held) {
         spin_unlock_irqrestore(&mishare_host_lock, flags);
         return -EBUSY;
+    }
+    ret = mishare_module_lease_get(&c->module_lease);
+    if (ret) {
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return ret;
     }
     c->hdd = hdd;
     c->parent_dev = hdd->parent_dev;
@@ -435,6 +441,7 @@ int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *c,
 {
     unsigned long flags;
     int ret;
+    struct mishare_module_lease completed_lease = {0};
 
     if (!tracked)
         return result;
@@ -446,6 +453,8 @@ int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *c,
                            c->phase == MISHARE_SSR_STOP_PARENTS) ? result : -EUCLEAN;
     if (!ret && (c->phase != MISHARE_SSR_STOP_PARENTS || !modules_closed))
         ret = -EIO;
+    if (!ret && !c->module_lease.held)
+        ret = -EUCLEAN;
     if (!c->first_error)
         c->first_error = ret;
     ret = c->first_error;
@@ -459,8 +468,14 @@ int mishare_ssr_stop_finish_locked(struct mishare_ssr_stop_checkpoint *c,
         c->psoc = NULL;
         c->pdev = NULL;
         c->driver_status = 0;
+        /* Move the completed receipt out before unlocking. The final put
+         * must not run under the registry lock or touch a reused slot.
+         */
+        c->module_lease.held = false;
+        completed_lease.held = true;
     }
     spin_unlock_irqrestore(&mishare_host_lock, flags);
+    mishare_module_lease_put(&completed_lease);
     return ret;
 }
 
@@ -535,7 +550,8 @@ int mishare_ssr_stop_remove_ready_locked(struct mishare_ssr_stop_checkpoint *c,
         return -EINVAL;
     osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
     spin_lock_irqsave(&mishare_host_lock, flags);
-    if (c->phase == MISHARE_SSR_STOP_EMPTY && !c->first_error && !c->paused)
+    if (c->phase == MISHARE_SSR_STOP_EMPTY && !c->first_error && !c->paused &&
+        !c->module_lease.held)
         ret = 0;
     else
         ret = mishare_ssr_checkpoint_matches(c, hdd, false) ? -EBUSY : -EUCLEAN;

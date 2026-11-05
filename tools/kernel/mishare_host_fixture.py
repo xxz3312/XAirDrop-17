@@ -80,6 +80,31 @@ static void module_put(void *module) {
  module_refs--;module_put_calls++;
 }
 
+
+/* Execute the real inline lease helper, routing the same module API model to
+ * a separate ledger so owner leases and independent stop leases are observable.
+ * reset() discards the synthetic retained-stop universe between inherited
+ * cases; it is NOT a production cleanup/reset API. Dedicated assertions run
+ * before such disposal. Native execution/loader lifetime remains modeled.
+ */
+static int lease_refs,lease_gets,lease_puts;
+static bool lease_get_failure;
+static bool lease_try_module_get(void *module) {
+ assert(module==THIS_MODULE);lease_gets++;
+ if(lease_get_failure)return false;
+ lease_refs++;return true;
+}
+static void lease_module_put(void *module) {
+ assert(module==THIS_MODULE && lease_refs>0 && "EXPECTED_STOP_LEASE_BALANCE");
+ lease_refs--;lease_puts++;
+}
+#define try_module_get lease_try_module_get
+#define module_put lease_module_put
+#include "wlan_hdd_mishare_module_lease.h"
+#undef module_put
+#undef try_module_get
+static void fixture_lease_scope_reset(void);
+
 #define WLAN_HDD_ID_OBJ_MGR 9
 #define QDF_STATUS_SUCCESS 0
 static void pins_live(void) { assert(module_refs==1 && "EXPECTED_MODULE_LIVE");assert(device_pins==1 && psoc_pins==1 && pdev_pins==1 && "EXPECTED_PARENT_PINS"); }
@@ -90,7 +115,7 @@ static struct osif_vdev_sync *registered;
 bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter);
 static const u8 mac[6]={2,3,4,5,6,7};
 static void event(char c) { size_t n=strlen(trace);assert(n+1<sizeof(trace));trace[n]=c;trace[n+1]=0; }
-static void reset(int fail) { assert(!module_refs && "EXPECTED_MODULE_RELEASE");assert(!runtime_tokens);pins_empty();assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
+static void reset(int fail) { fixture_lease_scope_reset();assert(!module_refs && "EXPECTED_MODULE_RELEASE");assert(!runtime_tokens);pins_empty();assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
 static struct device *get_device(struct device *d) { assert(d);event('G');if(failure==6)return NULL;d->refs++;device_pins++;return d; }
 static void put_device(struct device *d) { assert(d && d->refs==1 && !psoc_pins && !pdev_pins && "EXPECTED_PARENT_RELEASE_ORDER");event('g');d->refs--;device_pins--; }
 static int wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *p,int id) { assert(p && id==9 && device_pins==1);event('Q');if(failure==7)return 1;p->refs++;psoc_pins++;return 0; }
@@ -307,6 +332,10 @@ SSR_STOP_MODELS = r'''
 #define WLAN_OSIF_POWER_ID 24
 NATIVE_QDF_FROM_OS
 NATIVE_SSR_STATE
+static void fixture_lease_scope_reset(void) {
+ lease_refs=lease_gets=lease_puts=0;lease_get_failure=false;
+ mishare_ssr_power_lease=(struct mishare_module_lease){0};
+}
 NATIVE_MODULE_STATE
 static struct hdd_context *ssr_ctx;
 static int ssr_soc_cookie,ssr_hif_cookie;
@@ -346,7 +375,7 @@ static void ucfg_pkt_capture_resume_mon_thread(struct wlan_objmgr_vdev *v) {asse
 static void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *p) {assert(p==ssr_ctx->pdev);}
 static void cdp_flush_cache_rx_queue(void *soc) {assert(soc==&ssr_soc_cookie);}
 static void hdd_deregister_cb(struct hdd_context *h) {assert(h==ssr_ctx);}
-static void hdd_lpass_notify_stop(struct hdd_context *h) {assert(h==ssr_ctx);if(ssr_resume_tail_expected)assert(mishare_module_stop.phase==MISHARE_SSR_STOP_EMPTY && mishare_ssr_stop_blocked && parent_owned && !rtnl_owned && "EXPECTED_POWER_ACK_ORDER");ssr_tail++;}
+static void hdd_lpass_notify_stop(struct hdd_context *h) {assert(h==ssr_ctx);if(mishare_ssr_stop_blocked)assert(lease_refs==1 && mishare_ssr_power_lease.held && !mishare_module_stop.module_lease.held && "EXPECTED_POWER_LEASE_WINDOW");if(ssr_resume_tail_expected)assert(mishare_module_stop.phase==MISHARE_SSR_STOP_EMPTY && mishare_ssr_stop_blocked && parent_owned && !rtnl_owned && "EXPECTED_POWER_ACK_ORDER");ssr_tail++;}
 static void qdf_set_smmu_fault_state(bool value) {assert(!value);ssr_smmu_completions++;}
 static QDF_STATUS cds_post_disable(void) {
  ssr_post_calls++;
@@ -538,8 +567,10 @@ static void ssr_journal_cases(struct hdd_context *h,struct wireless_dev *wdev)
    }
   }
   trace[0]=0;assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));pins_empty();
-  if(kind==6){h->pdev=NULL;assert(!mishare_ssr_stop_finish_locked(&c,h,0,true,tracked) && c.phase==MISHARE_SSR_STOP_EMPTY && !c.hdd && !c.psoc && !c.pdev && !c.parent_dev && "EXPECTED_JOURNAL_COMPLETE");h->pdev=pdev;}
+  assert(lease_refs==1 && c.module_lease.held && "EXPECTED_JOURNAL_MODULE_RETAINED");
+  if(kind==6){h->pdev=NULL;assert(!mishare_ssr_stop_finish_locked(&c,h,0,true,tracked) && c.phase==MISHARE_SSR_STOP_EMPTY && !c.hdd && !c.psoc && !c.pdev && !c.parent_dev && "EXPECTED_JOURNAL_COMPLETE");h->pdev=pdev;assert(!lease_refs && !c.module_lease.held && "EXPECTED_JOURNAL_MODULE_RELEASE");}
   else {
+   assert(lease_refs==1 && c.module_lease.held && "EXPECTED_JOURNAL_MODULE_RETAINED");
    assert(c.phase!=MISHARE_SSR_STOP_EMPTY && "EXPECTED_JOURNAL_RETENTION");
    assert(mishare_ssr_stop_resume_locked(&c,h,&again)==-EBUSY && "EXPECTED_SSR_RESUME_HARD_FAILURE");
    assert(mishare_ssr_stop_begin_locked(&c,h,&again)==-EBUSY && "EXPECTED_JOURNAL_REPLAY");
@@ -670,7 +701,9 @@ static void ssr_upper_cases(struct hdd_context *h,struct wireless_dev *wdev)
     assert(!hdd_soc_recovery_reinit(h->parent_dev,NULL,NULL,SSR_IPCI));
    }
   }
+  if(terminal)assert(mishare_ssr_power_lease.held && lease_refs>=1 && "EXPECTED_POWER_LEASE_RETAINED");
   if(!terminal) {
+   assert(!lease_refs && !mishare_ssr_power_lease.held && "EXPECTED_POWER_LEASE_RELEASE");
    assert(!mishare_ssr_stop_blocked && !parent_owned && !active && !registered && ssr_parent_closes==1 && ssr_tail==1 && ssr_smmu_completions==1 && ssr_inner_reinits==1 && "EXPECTED_UPPER_COMPLETE");
    assert(ssr_start_status==(kind==12?-EIO:0) && "EXPECTED_UPPER_FAILURE_NOTIFY");
   }
@@ -790,6 +823,44 @@ static void unload_cases(struct hdd_context *h,struct wireless_dev *wdev)
 }
 
 
+
+
+static void stop_lease_cases(struct hdd_context *h,struct wireless_dev *wdev)
+{
+ struct mishare_module_lease lease={0};bool tracked=false;
+ struct mishare_ssr_stop_checkpoint c={0};struct mishare_wonder_host *owner=NULL;
+ reset(0);assert(mishare_module_lease_get(NULL)==-EINVAL);
+ assert(!mishare_module_lease_get(&lease) && lease_refs==1);
+ assert(mishare_module_lease_get(&lease)==-EBUSY && lease_refs==1);
+ mishare_module_lease_put(&lease);mishare_module_lease_put(&lease);assert(!lease_refs && lease_puts==1 && "EXPECTED_STOP_LEASE_HELPER");
+ assert(!mishare_module_lease_get(&c.module_lease));
+ assert(mishare_ssr_stop_unload_ready_locked(&c,false)==-EBUSY && mishare_ssr_stop_remove_ready_locked(&c,h)==-EUCLEAN && "EXPECTED_ORPHAN_JOURNAL_LEASE");
+ mishare_module_lease_put(&c.module_lease);
+
+ reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));active->dev->ieee80211_ptr=wdev;
+ runtime_ssr=true;lease_get_failure=true;
+ assert(mishare_ssr_stop_begin_locked(&c,h,&tracked)==-ESHUTDOWN && !tracked && !c.module_lease.held && c.phase==MISHARE_SSR_STOP_EMPTY && !lease_refs && "EXPECTED_JOURNAL_MODULE_REFUSAL");
+ lease_get_failure=false;runtime_ssr=false;assert(!mishare_wonder_host_destroy_locked(&owner));
+ reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));active->dev->ieee80211_ptr=wdev;
+ runtime_ssr=true;assert(!mishare_ssr_stop_begin_locked(&c,h,&tracked) && tracked);
+ assert(!mishare_ssr_stop_step_locked(&c,h,MISHARE_SSR_STOP_POST_DISABLED,0,true));
+ assert(mishare_ssr_stop_pause_locked(&c,h,-EINPROGRESS,true)==-EINPROGRESS);
+ assert(c.paused && c.module_lease.held && lease_refs==1 && "EXPECTED_JOURNAL_MODULE_WAIT");
+ assert(!mishare_ssr_stop_resume_locked(&c,h,&tracked) && tracked);
+
+ assert(!mishare_ssr_stop_step_locked(&c,h,MISHARE_SSR_STOP_PARENTS,0,true));
+ runtime_ssr=false;assert(!mishare_wonder_host_destroy_locked(&owner));
+ assert(!module_refs && lease_refs==1 && "EXPECTED_JOURNAL_MODULE_RETAINED");
+ assert(!mishare_ssr_stop_finish_locked(&c,h,0,true,true) && !lease_refs && !c.module_lease.held && "EXPECTED_JOURNAL_MODULE_RELEASE");
+ reset(0);mishare_module_stop=(struct mishare_ssr_stop_checkpoint){0};mishare_ssr_stop_blocked=false;
+ ssr_ctx=h;ssr_lookup_missing=ssr_unloading=ssr_hif_missing=false;ssr_epping=false;
+ assert(!mishare_wonder_host_create_locked(h,mac,&owner));active->dev->ieee80211_ptr=wdev;
+ runtime_ssr=true;lease_get_failure=true;ssr_module_prefixes=ssr_masks=ssr_isr_stops=0;
+ __hdd_soc_recovery_shutdown();
+ assert(mishare_ssr_stop_blocked && !mishare_ssr_power_lease.held && !lease_refs && !ssr_masks && !ssr_isr_stops && !ssr_module_prefixes && "EXPECTED_POWER_LEASE_REFUSAL");
+ rtnl_owned=false;assert(hdd_soc_recovery_reinit(h->parent_dev,NULL,NULL,SSR_IPCI)==-ESHUTDOWN && mishare_ssr_stop_blocked && "EXPECTED_POWER_MISSING_LEASE");rtnl_owned=true;
+ lease_get_failure=false;runtime_ssr=false;assert(!mishare_wonder_host_destroy_locked(&owner));mishare_ssr_stop_blocked=false;
+}
 
 static void module_host_cases(struct hdd_context *h,struct wireless_dev *wdev)
 {
@@ -1139,6 +1210,7 @@ int main(void)
  remove_cases(&h,&wdev);
  unload_cases(&h,&wdev);
  soft_unload_cases(&h,&wdev);
+ stop_lease_cases(&h,&wdev);
  module_host_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
@@ -1285,7 +1357,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(mutation)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
         handoff = extract(host_source, r'^int mishare_wonder_host_handoff_idle_locked\([^;{]+?\)\s*\{.*?^\}')
         prepare = extract(host_source, r'^int mishare_wonder_host_idle_prepare_locked\([^;{]+?\)\s*\{.*?^\}')
         candidate = extract(host_source, r'^static int mishare_host_idle_candidate\([^;{]+?\)\s*\{.*?^\}')
@@ -1315,7 +1387,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(mutation)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
         ssr = extract(host_source, r'^int mishare_wonder_host_reclaim_handoff_ssr_locked\([^;{]+?\)\s*\{.*?^\}')
         ssr_controls = []
         def ssr_mutate(body, needle, replacement, marker):
@@ -1336,7 +1408,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(mutation)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         bodies=[idle,request_prefix]+[extract(main,r'^static int\s+'+name+r'\([^;{]+?\)\s*\{.*?^\}') for name in ['__hdd_mode_change_psoc_idle_shutdown','hdd_mode_change_psoc_idle_shutdown']]
         for body in bodies:
@@ -1365,7 +1437,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(query, changed, 1))
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         needle = 'mishare_wonder_host_adapter_owned(adapter)'
         assert reset_native.count(needle) == 1
@@ -1380,7 +1452,7 @@ def run(wlan, output):
             source.write_text(code.replace(reset_native, changed, 1))
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
 
         # Native stop/power/shutdown/reinit controls use fresh base code each time.
         ssr_chain_controls = []
@@ -1405,7 +1477,7 @@ def run(wlan, output):
             source.write_text(changed_code)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
 
         source.write_text(code)
         prepare_ssr = extract(host_source, r'^int mishare_wonder_host_ssr_prepare_locked\([^;{]+?\)\s*\{.*?^\}')
@@ -1424,7 +1496,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command, check=True)
             bad = subprocess.run([exe], capture_output=True, text=True, env=env, timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr, (marker, bad.returncode, bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr), (marker, bad.returncode, bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         needle='mishare_wonder_host_ssr_prepare_locked(hdd_ctx)'
         assert post_native.count(needle)==1
@@ -1455,7 +1527,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         needle='mishare_gate = mishare_ssr_stop_begin_locked('
         assert module_begin.count(needle)==1
@@ -1487,7 +1559,7 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
         native_resume_controls=[]
         def native_resume_mutate(body,needle,replacement,marker):
@@ -1506,7 +1578,7 @@ def run(wlan, output):
             source.write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
 
         power_resume=extract(power_completion,r'^int hdd_mishare_resume_shutdown\([^;{]+?\)\s*\{.*?^\}')
         upper_controls=[]
@@ -1517,8 +1589,8 @@ def run(wlan, output):
                      'if (false && ret)\n\t\treturn ret;','EXPECTED_POWER_ACK_ORDER')
         upper_mutate(power_resume,'\thdd_mishare_shutdown_complete(hdd_ctx);',
                      '\t/* omitted power completion */','EXPECTED_UPPER_ACK_REQUIRED')
-        upper_mutate(reinit_native,'if (!errno)\n\t\t\tmishare_ssr_stop_blocked = false;',
-                     'if (true)\n\t\t\tmishare_ssr_stop_blocked = false;','EXPECTED_PRIVATE_TRANSITION_RETAINED')
+        upper_mutate(reinit_native,'if (!errno) {\n\t\t\tmishare_ssr_stop_blocked = false;',
+                     'if (true) {\n\t\t\tmishare_ssr_stop_blocked = false;','EXPECTED_PRIVATE_TRANSITION_RETAINED')
         upper_mutate(reinit_native,'if (!mishare_ssr_stop_blocked)\n\t\tosif_psoc_sync_trans_stop(psoc_sync);',
                      'if (true)\n\t\tosif_psoc_sync_trans_stop(psoc_sync);','EXPECTED_PRIVATE_TRANSITION_RETAINED')
         upper_mutate(reinit_native,'else if (hdd_ctx->parent_dev != dev)',
@@ -1538,7 +1610,7 @@ def run(wlan, output):
             source.write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
 
         remove_controls=[]
         def remove_mutate(body,needle,replacement,marker):
@@ -1557,7 +1629,7 @@ def run(wlan, output):
             source.write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
         remove_host_controls=[]
         def remove_host_mutate(body,needle,replacement,marker):
             assert body.count(needle)==1,needle
@@ -1568,14 +1640,14 @@ def run(wlan, output):
                           'osif_psoc_sync_assert_trans_protected(hdd->parent_dev);\n    ret = mishare_wonder_host_stop_ready_locked(hdd);','EXPECTED_REMOVE_LOOKUP_LIFETIME')
         remove_host_mutate(begin_body,'if (!mishare_host_hdd_mismatch(hdd) &&',
                           'if (false && !mishare_host_hdd_mismatch(hdd) &&','EXPECTED_REMOVE_LOOKUP_LIFETIME')
-        remove_host_mutate(remove_query,'c->phase == MISHARE_SSR_STOP_EMPTY && !c->first_error && !c->paused',
+        remove_host_mutate(remove_query,'c->phase == MISHARE_SSR_STOP_EMPTY && !c->first_error && !c->paused &&\n        !c->module_lease.held',
                           'c->phase == MISHARE_SSR_STOP_EMPTY','EXPECTED_REMOVE_CALLBACK_ADMISSION')
         source.write_text(code)
         for changed,marker in remove_host_controls:
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink()
 
         unload_controls=[]
@@ -1588,7 +1660,7 @@ def run(wlan, output):
         unload_query=extract(host_source,r'^int mishare_ssr_stop_unload_ready_locked\([^;{]+?\)\s*\{.*?^\}')
         for needle,replacement in [
             ('busy || mishare_runtime_any_busy()', 'busy'),
-            ('|| mishare_hosts;', '|| false;'),
+            ('mishare_hosts;', 'false;'),
             ('c->first_error ||', 'false ||'),
             ('upper_blocked ||', '(upper_blocked && false) ||'),
             ('c->hdd ||', 'false ||')]:
@@ -1614,12 +1686,37 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=20)
-            assert bad.returncode == -6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-1000:])
+            assert bad.returncode == -6 and (marker in bad.stderr or "EXPECTED_POWER_LEASE_WINDOW" in bad.stderr or "EXPECTED_JOURNAL_MODULE_RETAINED" in bad.stderr),(marker,bad.returncode,bad.stderr[-1000:])
         (d/'wlan_hdd_mishare_host.c').unlink(missing_ok=True)
-    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'negative_ssr_stop_controls_rejected':8,'negative_ssr_prepare_controls_rejected':7,'ssr_prepare_contract_cases':18,'ssr_journal_scenarios':8,'ssr_resume_scenarios':17,'ssr_upper_scenarios':16,'module_host_cases':5,'negative_module_controls_rejected':3,'module_api_is_modeled':True,'unload_scenarios':17,'soft_unload_scenarios':4,'negative_unload_controls_rejected':9,'native_unload_sha256':hashlib.sha256(unload_native.encode()).hexdigest(),'native_unload_prefix_sha256':hashlib.sha256(unload_prefix.encode()).hexdigest(),'remove_scenarios':17,'negative_remove_controls_rejected':10,'native_remove_source_sha256':hashlib.sha256(remove_source.encode()).hexdigest(),'native_remove_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_mishare_module_remove_ready',module_remove),('hdd_mishare_remove_prepare',remove_prepare),('pld_ipci_remove',ipci_remove)]},'native_sync_resume_sha256':hashlib.sha256(sync_resume.encode()).hexdigest(),'native_sync_source_sha256':hashlib.sha256(sync_source.encode()).hexdigest(),'negative_ssr_upper_controls_rejected':10,'negative_ssr_resume_controls_rejected':10,'negative_ssr_journal_controls_rejected':8,'native_module_begin_sha256':hashlib.sha256(module_begin.encode()).hexdigest(),'native_module_finish_sha256':hashlib.sha256(module_finish.encode()).hexdigest(),'native_module_resume_sha256':hashlib.sha256(module_resume.encode()).hexdigest(),'ssr_stop_contract_cases':15,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
+        lease_controls=[]
+        journal_begin=extract(host_source,r'^int mishare_ssr_stop_begin_locked\([^;{]+?\)\s*\{.*?^\}')
+        journal_finish=extract(host_source,r'^int mishare_ssr_stop_finish_locked\([^;{]+?\)\s*\{.*?^\}')
+        journal_pause=extract(host_source,r'^int mishare_ssr_stop_pause_locked\([^;{]+?\)\s*\{.*?^\}')
+        for body,needle,replacement,markers in [
+            (journal_begin,'ret = mishare_module_lease_get(&c->module_lease);','ret = 0;', ['EXPECTED_JOURNAL_MODULE_RETAINED','EXPECTED_JOURNAL_MODULE_REFUSAL','EXPECTED_JOURNAL_MODULE_WAIT']),
+            (journal_finish,'mishare_module_lease_put(&completed_lease);','if (false) mishare_module_lease_put(&completed_lease);',['EXPECTED_JOURNAL_MODULE_RELEASE','EXPECTED_POWER_LEASE_WINDOW']),
+            (journal_pause,'c->paused = true;','c->paused = true;\n        mishare_module_lease_put(&c->module_lease);',['EXPECTED_JOURNAL_MODULE_WAIT','EXPECTED_UPPER_RESULT','EXPECTED_SSR_NATIVE_CONTINUATION'])]:
+            assert body.count(needle)==1
+            lease_controls.append((code,host_source.replace(body,body.replace(needle,replacement,1),1),markers))
+        for body,needle,replacement,markers in [
+            (soc_native,'if (mishare_module_lease_get(&mishare_ssr_power_lease))','if (false && mishare_module_lease_get(&mishare_ssr_power_lease))',['EXPECTED_POWER_LEASE_WINDOW','EXPECTED_NO_PRIVATE_REINIT','EXPECTED_POWER_LEASE_REFUSAL']),
+            (reinit_native,'mishare_module_lease_put(&mishare_ssr_power_lease);','if (false) mishare_module_lease_put(&mishare_ssr_power_lease);',['EXPECTED_POWER_LEASE_RELEASE']),
+            (reinit_native,'if (!mishare_ssr_power_lease.held)','if (false && !mishare_ssr_power_lease.held)',['EXPECTED_POWER_MISSING_LEASE'])]:
+            assert body.count(needle)==1
+            lease_controls.append((code.replace(body,body.replace(needle,replacement,1),1),None,markers))
+        assert len(lease_controls)==6
+        for changed,override,markers in lease_controls:
+            source.write_text(changed)
+            if override is None:(d/'wlan_hdd_mishare_host.c').unlink(missing_ok=True)
+            else:(d/'wlan_hdd_mishare_host.c').write_text(override)
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and any(marker in bad.stderr for marker in markers),(markers,bad.returncode,bad.stderr[-1600:])
+        (d/'wlan_hdd_mishare_host.c').unlink(missing_ok=True)
+    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'negative_ssr_stop_controls_rejected':8,'negative_ssr_prepare_controls_rejected':7,'ssr_prepare_contract_cases':18,'ssr_journal_scenarios':8,'ssr_resume_scenarios':17,'ssr_upper_scenarios':16,'stop_lease_cases':4,'negative_stop_module_lease_controls_rejected':6,'independent_stop_module_API_ledger':True,'synthetic_scope_reset_is_not_production_cleanup':True,'module_host_cases':5,'negative_module_controls_rejected':3,'module_api_is_modeled':True,'unload_scenarios':17,'soft_unload_scenarios':4,'negative_unload_controls_rejected':9,'native_unload_sha256':hashlib.sha256(unload_native.encode()).hexdigest(),'native_unload_prefix_sha256':hashlib.sha256(unload_prefix.encode()).hexdigest(),'remove_scenarios':17,'negative_remove_controls_rejected':10,'native_remove_source_sha256':hashlib.sha256(remove_source.encode()).hexdigest(),'native_remove_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_mishare_module_remove_ready',module_remove),('hdd_mishare_remove_prepare',remove_prepare),('pld_ipci_remove',ipci_remove)]},'native_sync_resume_sha256':hashlib.sha256(sync_resume.encode()).hexdigest(),'native_sync_source_sha256':hashlib.sha256(sync_source.encode()).hexdigest(),'negative_ssr_upper_controls_rejected':10,'negative_ssr_resume_controls_rejected':10,'negative_ssr_journal_controls_rejected':8,'native_module_begin_sha256':hashlib.sha256(module_begin.encode()).hexdigest(),'native_module_finish_sha256':hashlib.sha256(module_finish.encode()).hexdigest(),'native_module_resume_sha256':hashlib.sha256(module_resume.encode()).hexdigest(),'ssr_stop_contract_cases':15,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
             'production_ssr_prepare_sha256':hashlib.sha256(prepare_ssr.encode()).hexdigest(),'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),'native_reset_sha256':hashlib.sha256(reset_native.encode()).hexdigest(),'native_reset_original_sha256':hashlib.sha256(reset_original.encode()).hexdigest(),'native_ssr_source_sha256':{name:hashlib.sha256((wlan/name).read_bytes()).hexdigest() for name in ['qcacld-3.0/core/hdd/src/wlan_hdd_main.c',power_path,ops_path,qdf_path]},'native_ssr_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_wlan_shutdown',power_native),('__hdd_soc_recovery_shutdown',soc_native),('hdd_soc_recovery_reinit',reinit_native),('qdf_status_from_os_return',qdf_from_os),('post_disable_section',post_native),('power_completion_helpers',power_completion)]},
             'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['actual native post-disable calls production SSR preparation and qualified host reclamation; failed CDS disable never admits cleanup', 'SSR prepare uses RTNL trylock, preserves empty/standalone/caller-owned/foreign-parent admission and exact recovery qualification, and unlocks on every pending/error/success result', 'asynchronous runtime token, quarantine policy and sync-close failure retain registry authority for later qualified polling', 'native SSR post-disable prefix refuses retained owners before modeled parent close and preserves CDS failure instead of entering its assert/teardown continuation', 'complete native power shutdown and SoC shutdown/reinit functions propagate private stop errors, retain failure across owner retirement, reject duplicate stop and block reinit with failure notification', 'native QDF errno-to-status converter executes unchanged; production post-disable qualified retirement success permits normal completion under modeled qualification, but metadata retirement plus pending parent stop still blocks', 'no-private-owner recovery, legacy status handling, HIF-missing and EPPING behavior preserved; suspended/IPA/capture power branches execute with modeled primitives', 'native hdd_reset_all_adapters skips exact registered private adapters before any link reset and balances current/next iterator references', 'caller-owned, runtime-attached, pending ordinary drain and handed-off pending SSR hosts retain ownership through native reset; modeled quarantine child also skips reset', 'empty registry and mixed STA/P2P/SAP/unowned PAS preserve native queue/WMM/scan/stop and VDEV reference boundaries; owned pointer at first/middle/last position', 'NULL lookup during pre-adapter construction is false; publication and global ownership lookup use the same registry lock', 'same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded', 'qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership', 'SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots', 'empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances', 'explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address', 'native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted', 'RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins', 'post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup', 'device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
-            'sanitizers':['address','undefined','leak detection'],'limitations':'Complete native power shutdown/internal SoC shutdown/reinit and a bounded post-disable section execute against modeled CDS/parent-stop/probe/IRQ primitives. The native post-disable call now invokes production host preparation and qualified reclamation. SSR qualification results and later parent/probe operations remain models; no fake CDS callback performs retirement. Only explicit POST_DISABLED transient waits have a native module-suffix resume API; the native reinit callback performs one qualified module poll and the shared power tail before clearing the upper gate; pending/hard failures retain the transition; no independent worker/timer is installed; hard failures have no reset API; this is failure admission/propagation, not a complete recovery coordinator. Explicit native driver unload prefix now refuses globally retained private owners/journal before unload flags, bus unregister and component teardown. Full unload body, kernel module exit veto and module text references remain uncoordinated. IPCI remove preflight now refuses private lifetimes before sync unregister and preserves the transition; its actual callback, hardware disappearance and complete module unload remain uncoordinated and modeled here. Other bus remove paths are unchanged. Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. Native SSR post-disable now reaches the qualified bridge; native reinit-triggered continuation is installed; independent retry scheduling and physical-remove coordination remain unconnected. This does not certify native kernel locking, teardown or radio validation.'}
+            'sanitizers':['address','undefined','leak detection'],'limitations':'Complete native power shutdown/internal SoC shutdown/reinit and a bounded post-disable section execute against modeled CDS/parent-stop/probe/IRQ primitives. The native post-disable call now invokes production host preparation and qualified reclamation. SSR qualification results and later parent/probe operations remain models; no fake CDS callback performs retirement. Only explicit POST_DISABLED transient waits have a native module-suffix resume API; the native reinit callback performs one qualified module poll and the shared power tail before clearing the upper gate; pending/hard failures retain the transition; no independent worker/timer is installed; hard failures have no reset API; this is failure admission/propagation, not a complete recovery coordinator. Explicit native driver unload prefix now refuses globally retained private owners/journal before unload flags, bus unregister and component teardown. Full unload body, kernel module exit veto and module text references remain uncoordinated. Independent journal and upper power leases execute against a separate module-API ledger; successful module finish does not release the power lease before its tail ACK. Inherited scope reset discards synthetic retained references between cases and is not a production reset API. Linux loader/refcount concurrency and return-to-caller safety are not executed. IPCI remove preflight now refuses private lifetimes before sync unregister and preserves the transition; its actual callback, hardware disappearance and complete module unload remain uncoordinated and modeled here. Other bus remove paths are unchanged. Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. Native SSR post-disable now reaches the qualified bridge; native reinit-triggered continuation is installed; independent retry scheduling and physical-remove coordination remain unconnected. This does not certify native kernel locking, teardown or radio validation.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(stdout,end='')
 
 

@@ -2,6 +2,7 @@
 #ifndef WLAN_HDD_MISHARE_HOST_H
 #define WLAN_HDD_MISHARE_HOST_H
 #include <linux/types.h>
+#include "wlan_hdd_mishare_module_lease.h"
 struct hdd_context;
 struct hdd_adapter;
 struct mishare_wonder_host;
@@ -68,11 +69,14 @@ enum mishare_ssr_stop_phase {
  * fails closed for a second HDD while a private stop is retained. Serialized
  * internally against other PSOCs; the caller also owns its exclusive PSOC
  * transition and retains HDD/native parents. These are borrowed identities,
- * not allocation/component leases. Never copy, zero or reuse a retained slot.
+ * not allocation/component leases. The independent module_lease retains code
+ * until successful native module completion; failures/waits retain it. Never
+ * copy, zero or reuse a retained slot.
  * A qualified POST_DISABLED wait may explicitly resume the native suffix.
  * No reset interface; the SoC/power completion gate is separately authoritative.
  */
 struct mishare_ssr_stop_checkpoint {
+    struct mishare_module_lease module_lease;
     struct hdd_context *hdd;
     struct device *parent_dev;
     struct wlan_objmgr_psoc *psoc;

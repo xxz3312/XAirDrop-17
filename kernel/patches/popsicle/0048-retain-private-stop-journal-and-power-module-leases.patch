@@ -1,0 +1,62 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c
+@@ -36,6 +36,7 @@
+  * and completes the power tail before clearing this gate. Hard failures retain
+  * the native transition; there is no worker, timer or force-clear path. */
+ static bool mishare_ssr_stop_blocked;
++static struct mishare_module_lease mishare_ssr_power_lease;
+ /* MISHARE_SSR_STOP_END:ops_state */
+ #include "wlan_hdd_mishare_backend.h"
+ 
+@@ -1044,7 +1045,9 @@
+ 	if (mishare_private_resume) {
+ 		struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+ 
+-		if (!hdd_ctx)
++		if (!mishare_ssr_power_lease.held)
++			errno = -ESHUTDOWN;
++		else if (!hdd_ctx)
+ 			errno = -ENODEV;
+ 		else if (hdd_ctx->parent_dev != dev)
+ 			errno = -EUCLEAN;
+@@ -1053,8 +1056,10 @@
+ 		/* Only module continuation AND the power completion tail ACK
+ 		 * release the upper failure gate. Empty owner metadata is no ACK.
+ 		 */
+-		if (!errno)
++		if (!errno) {
+ 			mishare_ssr_stop_blocked = false;
++			mishare_module_lease_put(&mishare_ssr_power_lease);
++		}
+ 	}
+ 	if (!errno)
+ 		errno = __hdd_soc_recovery_reinit(dev, bdev, bid, bus_type);
+@@ -1204,8 +1209,15 @@
+ 	if (mishare_ssr_stop_blocked)
+ 		return;
+ 	mishare_private_stop = !!mishare_wonder_host_stop_ready_locked(hdd_ctx);
+-	if (mishare_private_stop)
++	if (mishare_private_stop) {
+ 		mishare_ssr_stop_blocked = true;
++		/* A failed get latches refusal without entering native teardown.
++		 * The void shutdown callback cannot report an errno; reinit refuses
++		 * the missing lease rather than treating an empty journal as ACK.
++		 */
++		if (mishare_module_lease_get(&mishare_ssr_power_lease))
++			return;
++	}
+ /* MISHARE_SSR_STOP_END:shutdown_begin */
+ 
+ 	/*
+@@ -1234,8 +1246,10 @@
+ 		{
+ 			QDF_STATUS status = hdd_wlan_shutdown();
+ 
+-			if (mishare_private_stop && QDF_IS_STATUS_SUCCESS(status))
++			if (mishare_private_stop && QDF_IS_STATUS_SUCCESS(status)) {
+ 				mishare_ssr_stop_blocked = false;
++				mishare_module_lease_put(&mishare_ssr_power_lease);
++			}
+ 		}
+ /* MISHARE_SSR_STOP_END:shutdown_call */
+ 	}

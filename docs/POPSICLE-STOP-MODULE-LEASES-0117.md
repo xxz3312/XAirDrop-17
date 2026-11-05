@@ -1,0 +1,17 @@
+# 0117 Independent journal and upper power module leases
+
+The private module-stop journal can remain after its host/runtime allocations retire. The upper power gate can remain after the module journal completes. They now own independent `try_module_get(THIS_MODULE)` leases through the small production inline lease helper.
+
+A tracked journal acquires before publishing its borrowed identities and phase under the host registry lock. Acquisition refusal returns ESHUTDOWN without marking the invocation tracked. Paused waits, identity errors, hard failures and module-close errors retain the lease. Only successful native parent/module completion moves the receipt to a local lease and drops it after unlocking; the journal is cleared before that final put. A retained lease also blocks an otherwise empty remove/unload receipt. No timeout, force clear or reset interface is added.
+
+Patch 0048 acquires the upper power lease before native recovery cleanup, interrupt masking and module stop. The void native shutdown callback latches its private gate even when acquiring a reference fails, then returns before teardown. Reinit reports ESHUTDOWN for a missing lease and does not turn an empty journal into completion. Successful native module stop releases only its journal lease. The upper lease is dropped only after the existing LPASS/SMMU completion tail has returned, on either the ordinary private shutdown or qualified reinit-continuation path. External hardware/firmware ACK is not inferred from that return.
+
+## Verification checkpoint
+
+Local 53 Python tests, syntax, host source assembly, inherited native function/full-source restoration and patch 0048 forward/reverse checks passed. C execution and full WLAN linking require Actions and are not yet claimed. The fixture executes the production inline lease helper using a separate modeled module-API ledger from host/runtime owner references. It checks helper balance, duplicate get, journal acquire refusal, retained journal after host retirement, pause/resume retention, successful journal release, orphan-lease remove/unload refusal, upper acquire failure and missing-lease reinit refusal. Existing journal and upper scenarios assert the module-finished/power-not-finished reference window and successful upper release. Six new mutation controls target omitted/early journal and power acquisition/release and missing-lease admission.
+
+Inherited cases intentionally discard a synthetic retained-stop universe between cases. This counter reset is test-only, not a cleanup interface or proof that retained production errors can be reset. Dedicated retention and release assertions execute before that disposal. Earlier inherited mutation markers may now be caught by the more immediate journal-retention or power-window guard; only those specific new guards are accepted as alternate detection sites.
+
+## Remaining limits
+
+Module API and synchronization operations are models, not execution of the Linux module loader. The actual final put still relies on native caller execution/parent synchronization through return. This change does not retain HDD, native components, firmware or disappearing hardware, cancel module exit after it begins, authorize forced unload, add recovery retry scheduling or certify physical remove. Active START/UP and real radio activation remain disabled. No phone operation or Apple interoperability was tested.
