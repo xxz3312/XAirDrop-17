@@ -23,5 +23,24 @@
   "observed_stock_loaded_note_sha256": {
     "cnss2": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3",
     "qca_cld3_peach_v2": "e2db5a4c55b3664d2aa3d5ce4dc24af67df31f58d88f4e65121fd5aa0b050ecd"
-  }
+  },
+  "fix_source_commit": "c9596ac1216f2ca06838608e08451e90102c1427",
+  "workflow_run_id": 42259977562,
+  "tests_job_id": 128037033210,
+  "prepare_job_id": 128037097668,
+  "tests_pass": 92,
+  "permission_octal_combinations_pass": 512,
+  "permission_special_modes_pass": 4,
+  "checker_artifact_id": 13524930974,
+  "checker_artifact_size": 5469,
+  "checker_artifact_sha256": "9d0def8a2ef319aa17f2cd12d8aa4bfddb6ddff7e20786eed6b90ce49fb6482d",
+  "checker_artifact_members": [
+    "SHA256SUMS",
+    "deployment.tsv",
+    "popsicle-pairctl.sh"
+  ],
+  "repaired_original_bundle_all_8_checksums_verified": true,
+  "retained_module_bytes_changed": false,
+  "updated_manifest_changes_only_observed_kernel_release": true,
+  "phone_corrected_check_executed": false
 }
