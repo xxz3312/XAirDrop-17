@@ -1,0 +1,39 @@
+{
+  "stage": "0139",
+  "source_apply_log_sha256": "43d2de6dbce1bca1aa9308493638ee00cc437edd43794d492034d5e027ab0380",
+  "profile": "stock-cnss-manual diagnostic-defaults",
+  "phone_apply_completed": true,
+  "phone_apply_exit_code": 0,
+  "phase": "active",
+  "boot_id": "722369de-3820-40a5-9e3d-88f2432f1176",
+  "boot_id_matches_pre_apply_status": true,
+  "observed_effect_order": [
+    "wifi-off",
+    "hals-stop",
+    "remove-wlan",
+    "insert-provider",
+    "insert-wlan",
+    "hals-start",
+    "wifi-restore"
+  ],
+  "observed_module_commands": [
+    "+ /system/bin/rmmod qca_cld3_peach_v2",
+    "+ /system/bin/insmod /data/adb/modules/xairdrop17_stock_cnss/kernel/opairshare_wonder_provider.ko",
+    "+ /system/bin/insmod /data/adb/modules/xairdrop17_stock_cnss/kernel/qca_cld3_peach_v2.ko"
+  ],
+  "original_cnss2_live_note_sha256": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3",
+  "candidate_wlan_live_note_sha256": "88600269ff0d056a465a7b55d6888508a2458d917eac4661a262ede6643eb9f2",
+  "candidate_provider_live_note_sha256": "a0e4e2123e6dd71a2dcb0f44fcabb8fcce22da97215447ab6e451afcedf570fd",
+  "candidate_notes_match_accepted_payload": true,
+  "wifi_enabled_and_STA_associated": true,
+  "wifi_frequency_MHz": 5240,
+  "wifi_ipv4_acquired": true,
+  "internet_reachability_confirmed": false,
+  "post_load_kernel_log_review_completed": false,
+  "long_term_stability_certified": false,
+  "hot_unload_restore_certified": false,
+  "AWDL_RF_certified": false,
+  "Apple_discovery_or_transfer_certified": false,
+  "prior_0132_reboot_root_cause_resolved": false,
+  "limitations": "One completed manual load with unchanged stock CNSS2 and restored STA association. Not full ABI, long-term stability, live rollback, AWDL or Apple interoperability certification."
+}

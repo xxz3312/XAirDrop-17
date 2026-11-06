@@ -1,3 +1,7 @@
+## 最新实机阶段 0139（保留原厂 CNSS2 的新 WLAN/provider 加载成功，STA 已恢复关联）
+
+0138 修复后备份通过。实际 apply 按 Wi-Fi off→HAL stop→仅卸载原厂 WLAN→provider/WLAN 插入→HAL/Wi-Fi 恢复顺序完成，退出码 0、phase=active。原厂 CNSS2 note 保持匹配；新 WLAN/provider 为 live 且 note 与已验收原始 ELF 匹配。操作前后 boot-id 一致，没有在本次流程重启。日志确认 STA 重连 5240 MHz 并取得 IPv4；尚未验证互联网可达、长期稳定或卸载回退。下一步审查当前内核与联网状态，再接 Wonder/AWDL；不计 Apple 发现/握手/互传完成，也不能据此断言 0132 重启根因已确定。原始日志不提交公开仓库，仅存 SHA256 与结果索引。见 [0139 实机证据](research/popsicle-stock-cnss-phone-load-0139.json)。
+
 ## 最新阶段 0138（修复整份属性表触发外部 printf 参数过长）
 
 0137 手机 archive/check 已通过，但 backup 在 HAL 枚举阶段触发 printf Argument list too long；在快照目录创建、关闭 Wi-Fi 和驱动动作之前停止。按上游流式筛选 getprop，并保留生产者退出码回执，避免外部大参数。45 项回归及实际四文件覆盖模拟通过；只改 IO 的 sc_hals，主控制器/状态机/raw ELF 不变。约 5.3 KB 小修复包，不需重装或重启；CI 42288035806 的 policy/package 已通过，下载小包摘要/内层字节与本地包一致；尚待手机 backup。见 [0138 修复](POPSICLE-HAL-STREAM-FIX-0138.md)。
