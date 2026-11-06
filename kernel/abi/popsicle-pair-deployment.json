@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "device": "popsicle",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64",
+  "stock": {
+    "cnss2": {
+      "sha256": "6e0494f4535ee6e7923493abe75db2e50e3216cf204334639a52d84e23c51a37",
+      "note_sha256": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3"
+    },
+    "qca_cld3_peach_v2": {
+      "sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+      "note_sha256": "e2db5a4c55b3664d2aa3d5ce4dc24af67df31f58d88f4e65121fd5aa0b050ecd"
+    }
+  },
+  "source": "Exact audited stock module captures; file and raw GNU note hashes. A current matching device inventory is mandatory.",
+  "runtime_certified": false,
+  "loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+  "loader_evidence_sha256": "72d76c6964567da860f3605073aee9bb1abd7696540e9aefa79eeed416fff4b8",
+  "boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93"
+}

@@ -1,0 +1,61 @@
+name: Popsicle pair deployment preparation
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-deployment.yml
+      - tools/device/popsicle-pair*.sh
+      - tools/device/popsicle-wlan-trial.sh
+      - tools/kernel/popsicle_pair_bundle.py
+      - tools/kernel/test_popsicle_pair_deployment.py
+      - kernel/abi/popsicle-pair-deployment.json
+permissions:
+  contents: read
+  actions: read
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Policy failure injection and bundle contract tests
+        run: python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+      - name: Android shell syntax
+        run: sh -n tools/device/popsicle-pairctl.sh tools/device/popsicle-pair-engine.sh tools/device/popsicle-wlan-trial.sh
+  prepare:
+    needs: tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download exact accepted offline pair (not latest)
+        uses: actions/download-artifact@v4
+        with:
+          name: popsicle-cnss2-pair-42242503014-1
+          run-id: 42242503014
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: pair
+      - name: Extract only the three unchanged module files
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import tarfile
+          p=Path('pair');out=p/'binaries';out.mkdir()
+          names={'cnss2.ko','qca_cld3_peach_v2.ko','opairshare_wonder_provider.ko'}
+          with tarfile.open(p/'cnss2-checked-pair-diagnostic-not-for-install.tar.gz') as t:
+              members=t.getmembers()
+              assert {m.name for m in members}==names and all(m.isfile() for m in members)
+              t.extractall(out,filter='data')
+          PY
+      - name: Prepare manual experimental bundle without installing
+        run: |
+          mkdir output
+          python3 tools/kernel/popsicle_pair_bundle.py --pair pair --output output/popsicle-checked-pair-0131.zip > output/preparation.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-pair-preparation-0131-${{ github.run_id }}
+          path: output/
+          retention-days: 7

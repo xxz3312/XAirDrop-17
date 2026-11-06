@@ -54,6 +54,10 @@ start_hals() {
     [ "$failed" = 0 ]
 }
 restore_stock() {
+    [ ! -e "/sys/module/$NAME/parameters/mishare_load_error" ] || {
+        echo 'Checked CNSS2 pair detected; legacy restore cannot drain it. Use paired controller flow.'
+        return 1
+    }
     echo 'Restoring original WLAN and previous Wi-Fi state.'
     fw svc wifi disable && wait_wifi 0 || return 1
     stop_hals || return 1
@@ -94,6 +98,13 @@ finish() {
 [ "$(id -u)" = 0 ] || die 'Run as root.'
 case "${1:-check}" in check|run|run-mgmt-rx|restore|status) ;; *) die 'Usage: sh popsicle-wlan-trial.sh check|run|run-mgmt-rx|restore|status [bundle]';; esac
 ACTION=${1:-check}
+# This legacy two-module flow cannot replace or restore the checked CNSS2 pair.
+case "$ACTION" in run|run-mgmt-rx|restore)
+    [ ! -f "$BUNDLE/kernel/cnss2.ko" ] && [ ! -f "$BUNDLE/deployment.tsv" ] &&
+    [ ! -e "/sys/module/$NAME/parameters/mishare_load_error" ] ||
+        die 'Checked three-module pair requires popsicle-pairctl.sh; no legacy mutations attempted.'
+    ;;
+esac
 ENABLE_MGMT_RX=0
 if [ "$ACTION" = run-mgmt-rx ]; then ENABLE_MGMT_RX=1; ACTION=run; fi
 if [ "$ACTION" = status ]; then
