@@ -21,6 +21,56 @@ SCRIPTS = ['popsicle-stock-cnssctl.sh', 'popsicle-stock-cnss-io.sh',
            'popsicle-stock-cnss-engine.sh']
 
 
+def write_integrity(bundle):
+    # KernelSU removes customize.sh after installation. Verify it during
+    # installation, but never require this transient script at runtime.
+    if not (bundle / 'customize.sh').is_file():
+        raise ValueError('Installation script missing before packaging')
+    if any((bundle / name).exists() for name in ['SHA256SUMS', 'INSTALL_SHA256SUMS']):
+        raise ValueError('Integrity files already exist')
+    runtime = sorted(p for p in bundle.rglob('*') if p.is_file() and p.name != 'customize.sh')
+    (bundle / 'SHA256SUMS').write_text(''.join(sha(p) + '  ' + str(p.relative_to(bundle)) + '\n' for p in runtime))
+    install = sorted(p for p in bundle.rglob('*') if p.is_file())
+    (bundle / 'INSTALL_SHA256SUMS').write_text(''.join(sha(p) + '  ' + str(p.relative_to(bundle)) + '\n' for p in install))
+
+
+def checker_update(package, output, baseline=None):
+    baseline = baseline or json.loads((ROOT / 'kernel/abi/popsicle-stock-cnss-checker-base-0136.json').read_text())
+    if baseline['bundle_sha256'] != '2a07638505b70bfaf2f8eba3bdce33185dc5ea61f2d34a4e0024fd34fa1e6ade':
+        raise ValueError('Unknown original 0136 bundle')
+    if output.exists():
+        raise ValueError('Update output exists')
+    allowed = {'module.prop', 'CHECK_FIRST.txt'}
+    with zipfile.ZipFile(package) as source:
+        names = source.namelist()
+        if len(names) != len(set(names)) or any(Path(n).is_absolute() or '..' in Path(n).parts for n in names):
+            raise ValueError('Invalid package members')
+        lines = source.read('SHA256SUMS').decode().splitlines()
+        current = {line.split('  ', 1)[1]: line.split('  ', 1)[0] for line in lines}
+        expected = set(baseline['files']) - {'customize.sh'}
+        if (len(current) != len(lines) or set(current) != expected
+                or set(current) != set(names) - {'customize.sh', 'INSTALL_SHA256SUMS', 'SHA256SUMS'}):
+            raise ValueError('Unexpected runtime manifest scope')
+        if any(current[n] != baseline['files'][n] for n in expected - allowed):
+            raise ValueError('A retained module/script changed; no checker-only update allowed')
+        for name, digest in current.items():
+            value = hashlib.sha256()
+            with source.open(name) as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+                    value.update(chunk)
+            if value.hexdigest() != digest:
+                raise ValueError('Package checksum mismatch: ' + name)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with zipfile.ZipFile(output, 'x', compression=zipfile.ZIP_DEFLATED) as target:
+            for name in sorted(allowed | {'SHA256SUMS'}):
+                info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = (stat.S_IFREG | 0o600) << 16
+                target.writestr(info, source.read(name))
+    return {'sha256': sha(output), 'bytes': output.stat().st_size,
+            'files': sorted(allowed | {'SHA256SUMS'}), 'retained_modules_and_scripts_changed': False}
+
+
 def sha(path):
     value = hashlib.sha256()
     with Path(path).open('rb') as stream:
@@ -135,7 +185,7 @@ def build(modules, output, accepted=None):
         (bundle / 'acceptance.json').write_text(json.dumps(accepted, indent=2) + '\n')
         (bundle / 'stock-cnss-imports.json').write_text(json.dumps(gate, indent=2) + '\n')
         (bundle / 'CHECK_FIRST.txt').write_text(
-            'Experimental 0136 WLAN/provider diagnostic trial; stock CNSS2 retained.\n'
+            'Experimental 0137 WLAN/provider diagnostic trial; stock CNSS2 retained.\n'
             'Not an Apple discovery/file transfer release; no RF activation parameters.\n'
             'Install/boot never starts the trial. Do not press Action before reviewing check.\n'
             'Termux root: /system/bin/sh /data/adb/modules/xairdrop17_stock_cnss/popsicle-stock-cnssctl.sh check\n'
@@ -144,8 +194,7 @@ def build(modules, output, accepted=None):
             'No automatic rollback; disable trial and reboot to recover original drivers.\n'
             'Logs: /data/adb/xairdrop17-stockcnss-logs; transaction: /data/adb/xairdrop17-stockcnss-transaction.\n'
             'Do not mix with the old 0131/0132 checked-pair package.\n')
-        files = sorted(p for p in bundle.rglob('*') if p.is_file())
-        (bundle / 'SHA256SUMS').write_text(''.join(sha(p) + '  ' + str(p.relative_to(bundle)) + '\n' for p in files))
+        write_integrity(bundle)
         archive_path = Path(temporary) / 'package.zip'
         with zipfile.ZipFile(archive_path, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
             for path in sorted(p for p in bundle.rglob('*') if p.is_file()):
@@ -168,6 +217,7 @@ def main():
     inputs.add_argument('--artifact', type=Path)
     inputs.add_argument('--modules', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--checker-update', type=Path)
     args = parser.parse_args()
     accepted = evidence()
     if args.artifact:
@@ -177,6 +227,9 @@ def main():
             report = build(modules, args.output, accepted)
     else:
         report = build(args.modules, args.output, accepted)
+    if args.checker_update:
+        report['checker_update'] = checker_update(args.output, args.checker_update)
+        args.checker_update.with_suffix('.json').write_text(json.dumps(report['checker_update'], indent=2) + '\n')
     args.output.with_suffix('.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))
 

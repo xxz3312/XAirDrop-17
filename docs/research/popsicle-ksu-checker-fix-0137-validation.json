@@ -1,0 +1,37 @@
+{
+  "stage": "0137",
+  "source_phone_check_sha256": "58fd8155cb8dd194f92db70d83c23dffa32c4356666ab8776fb57a9ecfcab7db",
+  "phone_original_CNSS2_and_WLAN_notes_match": true,
+  "phone_0136_check_result": "BUNDLE_BLOCKED: customize.sh absent, all 14 retained files OK",
+  "KSU_installer_source_commit": "019a3c0103a8f8d56675546016c4073d0fd18352",
+  "KSU_installer_path": "userspace/ksud/src/installer.sh",
+  "KSU_installer_blob_sha": "30ef3992fd0817ff222b0bf98c61db2b6f7f23d3",
+  "local_tests_passed": 41,
+  "actual_install_and_KSU_cleanup_simulation_passed": true,
+  "actual_original_0136_three_file_update_simulation_passed": true,
+  "package": {
+    "bundle_sha256": "bfd78dd500263270b85fab9e07d9ee6f30200c99019a0a53c70282a67d8b817f",
+    "bytes": 167959940,
+    "kernel_modules": [
+      "opairshare_wonder_provider.ko",
+      "qca_cld3_peach_v2.ko"
+    ],
+    "stock_cnss2_retained": true,
+    "autostart": false,
+    "runtime_certified": false,
+    "checker_update": {
+      "sha256": "e36c4150c62c07aadb1012605cf1d9b175acb7292bb097953920c454fae1472f",
+      "bytes": 1718,
+      "files": [
+        "CHECK_FIRST.txt",
+        "SHA256SUMS",
+        "module.prop"
+      ],
+      "retained_modules_and_scripts_changed": false
+    }
+  },
+  "candidate_ELF_and_runtime_scripts_changed": false,
+  "phone_corrected_check_executed": false,
+  "phone_driver_replacement_executed": false,
+  "runtime_certified": false
+}

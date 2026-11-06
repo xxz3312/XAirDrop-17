@@ -1,6 +1,6 @@
 id=xairdrop17_stock_cnss
 name=XAirDrop-17 Stock CNSS2 Trial
-version=0.0.136-experimental
-versionCode=136
+version=0.0.137-experimental
+versionCode=137
 author=xxz3312; upstream Weverses and Leekin2
 description=Manual WLAN/provider diagnostic trial for popsicle OS4.0.5.0. Stock CNSS2 retained. No boot autostart. Apple transfer unverified.

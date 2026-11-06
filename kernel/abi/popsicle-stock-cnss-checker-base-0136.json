@@ -1,0 +1,20 @@
+{
+  "bundle_sha256": "2a07638505b70bfaf2f8eba3bdce33185dc5ea61f2d34a4e0024fd34fa1e6ade",
+  "files": {
+    "CHECK_FIRST.txt": "eda7de650413418b7a9fa21da5bc6cab37cab9f031e7d579a3aa9bc8e756cbcb",
+    "LICENSE": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
+    "acceptance.json": "322f8d5062760afcc4bcada29e6ed2611c0bcb6ef458260e4c87a3b576b5fabd",
+    "action.sh": "d0786b9c09b361ffed84d04b90d1ede025fced8b88e4ace31e0036439d1c235c",
+    "customize.sh": "f777b4f80dbef39fa8935a0470ab23bb75e634e38d0d5da8991fb270b9423260",
+    "deployment.tsv": "6918ee93d70679181c42507ddcf48a8d4b59f12e23ca68a8c2985d252adc8e2a",
+    "kernel/opairshare_wonder_provider.ko": "6350d0c61615acb831296c2e3ae742f7d74993fb18d808f03f3ba17b2e5e6a74",
+    "kernel/qca_cld3_peach_v2.ko": "c6ec40e51669c2c5175e4320603b915e6e6ced95c592ec241ff38b3cb678b3d2",
+    "module.prop": "11861b0947288fc18f034471b08564366d5884a9be6d5e96d65447629cfd18d3",
+    "popsicle-stock-cnss-engine.sh": "faa28a0236ce14894bc4ac0a74167f4a2471ea6e7dab3e1aec0e7b9c9c0cc0b6",
+    "popsicle-stock-cnss-io.sh": "e8b40affba46dd248178c4e010a886ac53369bf5d7de84369496ee15d712bae8",
+    "popsicle-stock-cnssctl.sh": "9d8f2842d0fbc86a6e0d90009d8767da6a9e6a7eb6e6d33419db17604de6547c",
+    "service.sh": "1efd485d9411cfc5cf95ee3672237928e79322b27a5b48000dfd47a59e8a597c",
+    "skip_mount": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stock-cnss-imports.json": "fdaa9cb782a6a9eebeb05389be68c9ee285581f93fa3fa7a6eb1bf6fb3ab9729"
+  }
+}

@@ -3,6 +3,7 @@ import io
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -15,6 +16,80 @@ import stock_cnss_bundle as bundle
 
 
 class StockCNSSBundleTests(unittest.TestCase):
+    def integrity_fixture(self, root):
+        for name, content in {'customize.sh': 'installer', 'module.prop': 'old version',
+                              'CHECK_FIRST.txt': 'old instructions', 'driver.ko': 'retained ELF',
+                              'controller.sh': 'retained script'}.items():
+            (root / name).write_text(content)
+
+    def checksum(self, root, name):
+        return subprocess.run(['sha256sum', '-c', name], cwd=root, capture_output=True)
+
+    def test_both_manifests_pass_before_installation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.integrity_fixture(root)
+            bundle.write_integrity(root)
+            self.assertEqual(self.checksum(root, 'SHA256SUMS').returncode, 0)
+            self.assertEqual(self.checksum(root, 'INSTALL_SHA256SUMS').returncode, 0)
+            self.assertNotIn('customize.sh', (root / 'SHA256SUMS').read_text())
+            self.assertIn('customize.sh', (root / 'INSTALL_SHA256SUMS').read_text())
+
+    def test_KSU_installer_deletion_does_not_break_runtime_verification(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            self.integrity_fixture(root)
+            bundle.write_integrity(root)
+            (root / 'customize.sh').unlink()
+            self.assertEqual(self.checksum(root, 'SHA256SUMS').returncode, 0)
+            self.assertNotEqual(self.checksum(root, 'INSTALL_SHA256SUMS').returncode, 0)
+
+    def test_runtime_still_rejects_missing_or_changed_retained_files(self):
+        for name in ['controller.sh', 'driver.ko']:
+            for remove in [False, True]:
+                with tempfile.TemporaryDirectory() as folder:
+                    root = Path(folder)
+                    self.integrity_fixture(root)
+                    bundle.write_integrity(root)
+                    if remove:
+                        (root / name).unlink()
+                    else:
+                        (root / name).write_text('changed')
+                    self.assertNotEqual(self.checksum(root, 'SHA256SUMS').returncode, 0)
+
+    def update_fixture(self, root, mutate_retained=False):
+        self.integrity_fixture(root)
+        old = {p.name: bundle.sha(p) for p in root.iterdir()}
+        baseline = {'bundle_sha256': '2a07638505b70bfaf2f8eba3bdce33185dc5ea61f2d34a4e0024fd34fa1e6ade', 'files': old}
+        (root / 'module.prop').write_text('new version')
+        (root / 'CHECK_FIRST.txt').write_text('new instructions')
+        if mutate_retained:
+            (root / 'driver.ko').write_text('modified driver')
+        bundle.write_integrity(root)
+        package = root / 'new.zip'
+        with zipfile.ZipFile(package, 'w') as archive:
+            for path in root.iterdir():
+                if path != package:
+                    archive.write(path, path.name)
+        return package, baseline
+
+    def test_checker_update_contains_exactly_three_non_executable_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            package, baseline = self.update_fixture(root)
+            output = root / 'update.zip'
+            report = bundle.checker_update(package, output, baseline)
+            self.assertFalse(report['retained_modules_and_scripts_changed'])
+            with zipfile.ZipFile(output) as archive:
+                self.assertEqual(sorted(archive.namelist()), ['CHECK_FIRST.txt', 'SHA256SUMS', 'module.prop'])
+
+    def test_checker_update_refuses_changed_driver_even_with_new_valid_checksum(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            package, baseline = self.update_fixture(root, mutate_retained=True)
+            with self.assertRaises(ValueError):
+                bundle.checker_update(package, root / 'update.zip', baseline)
+
     def test_checkpoint_does_not_accept_failed_mixed_or_runtime_certified_evidence(self):
         accepted = bundle.evidence()
         for key, value in [('required_jobs_success', 6), ('actual_wlan_cnss2_import_count', 62),

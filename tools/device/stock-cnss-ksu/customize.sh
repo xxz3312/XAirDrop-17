@@ -4,7 +4,7 @@
 [ "$(getprop ro.product.device)" = popsicle ] || abort 'Only audited popsicle is supported'
 [ "$(getprop ro.build.version.incremental)" = OS4.0.5.0.XPBCNXM ] || abort 'Firmware differs from the captured ABI'
 [ "$(uname -r)" = 6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k ] || abort 'Kernel differs from the captured boot'
-(cd "$MODPATH" && /system/bin/sha256sum -c SHA256SUMS) || abort 'Payload integrity check failed'
+(cd "$MODPATH" && /system/bin/sha256sum -c INSTALL_SHA256SUMS && /system/bin/sha256sum -c SHA256SUMS) || abort 'Payload integrity check failed'
 [ ! -e "$MODPATH/kernel/cnss2.ko" ] || abort 'CNSS2 replacement is forbidden in this profile'
 set_perm_recursive "$MODPATH" 0 0 0700 0600
 for script in "$MODPATH"/*.sh; do set_perm "$script" 0 0 0700; done
