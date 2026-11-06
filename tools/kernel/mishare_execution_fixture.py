@@ -121,7 +121,7 @@ NATIVE_HDD_CHECKED
 #define hdd_err(...) ((void)0)
 static int component_deinits;
 static void native_late_unload(void) {
- int mishare_ret;
+ int mishare_ret;int *private_result=NULL;
 NATIVE_LATE_GUARD
  component_deinits++;
 }
