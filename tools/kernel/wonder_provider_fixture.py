@@ -23,6 +23,8 @@ COMMON = lifecycle.COMMON + r'''
 #define module_init(x)
 #define module_exit(x)
 #define module_param(a,b,c)
+#define module_param_cb(n,ops,arg,perm) \
+ static const void *n##_fixture_ops __attribute__((used))=(ops)
 #define MODULE_PARM_DESC(a,b)
 #define MODULE_LICENSE(x)
 #define MODULE_DESCRIPTION(x)
@@ -69,6 +71,24 @@ static int component_add(struct device *,const struct component_ops *);
 static void component_del(struct device *,const struct component_ops *);
 static int component_bind_all(struct device *,void *);
 static void component_unbind_all(struct device *,void *);
+/* The execution controller has its own production fixture. Here only the
+ * provider parameter adapter is exercised against a modeled controller.
+ */
+struct kernel_param { int unused; };
+struct kernel_param_ops {
+ int (*set)(const char *, const struct kernel_param *);
+};
+static int live_requests;
+int opairshare_wlan_live_unload_request_v1(void)
+{live_requests++;return -EOPNOTSUPP;}
+static int kstrtoint(const char *text, unsigned int base, int *value)
+{
+ char *end;long parsed;
+ assert(base==0);
+ errno=0;parsed=strtol(text,&end,base);
+ if(errno || end==text || *end || parsed>INT32_MAX || parsed<INT32_MIN)return -EINVAL;
+ *value=(int)parsed;return 0;
+}
 '''
 HARNESS = r'''
 #include "provider/provider.c"
@@ -160,6 +180,10 @@ int main(void)
  struct hdd_context h={1},wrong={2};struct wondertap_init_params params={0};
  const struct wondertap_managed_ops *out=NULL;struct wondertap_data *w=&instance.wondertap_data;
  assert(provider_init()==0);prepare();
+ assert(live_requests==0);
+ assert(mishare_live_unload_ops.set("invalid",NULL)==-EINVAL && !live_requests);
+ assert(mishare_live_unload_ops.set("0",NULL)==-EINVAL && !live_requests);
+ assert(mishare_live_unload_ops.set("1",NULL)==-EOPNOTSUPP && live_requests==1);
  assert(mishare_wonder_backend_register(&h)==0 && !active_priv && !component_adds);
  mishare_wonder_attach=true;
  component_error=-ENOMEM;
@@ -276,6 +300,7 @@ def main():
     for key, value in fragments.items():
         harness = harness.replace(key, value)
     names = ['kernel/provider/provider.c', 'kernel/provider/wondertap.h',
+             'kernel/provider/mishare_wlan_execution.h',
              'kernel/wonder/wondertap.c', 'kernel/wonder/wondertap_internal.h',
              'kernel/wonder/wondertap_managed.h', 'kernel/wonder/wondertap_provider_binding.c',
              'kernel/wonder/include/wonder/wondertap.h',
@@ -289,7 +314,7 @@ def main():
             shutil.copyfile(ROOT/name, destination)
         shutil.copyfile(ROOT/'kernel/provider/wondertap.h', d/'hdd/wlan_hdd_mishare_wonder_api.h')
         shutil.copyfile(ROOT/'kernel/wonder/wondertap_managed.h', d/'hdd/wlan_hdd_mishare_managed.h')
-        for name in ['linux/export.h', 'linux/module.h', 'linux/mutex.h', 'linux/string.h',
+        for name in ['linux/types.h', 'linux/export.h', 'linux/module.h', 'linux/mutex.h', 'linux/string.h',
                      'linux/etherdevice.h', 'linux/delay.h', 'linux/ieee80211.h',
                      'linux/if_ether.h', 'linux/component.h', 'linux/platform_device.h',
                      'wonder/wonder_log.h', 'hdd/wlan_hdd_main.h', 'hdd/wlan_hdd_trace.h']:
@@ -322,7 +347,7 @@ def main():
         'build_modes': ['private provider with loader dependency', 'generic legacy without private import'],
         'production_sha256': {n: hashlib.sha256((ROOT/n).read_bytes()).hexdigest() for n in names},
         'production_fragment_sha256': {k: hashlib.sha256(v.encode()).hexdigest() for k, v in fragments.items()},
-        'limitations': 'Production provider/core/HDD metadata and extracted master/free callbacks with modeled modules, mutexes, platform/component services and version acceptance. Not native races, teardown leases, firmware or RF proof.'
+        'limitations': 'Production provider/core/HDD metadata and extracted master/free callbacks with modeled modules, mutexes, platform/component services, integer parser, explicit live-request result and version acceptance. Execution controller itself is not run by this fixture. Not native races, teardown leases, firmware or RF proof.'
     }, indent=2)+'\n')
 
 if __name__ == '__main__':
