@@ -209,9 +209,29 @@ pp_restore_services() {
 }
 # Read-only check/status do not create state or run lifecycle effects.
 if [ "$ACTION" = status ]; then
-    cat /proc/sys/kernel/random/boot_id
-    for m in cnss2 "$WLAN" "$PROVIDER"; do [ ! -d "/sys/module/$m" ] || { printf '%s ' "$m"; cat "/sys/module/$m/initstate"; cat "/sys/module/$m/refcnt"; ls -1 "/sys/module/$m/holders"; }; done
-    [ ! -f "$STATE/phase" ] || cat "$STATE/phase"
+    printf 'device='; getprop ro.product.device
+    printf 'firmware='; getprop ro.build.version.incremental
+    printf 'kernel='; uname -r
+    printf 'boot_id='; cat /proc/sys/kernel/random/boot_id
+    slot=$(getprop ro.boot.slot_suffix)
+    printf 'slot=%s\n' "$slot"
+    case "$slot" in _a|_b)
+        boot="/dev/block/by-name/boot$slot"
+        if [ -b "$boot" ]; then printf 'boot_sha256='; pp_hash "$boot"; fi;;
+    esac
+    for m in cnss2 "$WLAN" "$PROVIDER"; do
+        [ ! -d "/sys/module/$m" ] || {
+            printf 'module=%s\ninitstate=' "$m"; cat "/sys/module/$m/initstate"
+            printf 'refcnt='; cat "/sys/module/$m/refcnt"
+            printf 'holders='; ls -1 "/sys/module/$m/holders"
+            note="/sys/module/$m/notes/.note.gnu.build-id"
+            if [ -r "$note" ]; then printf 'loaded_note_sha256='; pp_hash "$note"; else echo 'loaded_note_sha256=missing'; fi
+        }
+    done
+    error="/sys/module/$WLAN/parameters/mishare_load_error"
+    [ ! -r "$error" ] || { printf 'mishare_load_error='; cat "$error"; }
+    [ ! -f "$STATE/phase" ] || { printf 'transaction_phase='; cat "$STATE/phase"; }
+    echo 'STATUS_READ_ONLY_NOT_RUNTIME_CERTIFICATION'
     exit 0
 fi
 pp_verify_bundle || { echo 'Bundle identity/permission/hash check failed.'; exit 1; }
