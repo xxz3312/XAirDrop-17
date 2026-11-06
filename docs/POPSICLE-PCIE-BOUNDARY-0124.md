@@ -9,3 +9,5 @@
 **接入边界：生产 pld_pcie_ops 仍使用原生入口，尚未切换到新 provider。** 平台 `cnss_wlan_unregister_driver` 仍为 void，其事件 handler 与清空状态/断电尾部尚未接入 checked remove 回执。当前只完成类型化边界和原生回调修复，不能称为 CNSS2 生命周期接通或实机保护完成。下一步需要实现 checked CNSS2 事件及 PCIe→PLD→HDD 拒绝传播，再成套切换注册槽位。
 
 本地 57 项 Python 回归、源码夹具组装、0053–0056 独立补丁正向应用和 0056 反向检查通过。Actions 结果单独记录；未运行的检查不计为通过。手机未操作，无线后端仍关闭。原生 CNSS2 调度器、PCIe remove/热拔插、module-exit 失败、模块加载/ABI/KCFI 与无线行为均未认证。
+
+[Actions 42198546212](https://github.com/xxz3312/XAirDrop-17/actions/runs/42198546212) 的 stop-admission 作业已通过，新增 PCIe 六项错误注入及四类并发回调场景通过，既有四套回归通过。产物 SHA256 与五套重新组装夹具、原生片段、provider/header/host 生产哈希一致。完整诊断构建仍在运行，尚未验收。详见 [机器证据](research/popsicle-pcie-boundary-0124-validation.json)。

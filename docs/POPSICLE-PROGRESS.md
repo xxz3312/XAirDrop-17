@@ -1,8 +1,8 @@
-## 最新阶段 0124（PCIe 类型化边界与原生回调修复，待 Actions 验证）
+## 最新阶段 0124（PCIe 类型化边界与原生回调修复，C 快速验收通过）
 
 已按实际 PCIe/CNSS2 签名新增独立 v3 描述符与四个外部入口，保留设备 ID，沿用共享 owner/引用/关闭保护；v2 布局不变，错总线拒绝。补丁 0056 修复四个原生回调的空 context/ops 访问及 idle_shutdown 指针检查错误。新增真实 provider + 四个原生 PCIe 回调 C 夹具、四类并发关闭和六项错误注入，接入默认 CI，真实 provider 导出门禁扩展为 17 项。
 
-57 项本地 Python 回归、源码组装与独立补丁正反检查通过。生产 PCIe 注册槽位尚未切换，CNSS2 checked 注销/清空/断电返回链尚未接入；本阶段不计作实机入口保护完成。手机未操作，无线后端仍关闭。详见 [0124 边界与限制](POPSICLE-PCIE-BOUNDARY-0124.md)。
+57 项本地 Python 回归、源码组装与独立补丁正反检查通过。[Actions 42198546212](https://github.com/xxz3312/XAirDrop-17/actions/runs/42198546212) 的 stop-admission 作业通过，新增四类 PCIe 并发关闭与六项错误注入、原有 host/runtime/IPCI/ICNSS 参考夹具均通过 ASan/UBSan/leak detection。产物 ZIP 摘要及五套重新组装夹具/生产哈希已核对；完整模块构建仍待验收。生产 PCIe 注册槽位尚未切换，CNSS2 checked 注销/清空/断电返回链尚未接入；本阶段不计作实机入口保护完成。手机未操作，无线后端仍关闭。详见 [0124 边界与限制](POPSICLE-PCIE-BOUNDARY-0124.md)。
 
 ## 最新阶段 0123（ICNSS 参考 CRC 已修复，实际目标总线已纠正）
 
