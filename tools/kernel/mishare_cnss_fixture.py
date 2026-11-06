@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from mishare_live_origins import restore_live_additions
 """Actions-only native PCIe consumer + CNSS2 checked unregister, modeled HW."""
 import argparse
 import hashlib
@@ -277,7 +278,7 @@ def assemble(wlan):
        'NATIVE_PL_UNREGISTER':native_function(pld,'pld_pcie_unregister_driver'),
        'NATIVE_COMMON_CHECKED':native_function((wlan/'qcacld-3.0/core/pld/src/pld_common.c').read_text(),'pld_unregister_driver_checked'),
        'NATIVE_HDD_CHECKED':native_function((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c').read_text(),'wlan_hdd_unregister_driver_checked'),
-       'NATIVE_LATE_GUARD':extract((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text(),r'/\* MISHARE_SSR_STOP_BEGIN:unload_checked_unregister \*/.*?/\* MISHARE_SSR_STOP_END:unload_checked_unregister \*/'),
+       'NATIVE_LATE_GUARD':extract(restore_live_additions((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text()),r'/\* MISHARE_SSR_STOP_BEGIN:unload_checked_unregister \*/.*?/\* MISHARE_SSR_STOP_END:unload_checked_unregister \*/'),
        'NATIVE_REMOVE_INTERNAL':native_function(pci,'cnss_pci_call_driver_remove_internal'),
        'NATIVE_REMOVE_WRAPPER':native_function(pci,'cnss_pci_call_driver_remove'),
        'NATIVE_SHUTDOWN_INTERNAL':native_function(pci,'cnss_qca6290_shutdown_internal'),

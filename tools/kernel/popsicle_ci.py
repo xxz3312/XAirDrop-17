@@ -641,7 +641,9 @@ def modules(work, link_only=False):
                     output = subprocess.check_output([str(work / 'toolchains/clang-r536225/bin/llvm-nm'),
                                                       '--defined-only', str(path)], text=True)
                     defined = {line.split()[-1] for line in output.splitlines() if line.split()}
-                    required = ['opairshare_wlan_execution_register_v2',
+                    required = ['opairshare_wlan_live_unload_arm_v1',
+                                'opairshare_wlan_live_unload_request_v1',
+                                'opairshare_wlan_execution_register_v2',
                                 'opairshare_wlan_execution_close', 'opairshare_wlan_execution_unregister',
                                 'opairshare_wlan_execution_reinit', 'opairshare_wlan_execution_shutdown',
                                 'opairshare_wlan_execution_idle_restart', 'opairshare_wlan_execution_idle_shutdown',

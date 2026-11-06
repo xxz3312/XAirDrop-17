@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from mishare_live_origins import restore_live_additions
 """Actions-only actual registration/load bodies; hardware and shutdown are models."""
 import argparse
 import hashlib
@@ -183,7 +184,7 @@ int main(void){
 
 def assemble(wlan):
     verify_platform_origin(wlan)
-    pci=(wlan/'platform/cnss2/pci.c').read_text();pcie=(wlan/'qcacld-3.0/core/pld/src/pld_pcie.c').read_text();common=(wlan/'qcacld-3.0/core/pld/src/pld_common.c').read_text();hdd=(wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text()
+    pci=(wlan/'platform/cnss2/pci.c').read_text();pcie=(wlan/'qcacld-3.0/core/pld/src/pld_pcie.c').read_text();common=(wlan/'qcacld-3.0/core/pld/src/pld_common.c').read_text();hdd=restore_live_additions((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text())
     def tag(s,t):return extract(s,r'/\* MISHARE_SSR_STOP_BEGIN:'+t+r' \*/.*?/\* MISHARE_SSR_STOP_END:'+t+r' \*/')
     f={'NATIVE_IDS':'\n'.join(extract((wlan/'platform/cnss_utils/cnss_common.h').read_text(),r'^#define '+n+r'[^\n]*') for n in ['PEACH_DEVICE_ID','KIWI_DEVICE_ID','FIG_DEVICE_ID','QCA6174_DEVICE_ID']),
        'NATIVE_ENUM':extract((wlan/'platform/cnss2/main.h').read_text(),r'^enum cnss_driver_state \{.*?^\};')+'\n'+extract((wlan/'platform/cnss2/main.h').read_text(),r'^enum cnss_driver_event_type \{.*?^\};'),

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from mishare_live_origins import restore_live_additions
 """Actions-only external provider return boundary and native IPCI registration."""
 import argparse
 import hashlib
@@ -22,7 +23,7 @@ COMMON = r'''
 #include <stdatomic.h>
 #include <unistd.h>
 #include <sys/wait.h>
-struct module {atomic_int refs;atomic_bool deny;};
+struct module {atomic_int refs;atomic_bool deny,coming;};
 static struct module wlan_module,foreign_module;
 #define THIS_MODULE (&wlan_module)
 struct device {int id;};
@@ -36,6 +37,7 @@ static bool try_module_get(struct module *m) {
  assert(m);atomic_fetch_add(&execution_get_count,1);if(atomic_load(&m->deny))return false;
  atomic_fetch_add(&m->refs,1);return true;
 }
+static inline bool module_is_coming(struct module *m) {return atomic_load(&m->coming);}
 static bool module_is_live(struct module *m) {return !atomic_load(&m->deny);}
 static void module_put(struct module *m) {
  int previous=atomic_fetch_sub(&m->refs,1);assert(previous>0 && "EXPECTED_EXEC_PUT_BALANCE");
@@ -267,7 +269,7 @@ def assemble(wlan):
         'NATIVE_REGISTER':extract(native,r'^int pld_ipci_register_driver\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_REMOVE':extract(native,r'^static void pld_ipci_remove\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_CHECKED':extract(native,r'^int pld_ipci_unregister_driver_checked\([^;{]+?\)\s*\{.*?^\}'),
-        'NATIVE_LATE_GUARD':extract((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text(),r'/\* MISHARE_SSR_STOP_BEGIN:unload_checked_unregister \*/.*?/\* MISHARE_SSR_STOP_END:unload_checked_unregister \*/'),
+        'NATIVE_LATE_GUARD':extract(restore_live_additions((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text()),r'/\* MISHARE_SSR_STOP_BEGIN:unload_checked_unregister \*/.*?/\* MISHARE_SSR_STOP_END:unload_checked_unregister \*/'),
         'NATIVE_COMMON_CHECKED':extract((wlan/'qcacld-3.0/core/pld/src/pld_common.c').read_text(),r'^int pld_unregister_driver_checked\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_HDD_CHECKED':extract((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c').read_text(),r'^int wlan_hdd_unregister_driver_checked\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_UNREGISTER':extract(native,r'^void pld_ipci_unregister_driver\([^;{]+?\)\s*\{.*?^\}'),

@@ -5,6 +5,7 @@
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
 
+#include "mishare_wlan_execution.h"
 #include "wondertap.h"
 #include "../wonder/wondertap_managed.h"
 
@@ -215,3 +216,23 @@ module_init(provider_init);
 module_exit(provider_exit);
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("OPAirShare DT-free Wonder provider bridge, independent of CNSS");
+
+/* Root-only explicit request. Provider owns the sysfs return frame. No
+ * request is submitted automatically at module load or callback registration.
+ */
+static int mishare_live_unload_set(const char *value, const struct kernel_param *kp)
+{
+	int request, ret;
+
+	ret = kstrtoint(value, 0, &request);
+	if (ret)
+		return ret;
+	if (request != 1)
+		return -EINVAL;
+	return opairshare_wlan_live_unload_request_v1();
+}
+static const struct kernel_param_ops mishare_live_unload_ops = {
+	.set = mishare_live_unload_set,
+};
+module_param_cb(mishare_live_unload, &mishare_live_unload_ops, NULL, 0200);
+MODULE_PARM_DESC(mishare_live_unload, "Experimental one-shot live WLAN unload; write 1 explicitly");

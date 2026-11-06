@@ -1,0 +1,208 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -683,6 +683,19 @@
+ #endif
+ /* MISHARE_SSR_STOP_END:reg_hdd_state */
+ 
++/* MISHARE_SSR_STOP_BEGIN:live_state */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++#if !defined(MODULE) || defined(FEATURE_WLAN_RESIDENT_DRIVER)
++#error "checked live unload requires the nonresident module lifecycle"
++#endif
++#include "mishare_wlan_execution.h"
++static DEFINE_MUTEX(mishare_lifecycle_lock);
++static bool mishare_live_load_started;
++static bool mishare_live_armed;
++static bool mishare_live_done;
++#endif
++/* MISHARE_SSR_STOP_END:live_state */
++
+ 
+ #ifdef WLAN_FEATURE_LOCAL_PKT_CAPTURE
+ /**
+@@ -20739,6 +20752,12 @@
+ 
+ static int hdd_wlan_soft_driver_load(void)
+ {
++/* MISHARE_SSR_STOP_BEGIN:live_hdd_wlan_soft_driver_load */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	return -EOPNOTSUPP;
++#endif
++/* MISHARE_SSR_STOP_END:live_hdd_wlan_soft_driver_load */
++
+ 	if (!cds_is_driver_loaded()) {
+ 		hdd_debug("\nEnabling CNSS WLAN HW");
+ 		pld_wlan_hw_enable();
+@@ -20761,6 +20780,12 @@
+ /* MISHARE_SSR_STOP_END:unload_forward */
+ static void hdd_wlan_soft_driver_unload(void)
+ {
++/* MISHARE_SSR_STOP_BEGIN:live_hdd_wlan_soft_driver_unload */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	return;
++#endif
++/* MISHARE_SSR_STOP_END:live_hdd_wlan_soft_driver_unload */
++
+ 
+ /* MISHARE_SSR_STOP_BEGIN:unload_soft_local */
+ 	bool private_refused;
+@@ -22081,7 +22106,7 @@
+ 	hdd_set_con_mode_cb = hdd_set_con_mode;
+ }
+ 
+-static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
++static int con_mode_handler_internal(const char *kmessage, const struct kernel_param *kp)
+ {
+ 	enum QDF_GLOBAL_MODE mode;
+ 	int errno;
+@@ -22101,6 +22126,23 @@
+ 
+ 	return hdd_set_con_mode_cb(mode);
+ }
++/* MISHARE_SSR_STOP_BEGIN:live_mode_wrapper */
++static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
++{
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	int ret;
++
++	mutex_lock(&mishare_lifecycle_lock);
++	ret = mishare_live_load_started ? -ESHUTDOWN :
++		con_mode_handler_internal(kmessage, kp);
++	mutex_unlock(&mishare_lifecycle_lock);
++	return ret;
++#else
++	return con_mode_handler_internal(kmessage, kp);
++#endif
++}
++/* MISHARE_SSR_STOP_END:live_mode_wrapper */
++
+ 
+ /*
+  * If the wlan_hdd_register_driver will return an error
+@@ -22157,7 +22199,7 @@
+ 	hdd_create_apfmode_interface_sysfs_file();
+ }
+ 
+-int hdd_driver_load(void)
++static int hdd_driver_load_internal(void)
+ {
+ 	struct osif_driver_sync *driver_sync;
+ 	QDF_STATUS status;
+@@ -22325,6 +22367,27 @@
+ exit:
+ 	return errno;
+ }
++/* MISHARE_SSR_STOP_BEGIN:live_load_wrapper */
++int hdd_driver_load(void)
++{
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	int ret;
++
++	mutex_lock(&mishare_lifecycle_lock);
++	if (mishare_live_load_started)
++		ret = -ESHUTDOWN;
++	else {
++		mishare_live_load_started = true;
++		ret = hdd_driver_load_internal();
++	}
++	mutex_unlock(&mishare_lifecycle_lock);
++	return ret;
++#else
++	return hdd_driver_load_internal();
++#endif
++}
++/* MISHARE_SSR_STOP_END:live_load_wrapper */
++
+ 
+ #ifdef FEATURE_WLAN_RESIDENT_DRIVER
+ EXPORT_SYMBOL(hdd_driver_load);
+@@ -22555,6 +22618,16 @@
+ /* MISHARE_SSR_STOP_BEGIN:unload_wrapper */
+ void hdd_driver_unload(void)
+ {
++/* MISHARE_SSR_STOP_BEGIN:live_void_gate */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	/* Normal module-exit reaches here only after external success dropped
++	 * both references. The completed graph must never be dismantled twice.
++	 */
++	if (READ_ONCE(mishare_live_load_started))
++		return;
++#endif
++/* MISHARE_SSR_STOP_END:live_void_gate */
++
+ 	hdd_driver_unload_internal(NULL, NULL);
+ }
+ /* MISHARE_SSR_STOP_END:unload_wrapper */
+@@ -22566,7 +22639,7 @@
+  * entries through the entire call. No execution-reference release here.
+  * This result is a teardown receipt only, not a retry/recovery permission.
+  */
+-int hdd_mishare_driver_unload_checked(void)
++static int hdd_mishare_driver_unload_checked_internal(void)
+ {
+ 	bool refused;
+ 	int result = -EINPROGRESS;
+@@ -22580,6 +22653,50 @@
+ }
+ #endif
+ /* MISHARE_SSR_STOP_END:result_entry */
++
++/* MISHARE_SSR_STOP_BEGIN:live_controller */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++int hdd_mishare_driver_unload_checked(void)
++{
++	int ret;
++
++	mutex_lock(&mishare_lifecycle_lock);
++	if (!mishare_live_armed || mishare_live_done) {
++		ret = -ESHUTDOWN;
++		goto out;
++	}
++	ret = hdd_mishare_driver_unload_checked_internal();
++	if (!ret) {
++		/* Provider's independent reference remains held through our return. */
++		ret = pld_registration_release_clean();
++		if (!ret)
++			WRITE_ONCE(mishare_live_done, true);
++	}
++	if (ret)
++		hdd_mishare_quarantine_load(ret);
++out:
++	mutex_unlock(&mishare_lifecycle_lock);
++	return ret;
++}
++
++static int hdd_mishare_arm_live_unload(void)
++{
++	int ret;
++
++	mutex_lock(&mishare_lifecycle_lock);
++	ret = opairshare_wlan_live_unload_arm_v1(THIS_MODULE,
++					 hdd_mishare_driver_unload_checked);
++	if (!ret)
++		mishare_live_armed = true;
++	else {
++		opairshare_wlan_execution_close(THIS_MODULE);
++		hdd_mishare_quarantine_load(ret);
++	}
++	mutex_unlock(&mishare_lifecycle_lock);
++	return ret;
++}
++#endif
++/* MISHARE_SSR_STOP_END:live_controller */
+ 
+ #ifdef FEATURE_WLAN_RESIDENT_DRIVER
+ EXPORT_SYMBOL(hdd_driver_unload);
+@@ -22743,6 +22860,12 @@
+ 		}
+ 		return -EINVAL;
+ 	}
++
++/* MISHARE_SSR_STOP_BEGIN:live_arm */
++	/* An arm error must retain the already loaded graph. */
++	if (hdd_mishare_arm_live_unload())
++		return 0;
++/* MISHARE_SSR_STOP_END:live_arm */
+ 	return 0;
+ #else
+ 	if (hdd_driver_load())

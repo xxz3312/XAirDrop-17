@@ -56,4 +56,11 @@ int opairshare_wlan_execution_remove_begin(struct module *owner, struct device *
 int opairshare_wlan_execution_remove_end(struct module *owner, struct device *dev, int result);
 /* Read-only observation for a matched checked platform callback. */
 int opairshare_wlan_execution_remove_status(struct device *dev);
+/* One-shot PCIe live-unload lease. arm acquires its own reference;
+ * request calls the typed teardown and releases only after all WLAN frames
+ * return and the execution registry is empty. Admitted errors retain the
+ * lease permanently. COMING and pre-admission contention do not enter WLAN.
+ */
+int opairshare_wlan_live_unload_arm_v1(struct module *owner, int (*prepare)(void));
+int opairshare_wlan_live_unload_request_v1(void);
 #endif

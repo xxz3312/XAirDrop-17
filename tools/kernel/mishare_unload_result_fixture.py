@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from mishare_live_origins import restore_live_additions
 """Actions-only complete native HDD unload; teardown/resource APIs are models."""
 import argparse,hashlib,json,os,re,subprocess,tempfile
 from pathlib import Path
@@ -96,7 +97,7 @@ int main(void){
 }
 '''
 def assemble(wlan):
-    main=(wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text()
+    main=restore_live_additions((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text())
     original=subprocess.check_output(['git','-C',str(wlan),'show','HEAD:qcacld-3.0/core/hdd/src/wlan_hdd_main.c'],text=True)
     native=native_function(main,'hdd_driver_unload_internal');assert remove_ssr_stop_additions(native) in original
     qdf=(wlan/'qca-wifi-host-cmn/qdf/linux/src/qdf_status.c').read_text()

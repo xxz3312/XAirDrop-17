@@ -434,3 +434,101 @@ int opairshare_wlan_execution_pcie_idle_shutdown(struct pci_dev *pdev)
     return ret;
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_pcie_idle_shutdown);
+
+/* One-shot live unload controller. This independent reference is never
+ * released by WLAN. No controller lock is held while entering WLAN code.
+ * A failed admitted attempt is terminal and retains this reference.
+ */
+static DEFINE_MUTEX(live_unload_lock);
+static struct module *live_unload_owner;
+static int (*live_unload_prepare)(void);
+static enum { LIVE_EMPTY, LIVE_ARMED, LIVE_RUNNING, LIVE_FAILED,
+              LIVE_COMPLETE } live_unload_state;
+static int live_unload_error;
+
+int opairshare_wlan_live_unload_arm_v1(struct module *owner, int (*prepare)(void))
+{
+    int ret = 0;
+
+    if (!owner || !prepare)
+        return -EINVAL;
+    mutex_lock(&live_unload_lock);
+    mutex_lock(&execution_lock);
+    if (live_unload_state != LIVE_EMPTY)
+        ret = -EALREADY;
+    else if (execution_ops.owner != owner || execution_pcie_ops.owner != owner)
+        ret = -ENOENT;
+    else if (execution_closing || execution_active || unregister_scope)
+        ret = -EBUSY;
+    else if (!try_module_get(owner))
+        ret = -ESHUTDOWN;
+    else {
+        live_unload_owner = owner;
+        live_unload_prepare = prepare;
+        live_unload_state = LIVE_ARMED;
+    }
+    mutex_unlock(&execution_lock);
+    mutex_unlock(&live_unload_lock);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_live_unload_arm_v1);
+
+int opairshare_wlan_live_unload_request_v1(void)
+{
+    struct module *owner;
+    int (*prepare)(void);
+    int ret;
+
+    mutex_lock(&live_unload_lock);
+    if (live_unload_state != LIVE_ARMED) {
+        ret = live_unload_state == LIVE_FAILED ? live_unload_error :
+              live_unload_state == LIVE_RUNNING ? -EBUSY :
+              live_unload_state == LIVE_COMPLETE ? -EALREADY : -ENODEV;
+        mutex_unlock(&live_unload_lock);
+        return ret;
+    }
+    owner = live_unload_owner;
+    if (module_is_coming(owner) || !module_is_live(owner)) {
+        mutex_unlock(&live_unload_lock);
+        return -EAGAIN;
+    }
+    mutex_lock(&execution_lock);
+    if (execution_ops.owner != owner || execution_pcie_ops.owner != owner)
+        ret = -ENOENT;
+    else if (execution_active || unregister_scope || execution_closing)
+        ret = -EBUSY;
+    else {
+        execution_closing = true;
+        live_unload_state = LIVE_RUNNING;
+        ret = 0;
+    }
+    mutex_unlock(&execution_lock);
+    if (ret) {
+        mutex_unlock(&live_unload_lock);
+        return ret; /* no WLAN entry and no reference release */
+    }
+    prepare = live_unload_prepare;
+    mutex_unlock(&live_unload_lock);
+
+    ret = prepare();
+
+    /* Every WLAN frame, including its local-pin release, has returned. */
+    mutex_lock(&live_unload_lock);
+    mutex_lock(&execution_lock);
+    if (!ret && (execution_ops.owner || execution_active || unregister_scope))
+        ret = -EUCLEAN;
+    if (ret) {
+        live_unload_error = ret;
+        live_unload_state = LIVE_FAILED;
+    } else {
+        live_unload_owner = NULL;
+        live_unload_prepare = NULL;
+        live_unload_state = LIVE_COMPLETE;
+    }
+    mutex_unlock(&execution_lock);
+    mutex_unlock(&live_unload_lock);
+    if (!ret)
+        module_put(owner); /* external final return boundary, no WLAN access */
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_live_unload_request_v1);

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from mishare_live_origins import restore_live_additions
 """Actions-only ASan/UBSan execution of the actual dormant HDD host helper."""
 import argparse
 import hashlib
@@ -1257,7 +1258,7 @@ def extract(text, pattern):
 def run(wlan, output):
     if os.environ.get('GITHUB_ACTIONS') != 'true':
         raise ValueError('Native compilation runs only on Actions')
-    main = (wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text()
+    main = restore_live_additions((wlan/'qcacld-3.0/core/hdd/src/wlan_hdd_main.c').read_text())
     guard = extract(main, r'if \(session_type == QDF_PASSTHRU_MODE && !mishare_host_only\) \{.*?\n\t\}')
     rollback = extract(main, r'if \(mishare_host_only && adapter\) \{.*?\n\t\}')
     wrappers = '\n'.join(extract(main, pattern) for pattern in [
