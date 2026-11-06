@@ -1,8 +1,8 @@
-## 最新阶段 0125（PCIe / CNSS2 checked 注销源码，待 C 验证）
+## 最新阶段 0125（PCIe / CNSS2 checked 注销源码，联合 C 验收通过）
 
 补丁 0057 为实际 PEACH PCIe/CNSS2 增加独立 checked 注销：原生同步事件显式传递回执，remove 错误在清 PROBED/ops 和断电前返回；投递/准入/执行失败进入 terminal 状态，旧入口不能重放。补丁 0058 提供 opt-in 原生 PCIe 消费者，直接使用 v3 provider 槽位、PSOC transition 内的 remove preflight 与回执，以及 PCIe→PLD→HDD 拒绝传播。电源尾部失败保留剩余状态，不承诺撤销此前完成的硬件/WLAN 操作。
 
-新增真实平台/消费者联合 C 夹具，57 项本地 Python 回归、源码组装及独立补丁正反检查通过；C 验证待 Actions。默认实验开关仍关闭，平台二进制/配对 ABI 未验收，手机未操作。见 [0125 边界与限制](POPSICLE-CNSS-CHECKED-0125.md)。
+新增真实平台/消费者联合 C 夹具，57 项本地 Python 回归、源码组装及独立补丁正反检查通过。[Actions 42201870635](https://github.com/xxz3312/XAirDrop-17/actions/runs/42201870635) 的 stop-admission 作业通过：两组成功、九组失败、七组准入拒绝及六项错误注入通过 ASan/UBSan/leak detection；原有五套回归通过。ZIP 摘要与六套重新组装夹具、原生片段及生产哈希核对一致。完整诊断构建仍未验收。默认实验开关仍关闭，平台二进制/配对 ABI 未验收，手机未操作。见 [0125 边界与限制](POPSICLE-CNSS-CHECKED-0125.md)。
 
 ## 最新阶段 0124（PCIe 类型化边界与原生回调修复，C 快速验收通过）
 
