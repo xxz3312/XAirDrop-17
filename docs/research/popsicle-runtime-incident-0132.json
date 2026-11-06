@@ -1,0 +1,31 @@
+{
+  "stage": "0132",
+  "result": "PHONE_APPLY_INTERRUPTED_BY_REBOOT_CAUSE_UNRESOLVED",
+  "evidence_sha256": {
+    "xairdrop-0132-backup-pipe.txt": "62d8bd40caa26200e430b817b78f155a9cf3793f41dbc3fc15e90a8decc054eb",
+    "xairdrop-0132-apply.txt": "cca1b6e6402cf735c87f556f8628ca1e0c1f2105eb7259080ca26098739c69f4",
+    "xairdrop-0132-after-apply.txt": "5311fa5f7dd4ab90188e5a75e19a015884ea181918dd639f4cce5a129a941643",
+    "xairdrop-0132-reboot-info.txt": "3ca77a2ac3caefd7ead54c1eadc938e3db89309983ef18f9caa21c7ac64de759",
+    "xairdrop-0132-pstore.tar.gz": "0812230ce992a0969ccd2df377dbe5ab0410d3a98ec7f1b180895dd074f9b666",
+    "xairdrop-0132-reboot-diag.txt": "e6d6ecf211bce41c3108930d269350bc77199cec663ca2c92d06ab6104e6cbc2",
+    "xairdrop-0132-reboot-full.txt.gz": "d4f55331f92e79cfa6cbb088ad1e1b5b317ebefca9de84adcb6c6d0f4a14330d"
+  },
+  "backup_completed": true,
+  "backup_wifi_before": 1,
+  "backup_hal": "vendor.wifi_hal_legacy",
+  "provider_insert_returned_success_and_note_matched": true,
+  "last_persisted_phase": "intent:insert:cnss2",
+  "candidate_cnss2_insmod_execution_confirmed": false,
+  "candidate_wlan_insert_reached": false,
+  "apply_completed": false,
+  "runtime_certified": false,
+  "rf_certified": false,
+  "post_reboot_stock_module_notes_match": true,
+  "post_reboot_boot_sha256_matches": true,
+  "pstore_regular_file_count": 0,
+  "dropbox_SYSTEM_LAST_KMSG_present": false,
+  "dropbox_SYSTEM_SERVER_WATCHDOG_present": false,
+  "vendor_mcrash_history_contains_this_incident": false,
+  "root_cause": "unresolved; asynchronous teardown failure and candidate insertion cannot be distinguished by the saved trace",
+  "retry_policy": "Do not repeat apply or restore with this bundle; preserve transaction and evidence. Review teardown and add durable pre-effect execution/return markers plus pre-reboot kernel capture before another trial."
+}

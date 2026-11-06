@@ -1,3 +1,7 @@
+## 最新实机结果 0132（备份通过，apply 期间重启，运行验收未通过）
+
+Termux 改用管道 tee 后 backup 成功，原厂副本校验和 Wi-Fi/HAL 状态保存通过。随后 apply 中原厂两模块移除返回、provider 插入及 note 验证通过，最后记录 intent:insert:cnss2 后手机重启；缺少 CNSS2 insmod 执行/返回证据，候选 WLAN 未到加载阶段。重启后原厂模块 note 与活动 boot 摘要匹配。pstore 空、DropBox 无上次内核/看门狗记录，厂商历史无本次条目；当前日志不能判定根因。暂停原包 apply/restore 重试，保留事务，先审查卸载生命周期和改进故障前取证。见 [0132 实机重启事件](POPSICLE-RUNTIME-INCIDENT-0132.md)。下面“尚未操作手机”等表述是各历史阶段当时的状态，不代表当前实机结果。
+
 ## 最新阶段 0132（手机只读 check 已通过，备份与驱动运行仍待执行）
 
 手机只读状态确认 popsicle / OS4.0.5.0.XPBCNXM，活动 boot SHA 和原厂 CNSS2/WLAN build-id note 均匹配捕获样本；CNSS2 仅由 WLAN 持有，WLAN 引用为零。跟踪定位到检查器在权限 700 上把前导零表达式算成 20，误拒绝了正确目录。修复为文本八进制权限位检查，保持 root 归属、禁止链接及组/其他用户写入的规则；另将完整 uname 与模块 vermagic 字段分开，清单精确匹配已观测的完整运行版本。
