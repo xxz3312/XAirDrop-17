@@ -1,0 +1,438 @@
+{
+  "stage": "0126",
+  "first_source_commit": "b8497fd1e4f7ad4d17527766aebc7f36867b1f45",
+  "first_run_id": 42214178581,
+  "first_job_id": 127879966350,
+  "first_artifact_id": 13500343312,
+  "first_artifact_sha256": "0d67b41cc5aff2ebb98f62a0a93a383895dac0d76f082b79e873d51b47353550",
+  "first_report": {
+    "status": "CHECKED_PLATFORM_PAIR_BLOCKED",
+    "variant": "CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER=1",
+    "paired_WLAN_built": false,
+    "modules": {},
+    "checked_WLAN_unresolved": [],
+    "platform_export_crc_changes": {},
+    "phone_executed": false,
+    "radio_backend_activation_enabled": false,
+    "version_generator": "gendwarfksyms",
+    "stable_kabi_mode": true,
+    "new_kernel_kabi_rules_added": false,
+    "CRC_gate_waived": false,
+    "limitations": "Diagnostic paired build only. Stock CNSS2 must not remain loaded beside its replacement. No platform private layout/KCFI, module replacement procedure, actual loader/firmware, error recovery, module-exit failure or radio interoperability certification.",
+    "removed_stock_provider": "cnss2",
+    "stock_cnss2_export_count": 81,
+    "soc_config_sha256": "efa1a94176ead2177fd3d2cde5e46885130a6fa9dc710da22c60d9ded2ae6379",
+    "soc_selected_config": {
+      "CONFIG_PCI_MSM": "m",
+      "CONFIG_MHI_BUS": "m",
+      "CONFIG_MHI_BUS_MISC": "y",
+      "CONFIG_IPC_LOGGING": "m",
+      "CONFIG_QCOM_SMEM": "m",
+      "CONFIG_QCOM_SOCINFO": "m"
+    },
+    "soc_header_sha256": {
+      "include/linux/mhi.h": "8333c4d98f2403f57e96b47e18276f152315a9799ce7e40fb07af0f6b7cd9cc1",
+      "include/linux/mhi_misc.h": "7c379f95aaf129dae35c13d58cd1ad96efd59cb1d20663b0dfab40793a28050c"
+    },
+    "platform_config_sha256": "bed3c9d017f8491bb0e799f7a05ce018c2ea920556057d1a7c752d9fe19fe0d7",
+    "error": "Command '['make', '-C', PosixPath('/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/common'), 'O=/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/out', 'ARCH=arm64', 'LLVM=/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/toolchains/clang-r536225/bin/', 'HOSTCFLAGS=-I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/toolchains/host/usr/include', 'HOSTLDFLAGS=-L/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/toolchains/host/usr/lib/x86_64-linux-gnu', '-j4', 'KBUILD_SYMTYPES=1', 'KBUILD_GENDWARFKSYMS_STABLE=1', 'M=/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/wlan/platform/cnss2', 'WLAN_PLATFORM_ROOT=/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/wlan/platform', 'CONFIG_CNSS2=m', 'CONFIG_CNSS_OUT_OF_TREE=y', 'CONFIG_CNSS2_QMI=y', 'CONFIG_CNSS_QMI_SVC=m', 'CONFIG_BUS_AUTO_SUSPEND=y', 'CONFIG_CNSS2_SSR_DRIVER_DUMP=y', 'CONFIG_CNSS_HW_SECURE_DISABLE=y', 'CONFIG_CNSS_HW_SECURE_SMEM=y', 'CONFIG_CNSS2_SMMU_DB_SUPPORT=y', 'CONFIG_CNSS_PLAT_IPC_QMI_SVC=m', 'CONFIG_WCNSS_MEM_PRE_ALLOC=m', 'CONFIG_CNSS2_FMD_FEATURE_ENABLE=y', 'CONFIG_CNSS2_DIRECT_CX=y', 'CONFIG_PCI_MSM=m', 'CONFIG_MHI_BUS=m', 'CONFIG_MHI_BUS_MISC=y', 'CONFIG_IPC_LOGGING=m', 'CONFIG_QCOM_SMEM=m', 'CONFIG_QCOM_SOCINFO=m', 'EXTRA_CFLAGS=-I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/soc/include -I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/soc/drivers/soc/qcom -I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/soc/drivers/remoteproc -I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/wlan/platform/inc -I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/wlan/platform/cnss_utils -DCONFIG_CNSS2_MODULE=1 -DCONFIG_CNSS_OUT_OF_TREE=1 -DCONFIG_CNSS2_QMI=1 -DCONFIG_CNSS_QMI_SVC_MODULE=1 -DCONFIG_BUS_AUTO_SUSPEND=1 -DCONFIG_CNSS2_SSR_DRIVER_DUMP=1 -DCONFIG_CNSS_HW_SECURE_DISABLE=1 -DCONFIG_CNSS_HW_SECURE_SMEM=1 -DCONFIG_CNSS2_SMMU_DB_SUPPORT=1 -DCONFIG_CNSS_PLAT_IPC_QMI_SVC_MODULE=1 -DCONFIG_WCNSS_MEM_PRE_ALLOC_MODULE=1 -DCONFIG_CNSS2_FMD_FEATURE_ENABLE=1 -DCONFIG_CNSS2_DIRECT_CX=1 -DCONFIG_QCOM_SOCINFO_MODULE=1 -DCONFIG_QCOM_RPROC_COMMON_MODULE=1 -DCONFIG_WCNSS_MEM_PRE_ALLOC=1 -DCONFIG_ARM_SMMU_MODULE=1 -DCONFIG_QCOM_IOMMU_UTIL_MODULE=1 -DCONFIG_PCI_MSM_MODULE=1 -DCONFIG_MHI_BUS_MODULE=1 -DCONFIG_MHI_BUS_MISC=1 -DCONFIG_IPC_LOGGING_MODULE=1 -DCONFIG_QCOM_SMEM_MODULE=1 -DCONFIG_QCOM_SOCINFO_MODULE=1 -I/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/abi/cnss2-include -DCONFIG_MISHARE_CHECKED_CNSS2_PLATFORM=1 -fno-eliminate-unused-debug-types', 'KBUILD_EXTRA_SYMBOLS=/home/runner/work/XAirDrop-17/XAirDrop-17/.popsicle-ci/abi/vendor-without-cnss2.symvers', 'modules']' returned non-zero exit status 2.",
+    "type_inputs": [
+      {
+        "name": "kernel.config",
+        "source": "out/.config",
+        "sha256": "94bf002db208377075e9aad55cbc850bdc9d2dd04cbd410d88d4bb75a176b6f3",
+        "size": 223236
+      },
+      {
+        "name": "stock-config-delta.json",
+        "source": "out/stock-config-delta.json",
+        "sha256": "840adae0ad9fe49b2deb44433dd3a93dc872f59f2392b71f1ae20b60f9becb50",
+        "size": 934
+      },
+      {
+        "name": "cnss2.defconfig",
+        "source": "wlan/platform/cnss2/canoe_gki_defconfig",
+        "sha256": "bed3c9d017f8491bb0e799f7a05ce018c2ea920556057d1a7c752d9fe19fe0d7",
+        "size": 350
+      },
+      {
+        "name": "bus.o.cmd",
+        "source": "wlan/platform/cnss2/.bus.o.cmd",
+        "sha256": "81190c3a6c84d5dd8ba550df384f65003761b6fbd0cb798e137c606be0c23cf2",
+        "size": 124067
+      },
+      {
+        "name": "cnss2.mod.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.mod.cmd",
+        "sha256": "0d320d509c568bf33e9e8ab95dd4230d99eec9d79608e092a37bd63f65673122",
+        "size": 395
+      }
+    ]
+  },
+  "first_compile_errors": [
+    "terminal enum not handled in debug state switch",
+    "CONFIG_MHI_BUF_LEN from parent Kbuild missing",
+    "internal cnss_read_debug_register lacks static declaration"
+  ],
+  "fixed_in_commit": "d06f8578563e64a9776499679ec0b25a570f1128",
+  "retry_run_id": 42215079411,
+  "retry_result_accepted": false,
+  "local_python_tests": 62,
+  "default_checked_consumer_enabled": false,
+  "phone_executed": false,
+  "first_export_record_gate_executed": false,
+  "retry_source_commit": "d06f8578563e64a9776499679ec0b25a570f1128",
+  "retry_job_id": 127882945648,
+  "retry_artifact_id": 13501001470,
+  "retry_artifact_sha256": "b2be0445ec6c9b09224b78d83cb887ad1fa43f08f102338dcaf3a906398e790b",
+  "retry_report": {
+    "status": "CHECKED_PLATFORM_PAIR_BLOCKED",
+    "variant": "CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER=1",
+    "paired_WLAN_built": false,
+    "modules": {},
+    "checked_WLAN_unresolved": [],
+    "platform_export_crc_changes": {
+      "cnss_get_fw_cap": {
+        "stock": {
+          "crc": "0x537ead95",
+          "export_type": "EXPORT_SYMBOL",
+          "namespace": ""
+        },
+        "actual": {
+          "crc": "0x42d590ce",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        }
+      }
+    },
+    "phone_executed": false,
+    "radio_backend_activation_enabled": false,
+    "version_generator": "gendwarfksyms",
+    "stable_kabi_mode": true,
+    "new_kernel_kabi_rules_added": false,
+    "CRC_gate_waived": false,
+    "limitations": "Diagnostic paired build only. Stock CNSS2 must not remain loaded beside its replacement. No platform private layout/KCFI, module replacement procedure, actual loader/firmware, error recovery, module-exit failure or radio interoperability certification.",
+    "removed_stock_provider": "cnss2",
+    "stock_cnss2_export_count": 81,
+    "parent_MHI_buffer_default": {
+      "value": 32768,
+      "Kbuild_sha256": "5dae4841168d3456c95e695c4d3c8d2e73370c6ddcf6f24f4491f3c61445888f",
+      "Kconfig_sha256": "52bb498ea0c22898e75988cb7ecf8cc0d707de5f97b14d31d565f60f794b3d31"
+    },
+    "soc_config_sha256": "efa1a94176ead2177fd3d2cde5e46885130a6fa9dc710da22c60d9ded2ae6379",
+    "soc_selected_config": {
+      "CONFIG_PCI_MSM": "m",
+      "CONFIG_MHI_BUS": "m",
+      "CONFIG_MHI_BUS_MISC": "y",
+      "CONFIG_IPC_LOGGING": "m",
+      "CONFIG_QCOM_SMEM": "m",
+      "CONFIG_QCOM_SOCINFO": "m"
+    },
+    "soc_header_sha256": {
+      "include/linux/mhi.h": "8333c4d98f2403f57e96b47e18276f152315a9799ce7e40fb07af0f6b7cd9cc1",
+      "include/linux/mhi_misc.h": "7c379f95aaf129dae35c13d58cd1ad96efd59cb1d20663b0dfab40793a28050c"
+    },
+    "platform_config_sha256": "bed3c9d017f8491bb0e799f7a05ce018c2ea920556057d1a7c752d9fe19fe0d7",
+    "export_surface": {
+      "match": false,
+      "legacy_count": 81,
+      "missing": [
+        "cnss_register_tsf_captured_handler",
+        "cnss_set_vendor_wonder_priv_data",
+        "cnss_smmu_s1_enabled",
+        "cnss_unregister_tsf_captured_handler"
+      ],
+      "changed": {
+        "cnss_get_fw_cap": {
+          "stock": {
+            "crc": "0x537ead95",
+            "export_type": "EXPORT_SYMBOL",
+            "namespace": ""
+          },
+          "actual": {
+            "crc": "0x42d590ce",
+            "namespace": "",
+            "export_type": "EXPORT_SYMBOL"
+          }
+        }
+      },
+      "unexpected_extra": [
+        "cnss_get_wlan_tsf_gpio"
+      ],
+      "checked_export_valid": true
+    },
+    "type_streams_requested": true,
+    "error": "Rebuilt CNSS2 export records differ from stock; inspect report",
+    "existing_kabi_rules": {
+      "sha256": "d0138eb5d3e35b5620fe8a777534ab6f0474eae442b8b3233e8f9fe5b6b394c7",
+      "size": 32
+    },
+    "type_inputs": [
+      {
+        "name": "kernel.config",
+        "source": "out/.config",
+        "sha256": "94bf002db208377075e9aad55cbc850bdc9d2dd04cbd410d88d4bb75a176b6f3",
+        "size": 223236
+      },
+      {
+        "name": "stock-config-delta.json",
+        "source": "out/stock-config-delta.json",
+        "sha256": "840adae0ad9fe49b2deb44433dd3a93dc872f59f2392b71f1ae20b60f9becb50",
+        "size": 934
+      },
+      {
+        "name": "cnss2.Module.symvers",
+        "source": "wlan/platform/cnss2/Module.symvers",
+        "sha256": "4a89bae4b61c88508e79759a65a3653c509b2c1e0395e4bfd7ea09154611b0d5",
+        "size": 10290
+      },
+      {
+        "name": "cnss2.defconfig",
+        "source": "wlan/platform/cnss2/canoe_gki_defconfig",
+        "sha256": "bed3c9d017f8491bb0e799f7a05ce018c2ea920556057d1a7c752d9fe19fe0d7",
+        "size": 350
+      },
+      {
+        "name": "main.symtypes",
+        "source": "wlan/platform/cnss2/main.symtypes",
+        "sha256": "0f06909195c69c41635fb9cc622f2e8ff1fba45850a95e2feb17dd70daf41f7c",
+        "size": 591823
+      },
+      {
+        "name": "pci.symtypes",
+        "source": "wlan/platform/cnss2/pci.symtypes",
+        "sha256": "6123ba97a65dcca4839818b45a2c83498edcfe370828d47a4eb0041f576d7a67",
+        "size": 610867
+      },
+      {
+        "name": "pci_qcom.symtypes",
+        "source": "wlan/platform/cnss2/pci_qcom.symtypes",
+        "sha256": "3269c80880cf25c41e317c5cbc4a3db633ff26fae7994ec9011b4a9b76f4a4f3",
+        "size": 540554
+      },
+      {
+        "name": "power.symtypes",
+        "source": "wlan/platform/cnss2/power.symtypes",
+        "sha256": "659cdadd7a3be5b32aef3667d94cc0bc5c4b004198ce92d7a9b2dd811ac218d7",
+        "size": 577243
+      },
+      {
+        "name": "module-common.o.cmd",
+        "source": "wlan/platform/cnss2/..module-common.o.cmd",
+        "sha256": "eedd8dec44d7d89642d01cbe382f25ccdab715dcc0a924c409fe01449b7e6b49",
+        "size": 75479
+      },
+      {
+        "name": "Module.symvers.cmd",
+        "source": "wlan/platform/cnss2/.Module.symvers.cmd",
+        "sha256": "9095c6a5dfbae28508f2000e4b0354d509e843cbb551b2894268a8b0824e4268",
+        "size": 475
+      },
+      {
+        "name": "bus.o.cmd",
+        "source": "wlan/platform/cnss2/.bus.o.cmd",
+        "sha256": "c0be3c89a569212e8a6ebe6ab9858b6554252e7e1e06b4583e28626f65da40fd",
+        "size": 124095
+      },
+      {
+        "name": "cnss2.ko.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.ko.cmd",
+        "sha256": "141269277be74899832defb677e897e4b4307185da9341c789626aae9e64aeb2",
+        "size": 662
+      },
+      {
+        "name": "cnss2.mod.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.mod.cmd",
+        "sha256": "0d320d509c568bf33e9e8ab95dd4230d99eec9d79608e092a37bd63f65673122",
+        "size": 395
+      },
+      {
+        "name": "cnss2.mod.o.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.mod.o.cmd",
+        "sha256": "705961ae23f01ab60a65bd24daa2d11797370e66ada7d62fa02f069d73187069",
+        "size": 74912
+      },
+      {
+        "name": "cnss2.o.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.o.cmd",
+        "sha256": "18e8a72b3f869e2fec5a17c8ab01de4078cc0dd5a0aed7f21f9bb218d485ad21",
+        "size": 439
+      },
+      {
+        "name": "coexistence_service_v01.o.cmd",
+        "source": "wlan/platform/cnss2/.coexistence_service_v01.o.cmd",
+        "sha256": "553ae0b810da4b4f333569b97f74728e3979c4d8a9376d76dba6ef8f2a27b3f1",
+        "size": 62595
+      },
+      {
+        "name": "debug.o.cmd",
+        "source": "wlan/platform/cnss2/.debug.o.cmd",
+        "sha256": "887eec776a292928da0943973fff98a9053e2b270f118bfa85d9950a1a3b1e11",
+        "size": 124207
+      },
+      {
+        "name": "genl.o.cmd",
+        "source": "wlan/platform/cnss2/.genl.o.cmd",
+        "sha256": "7b14e2f05c8f01dab7b591f8bcac77cfaa1517703b39d2e969fb3455b362d76c",
+        "size": 122664
+      },
+      {
+        "name": "main.o.cmd",
+        "source": "wlan/platform/cnss2/.main.o.cmd",
+        "sha256": "a3897ce9e60934432e9344eab661c697eb63f9d5990fd208531a624c95daaac1",
+        "size": 129176
+      },
+      {
+        "name": "modules.order.cmd",
+        "source": "wlan/platform/cnss2/.modules.order.cmd",
+        "sha256": "a8a60b72ffe46f29bfc62338e31679fbad7e06738835345efa5828524c076dfd",
+        "size": 290
+      },
+      {
+        "name": "pci.o.cmd",
+        "source": "wlan/platform/cnss2/.pci.o.cmd",
+        "sha256": "af6ef505d6539d86fcc4298b0801e972c4df2c3a0388043fc75df426a5c5afc0",
+        "size": 129531
+      },
+      {
+        "name": "pci_qcom.o.cmd",
+        "source": "wlan/platform/cnss2/.pci_qcom.o.cmd",
+        "sha256": "493600b2e6200223e293f7013d67f4bd190e72be4653e3e2fb89455975291149",
+        "size": 124430
+      },
+      {
+        "name": "power.o.cmd",
+        "source": "wlan/platform/cnss2/.power.o.cmd",
+        "sha256": "570d919d67fadbf5b6aa517cd982aae5f2a1cf8916502d029526f22e8234a7b3",
+        "size": 125515
+      },
+      {
+        "name": "qmi.o.cmd",
+        "source": "wlan/platform/cnss2/.qmi.o.cmd",
+        "sha256": "70cea61bb336058811962cb46eb26f4f0c2e4dc9a308e35d0a415ec75c989018",
+        "size": 122804
+      }
+    ]
+  },
+  "CNSS2_binary_built_and_strict_modpost_linked": true,
+  "exact_old_export_records": 76,
+  "read_only_module_record_checks": {
+    "provider": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "30f01d8311e01f799b72402ba42c80beecd8d4741fffad980e42d9a3044f327c",
+      "version_records": 13,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    },
+    "cnss2": {
+      "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+      "sha256": "1560fc11c2fcc0d7812a9b5bba0e1654469270a7f089a4be3f6d713910dab201",
+      "version_records": 362,
+      "version_record_mismatches": {},
+      "layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      },
+      "undefined_without_version": [],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "vermagic_reference_loader_match": true,
+      "vermagic_stock_loader_match": true,
+      "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+      "btf_present": false,
+      "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+    }
+  },
+  "common_export_pre_entry_words": {
+    "count": 77,
+    "changed": {},
+    "limitations": "Four-byte mapped pre-entry data words only; no complete KCFI or ABI certification; never overrides old-export gate."
+  },
+  "checked_export": {
+    "crc": "0x45b39d2b",
+    "namespace": "",
+    "export_type": "EXPORT_SYMBOL"
+  },
+  "paired_WLAN_built": false,
+  "latest_fast_acceptance": {
+    "run_id": 42215079129,
+    "job_id": 127882944892,
+    "artifact_id": 13500553511,
+    "artifact_sha256": "648eedbb55353f3d945202dd3c8fd8720f9f23e6a80b30d9971b0516315fd0a8",
+    "six_fixture_hashes_reassembled_and_matched": true,
+    "native_CNSS2_report": {
+      "status": "MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY",
+      "fixture_sha256": "04acf375ea522f9f3594bed4430eca61676b0ee39eaa7cf85270928eb081b587",
+      "provider_sha256": "273c91f4b2b66a87f179becbe440702d9364884bc345a867be9bc0111505b26c",
+      "execution_header_sha256": "235550f51cd548052164ab1fd398c23cf60ec69b2e5620bb20dd13fa4c25aad0",
+      "native_fragments_sha256": {
+        "NATIVE_DEVICE_ID": "375f48eabf194cd6d740d76bfcf22672e3c8070a9c370fb215f7932e8542804c",
+        "NATIVE_ENUM": "eceea863e252fbb6f19f7ef7cb2a9bd8ffeded5fb490fa431f57eb4ae8482ab7",
+        "NATIVE_GUARD": "216e5d7c6e294e29dfffdbe53ed41559ec6359f0a47d3323527847117962af07",
+        "NATIVE_PL_CALLBACKS": "9489d724ae382480a9bac84e7906b614b9889e0b7059733047c837d50b02baa3",
+        "NATIVE_PL_REMOVE": "8cbe29d741880931c5e1ca8d9e914f19e85b2ab38786a001707f72856907222e",
+        "NATIVE_PL_DESCRIPTOR": "9ee89a701ea709ee9e4f4d16d6cd261c8ec9b8cb52435dcccbb27ba94c3099c2",
+        "NATIVE_PL_REGISTER": "428ca9791b666fe4173648d37452daed32f2d7ddceb114bfec0b76433474f66e",
+        "NATIVE_PL_CHECKED": "19af208c87d19f53621b4def2c0cf79d548e66c13aeb2105de69d685122fe9c2",
+        "NATIVE_PL_UNREGISTER": "e0198e512123369f50ff2ead9c4f74dfeca88f5266b08807bdc35700e0a6ac32",
+        "NATIVE_COMMON_CHECKED": "43d3153e3671c26bf095a6ae80792530db47d8518e3330cf1ec586acecffe278",
+        "NATIVE_HDD_CHECKED": "945d08ed73bbb3f10ec97f5527e5e701b138f9ae09a920614886509b55876727",
+        "NATIVE_LATE_GUARD": "c4df8b8b48f33caf1f46b40017c389f59c82b5315af28952d41557907c4737ff",
+        "NATIVE_REMOVE_INTERNAL": "b1d57a0f2984331e9421eda78ec391ba89858ba1f09f58cc6c16af1e2b3b358c",
+        "NATIVE_REMOVE_WRAPPER": "3e5422203f7a6b8346620718a353543f6246c01e42f4ff7b0619553e0e2145a0",
+        "NATIVE_SHUTDOWN_INTERNAL": "aeadcf0cfb12d07111b5b35790ce83e296526d3732e946e6813fedc04a0c9b76",
+        "NATIVE_SHUTDOWN_WRAPPER": "ac0391d005de55aa72110233cbf43b0b002d61d8dba60d2c78a589f91f1ca7b0",
+        "NATIVE_LEGACY_HANDLER": "0c31a5baabfd1377242558cfacf200b5b3c69c391ff2db18f1b661a95a180b24",
+        "NATIVE_CHECKED_HANDLER": "04eaf51832fcbc89406008dab93e2ac87cf38de8a80f6dd3d54b48edf6b34e06",
+        "NATIVE_BUS_CHECKED": "6341ce5e97094b621e97dc3349fadcf741f4483d100bb10d07e4e5319b53f0b4",
+        "NATIVE_CHECKED_ENTRY": "6d06318ccd1f1ea9af69ce1b6a2c3d3398a3a02723d617d33e5a190f7e8dce9b",
+        "NATIVE_LEGACY_ENTRY": "cb2a2763f5f0ad9b41b4c63cfc38e02e17354f825c0b2062bce2034af0d4fd83",
+        "NATIVE_EVENT_ROUTE": "2c2884f91208bb318d71a36b9ec30e847bb51447f8e08c7198fb62dba3b41751",
+        "NATIVE_PL_SLOTS": "d5caa293fc1554a235530dea00fffd12eb95286c2a2a61137caee698f2a8b20c"
+      },
+      "platform_source_sha256": {
+        "platform/cnss2/main.h": "d1b02162122496373e1dde534f0409fc596c3f711f0d12e4e40dfadcb894d6e7",
+        "platform/cnss2/pci.h": "2e59f85accca59faec4f2513d3961282e6310175b6b56239360e4963e08d5364",
+        "platform/cnss2/bus.h": "b97e385316537c359a3cb0b32b29a47f5e497e07cb630c9627d2854a548c356a",
+        "platform/cnss2/bus.c": "e42d8924d1e76c5cd57c9445dce02fc2c3e61075a06f9470d8ad26d60e6cff3b",
+        "platform/cnss2/main.c": "b2ca06f398f8a06ec78d0eac23da164dca866bc762e2c6ab2e9a86102a8f2251",
+        "platform/inc/cnss2.h": "1bbde9632a5258a089b5f7dac7d9846780c6b9366f9dce7be556cf03ed1f363c",
+        "platform/cnss2/pci.c": "fd88e5c3d06706fcab18fcc24cad4f75fe5c247f47cfc3119be13cb0c06c264f",
+        "platform/cnss2/debug.c": "1c209bfa3751cf73e1a4081c37bd7243efecae764d8e520bc9a32d0fd90191c3"
+      },
+      "success_cases": 2,
+      "isolated_failure_cases": 9,
+      "isolated_admission_cases": 7,
+      "negative_controls_rejected": 6,
+      "platform_origin_files_restored": 8,
+      "sanitizers": [
+        "address",
+        "undefined",
+        "leak detection"
+      ],
+      "production_opt_in_consumer_executed": true,
+      "default_build_opt_in_enabled": false,
+      "CNSS2_binary_built": false,
+      "phone_executed": false,
+      "limitations": "Real provider, native PCIe register/checked unregister/remove, PLD/HDD refusal chain, CNSS2 checked/legacy entry, event routing, bus handler, complete native remove and qca6290 shutdown bodies. Five selected native ops slots and pthread synchronous event post; hardware/module/sync/HDD bodies are models. Only PEACH stable probed PCIe is admitted. Native power-tail errors retain remaining ownership but cannot undo already completed WLAN/MHI steps. Default consumer is unchanged; no real CNSS2 pair, ABI/KCFI, loader, RF, concurrent native power/recovery coordinator or module-exit veto is certified."
+    }
+  },
+  "captured_retry_type_inputs_verified": true
+}
