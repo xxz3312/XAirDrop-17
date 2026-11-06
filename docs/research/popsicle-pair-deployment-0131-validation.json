@@ -1,0 +1,27 @@
+{
+  "stage": "0131",
+  "deployment_source_commit": "3ea437172cf4090522def8edd42f56bd757306aa",
+  "kernel_source_commit": "07530b1a618c84238bffe035060267b8eca5817b",
+  "unit_tests_pass": 86,
+  "workflow_run_id": 42252554356,
+  "tests_job_id": 128011191065,
+  "prepare_job_id": 128011255797,
+  "artifact_id": 13521825623,
+  "artifact_sha256": "309c67a57073e6290c948df4ccac7edbb05f1641389607664ff4cbf2ad7fe5d0",
+  "bundle": {
+    "status": "EXPERIMENTAL_MANUAL_PAIR_BUNDLE_PREPARED_ONLY",
+    "sha256": "b7fe3645c7c464269958c3fdb8879685c76cd427f5af429295efec811309acda",
+    "size": 170771976,
+    "source_commit": "07530b1a618c84238bffe035060267b8eca5817b",
+    "runtime_certified": false,
+    "phone_executed": false
+  },
+  "bundle_member_count": 9,
+  "all_bundle_member_checksums_verified": true,
+  "candidate_module_bytes_identical_to_0130": true,
+  "deployment_scripts_identical_to_source": true,
+  "boot_and_stock_identity_manifest_verified": true,
+  "phone_executed": false,
+  "runtime_certified": false,
+  "failure_policy": "Intent before every effect; stop after any failure/interruption; restore only healthy active matching transaction; no force/uncontrolled rollback; preserve originals for next boot"
+}

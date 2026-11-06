@@ -1,3 +1,9 @@
+## 最新阶段 0131（部署/回退工具与手动试验包生成通过，尚未操作手机）
+
+新增三模块独立工具和固定产物打包器，复用原样 0130 ELF；旧两模块脚本拒绝 checked 配对。设备端核对固件、当前槽位 boot、原厂/候选 build-id note、文件 SHA 和 holders，先备份原厂模块/用户状态，再以写前 intent 阶段记录每个副作用。restore 仅接受健康 ACTIVE 同 boot-id 事务，先完成 live-unload 才普通删除 WLAN→CNSS2→provider；任何失败/中断立即停止，不强制卸载、不重放未知动作。原厂文件与启动配置不修改；状态/锁隔离并与旧工具互斥。
+
+86 项本地与 CI 回归及 shell 语法通过；CI 成功生成约 171 MB 的手动实验包。外/内 ZIP 摘要、9 个包内文件、全部校验清单、当前脚本、原样三模块和 boot/stock note 记录已核对。新增 status/check 都是只读，backup 只复制数据，apply/restore 必须显式调用。该包不是模块管理器安装器。下一步应先取得手机只读身份/依赖快照，原厂加载器/sysfs/平台卸载重载、private ABI/KCFI、RF/Apple 互传仍需实机验收。见 [0131 流程和限制](POPSICLE-PAIR-DEPLOYMENT-0131.md)。
+
 ## 最新阶段 0130（外部一次性卸载控制器、十套 C 验收及真实配对构建通过）
 
 补丁 0064 在成功初始化后为外部 provider 注册 typed 卸载回调并增加独立引用。控制器拒绝 COMING/繁忙请求，准入后关闭 execution 入口，失败保存错误并保留引用，成功在 WLAN 返回且注册表为空后释放最后控制器引用。WLAN 生命周期互斥与一次加载门禁阻止重载/模式切换，实验软加载/卸载路径关闭；正常 module-exit 不重复销毁已经完成的 HDD 图。新增 provider 的显式 0200 请求入口，默认不自动请求。
