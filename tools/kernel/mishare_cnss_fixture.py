@@ -245,6 +245,7 @@ def verify_platform_origin(wlan):
     with tempfile.TemporaryDirectory() as tmp:
         t=Path(tmp)
         for f in FILES:(t/f).parent.mkdir(parents=True,exist_ok=True);(t/f).write_bytes((wlan/f).read_bytes())
+        subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0059-select-real-SoC-MHI-headers-for-checked-CNSS2.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0057-checked-PEACH-CNSS2-remove-before-power-tail.patch')],cwd=t,check=True,capture_output=True)
         for f in FILES:
             if (t/f).read_bytes()!=subprocess.check_output(['git','-C',str(wlan),'show','HEAD:'+f]):raise ValueError('Unreviewed CNSS2 file: '+f)

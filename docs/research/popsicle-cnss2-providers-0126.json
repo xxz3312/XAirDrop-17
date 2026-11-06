@@ -1,0 +1,443 @@
+{
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "source_archive": "17pm-airdrop-extra-20261025-162440.tar.gz",
+  "archive_sha256": "974268f5d81561377a9a5eaed29cf653560b3f834f864e525fc9d8091a9056ac",
+  "vendor_boot_sha256": "77d7941a8cf074e5fcf15dd36508405ae536ea28636dc0b321ed96e54727c630",
+  "stock_cnss2_sha256": "6e0494f4535ee6e7923493abe75db2e50e3216cf204334639a52d84e23c51a37",
+  "providers_added": [
+    {
+      "name": "smem",
+      "file": "smem.ko",
+      "sha256": "a4318404bc4d9cef8705c5b907ac97b106bfc57d5c825935897928b12097462f",
+      "export_count": 8,
+      "symbols_found": [
+        "qcom_smem_get"
+      ]
+    },
+    {
+      "name": "minidump",
+      "file": "minidump.ko",
+      "sha256": "18a8f4e8f8c9e5d102bef8450ffbf78fa49f6f6229d633ae949bceadf5a282fb",
+      "export_count": 14,
+      "symbols_found": [
+        "msm_minidump_add_region",
+        "msm_minidump_remove_region"
+      ]
+    },
+    {
+      "name": "pci_msm_drv",
+      "file": "pci-msm-drv.ko",
+      "sha256": "02d9b2dc1532e88b7a695a191cf523c09aad433bd3986bd0727c6a3bcfaf2bc5",
+      "export_count": 16,
+      "symbols_found": [
+        "msm_pcie_allow_l1",
+        "msm_pcie_deregister_event",
+        "msm_pcie_enumerate",
+        "msm_pcie_fmd_enable",
+        "msm_pcie_pm_control",
+        "msm_pcie_prevent_l1",
+        "msm_pcie_reg_dump",
+        "msm_pcie_register_event",
+        "msm_pcie_set_link_bandwidth",
+        "msm_pcie_set_target_link_speed"
+      ]
+    },
+    {
+      "name": "qcom_ipc_logging",
+      "file": "qcom_ipc_logging.ko",
+      "sha256": "1fc0057dbb310a38f590bbbd37032d03319d4c59195ff82d2bfb4a92d9255005",
+      "export_count": 20,
+      "symbols_found": [
+        "ipc_log_context_create",
+        "ipc_log_context_destroy",
+        "ipc_log_string"
+      ]
+    },
+    {
+      "name": "mhi",
+      "file": "mhi.ko",
+      "sha256": "88b84d58fce3f0f31274dde1ee5bde09585ccd0e8d0b9371c259e506fbed23a4",
+      "export_count": 63,
+      "symbols_found": [
+        "mhi_alloc_controller",
+        "mhi_controller_set_base",
+        "mhi_controller_set_bw_scale_cb",
+        "mhi_debug_reg_dump",
+        "mhi_device_get_sync",
+        "mhi_device_get_sync_atomic",
+        "mhi_device_put",
+        "mhi_download_rddm_image",
+        "mhi_force_rddm_mode",
+        "mhi_force_reset",
+        "mhi_free_controller",
+        "mhi_get_exec_env",
+        "mhi_pm_fast_resume",
+        "mhi_pm_fast_suspend",
+        "mhi_pm_resume",
+        "mhi_pm_resume_force",
+        "mhi_pm_suspend",
+        "mhi_power_down",
+        "mhi_prepare_for_power_up",
+        "mhi_register_controller",
+        "mhi_report_error",
+        "mhi_scan_rddm_cookie",
+        "mhi_set_m2_timeout_ms",
+        "mhi_sync_power_up",
+        "mhi_unprepare_after_power_down",
+        "mhi_unregister_controller"
+      ]
+    },
+    {
+      "name": "memory_dump_v2",
+      "file": "memory_dump_v2.ko",
+      "sha256": "5bdc7fa6f29c76603819acc29c6be23ccb1a36aa54eb309adee2e818cb344dcf",
+      "export_count": 3,
+      "symbols_found": [
+        "msm_dump_data_register_nominidump"
+      ]
+    },
+    {
+      "name": "cmd_db",
+      "file": "cmd-db.ko",
+      "sha256": "46cfeefc59aabd24f24c8c85dc01b645d8e9c5cb23abc5ac42530164adfc9243",
+      "export_count": 6,
+      "symbols_found": [
+        "cmd_db_read_addr",
+        "cmd_db_ready"
+      ]
+    },
+    {
+      "name": "qcom_ramdump",
+      "file": "qcom_ramdump.ko",
+      "sha256": "8731130f118e028d5b81b5c77dcf582c0cbe0449ff9aa058eb1112766e4d2315",
+      "export_count": 8,
+      "symbols_found": [
+        "dump_enabled",
+        "qcom_dump",
+        "qcom_elf_dump"
+      ]
+    },
+    {
+      "name": "qcom_aoss",
+      "file": "qcom_aoss.ko",
+      "sha256": "18b7e239efbfb60c2ad665db24fb1ecaba9cb6c165c557ca93543cd9ea2a3261",
+      "export_count": 3,
+      "symbols_found": [
+        "qmp_get",
+        "qmp_put",
+        "qmp_send"
+      ]
+    }
+  ],
+  "recovered_symbols": {
+    "qcom_smem_get": {
+      "provider": "smem",
+      "crc": "0x869bde71",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "msm_minidump_add_region": {
+      "provider": "minidump",
+      "crc": "0xdd21467e",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "msm_minidump_remove_region": {
+      "provider": "minidump",
+      "crc": "0xdd21467e",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "msm_pcie_allow_l1": {
+      "provider": "pci_msm_drv",
+      "crc": "0xf04c98b3",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_deregister_event": {
+      "provider": "pci_msm_drv",
+      "crc": "0x7eabc06f",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_enumerate": {
+      "provider": "pci_msm_drv",
+      "crc": "0xc83b1445",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_fmd_enable": {
+      "provider": "pci_msm_drv",
+      "crc": "0xf04c98b3",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "msm_pcie_pm_control": {
+      "provider": "pci_msm_drv",
+      "crc": "0x5df79c99",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_prevent_l1": {
+      "provider": "pci_msm_drv",
+      "crc": "0xf04c98b3",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_reg_dump": {
+      "provider": "pci_msm_drv",
+      "crc": "0xc36b230e",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_register_event": {
+      "provider": "pci_msm_drv",
+      "crc": "0x7eabc06f",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_set_link_bandwidth": {
+      "provider": "pci_msm_drv",
+      "crc": "0xd6ab973d",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "msm_pcie_set_target_link_speed": {
+      "provider": "pci_msm_drv",
+      "crc": "0x38036626",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "ipc_log_context_create": {
+      "provider": "qcom_ipc_logging",
+      "crc": "0x946a038b",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "ipc_log_context_destroy": {
+      "provider": "qcom_ipc_logging",
+      "crc": "0x059e503c",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "ipc_log_string": {
+      "provider": "qcom_ipc_logging",
+      "crc": "0x5feed93c",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_alloc_controller": {
+      "provider": "mhi",
+      "crc": "0x70a2e830",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_controller_set_base": {
+      "provider": "mhi",
+      "crc": "0xb215fefe",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_controller_set_bw_scale_cb": {
+      "provider": "mhi",
+      "crc": "0x00aaef32",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_debug_reg_dump": {
+      "provider": "mhi",
+      "crc": "0x890ead13",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_device_get_sync": {
+      "provider": "mhi",
+      "crc": "0x5c3334cb",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_device_get_sync_atomic": {
+      "provider": "mhi",
+      "crc": "0x3733f1b4",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_device_put": {
+      "provider": "mhi",
+      "crc": "0xe17d98b0",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_download_rddm_image": {
+      "provider": "mhi",
+      "crc": "0x32172c48",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_force_rddm_mode": {
+      "provider": "mhi",
+      "crc": "0x246ce657",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_force_reset": {
+      "provider": "mhi",
+      "crc": "0xbb7f603a",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_free_controller": {
+      "provider": "mhi",
+      "crc": "0xe91ff117",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_get_exec_env": {
+      "provider": "mhi",
+      "crc": "0x737f9b52",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_pm_fast_resume": {
+      "provider": "mhi",
+      "crc": "0xd8cd5c25",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_pm_fast_suspend": {
+      "provider": "mhi",
+      "crc": "0xd8cd5c25",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_pm_resume": {
+      "provider": "mhi",
+      "crc": "0x246ce657",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_pm_resume_force": {
+      "provider": "mhi",
+      "crc": "0x246ce657",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_pm_suspend": {
+      "provider": "mhi",
+      "crc": "0x246ce657",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_power_down": {
+      "provider": "mhi",
+      "crc": "0xe5689c0a",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_prepare_for_power_up": {
+      "provider": "mhi",
+      "crc": "0x0bd2c504",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_register_controller": {
+      "provider": "mhi",
+      "crc": "0xd770ed52",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_report_error": {
+      "provider": "mhi",
+      "crc": "0xbb7f603a",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_scan_rddm_cookie": {
+      "provider": "mhi",
+      "crc": "0xb464bf25",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_set_m2_timeout_ms": {
+      "provider": "mhi",
+      "crc": "0xb5d6c512",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_sync_power_up": {
+      "provider": "mhi",
+      "crc": "0x246ce657",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "mhi_unprepare_after_power_down": {
+      "provider": "mhi",
+      "crc": "0xe91ff117",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "mhi_unregister_controller": {
+      "provider": "mhi",
+      "crc": "0xe91ff117",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "msm_dump_data_register_nominidump": {
+      "provider": "memory_dump_v2",
+      "crc": "0xdcce5e7a",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "cmd_db_read_addr": {
+      "provider": "cmd_db",
+      "crc": "0x4d64b501",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "cmd_db_ready": {
+      "provider": "cmd_db",
+      "crc": "0x7851be11",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "dump_enabled": {
+      "provider": "qcom_ramdump",
+      "crc": "0x5e505530",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "qcom_dump": {
+      "provider": "qcom_ramdump",
+      "crc": "0x0fbb6a44",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "qcom_elf_dump": {
+      "provider": "qcom_ramdump",
+      "crc": "0xf10875c9",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "qmp_get": {
+      "provider": "qcom_aoss",
+      "crc": "0x95741ed6",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "qmp_put": {
+      "provider": "qcom_aoss",
+      "crc": "0xb6f23ecd",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    },
+    "qmp_send": {
+      "provider": "qcom_aoss",
+      "crc": "0x887664c0",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL_GPL"
+    }
+  },
+  "all_recovered_stock_import_crcs_match_actual_exports": true,
+  "remaining_stock_cnss2_undefined": [],
+  "total_provider_modules": 29
+}

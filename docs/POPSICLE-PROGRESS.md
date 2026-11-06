@@ -1,3 +1,9 @@
+## 最新阶段 0126（实际 CNSS2 配对构建接入，待真实编译）
+
+新增独立的 CNSS2/provider/WLAN 严格配对工作流。恢复九个真实原厂早期提供者的 141 项导出，51 个原厂 CNSS2 导入 CRC 与实际导出全部匹配，固定核心与 29 个提供者覆盖原厂 CNSS2 的全部导入。构建选用固定 SoC MHI 头文件和目标配置，要求原有 81 个 CNSS2 导出记录不变，才允许继续 checked WLAN 配对，不修改或放宽 CRC。
+
+62 项本地回归、脚本/YAML、0059 补丁正反及平台还原检查通过。真实配对构建尚待运行结果；默认开关关闭，手机未操作，无线后端未开启。见 [0126 配对门禁](POPSICLE-CNSS2-PAIR-0126.md)。
+
 ## 最新阶段 0125（PCIe / CNSS2 checked 注销源码，联合 C 验收通过）
 
 补丁 0057 为实际 PEACH PCIe/CNSS2 增加独立 checked 注销：原生同步事件显式传递回执，remove 错误在清 PROBED/ops 和断电前返回；投递/准入/执行失败进入 terminal 状态，旧入口不能重放。补丁 0058 提供 opt-in 原生 PCIe 消费者，直接使用 v3 provider 槽位、PSOC transition 内的 remove preflight 与回执，以及 PCIe→PLD→HDD 拒绝传播。电源尾部失败保留剩余状态，不承诺撤销此前完成的硬件/WLAN 操作。

@@ -51,6 +51,16 @@ case "${POPSICLE_CHECKED_ICNSS:-0}" in
   1) checked_icnss_flag=-DCONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER=1 ;;
   *) echo 'Invalid checked ICNSS variant' >&2; exit 3 ;;
 esac
+checked_cnss2_flag=
+case "${POPSICLE_CHECKED_CNSS2:-0}" in
+  0) ;;
+  1) checked_cnss2_flag=-DCONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER=1 ;;
+  *) echo 'Invalid checked CNSS2 variant' >&2; exit 3 ;;
+esac
+if [[ -n "$checked_icnss_flag" && -n "$checked_cnss2_flag" ]]; then
+  echo 'Refusing mixed ICNSS and CNSS2 checked consumers' >&2
+  exit 3
+fi
 target=qca_cld3_peach_v2.o
 extra_symbols=()
 if [[ "$phase" == wlan-modules ]]; then
@@ -123,6 +133,6 @@ make "${make_args[@]}" "-j$jobs" \
   CONFIG_QCA_CLD_WLAN_PROFILE=canoe_gki_peach-v2 \
   CONFIG_IPA_OUT_OF_TREE=y \
   "DATA_IPA_INC=$dataipa/drivers/platform/msm/include" \
-  "EXTRA_CFLAGS=-I$soc/include -I$hwid_include -DCONFIG_NL80211_TESTMODE=1 -DCONFIG_IPA3_MODULE=1 -DCONFIG_ARM_SMMU_MODULE=1 -DCONFIG_QCOM_IOMMU_UTIL_MODULE=1 $checked_icnss_flag" \
+  "EXTRA_CFLAGS=-I$soc/include -I$hwid_include -DCONFIG_NL80211_TESTMODE=1 -DCONFIG_IPA3_MODULE=1 -DCONFIG_ARM_SMMU_MODULE=1 -DCONFIG_QCOM_IOMMU_UTIL_MODULE=1 $checked_icnss_flag $checked_cnss2_flag" \
   "${extra_symbols[@]}" "$target"
 echo 'Diagnostic compilation finished; no load, firmware or AirDrop compatibility is implied.'
