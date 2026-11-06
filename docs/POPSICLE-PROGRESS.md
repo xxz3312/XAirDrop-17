@@ -1,3 +1,7 @@
+## 最新实机阶段 0140（普通 Wi-Fi 收发与系统连通性短时通过，Wonder 会话仍待接入）
+
+HAL running，5240 MHz STA 网络显示 VALIDATED；采样网口收约 19.4 MB/发约 4.75 MB，errors/dropped 均为 0。新驱动 ready 后约四分钟日志未见明确 panic/Oops/BUG/CFI/未知符号或版本冲突；固件直接查找失败已经 fallback 找到并收到 FW ready。仍有 trace cfg 缺失及 MLO/TWT/P2P、roam/速率统计告警，不能宣称日志全净或长期稳定。已核对上游原生 Wonder ops；当前 managed bridge init 仍返回 EOPNOTSUPP。下一阶段回到源码接入 typed init/poll/retire，不让用户重复 apply，不计 AWDL/Apple 功能完成。见 [0140 审查](POPSICLE-ACTIVE-REVIEW-0140.md)。
+
 ## 最新实机阶段 0139（保留原厂 CNSS2 的新 WLAN/provider 加载成功，STA 已恢复关联）
 
 0138 修复后备份通过。实际 apply 按 Wi-Fi off→HAL stop→仅卸载原厂 WLAN→provider/WLAN 插入→HAL/Wi-Fi 恢复顺序完成，退出码 0、phase=active。原厂 CNSS2 note 保持匹配；新 WLAN/provider 为 live 且 note 与已验收原始 ELF 匹配。操作前后 boot-id 一致，没有在本次流程重启。日志确认 STA 重连 5240 MHz 并取得 IPv4；尚未验证互联网可达、长期稳定或卸载回退。下一步审查当前内核与联网状态，再接 Wonder/AWDL；不计 Apple 发现/握手/互传完成，也不能据此断言 0132 重启根因已确定。原始日志不提交公开仓库，仅存 SHA256 与结果索引。见 [0139 实机证据](research/popsicle-stock-cnss-phone-load-0139.json)。
