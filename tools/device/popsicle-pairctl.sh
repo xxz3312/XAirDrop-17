@@ -57,6 +57,7 @@ pp_verify_bundle() {
         [ "$parent" = /data/adb ] && break
         parent=${parent%/*}; [ -n "$parent" ] || parent=/
     done
+    pp_private "$BUNDLE/kernel" || return 1
     for f in SHA256SUMS deployment.tsv popsicle-pairctl.sh popsicle-pair-engine.sh kernel/cnss2.ko kernel/qca_cld3_peach_v2.ko kernel/opairshare_wonder_provider.ko; do
         [ -f "$BUNDLE/$f" ] && pp_private "$BUNDLE/$f" || return 1
     done
