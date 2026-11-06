@@ -9,3 +9,5 @@
 顺序：prepare → provider → CNSS2 完整编译/严格 modpost → 原有 81 个导出的 CRC/许可证类别/命名空间与原厂完全一致且仅新增 checked 导出 → 模块记录/头部检查 → 开启独立 WLAN checked CNSS2 消费者编译 → 验证强导入新接口、不导入旧 void 注销接口、依赖 CNSS2/provider、版本记录与完整解析 → 严格链接 WLAN。任一步失败停止；不放宽 CRC/modpost、不新增 KABI 规则，不开启无线后端。真实错误日志、symtypes、生成 symvers、构建命令、配置和模块留作诊断。
 
 当前本地 62 项回归通过（新增 5 项导出表准入测试），脚本/YAML、0059 正反检查及七个平台文件还原通过。真实配对构建待 Actions；尚未生成或认证可安装配对。默认 WLAN 消费者开关关闭，配对脚本显式开启且禁止与 checked ICNSS 同时开启。原厂 CNSS2/MHI 私有 ABI/KCFI、加载替换次序、原生恢复/电源并发协调、注册失败展开、module-exit 与 RF/Apple 互操作均未实测。
+
+首轮 [Actions 42214178581](https://github.com/xxz3312/XAirDrop-17/actions/runs/42214178581) 完成固定源码/工具链准备和 provider 编译，但 CNSS2 C 编译拒绝三处错误：调试 switch 未处理新增 terminal 枚举、内部 cnss_read_debug_register 缺少静态声明、M=cnss2 未继承父级 Kbuild 的 CONFIG_MHI_BUF_LEN 默认值。补丁 0060 补调试枚举并仅将本文件内部函数设为 static；构建脚本按实际 parent Kbuild/Kconfig 的固定哈希引入 0x8000（32768）默认值。未关闭 Wswitch/Wmissing-prototypes，不修改 CRC。更新后的八个平台文件还原与 62 项本地回归通过，后续编译待重跑。原厂 CNSS2 的全部 370 个导入版本记录亦已与真实核心/厂商提供者比对，差异为零。

@@ -2,7 +2,7 @@
 
 新增独立的 CNSS2/provider/WLAN 严格配对工作流。恢复九个真实原厂早期提供者的 141 项导出，51 个原厂 CNSS2 导入 CRC 与实际导出全部匹配，固定核心与 29 个提供者覆盖原厂 CNSS2 的全部导入。构建选用固定 SoC MHI 头文件和目标配置，要求原有 81 个 CNSS2 导出记录不变，才允许继续 checked WLAN 配对，不修改或放宽 CRC。
 
-62 项本地回归、脚本/YAML、0059 补丁正反及平台还原检查通过。真实配对构建尚待运行结果；默认开关关闭，手机未操作，无线后端未开启。见 [0126 配对门禁](POPSICLE-CNSS2-PAIR-0126.md)。
+62 项本地回归、脚本/YAML、0059 补丁正反及平台还原检查通过。首轮真实编译发现三项错误（terminal 调试枚举、内部 helper 可见性、父级 Kbuild 的 MHI_BUF_LEN 默认值），已按固定源码修复；尚未越过平台编译/81 项旧导出记录门禁。默认开关关闭，手机未操作，无线后端未开启。见 [0126 配对门禁](POPSICLE-CNSS2-PAIR-0126.md)。
 
 ## 最新阶段 0125（PCIe / CNSS2 checked 注销源码，联合 C 验收通过）
 
@@ -10,11 +10,11 @@
 
 新增真实平台/消费者联合 C 夹具，57 项本地 Python 回归、源码组装及独立补丁正反检查通过。[Actions 42201870635](https://github.com/xxz3312/XAirDrop-17/actions/runs/42201870635) 的 stop-admission 作业通过：两组成功、九组失败、七组准入拒绝及六项错误注入通过 ASan/UBSan/leak detection；原有五套回归通过。ZIP 摘要与六套重新组装夹具、原生片段及生产哈希核对一致。完整诊断构建仍未验收。默认实验开关仍关闭，平台二进制/配对 ABI 未验收，手机未操作。见 [0125 边界与限制](POPSICLE-CNSS-CHECKED-0125.md)。
 
-## 最新阶段 0124（PCIe 类型化边界与原生回调修复，C 快速验收通过）
+## 最新阶段 0124（PCIe 类型化边界与原生回调修复，默认模块构建与 C 验收通过）
 
 已按实际 PCIe/CNSS2 签名新增独立 v3 描述符与四个外部入口，保留设备 ID，沿用共享 owner/引用/关闭保护；v2 布局不变，错总线拒绝。补丁 0056 修复四个原生回调的空 context/ops 访问及 idle_shutdown 指针检查错误。新增真实 provider + 四个原生 PCIe 回调 C 夹具、四类并发关闭和六项错误注入，接入默认 CI，真实 provider 导出门禁扩展为 17 项。
 
-57 项本地 Python 回归、源码组装与独立补丁正反检查通过。[Actions 42198546212](https://github.com/xxz3312/XAirDrop-17/actions/runs/42198546212) 的 stop-admission 作业通过，新增四类 PCIe 并发关闭与六项错误注入、原有 host/runtime/IPCI/ICNSS 参考夹具均通过 ASan/UBSan/leak detection。产物 ZIP 摘要及五套重新组装夹具/生产哈希已核对；完整模块构建仍待验收。生产 PCIe 注册槽位尚未切换，CNSS2 checked 注销/清空/断电返回链尚未接入；本阶段不计作实机入口保护完成。手机未操作，无线后端仍关闭。详见 [0124 边界与限制](POPSICLE-PCIE-BOUNDARY-0124.md)。
+57 项本地 Python 回归、源码组装与独立补丁正反检查通过。[Actions 42198546212](https://github.com/xxz3312/XAirDrop-17/actions/runs/42198546212) 的 stop-admission 作业通过，新增四类 PCIe 并发关闭与六项错误注入、原有 host/runtime/IPCI/ICNSS 参考夹具均通过 ASan/UBSan/leak detection。产物 ZIP 摘要及五套重新组装夹具/生产哈希已核对；七项默认作业均通过；完整紧凑产物摘要、五个模块记录检查、选定布局和 provider 的 17 项实际导出已核对。生产 PCIe 注册槽位尚未切换，CNSS2 checked 注销/清空/断电返回链尚未接入；本阶段不计作实机入口保护完成。手机未操作，无线后端仍关闭。详见 [0124 边界与限制](POPSICLE-PCIE-BOUNDARY-0124.md)。
 
 ## 最新阶段 0123（ICNSS 参考 CRC 已修复，实际目标总线已纠正）
 

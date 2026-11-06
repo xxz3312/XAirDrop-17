@@ -109,6 +109,18 @@ def build(work):
                 if alias.resolve()!=actual.resolve():raise ValueError('Wrong SoC header alias')
             elif alias.exists():raise ValueError('Non-symlink SoC header alias')
             else:alias.symlink_to(actual.resolve())
+        # Direct M=cnss2 omits this real parent Kbuild default. Preserve it
+        # exactly rather than invent a channel buffer size or relax warnings.
+        parent=work/'wlan/platform/Kbuild'
+        kconfig=work/'wlan/platform/cnss2/Kconfig'
+        if hashlib.sha256(parent.read_bytes()).hexdigest()!='5dae4841168d3456c95e695c4d3c8d2e73370c6ddcf6f24f4491f3c61445888f' or \
+           hashlib.sha256(kconfig.read_bytes()).hexdigest()!='52bb498ea0c22898e75988cb7ecf8cc0d707de5f97b14d31d565f60f794b3d31':
+            raise ValueError('Unreviewed CNSS2 parent configuration')
+        if 'KBUILD_CPPFLAGS += -DCONFIG_MHI_BUF_LEN=0x8000' not in parent.read_text():
+            raise ValueError('CNSS2 MHI buffer default changed')
+        flags+=['-DCONFIG_MHI_BUF_LEN=0x8000']
+        report['parent_MHI_buffer_default']={'value':32768,'Kbuild_sha256':'5dae4841168d3456c95e695c4d3c8d2e73370c6ddcf6f24f4491f3c61445888f',
+                                             'Kconfig_sha256':'52bb498ea0c22898e75988cb7ecf8cc0d707de5f97b14d31d565f60f794b3d31'}
         flags+=['-I'+str(overlay),'-DCONFIG_MISHARE_CHECKED_CNSS2_PLATFORM=1',
                 '-fno-eliminate-unused-debug-types']
         report['soc_config_sha256']='efa1a94176ead2177fd3d2cde5e46885130a6fa9dc710da22c60d9ded2ae6379'

@@ -10,4 +10,4 @@
 
 本地 57 项 Python 回归、源码夹具组装、0053–0056 独立补丁正向应用和 0056 反向检查通过。Actions 结果单独记录；未运行的检查不计为通过。手机未操作，无线后端仍关闭。原生 CNSS2 调度器、PCIe remove/热拔插、module-exit 失败、模块加载/ABI/KCFI 与无线行为均未认证。
 
-[Actions 42198546212](https://github.com/xxz3312/XAirDrop-17/actions/runs/42198546212) 的 stop-admission 作业已通过，新增 PCIe 六项错误注入及四类并发回调场景通过，既有四套回归通过。产物 SHA256 与五套重新组装夹具、原生片段、provider/header/host 生产哈希一致。完整诊断构建仍在运行，尚未验收。详见 [机器证据](research/popsicle-pcie-boundary-0124-validation.json)。
+[Actions 42198546212](https://github.com/xxz3312/XAirDrop-17/actions/runs/42198546212) 的 stop-admission 作业已通过，新增 PCIe 六项错误注入及四类并发回调场景通过，既有四套回归通过。产物 SHA256 与五套重新组装夹具、原生片段、provider/header/host 生产哈希一致。七项默认作业均已通过；完整紧凑产物摘要、五个模块的记录检查、选定布局和 provider 实际 17 项导出已核对。这是默认模块构建验收，仍未切换 CNSS2 实验消费者或认证实机。详见 [机器证据](research/popsicle-pcie-boundary-0124-validation.json)。

@@ -1,0 +1,32 @@
+--- a/platform/cnss2/debug.c
++++ b/platform/cnss2/debug.c
+@@ -193,6 +193,9 @@
+ 			continue;
+ 		case CNSS_POWERING_ON:
+ 			seq_puts(s, "POWERING ON");
++			continue;
++		case CNSS_MISHARE_UNREGISTER_TERMINAL:
++			seq_puts(s, "MISHARE UNREGISTER TERMINAL");
+ 			continue;
+ 		case CNSS_SEC_DOWNLOAD:
+ 			seq_puts(s, "DOWNLOAD SEC_IN_BOOTUP");
+--- a/platform/cnss2/main.c
++++ b/platform/cnss2/main.c
+@@ -2558,7 +2558,7 @@
+ 	return 0;
+ }
+ 
+-u8 *cnss_read_debug_register(struct cnss_plat_data *plat_priv)
++static u8 *cnss_read_debug_register(struct cnss_plat_data *plat_priv)
+ {
+ 	u8 *buf;
+ 	size_t len;
+@@ -2711,7 +2711,7 @@
+ 	return 0;
+ }
+ 
+-u8 *cnss_read_debug_register(struct cnss_plat_data *plat_priv)
++static u8 *cnss_read_debug_register(struct cnss_plat_data *plat_priv)
+ {
+ 	cnss_pr_info("Entering negative cnss_read_debug_register function\n");
+ 	return NULL;

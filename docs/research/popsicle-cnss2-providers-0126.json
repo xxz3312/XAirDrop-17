@@ -439,5 +439,8 @@
   },
   "all_recovered_stock_import_crcs_match_actual_exports": true,
   "remaining_stock_cnss2_undefined": [],
-  "total_provider_modules": 29
+  "total_provider_modules": 29,
+  "stock_CNSS2_version_records_checked": 370,
+  "all_stock_import_crcs_match_available_real_providers": true,
+  "official_core_symvers_sha256": "3484f2352f7bddb2f335b800b1d83a776f7dfd817d45f1261cadb794e9355530"
 }
