@@ -141,13 +141,14 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Native PCIe and CNSS2 checked lifecycle with sanitizers
+        run: python3 tools/kernel/mishare_cnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss.json
       - name: Production host and runtime stop admission with sanitizers
         run: |
           python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
           python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
           python3 tools/kernel/mishare_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-execution.json
           python3 tools/kernel/mishare_pcie_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-pcie-execution.json
-          python3 tools/kernel/mishare_cnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss.json
           python3 tools/kernel/mishare_icnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-icnss.json
       - uses: actions/upload-artifact@v4
         with:

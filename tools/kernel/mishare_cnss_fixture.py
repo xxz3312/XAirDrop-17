@@ -308,7 +308,7 @@ def run(wlan,output):
             part=fragments[key];assert old in part
             changed=code.replace(part,part.replace(old,new,1),1);assert changed!=code;mutations.append((changed,marker))
         mutate('NATIVE_SHUTDOWN_INTERNAL','if (ret == -EAGAIN || (guard && ret))','if (ret == -EAGAIN)','EXPECTED_CNSS_NO_POWER_TAIL')
-        mutate('NATIVE_REMOVE_INTERNAL','if (ret)\n\t\t\t\treturn ret;','if (false && ret)\n\t\t\t\treturn ret;','EXPECTED_CNSS_PLATFORM_RETAINED')
+        mutate('NATIVE_REMOVE_INTERNAL','if (ret)\n\t\t\t\treturn ret;','if (false && ret)\n\t\t\t\treturn ret;','EXPECTED_CNSS_NO_WLAN_TEARDOWN')
         mutate('NATIVE_PL_CHECKED','opairshare_wlan_execution_unregister_end(THIS_MODULE, ret)','opairshare_wlan_execution_unregister_end(THIS_MODULE, 0)','EXPECTED_CNSS_LATE_RETAINED')
         mutate('NATIVE_COMMON_CHECKED','ret = pld_pcie_unregister_driver_checked();\n\tif (ret)','ret = pld_pcie_unregister_driver_checked();\n\tif (false && ret)','EXPECTED_CNSS_LATE_RETAINED')
         mutate('NATIVE_LEGACY_ENTRY','if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))','if (false && test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))','EXPECTED_CNSS_NO_LEGACY_BYPASS')
