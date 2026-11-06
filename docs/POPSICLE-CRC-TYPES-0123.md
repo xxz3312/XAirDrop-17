@@ -1,0 +1,11 @@
+# 0123 Read-only CRC/type diagnosis
+
+The 53 legacy export CRC changes remain a hard pair gate. The stock/candidate AArch64 exported function entries have matching preceding four-byte data words in all 60 old functions, each independently checked against ELF data/code mapping symbols. In these KCFI-enabled binaries this narrows the investigation, but does not validate all KCFI sites or waive any CRC. See the [mapped prefix audit](research/popsicle-icnss-prefix-0123-analysis.json); the read-only helper verifies the stock ELF hash and actual stock export records before comparison.
+
+An exploratory stock kernel BTF versus candidate module DWARF breadth-first walk visited 2,858 type pairs. After stripping qualifiers/typedef wrappers and comparing array representations by total element count, the expanded subset showed no differences. It still has 196 incomplete-definition paths; this is not the original stock ICNSS genksyms stream. No claim of complete type/layout compatibility follows. See [transitive analysis](research/popsicle-transitive-device-0123-analysis.json).
+
+The reconstructed source lock explicitly identifies e2b8ca7 as a candidate common base rather than exact stock. A short-hash lookup for 43b5ab7e247d in official kernel/common returned HTTP 404; this single lookup is not proof that exact source is unavailable from every origin.
+
+The paired diagnostic builder now asks Kbuild for real symtypes using its supported KBUILD_SYMTYPES interface and archives actual .symtypes, .cmd, kernel config, target config, config delta and generated ICNSS symvers even on rejection. Full unused debug type emission is requested to address missing DWARF definitions. Candidate export CRCs are compared against the previous real candidate to check whether added debug emission changed them. These are diagnostic inputs, not reconstructed declarations or symbol-version overrides. No original CRC gate is relaxed, no kernel .config ABI setting is modified, and no install package or phone operation is enabled.
+
+Local 53 existing Python tests, Python syntax and the actual 60-function binary prefix comparison pass. The new compiler evidence collection and expanded DWARF emission require CI confirmation. Next work is to inspect actual genksyms definition streams/configuration for a concrete difference before changing the kernel base or headers.

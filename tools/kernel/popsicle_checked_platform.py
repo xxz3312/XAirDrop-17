@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import tarfile
+import shutil
 from module_abi import inspect, symvers
 from popsicle_modpost import write_inputs, merge_generated_exports, module_report
 from popsicle_ci import REPO, download
@@ -54,7 +55,7 @@ def build(work):
                                     if line.split('\t')[2]!='icnss2'))
         report['removed_stock_provider']='icnss2';report['stock_icnss_export_count']=len(original)
         make=['make','-C',work/'common',f'O={out}','ARCH=arm64',f'LLVM={tools}/clang-r536225/bin/',
-              f'HOSTCFLAGS=-I{host}/usr/include',f'HOSTLDFLAGS=-L{host}/usr/lib/x86_64-linux-gnu','-j4']
+              f'HOSTCFLAGS=-I{host}/usr/include',f'HOSTLDFLAGS=-L{host}/usr/lib/x86_64-linux-gnu','-j4','KBUILD_SYMTYPES=1']
         command(make+[f'M={REPO}/kernel/provider',f'KBUILD_EXTRA_SYMBOLS={filtered}','modules'],'provider-checked.log')
         provider=REPO/'kernel/provider/opairshare_wonder_provider.ko';produced.append(provider)
         provider_sym=REPO/'kernel/provider/Module.symvers';merge_generated_exports(known,symvers([provider_sym]))
@@ -85,7 +86,8 @@ def build(work):
         else:alias.symlink_to(rproc.resolve())
         # Include at the native source position, after pr_fmt is defined.
         # Forcing this header before the source would initialize printk early.
-        flags+=['-I'+str(overlay),'-DCONFIG_MISHARE_CHECKED_ICNSS_PLATFORM=1']
+        flags+=['-I'+str(overlay),'-DCONFIG_MISHARE_CHECKED_ICNSS_PLATFORM=1',
+                '-fno-eliminate-unused-debug-types']
         report['soc_remoteproc_header_sha256']=digest
         report['platform_soc_dependency_defines']=['CONFIG_QCOM_SOCINFO_MODULE=1','CONFIG_QCOM_RPROC_COMMON_MODULE=1']
         report['platform_config_sha256']=hashlib.sha256(config.read_bytes()).hexdigest()
@@ -101,6 +103,11 @@ def build(work):
         changes={name:{'stock':record['crc'],'generated':generated.get(name)}
                  for name,record in original.items() if generated.get(name)!=record['crc']}
         report['platform_export_crc_changes']=changes
+        previous=json.loads((REPO/'docs/research/popsicle-checked-platform-0122-exports.json').read_text())
+        prior={name:record['crc'] for name,record in previous['candidate_exports'].items()}
+        report['debug_emission_preserved_candidate_export_crcs']=(generated==prior)
+        report['type_streams_requested']=True
+        report['full_unused_debug_types_requested']=True
         if missing or changes:raise ValueError('Rebuilt ICNSS legacy export surface differs from stock; inspect report')
         merge_generated_exports(known,generated)
         expected=json.loads((REPO/'kernel/abi/popsicle-stock-module-header.json').read_text())
@@ -133,6 +140,21 @@ def build(work):
     except Exception as error:
         report['status']='CHECKED_PLATFORM_PAIR_BLOCKED';report['error']=str(error);raise
     finally:
+        # Preserve actual compiler/genksyms evidence even when the strict
+        # public export gate refuses the candidate. Never edit a CRC/type.
+        type_dir=work/'artifacts/type-inputs';type_dir.mkdir(parents=True,exist_ok=True)
+        evidence=[]
+        source_dir=work/'wlan/platform/icnss2'
+        files=[(out/'.config','kernel.config'),
+               (out/'stock-config-delta.json','stock-config-delta.json'),
+               (source_dir/'Module.symvers','icnss.Module.symvers'),
+               (source_dir/'canoe_gki_defconfig','icnss.defconfig')]
+        files += [(x,x.name.removeprefix('.')) for pattern in ['*.symtypes','.*.cmd'] for x in sorted(source_dir.glob(pattern))]
+        for source,name in files:
+            if source.is_file():
+                dst=type_dir/name;shutil.copy2(source,dst)
+                evidence.append({'name':name,'source':str(source.relative_to(work)),'sha256':hashlib.sha256(dst.read_bytes()).hexdigest(),'size':dst.stat().st_size})
+        report['type_inputs']=evidence
         (reports/'checked-platform-pair.json').write_text(json.dumps(report,indent=2)+'\n')
         if produced:
             with tarfile.open(work/'artifacts/checked-pair-diagnostic-not-for-install.tar.gz','w:gz') as bundle:

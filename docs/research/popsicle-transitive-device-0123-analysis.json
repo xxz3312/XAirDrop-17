@@ -1,0 +1,1194 @@
+{
+  "candidate_module_sha256": "fe4dd7334e5ba74fe5eb9de81ee1be9cc6910709b020910e5d13668670b8da1d",
+  "stock_btf_sha256": "cc91023777fb757859cbc861302f7a303ede19c10a93823d6b99c5d5dbd699d7",
+  "visited_type_pairs": 2858,
+  "differences": [],
+  "incomplete_paths": [
+    {
+      "path": "device.p->",
+      "reason": "incomplete definition",
+      "stock": "device_private",
+      "candidate": "device_private"
+    },
+    {
+      "path": "device.pins->",
+      "reason": "incomplete definition",
+      "stock": "dev_pin_info",
+      "candidate": "dev_pin_info"
+    },
+    {
+      "path": "device.dma_ops->",
+      "reason": "incomplete definition",
+      "stock": "dma_map_ops",
+      "candidate": "dma_map_ops"
+    },
+    {
+      "path": "device.dma_range_map->",
+      "reason": "incomplete definition",
+      "stock": "bus_dma_region",
+      "candidate": "bus_dma_region"
+    },
+    {
+      "path": "device.dma_mem->",
+      "reason": "incomplete definition",
+      "stock": "dma_coherent_mem",
+      "candidate": "dma_coherent_mem"
+    },
+    {
+      "path": "device.cma_area->",
+      "reason": "incomplete definition",
+      "stock": "cma",
+      "candidate": "cma"
+    },
+    {
+      "path": "device.dma_io_tlb_mem->",
+      "reason": "incomplete definition",
+      "stock": "io_tlb_mem",
+      "candidate": "io_tlb_mem"
+    },
+    {
+      "path": "device.iommu_group->",
+      "reason": "incomplete definition",
+      "stock": "iommu_group",
+      "candidate": "iommu_group"
+    },
+    {
+      "path": "device.power.wakeirq->",
+      "reason": "incomplete definition",
+      "stock": "wake_irq",
+      "candidate": "wake_irq"
+    },
+    {
+      "path": "device.power.qos->",
+      "reason": "incomplete definition",
+      "stock": "dev_pm_qos",
+      "candidate": "dev_pm_qos"
+    },
+    {
+      "path": "device.msi.data->",
+      "reason": "incomplete definition",
+      "stock": "msi_device_data",
+      "candidate": "msi_device_data"
+    },
+    {
+      "path": "device.driver->.p->",
+      "reason": "incomplete definition",
+      "stock": "driver_private",
+      "candidate": "driver_private"
+    },
+    {
+      "path": "device.kobj.sd->.iattr->",
+      "reason": "incomplete definition",
+      "stock": "kernfs_iattrs",
+      "candidate": "kernfs_iattrs"
+    },
+    {
+      "path": "device.power.subsys_data->.domain_data->",
+      "reason": "incomplete definition",
+      "stock": "pm_domain_data",
+      "candidate": "pm_domain_data"
+    },
+    {
+      "path": "device.driver->.owner->.syms->",
+      "reason": "incomplete definition",
+      "stock": "kernel_symbol",
+      "candidate": "kernel_symbol"
+    },
+    {
+      "path": "device.driver->.owner->.sect_attrs->",
+      "reason": "incomplete definition",
+      "stock": "module_sect_attrs",
+      "candidate": "module_sect_attrs"
+    },
+    {
+      "path": "device.driver->.owner->.notes_attrs->",
+      "reason": "incomplete definition",
+      "stock": "module_notes_attrs",
+      "candidate": "module_notes_attrs"
+    },
+    {
+      "path": "device.kobj.sd->.<anon0>.dir.root->",
+      "reason": "incomplete definition",
+      "stock": "kernfs_root",
+      "candidate": "kernfs_root"
+    },
+    {
+      "path": "device.kobj.sd->.<anon0>.attr.open->",
+      "reason": "incomplete definition",
+      "stock": "kernfs_open_node",
+      "candidate": "kernfs_open_node"
+    },
+    {
+      "path": "device.driver->.owner->.mkobj.mp->",
+      "reason": "incomplete definition",
+      "stock": "module_param_attrs",
+      "candidate": "module_param_attrs"
+    },
+    {
+      "path": "device.driver->.owner->.trace_events->->",
+      "reason": "incomplete definition",
+      "stock": "trace_event_call",
+      "candidate": "trace_event_call"
+    },
+    {
+      "path": "device.driver->.owner->.kunit_init_suites->->",
+      "reason": "incomplete definition",
+      "stock": "kunit_suite",
+      "candidate": "kunit_suite"
+    },
+    {
+      "path": "device.driver->.owner->.arch.hyp.hyp_events->",
+      "reason": "incomplete definition",
+      "stock": "hyp_event",
+      "candidate": "hyp_event"
+    },
+    {
+      "path": "device.driver->.owner->.arch.hyp.hyp_printk_fmts->",
+      "reason": "incomplete definition",
+      "stock": "hyp_printk_fmt",
+      "candidate": "hyp_printk_fmt"
+    },
+    {
+      "path": "device.class->.ns_type->.netlink_ns-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "sock",
+      "candidate": "sock"
+    },
+    {
+      "path": "device.iommu->.fault_param->.queue->.wq->",
+      "reason": "incomplete definition",
+      "stock": "workqueue_struct",
+      "candidate": "workqueue_struct"
+    },
+    {
+      "path": "device.driver->.owner->.arch.hyp.init-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "pkvm_module_ops",
+      "candidate": "pkvm_module_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.identity_domain->.iova_cookie->",
+      "reason": "incomplete definition",
+      "stock": "iommu_dma_cookie",
+      "candidate": "iommu_dma_cookie"
+    },
+    {
+      "path": "device.kobj.sd->.<anon0>.attr.ops->.poll-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "poll_table_struct",
+      "candidate": "poll_table_struct"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.mmap-> arg3->.anon_vma->",
+      "reason": "incomplete definition",
+      "stock": "anon_vma",
+      "candidate": "anon_vma"
+    },
+    {
+      "path": "device.driver->.owner->.bpf_raw_events->.tp->.key.<anon0>.next->",
+      "reason": "incomplete definition",
+      "stock": "static_key_mod",
+      "candidate": "static_key_mod"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.mmap-> arg3->.vm_userfaultfd_ctx.ctx->",
+      "reason": "incomplete definition",
+      "stock": "userfaultfd_ctx",
+      "candidate": "userfaultfd_ctx"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_acl->",
+      "reason": "incomplete definition",
+      "stock": "posix_acl",
+      "candidate": "posix_acl"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_flctx->",
+      "reason": "incomplete definition",
+      "stock": "file_lock_context",
+      "candidate": "file_lock_context"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_fsnotify_marks->",
+      "reason": "incomplete definition",
+      "stock": "fsnotify_mark_connector",
+      "candidate": "fsnotify_mark_connector"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_crypt_info->",
+      "reason": "incomplete definition",
+      "stock": "fscrypt_inode_info",
+      "candidate": "fscrypt_inode_info"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_verity_info->",
+      "reason": "incomplete definition",
+      "stock": "fsverity_info",
+      "candidate": "fsverity_info"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.binfmt->",
+      "reason": "incomplete definition",
+      "stock": "linux_binfmt",
+      "candidate": "linux_binfmt"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.ioctx_table->",
+      "reason": "incomplete definition",
+      "stock": "kioctx_table",
+      "candidate": "kioctx_table"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.notifier_subscriptions->",
+      "reason": "incomplete definition",
+      "stock": "mmu_notifier_subscriptions",
+      "candidate": "mmu_notifier_subscriptions"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.<anon3>.i_pipe->",
+      "reason": "incomplete definition",
+      "stock": "pipe_inode_info",
+      "candidate": "pipe_inode_info"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_path.mnt->.mnt_idmap->",
+      "reason": "incomplete definition",
+      "stock": "mnt_idmap",
+      "candidate": "mnt_idmap"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.uprobes_state.xol_area->",
+      "reason": "incomplete definition",
+      "stock": "xol_area",
+      "candidate": "xol_area"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.<anon1>.dmabuf_info->",
+      "reason": "incomplete definition",
+      "stock": "task_dma_buf_info",
+      "candidate": "task_dma_buf_info"
+    },
+    {
+      "path": "device.msi.domain->.msi_parent_ops->.init_dev_msi_info-> arg3->.handler-> arg0->.dir->",
+      "reason": "incomplete definition",
+      "stock": "proc_dir_entry",
+      "candidate": "proc_dir_entry"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_export_op->",
+      "reason": "incomplete definition",
+      "stock": "export_operations",
+      "candidate": "export_operations"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_cop->",
+      "reason": "incomplete definition",
+      "stock": "fscrypt_operations",
+      "candidate": "fscrypt_operations"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_master_keys->",
+      "reason": "incomplete definition",
+      "stock": "fscrypt_keyring",
+      "candidate": "fscrypt_keyring"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_vop->",
+      "reason": "incomplete definition",
+      "stock": "fsverity_operations",
+      "candidate": "fsverity_operations"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_encoding->",
+      "reason": "incomplete definition",
+      "stock": "unicode_map",
+      "candidate": "unicode_map"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_mtd->",
+      "reason": "incomplete definition",
+      "stock": "mtd_info",
+      "candidate": "mtd_info"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_fsnotify_info->",
+      "reason": "incomplete definition",
+      "stock": "fsnotify_sb_info",
+      "candidate": "fsnotify_sb_info"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_op->.iopoll-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "io_comp_batch",
+      "candidate": "io_comp_batch"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_op->.lock-> arg2->",
+      "reason": "incomplete definition",
+      "stock": "file_lock",
+      "candidate": "file_lock"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_op->.uring_cmd-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "io_uring_cmd",
+      "candidate": "io_uring_cmd"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_cred->.session_keyring->.user->",
+      "reason": "incomplete definition",
+      "stock": "key_user",
+      "candidate": "key_user"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_cred->.user_ns->.binfmt_misc->",
+      "reason": "incomplete definition",
+      "stock": "binfmt_misc",
+      "candidate": "binfmt_misc"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.sched_class->",
+      "reason": "incomplete definition",
+      "stock": "sched_class",
+      "candidate": "sched_class"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.sched_task_group->",
+      "reason": "incomplete definition",
+      "stock": "task_group",
+      "candidate": "task_group"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.rcu_blocked_node->",
+      "reason": "incomplete definition",
+      "stock": "rcu_node",
+      "candidate": "rcu_node"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nameidata->",
+      "reason": "incomplete definition",
+      "stock": "nameidata",
+      "candidate": "nameidata"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.fs->",
+      "reason": "incomplete definition",
+      "stock": "fs_struct",
+      "candidate": "fs_struct"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.files->",
+      "reason": "incomplete definition",
+      "stock": "files_struct",
+      "candidate": "files_struct"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.io_uring->",
+      "reason": "incomplete definition",
+      "stock": "io_uring_task",
+      "candidate": "io_uring_task"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.audit_context->",
+      "reason": "incomplete definition",
+      "stock": "audit_context",
+      "candidate": "audit_context"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.pi_blocked_on->",
+      "reason": "incomplete definition",
+      "stock": "rt_mutex_waiter",
+      "candidate": "rt_mutex_waiter"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.plug->",
+      "reason": "incomplete definition",
+      "stock": "blk_plug",
+      "candidate": "blk_plug"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.capture_control->",
+      "reason": "incomplete definition",
+      "stock": "capture_control",
+      "candidate": "capture_control"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.robust_list->",
+      "reason": "incomplete definition",
+      "stock": "robust_list_head",
+      "candidate": "robust_list_head"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.pi_state_cache->",
+      "reason": "incomplete definition",
+      "stock": "futex_pi_state",
+      "candidate": "futex_pi_state"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.perf_event_ctxp->",
+      "reason": "incomplete definition",
+      "stock": "perf_event_context",
+      "candidate": "perf_event_context"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.delays->",
+      "reason": "incomplete definition",
+      "stock": "task_delay_info",
+      "candidate": "task_delay_info"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.kunit_test->",
+      "reason": "incomplete definition",
+      "stock": "kunit",
+      "candidate": "kunit"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.throttle_disk->",
+      "reason": "incomplete definition",
+      "stock": "gendisk",
+      "candidate": "gendisk"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.stack_vm_area->",
+      "reason": "incomplete definition",
+      "stock": "vm_struct",
+      "candidate": "vm_struct"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.bpf_storage->",
+      "reason": "incomplete definition",
+      "stock": "bpf_local_storage",
+      "candidate": "bpf_local_storage"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.bpf_net_context->",
+      "reason": "incomplete definition",
+      "stock": "bpf_net_context",
+      "candidate": "bpf_net_context"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_xattr->->",
+      "reason": "incomplete definition",
+      "stock": "xattr_handler",
+      "candidate": "xattr_handler"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_op->.setlease-> arg2->->",
+      "reason": "incomplete definition",
+      "stock": "file_lease",
+      "candidate": "file_lease"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_cred->.user_ns->.ns.ops->",
+      "reason": "incomplete definition",
+      "stock": "proc_ns_operations",
+      "candidate": "proc_ns_operations"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.se.cfs_rq->",
+      "reason": "incomplete definition",
+      "stock": "cfs_rq",
+      "candidate": "cfs_rq"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.dl.rq->",
+      "reason": "incomplete definition",
+      "stock": "rq",
+      "candidate": "rq"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.seccomp.filter->",
+      "reason": "incomplete definition",
+      "stock": "seccomp_filter",
+      "candidate": "seccomp_filter"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.lru_gen.memcg->.vmstats->",
+      "reason": "incomplete definition",
+      "stock": "memcg_vmstats",
+      "candidate": "memcg_vmstats"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.lru_gen.memcg->.vmstats_percpu->",
+      "reason": "incomplete definition",
+      "stock": "memcg_vmstats_percpu",
+      "candidate": "memcg_vmstats_percpu"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.lru_gen.memcg->.events_percpu->",
+      "reason": "incomplete definition",
+      "stock": "memcg1_events_percpu",
+      "candidate": "memcg1_events_percpu"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.identity_domain->.dirty_ops->.read_and_clear_dirty-> arg4->.bitmap->",
+      "reason": "incomplete definition",
+      "stock": "iova_bitmap",
+      "candidate": "iova_bitmap"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_op->.fiemap-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "fiemap_extent_info",
+      "candidate": "fiemap_extent_info"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_op->.fileattr_set-> arg2->",
+      "reason": "incomplete definition",
+      "stock": "fileattr",
+      "candidate": "fileattr"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_type->.parameters->",
+      "reason": "incomplete definition",
+      "stock": "fs_parameter_spec",
+      "candidate": "fs_parameter_spec"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_bdev->.bd_queue->",
+      "reason": "incomplete definition",
+      "stock": "request_queue",
+      "candidate": "request_queue"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_bdev->.bd_stats->",
+      "reason": "incomplete definition",
+      "stock": "disk_stats",
+      "candidate": "disk_stats"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_bdev->.bd_holder_ops->",
+      "reason": "incomplete definition",
+      "stock": "blk_holder_ops",
+      "candidate": "blk_holder_ops"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_bdev->.bd_meta_info->",
+      "reason": "incomplete definition",
+      "stock": "partition_meta_info",
+      "candidate": "partition_meta_info"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_cred->.session_keyring->.<anon2>.index_key.type->",
+      "reason": "incomplete definition",
+      "stock": "key_type",
+      "candidate": "key_type"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.uts_ns->",
+      "reason": "incomplete definition",
+      "stock": "uts_namespace",
+      "candidate": "uts_namespace"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.ipc_ns->",
+      "reason": "incomplete definition",
+      "stock": "ipc_namespace",
+      "candidate": "ipc_namespace"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.mnt_ns->",
+      "reason": "incomplete definition",
+      "stock": "mnt_namespace",
+      "candidate": "mnt_namespace"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.time_ns->",
+      "reason": "incomplete definition",
+      "stock": "time_namespace",
+      "candidate": "time_namespace"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.signal->.tty->",
+      "reason": "incomplete definition",
+      "stock": "tty_struct",
+      "candidate": "tty_struct"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.signal->.tty_audit_buf->",
+      "reason": "incomplete definition",
+      "stock": "tty_audit_buf",
+      "candidate": "tty_audit_buf"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.utask->.active_uprobe->",
+      "reason": "incomplete definition",
+      "stock": "uprobe",
+      "candidate": "uprobe"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.a_ops->.writepage-> arg1->.swap_plug->->",
+      "reason": "incomplete definition",
+      "stock": "swap_iocb",
+      "candidate": "swap_iocb"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_cred->.session_keyring->.<anon3>.<anon0>.keys.root->",
+      "reason": "incomplete definition",
+      "stock": "assoc_array_ptr",
+      "candidate": "assoc_array_ptr"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.restart_block.<anon0>.poll.ufds->",
+      "reason": "incomplete definition",
+      "stock": "pollfd",
+      "candidate": "pollfd"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.thread.debug.hbp_break[]->",
+      "reason": "incomplete definition",
+      "stock": "perf_event",
+      "candidate": "perf_event"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_type->.init_fs_context-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "fs_context",
+      "candidate": "fs_context"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_sb->.s_op->.statfs-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "kstatfs",
+      "candidate": "kstatfs"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.a_ops->.writepage-> arg0->.<anon0>.<anon1>.pp->",
+      "reason": "incomplete definition",
+      "stock": "page_pool",
+      "candidate": "page_pool"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.read-> arg0->.f_owner->.pid->.numbers[].ns->.pid_cachep->",
+      "reason": "incomplete definition",
+      "stock": "kmem_cache",
+      "candidate": "kmem_cache"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.uevent_sock->",
+      "reason": "incomplete definition",
+      "stock": "uevent_sock",
+      "candidate": "uevent_sock"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.gen->",
+      "reason": "incomplete definition",
+      "stock": "net_generic",
+      "candidate": "net_generic"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.bio_list->.head->.bi_blkg->",
+      "reason": "incomplete definition",
+      "stock": "blkcg_gq",
+      "candidate": "blkcg_gq"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.bio_list->.head->.bi_crypt_context->",
+      "reason": "incomplete definition",
+      "stock": "bio_crypt_ctx",
+      "candidate": "bio_crypt_ctx"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.lru_gen.memcg->.nodeinfo[]->.lruvec_stats_percpu->",
+      "reason": "incomplete definition",
+      "stock": "lruvec_stats_percpu",
+      "candidate": "lruvec_stats_percpu"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.lru_gen.memcg->.nodeinfo[]->.lruvec_stats->",
+      "reason": "incomplete definition",
+      "stock": "lruvec_stats",
+      "candidate": "lruvec_stats"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.a_ops->.direct_IO-> arg1->.<anon0>.<anon0>.<anon0>.folioq->",
+      "reason": "incomplete definition",
+      "stock": "folio_queue",
+      "candidate": "folio_queue"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.core.prot_inuse->",
+      "reason": "incomplete definition",
+      "stock": "prot_inuse",
+      "candidate": "prot_inuse"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.udp_table->",
+      "reason": "incomplete definition",
+      "stock": "udp_table",
+      "candidate": "udp_table"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.devconf_all->",
+      "reason": "incomplete definition",
+      "stock": "ipv4_devconf",
+      "candidate": "ipv4_devconf"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.ra_chain->",
+      "reason": "incomplete definition",
+      "stock": "ip_ra_chain",
+      "candidate": "ip_ra_chain"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.rules_ops->",
+      "reason": "incomplete definition",
+      "stock": "fib_rules_ops",
+      "candidate": "fib_rules_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.fib_main->",
+      "reason": "incomplete definition",
+      "stock": "fib_table",
+      "candidate": "fib_table"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.peers->",
+      "reason": "incomplete definition",
+      "stock": "inet_peer_base",
+      "candidate": "inet_peer_base"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.tcp_congestion_control->",
+      "reason": "incomplete definition",
+      "stock": "tcp_congestion_ops",
+      "candidate": "tcp_congestion_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.tcp_fastopen_ctx->",
+      "reason": "incomplete definition",
+      "stock": "tcp_fastopen_context",
+      "candidate": "tcp_fastopen_context"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.notifier_ops->",
+      "reason": "incomplete definition",
+      "stock": "fib_notifier_ops",
+      "candidate": "fib_notifier_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.devconf_all->",
+      "reason": "incomplete definition",
+      "stock": "ipv6_devconf",
+      "candidate": "ipv6_devconf"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.fib6_null_entry->",
+      "reason": "incomplete definition",
+      "stock": "fib6_info",
+      "candidate": "fib6_info"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.ip6_null_entry->",
+      "reason": "incomplete definition",
+      "stock": "rt6_info",
+      "candidate": "rt6_info"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.rt6_stats->",
+      "reason": "incomplete definition",
+      "stock": "rt6_statistics",
+      "candidate": "rt6_statistics"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.fib6_main_tbl->",
+      "reason": "incomplete definition",
+      "stock": "fib6_table",
+      "candidate": "fib6_table"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.seg6_data->",
+      "reason": "incomplete definition",
+      "stock": "seg6_pernet_data",
+      "candidate": "seg6_pernet_data"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.ioam6_data->",
+      "reason": "incomplete definition",
+      "stock": "ioam6_pernet_data",
+      "candidate": "ioam6_pernet_data"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ct.nf_conntrack_event_cb->",
+      "reason": "incomplete definition",
+      "stock": "nf_ct_event_notifier",
+      "candidate": "nf_ct_event_notifier"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.can.rx_alldev_list->",
+      "reason": "incomplete definition",
+      "stock": "can_dev_rcv_lists",
+      "candidate": "can_dev_rcv_lists"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.can.pkg_stats->",
+      "reason": "incomplete definition",
+      "stock": "can_pkg_stats",
+      "candidate": "can_pkg_stats"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.can.rcv_lists_stats->",
+      "reason": "incomplete definition",
+      "stock": "can_rcv_lists_stats",
+      "candidate": "can_rcv_lists_stats"
+    },
+    {
+      "path": "device.of_node->.properties->.attr.f_mapping-> return->.host->.i_wb->.memcg_css->.ss->.can_attach-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "cgroup_taskset",
+      "candidate": "cgroup_taskset"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.nf_hooks_egress->",
+      "reason": "incomplete definition",
+      "stock": "nf_hook_entries",
+      "candidate": "nf_hook_entries"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.tcx_egress->",
+      "reason": "incomplete definition",
+      "stock": "bpf_mprog_entry",
+      "candidate": "bpf_mprog_entry"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ip6_ptr->",
+      "reason": "incomplete definition",
+      "stock": "inet6_dev",
+      "candidate": "inet6_dev"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->._rx->",
+      "reason": "incomplete definition",
+      "stock": "netdev_rx_queue",
+      "candidate": "netdev_rx_queue"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.name_node->",
+      "reason": "incomplete definition",
+      "stock": "netdev_name_node",
+      "candidate": "netdev_name_node"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_metadata_ops->",
+      "reason": "incomplete definition",
+      "stock": "xdp_metadata_ops",
+      "candidate": "xdp_metadata_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xsk_tx_metadata_ops->",
+      "reason": "incomplete definition",
+      "stock": "xsk_tx_metadata_ops",
+      "candidate": "xsk_tx_metadata_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.wireless_handlers->",
+      "reason": "incomplete definition",
+      "stock": "iw_handler_def",
+      "candidate": "iw_handler_def"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.wireless_data->",
+      "reason": "incomplete definition",
+      "stock": "iw_public_data",
+      "candidate": "iw_public_data"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ethtool_ops->",
+      "reason": "incomplete definition",
+      "stock": "ethtool_ops",
+      "candidate": "ethtool_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ndisc_ops->",
+      "reason": "incomplete definition",
+      "stock": "ndisc_ops",
+      "candidate": "ndisc_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ip_ptr->",
+      "reason": "incomplete definition",
+      "stock": "in_device",
+      "candidate": "in_device"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.vlan_info->",
+      "reason": "incomplete definition",
+      "stock": "vlan_info",
+      "candidate": "vlan_info"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.tipc_ptr->",
+      "reason": "incomplete definition",
+      "stock": "tipc_bearer",
+      "candidate": "tipc_bearer"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ieee80211_ptr->",
+      "reason": "incomplete definition",
+      "stock": "wireless_dev",
+      "candidate": "wireless_dev"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ieee802154_ptr->",
+      "reason": "incomplete definition",
+      "stock": "wpan_dev",
+      "candidate": "wpan_dev"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.rx_cpu_rmap->",
+      "reason": "incomplete definition",
+      "stock": "cpu_rmap",
+      "candidate": "cpu_rmap"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.qdisc->",
+      "reason": "incomplete definition",
+      "stock": "Qdisc",
+      "candidate": "Qdisc"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_bulkq->",
+      "reason": "incomplete definition",
+      "stock": "xdp_dev_bulk_queue",
+      "candidate": "xdp_dev_bulk_queue"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.rtnl_link_ops->",
+      "reason": "incomplete definition",
+      "stock": "rtnl_link_ops",
+      "candidate": "rtnl_link_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.stat_ops->",
+      "reason": "incomplete definition",
+      "stock": "netdev_stat_ops",
+      "candidate": "netdev_stat_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.queue_mgmt_ops->",
+      "reason": "incomplete definition",
+      "stock": "netdev_queue_mgmt_ops",
+      "candidate": "netdev_queue_mgmt_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.link_topo->",
+      "reason": "incomplete definition",
+      "stock": "phy_link_topology",
+      "candidate": "phy_link_topology"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.phydev->",
+      "reason": "incomplete definition",
+      "stock": "phy_device",
+      "candidate": "phy_device"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.sfp_bus->",
+      "reason": "incomplete definition",
+      "stock": "sfp_bus",
+      "candidate": "sfp_bus"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.macsec_ops->",
+      "reason": "incomplete definition",
+      "stock": "macsec_ops",
+      "candidate": "macsec_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.udp_tunnel_nic_info->",
+      "reason": "incomplete definition",
+      "stock": "udp_tunnel_nic_info",
+      "candidate": "udp_tunnel_nic_info"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.udp_tunnel_nic->",
+      "reason": "incomplete definition",
+      "stock": "udp_tunnel_nic",
+      "candidate": "udp_tunnel_nic"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.ethtool->",
+      "reason": "incomplete definition",
+      "stock": "ethtool_netdev_state",
+      "candidate": "ethtool_netdev_state"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.devlink_port->",
+      "reason": "incomplete definition",
+      "stock": "devlink_port",
+      "candidate": "devlink_port"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.irq_moder->",
+      "reason": "incomplete definition",
+      "stock": "dim_irq_moder",
+      "candidate": "dim_irq_moder"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.tcp_death_row.hashinfo->",
+      "reason": "incomplete definition",
+      "stock": "inet_hashinfo",
+      "candidate": "inet_hashinfo"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.nf.nf_loggers[]->",
+      "reason": "incomplete definition",
+      "stock": "nf_logger",
+      "candidate": "nf_logger"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.bio_list->.head->.bi_pool->.cache->",
+      "reason": "incomplete definition",
+      "stock": "bio_alloc_cache",
+      "candidate": "bio_alloc_cache"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.lru_gen.memcg->.thresholds.primary->.entries[].eventfd->",
+      "reason": "incomplete definition",
+      "stock": "eventfd_ctx",
+      "candidate": "eventfd_ctx"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->._tx->.pool->",
+      "reason": "incomplete definition",
+      "stock": "xsk_buff_pool",
+      "candidate": "xsk_buff_pool"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.stats->",
+      "reason": "incomplete definition",
+      "stock": "bpf_prog_stats",
+      "candidate": "bpf_prog_stats"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.orig_prog->",
+      "reason": "incomplete definition",
+      "stock": "sock_fprog_kern",
+      "candidate": "sock_fprog_kern"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_state[].link->",
+      "reason": "incomplete definition",
+      "stock": "bpf_xdp_link",
+      "candidate": "bpf_xdp_link"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv4.fqdir->.rhashtable.tbl->",
+      "reason": "incomplete definition",
+      "stock": "bucket_table",
+      "candidate": "bucket_table"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.ip6_dst_ops.check-> return->",
+      "reason": "incomplete definition",
+      "stock": "dst_entry",
+      "candidate": "dst_entry"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.ipv6.ip6_dst_ops.neigh_lookup-> return->",
+      "reason": "incomplete definition",
+      "stock": "neighbour",
+      "candidate": "neighbour"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.scx.cgrp_moving_from->.bpf.inactive->.items[].<anon0>.cgroup_storage[]->",
+      "reason": "incomplete definition",
+      "stock": "bpf_cgroup_storage",
+      "candidate": "bpf_cgroup_storage"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.netdev_ops->.ndo_neigh_setup-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "neigh_parms",
+      "candidate": "neigh_parms"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.netdev_ops->.ndo_xdp_get_xmit_slave-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "xdp_buff",
+      "candidate": "xdp_buff"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.netdev_ops->.ndo_tunnel_ctl-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "ip_tunnel_parm_kern",
+      "candidate": "ip_tunnel_parm_kern"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.netdev_ops->.ndo_hwtstamp_get-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "kernel_hwtstamp_config",
+      "candidate": "kernel_hwtstamp_config"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.attach_btf->",
+      "reason": "incomplete definition",
+      "stock": "btf",
+      "candidate": "btf"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.arena->",
+      "reason": "incomplete definition",
+      "stock": "bpf_arena",
+      "candidate": "bpf_arena"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.kfunc_tab->",
+      "reason": "incomplete definition",
+      "stock": "bpf_kfunc_desc_tab",
+      "candidate": "bpf_kfunc_desc_tab"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.kfunc_btf_tab->",
+      "reason": "incomplete definition",
+      "stock": "bpf_kfunc_btf_tab",
+      "candidate": "bpf_kfunc_btf_tab"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.netdev_ops->.ndo_xdp_xmit-> arg2->->",
+      "reason": "incomplete definition",
+      "stock": "xdp_frame",
+      "candidate": "xdp_frame"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.dst_trampoline->.fops->",
+      "reason": "incomplete definition",
+      "stock": "ftrace_ops",
+      "candidate": "ftrace_ops"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.offload->.offdev->",
+      "reason": "incomplete definition",
+      "stock": "bpf_offload_dev",
+      "candidate": "bpf_offload_dev"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.used_maps->->.ops->.map_local_storage_charge-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "bpf_local_storage_map",
+      "candidate": "bpf_local_storage_map"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.used_maps->->.ops->.map_set_for_each_callback_args-> arg0->",
+      "reason": "incomplete definition",
+      "stock": "bpf_verifier_env",
+      "candidate": "bpf_verifier_env"
+    },
+    {
+      "path": "device.iommu->.iommu_dev->.ops->.domain_alloc_sva-> arg1->.<anon0>.owner->.nsproxy->.net_ns->.loopback_dev->.xdp_prog->.aux->.used_maps->->.ops->.map_set_for_each_callback_args-> arg1->",
+      "reason": "incomplete definition",
+      "stock": "bpf_func_state",
+      "candidate": "bpf_func_state"
+    }
+  ],
+  "limitations": "Exploratory candidate DWARF versus stock kernel BTF transitive type walk. Typedef/qualifier wrappers are stripped; incomplete and anonymous repeated members are not proved; depth/size bounds apply. This is not the original stock ICNSS genksyms stream and cannot by itself identify the CRC cause or prove compatibility.",
+  "comparison_note": "Multidimensional array representation is compared by total element count; qualifiers and typedef wrappers are not compared; incomplete definitions remain explicit.",
+  "algorithm_note": "Breadth-first, pair-deduplicated walk, 64-edge depth and 20000-pair cap; repeated anonymous members identified positionally; no candidate/stock bytes modified.",
+  "analysis_script_sha256": "e72358944adedb4cad9e5669f4d43784ef47239d074405c092e7c5aa6d5a1fc1",
+  "stock_exact_common_commit_probe": {
+    "requested": "43b5ab7e247d",
+    "repository": "https://android.googlesource.com/kernel/common",
+    "lookup_http_status": 404,
+    "limitation": "One repository/short-prefix lookup only; not evidence the complete stock source is unavailable everywhere."
+  }
+}
