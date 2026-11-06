@@ -1,0 +1,20 @@
+{
+  "stage": "0128",
+  "kernel_commit": "e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5",
+  "files": {
+    "include/linux/module.h": {
+      "sha256": "c88db92183672404e636ef504f605b30f3e1cc9742749d168790e89db0d07cbb",
+      "source_url": "https://android.googlesource.com/kernel/common/+/e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5/include/linux/module.h"
+    },
+    "kernel/module/main.c": {
+      "sha256": "09ffe0fff64d8a2380b49bfd5c3c63497ae128e1b53e964ac458f03c07e20344",
+      "source_url": "https://android.googlesource.com/kernel/common/+/e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5/kernel/module/main.c"
+    }
+  },
+  "findings": [
+    "module_is_live excludes only GOING, so COMING admits a reference",
+    "do_init_module negative result enters failure path, sets GOING and calls free_module despite retained callback references",
+    "Experimental successful load therefore keeps persistent self-reference; controlled live unload is not implemented",
+    "Published-error load keeps full graph and reports readonly mishare_load_error while module init returns zero to preserve resident text"
+  ]
+}
