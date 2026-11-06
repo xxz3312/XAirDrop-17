@@ -23,10 +23,13 @@ def build(work):
     env.update(PATH=f'{host}/usr/bin:{tools}/rust-1.82.0.p2/bin:'+env.get('PATH',''),
                LD_LIBRARY_PATH=f'{host}/usr/lib/x86_64-linux-gnu',LIBCLANG_PATH=f'{tools}/clang-r536225/lib',
                M4=f'{host}/usr/bin/m4',BISON_PKGDATADIR=f'{host}/usr/share/bison',
-               POPSICLE_HWID_INCLUDE=str(REPO/'kernel/compat/popsicle'))
+               POPSICLE_HWID_INCLUDE=str(REPO/'kernel/compat/popsicle'),
+               KBUILD_GENDWARFKSYMS_STABLE='1')
     report={'status':'BUILD_STARTED','variant':'CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER=1',
             'modules':{},'checked_WLAN_unresolved':[],'platform_export_crc_changes':{},
             'phone_executed':False,'radio_backend_activation_enabled':False,
+            'version_generator':'gendwarfksyms','stable_kabi_mode':True,
+            'new_kernel_kabi_rules_added':False,'CRC_gate_waived':False,
             'limitations':'Diagnostic paired build only. Stock ICNSS must not remain loaded beside its replacement. No platform private layout/KCFI, module replacement procedure, actual loader/firmware, error recovery, module-exit failure or radio interoperability certification.'}
     produced=[]
     def command(args,name):
@@ -55,7 +58,7 @@ def build(work):
                                     if line.split('\t')[2]!='icnss2'))
         report['removed_stock_provider']='icnss2';report['stock_icnss_export_count']=len(original)
         make=['make','-C',work/'common',f'O={out}','ARCH=arm64',f'LLVM={tools}/clang-r536225/bin/',
-              f'HOSTCFLAGS=-I{host}/usr/include',f'HOSTLDFLAGS=-L{host}/usr/lib/x86_64-linux-gnu','-j4','KBUILD_SYMTYPES=1']
+              f'HOSTCFLAGS=-I{host}/usr/include',f'HOSTLDFLAGS=-L{host}/usr/lib/x86_64-linux-gnu','-j4','KBUILD_SYMTYPES=1','KBUILD_GENDWARFKSYMS_STABLE=1']
         command(make+[f'M={REPO}/kernel/provider',f'KBUILD_EXTRA_SYMBOLS={filtered}','modules'],'provider-checked.log')
         provider=REPO/'kernel/provider/opairshare_wonder_provider.ko';produced.append(provider)
         provider_sym=REPO/'kernel/provider/Module.symvers';merge_generated_exports(known,symvers([provider_sym]))
@@ -105,7 +108,8 @@ def build(work):
         report['platform_export_crc_changes']=changes
         previous=json.loads((REPO/'docs/research/popsicle-checked-platform-0122-exports.json').read_text())
         prior={name:record['crc'] for name,record in previous['candidate_exports'].items()}
-        report['debug_emission_preserved_candidate_export_crcs']=(generated==prior)
+        report['candidate_exports_equal_nonstable_0122']=(generated==prior)
+        report['nonstable_0122_difference_count']=sum(generated.get(n)!=v for n,v in prior.items())
         report['type_streams_requested']=True
         report['full_unused_debug_types_requested']=True
         if missing or changes:raise ValueError('Rebuilt ICNSS legacy export surface differs from stock; inspect report')
@@ -149,11 +153,20 @@ def build(work):
                (out/'stock-config-delta.json','stock-config-delta.json'),
                (source_dir/'Module.symvers','icnss.Module.symvers'),
                (source_dir/'canoe_gki_defconfig','icnss.defconfig')]
-        files += [(x,x.name.removeprefix('.')) for pattern in ['*.symtypes','.*.cmd'] for x in sorted(source_dir.glob(pattern))]
+        files += [(x,x.name.lstrip('.')) for pattern in ['*.symtypes','.*.cmd'] for x in sorted(source_dir.glob(pattern))]
         for source,name in files:
             if source.is_file():
                 dst=type_dir/name;shutil.copy2(source,dst)
                 evidence.append({'name':name,'source':str(source.relative_to(work)),'sha256':hashlib.sha256(dst.read_bytes()).hexdigest(),'size':dst.stat().st_size})
+        from module_exports import load
+        rule_object=source_dir/'main.o'
+        if rule_object.is_file():
+            raw,sections=load(rule_object)
+            section=next((x for x in sections if x['name']=='.discard.gendwarfksyms.kabi_rules'),None)
+            if section:
+                data=raw[section['off']:section['off']+section['size']]
+                dst=type_dir/'existing-kabi-rules.bin';dst.write_bytes(data)
+                report['existing_kabi_rules']={'sha256':hashlib.sha256(data).hexdigest(),'size':len(data)}
         report['type_inputs']=evidence
         (reports/'checked-platform-pair.json').write_text(json.dumps(report,indent=2)+'\n')
         if produced:
