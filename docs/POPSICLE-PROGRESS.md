@@ -1,3 +1,9 @@
+## 最新阶段 0125（PCIe / CNSS2 checked 注销源码，待 C 验证）
+
+补丁 0057 为实际 PEACH PCIe/CNSS2 增加独立 checked 注销：原生同步事件显式传递回执，remove 错误在清 PROBED/ops 和断电前返回；投递/准入/执行失败进入 terminal 状态，旧入口不能重放。补丁 0058 提供 opt-in 原生 PCIe 消费者，直接使用 v3 provider 槽位、PSOC transition 内的 remove preflight 与回执，以及 PCIe→PLD→HDD 拒绝传播。电源尾部失败保留剩余状态，不承诺撤销此前完成的硬件/WLAN 操作。
+
+新增真实平台/消费者联合 C 夹具，57 项本地 Python 回归、源码组装及独立补丁正反检查通过；C 验证待 Actions。默认实验开关仍关闭，平台二进制/配对 ABI 未验收，手机未操作。见 [0125 边界与限制](POPSICLE-CNSS-CHECKED-0125.md)。
+
 ## 最新阶段 0124（PCIe 类型化边界与原生回调修复，C 快速验收通过）
 
 已按实际 PCIe/CNSS2 签名新增独立 v3 描述符与四个外部入口，保留设备 ID，沿用共享 owner/引用/关闭保护；v2 布局不变，错总线拒绝。补丁 0056 修复四个原生回调的空 context/ops 访问及 idle_shutdown 指针检查错误。新增真实 provider + 四个原生 PCIe 回调 C 夹具、四类并发关闭和六项错误注入，接入默认 CI，真实 provider 导出门禁扩展为 17 项。

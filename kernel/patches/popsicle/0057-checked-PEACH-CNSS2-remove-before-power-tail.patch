@@ -1,0 +1,337 @@
+--- a/platform/cnss2/main.h
++++ b/platform/cnss2/main.h
+@@ -394,6 +394,8 @@
+ 	CNSS_SHUTDOWN_DEVICE,
+ 	CNSS_POWERING_ON,
+ 	CNSS_SEC_DOWNLOAD,
++	/* Private checked unregister: terminal on every refused attempt. */
++	CNSS_MISHARE_UNREGISTER_TERMINAL,
+ };
+ 
+ struct cnss_recovery_data {
+--- a/platform/cnss2/pci.h
++++ b/platform/cnss2/pci.h
+@@ -27,6 +27,16 @@
+ 
+ 
+ #include "main.h"
++
++struct cnss_pci_data;
++
++/* The caller keeps this guard alive through a synchronous unkillable event. */
++struct cnss_mishare_unregister_guard {
++	struct cnss_wlan_driver *ops;
++	int (*remove_status)(struct device *dev);
++};
++int cnss_pci_unregister_driver_checked_hdlr(struct cnss_pci_data *pci_priv,
++		struct cnss_mishare_unregister_guard *guard);
+ 
+ #define PM_OPTIONS_DEFAULT		0
+ #define PCI_LINK_DOWN			0
+--- a/platform/cnss2/bus.h
++++ b/platform/cnss2/bus.h
+@@ -49,6 +49,8 @@
+ int cnss_bus_dev_ramdump(struct cnss_plat_data *plat_priv);
+ int cnss_bus_register_driver_hdlr(struct cnss_plat_data *plat_priv, void *data);
+ int cnss_bus_unregister_driver_hdlr(struct cnss_plat_data *plat_priv);
++int cnss_bus_unregister_driver_checked_hdlr(struct cnss_plat_data *plat_priv,
++					   void *guard);
+ int cnss_bus_call_driver_modem_status(struct cnss_plat_data *plat_priv,
+ 				      int modem_current_status);
+ int cnss_bus_fmd_status(struct cnss_plat_data *plat_priv,
+--- a/platform/cnss2/bus.c
++++ b/platform/cnss2/bus.c
+@@ -538,6 +538,22 @@
+ 	}
+ }
+ 
++int cnss_bus_unregister_driver_checked_hdlr(struct cnss_plat_data *plat_priv,
++					   void *guard)
++{
++	if (!plat_priv)
++		return -ENODEV;
++
++	switch (plat_priv->bus_type) {
++	case CNSS_BUS_PCI:
++		return cnss_pci_unregister_driver_checked_hdlr(plat_priv->bus_priv, guard);
++	default:
++		cnss_pr_err("Unsupported bus type: %d\n",
++			    plat_priv->bus_type);
++		return -EINVAL;
++	}
++}
++
+ int cnss_bus_call_driver_modem_status(struct cnss_plat_data *plat_priv,
+ 				      int modem_current_status)
+ {
+--- a/platform/cnss2/main.c
++++ b/platform/cnss2/main.c
+@@ -4180,7 +4180,11 @@
+ 							    event->data);
+ 			break;
+ 		case CNSS_DRIVER_EVENT_UNREGISTER_DRIVER:
+-			ret = cnss_bus_unregister_driver_hdlr(plat_priv);
++			if (event->data)
++				ret = cnss_bus_unregister_driver_checked_hdlr(plat_priv,
++								    event->data);
++			else
++				ret = cnss_bus_unregister_driver_hdlr(plat_priv);
+ 			break;
+ 		case CNSS_DRIVER_EVENT_RECOVERY:
+ 			ret = cnss_driver_recovery_hdlr(plat_priv,
+--- a/platform/inc/cnss2.h
++++ b/platform/inc/cnss2.h
+@@ -250,6 +250,8 @@
+ 
+ extern int cnss_wlan_register_driver(struct cnss_wlan_driver *driver);
+ extern void cnss_wlan_unregister_driver(struct cnss_wlan_driver *driver);
++int cnss_wlan_unregister_driver_checked_v1(struct cnss_wlan_driver *driver,
++				   int (*remove_status)(struct device *dev));
+ extern void cnss_device_crashed(struct device *dev);
+ extern int cnss_pci_prevent_l1(struct device *dev);
+ extern void cnss_pci_allow_l1(struct device *dev);
+--- a/platform/cnss2/pci.c
++++ b/platform/cnss2/pci.c
+@@ -3511,7 +3511,8 @@
+ 	return ret;
+ }
+ 
+-int cnss_pci_call_driver_remove(struct cnss_pci_data *pci_priv)
++static int cnss_pci_call_driver_remove_internal(struct cnss_pci_data *pci_priv,
++		struct cnss_mishare_unregister_guard *guard)
+ {
+ 	struct cnss_plat_data *plat_priv;
+ 	int ret;
+@@ -3520,6 +3521,9 @@
+ 		return -ENODEV;
+ 
+ 	plat_priv = pci_priv->plat_priv;
++	if (!guard && test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,
++			       &plat_priv->driver_state))
++		return -ESHUTDOWN;
+ 
+ 	if (test_bit(CNSS_IN_COLD_BOOT_CAL, &plat_priv->driver_state) ||
+ 	    test_bit(CNSS_FW_BOOT_RECOVERY, &plat_priv->driver_state) ||
+@@ -3541,6 +3545,11 @@
+ 		pci_priv->driver_ops->shutdown(pci_priv->pci_dev);
+ 	} else if (test_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state)) {
+ 		pci_priv->driver_ops->remove(pci_priv->pci_dev);
++		if (guard) {
++			ret = guard->remove_status(&pci_priv->pci_dev->dev);
++			if (ret)
++				return ret;
++		}
+ 		clear_bit(CNSS_DRIVER_PROBED, &plat_priv->driver_state);
+ 	} else if (test_bit(CNSS_DRIVER_IDLE_SHUTDOWN,
+ 			    &plat_priv->driver_state)) {
+@@ -3558,6 +3567,11 @@
+ 	plat_priv->get_driver_async_data_cb = NULL;
+ 
+ 	return 0;
++}
++
++int cnss_pci_call_driver_remove(struct cnss_pci_data *pci_priv)
++{
++	return cnss_pci_call_driver_remove_internal(pci_priv, NULL);
+ }
+ 
+ int cnss_pci_call_driver_modem_status(struct cnss_pci_data *pci_priv,
+@@ -4023,16 +4037,24 @@
+ 	return ret;
+ }
+ 
+-static int cnss_qca6290_shutdown(struct cnss_pci_data *pci_priv)
++static int cnss_qca6290_shutdown_internal(struct cnss_pci_data *pci_priv,
++		struct cnss_mishare_unregister_guard *guard)
+ {
+ 	int ret = 0;
+ 	struct cnss_plat_data *plat_priv = pci_priv->plat_priv;
+ 	int do_force_wake = true;
+ 
++	if (!guard && test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,
++			       &plat_priv->driver_state))
++		return -ESHUTDOWN;
++
+ 	cnss_pci_pm_runtime_resume(pci_priv);
+ 
+-	ret = cnss_pci_call_driver_remove(pci_priv);
+-	if (ret == -EAGAIN)
++	ret = cnss_pci_call_driver_remove_internal(pci_priv, guard);
++	/* Also catch native skip/shutdown branches which did not emit remove. */
++	if (guard && !ret)
++		ret = guard->remove_status(&pci_priv->pci_dev->dev);
++	if (ret == -EAGAIN || (guard && ret))
+ 		goto out;
+ 
+ 	cnss_request_bus_bandwidth(&plat_priv->plat_dev->dev,
+@@ -4084,9 +4106,12 @@
+ 	} else {
+ 		cnss_pci_power_off_mhi(pci_priv, false);
+ 		ret = cnss_suspend_pci_link(pci_priv);
+-		if (ret)
++		if (ret) {
+ 			cnss_pr_err("Failed to suspend PCI link, err = %d\n",
+ 				    ret);
++			if (guard)
++				goto out;
++		}
+ 		cnss_pci_deinit_mhi(pci_priv);
+ 		cnss_power_off_device(plat_priv);
+ 	}
+@@ -4107,6 +4132,11 @@
+ 
+ out:
+ 	return ret;
++}
++
++static int cnss_qca6290_shutdown(struct cnss_pci_data *pci_priv)
++{
++	return cnss_qca6290_shutdown_internal(pci_priv, NULL);
+ }
+ 
+ static void cnss_qca6290_crash_shutdown(struct cnss_pci_data *pci_priv)
+@@ -4363,6 +4393,9 @@
+ 		cnss_pr_buf("plat_priv is not ready for register driver\n");
+ 		return -EAGAIN;
+ 	}
++
++	if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))
++		return -ESHUTDOWN;
+ 
+ 	pci_priv = plat_priv->bus_priv;
+ 	if (test_bit(CNSS_WLAN_HW_DISABLED, &plat_priv->driver_state)) {
+@@ -4473,6 +4506,8 @@
+ 	}
+ 
+ 	mutex_lock(&plat_priv->driver_ops_lock);
++	if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))
++		goto mishare_unlock;
+ 
+ 	if (plat_priv->device_id == QCA6174_DEVICE_ID)
+ 		goto skip_wait_power_up;
+@@ -4507,6 +4542,7 @@
+ 			       CNSS_DRIVER_EVENT_UNREGISTER_DRIVER,
+ 			       CNSS_EVENT_SYNC_UNKILLABLE, NULL);
+ 
++mishare_unlock:
+ 	mutex_unlock(&plat_priv->driver_ops_lock);
+ }
+ EXPORT_SYMBOL(cnss_wlan_unregister_driver);
+@@ -4516,6 +4552,9 @@
+ {
+ 	int ret = 0;
+ 	struct cnss_plat_data *plat_priv = pci_priv->plat_priv;
++
++	if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))
++		return -ESHUTDOWN;
+ 
+ 	if (test_bit(CNSS_IN_REBOOT, &plat_priv->driver_state)) {
+ 		cnss_pr_dbg("Reboot or shutdown is in progress, ignore register driver\n");
+@@ -4544,6 +4583,8 @@
+ 		return -EINVAL;
+ 
+ 	plat_priv = pci_priv->plat_priv;
++	if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))
++		return -ESHUTDOWN;
+ 	set_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
+ 	cnss_pci_dev_shutdown(pci_priv);
+ 	pci_priv->driver_ops = NULL;
+@@ -9018,3 +9059,98 @@
+ 		cnss_driver_registered = false;
+ 	}
+ }
++
++/* Private PEACH-only lifecycle. No new fields in cnss_wlan_driver and no
++ * global/retained guard pointer: guard storage is borrowed by the synchronous
++ * unkillable event, then threaded explicitly through shutdown/remove.
++ */
++int cnss_wlan_unregister_driver_checked_v1(struct cnss_wlan_driver *driver_ops,
++				   int (*remove_status)(struct device *dev))
++{
++	struct cnss_plat_data *plat_priv;
++	struct cnss_pci_data *pci_priv;
++	struct cnss_mishare_unregister_guard guard = { driver_ops, remove_status };
++	int ret;
++
++	if (!driver_ops || !remove_status)
++		return -EINVAL;
++	plat_priv = cnss_get_plat_priv_by_driver_ops(driver_ops);
++	if (!plat_priv)
++		return -ENODEV;
++	mutex_lock(&plat_priv->driver_ops_lock);
++	if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state)) {
++		ret = -ESHUTDOWN;
++		goto out;
++	}
++	if (plat_priv->bus_type != CNSS_BUS_PCI ||
++	    plat_priv->device_id != PEACH_DEVICE_ID) {
++		ret = -EOPNOTSUPP;
++		goto out;
++	}
++	pci_priv = plat_priv->bus_priv;
++	if (!pci_priv || pci_priv->driver_ops != driver_ops) {
++		ret = -ENOENT;
++		goto out;
++	}
++	set_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state);
++	ret = cnss_driver_event_post(plat_priv,
++				    CNSS_DRIVER_EVENT_UNREGISTER_DRIVER,
++				    CNSS_EVENT_SYNC_UNKILLABLE, &guard);
++out:
++	mutex_unlock(&plat_priv->driver_ops_lock);
++	return ret;
++}
++EXPORT_SYMBOL(cnss_wlan_unregister_driver_checked_v1);
++
++int cnss_pci_unregister_driver_checked_hdlr(struct cnss_pci_data *pci_priv,
++		struct cnss_mishare_unregister_guard *guard)
++{
++	struct cnss_plat_data *plat_priv;
++	unsigned long rejected;
++	int ret;
++
++	if (!pci_priv || !pci_priv->plat_priv || !pci_priv->pci_dev)
++		return -ENODEV;
++	plat_priv = pci_priv->plat_priv;
++	if (!guard || !guard->remove_status || !guard->ops ||
++	    guard->ops != pci_priv->driver_ops || !guard->ops->remove)
++		return -EINVAL;
++	if (pci_priv->device_id != PEACH_DEVICE_ID ||
++	    plat_priv->device_id != PEACH_DEVICE_ID ||
++	    plat_priv->bus_type != CNSS_BUS_PCI)
++		return -EOPNOTSUPP;
++	if (!test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))
++		return -EPERM;
++	if (!test_bit(CNSS_DRIVER_PROBED, &plat_priv->driver_state) ||
++	    !test_bit(CNSS_DRIVER_REGISTERED, &plat_priv->driver_state))
++		return -ENODEV;
++	rejected = BIT(CNSS_DRIVER_LOADING) | BIT(CNSS_DRIVER_UNLOADING) |
++		BIT(CNSS_DRIVER_RECOVERY) | BIT(CNSS_FW_BOOT_RECOVERY) |
++		BIT(CNSS_DEV_ERR_NOTIFY) | BIT(CNSS_IN_COLD_BOOT_CAL) |
++		BIT(CNSS_DRIVER_DEBUG) | BIT(CNSS_IN_REBOOT) |
++		BIT(CNSS_IN_PANIC) | BIT(CNSS_IN_SUSPEND_RESUME) |
++		BIT(CNSS_DRIVER_IDLE_SHUTDOWN) | BIT(CNSS_DRIVER_IDLE_RESTART) |
++		BIT(CNSS_SHUTDOWN_DEVICE) | BIT(CNSS_POWER_OFF) | BIT(CNSS_POWERING_ON);
++	if ((plat_priv->driver_state & rejected) ||
++	    plat_priv->pm_suspend_in_progress ||
++	    plat_priv->ramdump_info_v2.dump_data_valid ||
++	    plat_priv->xdump_helper.dumping_bt_over_wl || pci_priv->pci_link_down_ind)
++		return -EBUSY;
++	/* A fresh scope must have no prior completed or in-flight remove. */
++	ret = guard->remove_status(&pci_priv->pci_dev->dev);
++	if (ret != -ENODATA)
++		return ret ? ret : -EALREADY;
++	set_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
++	ret = cnss_qca6290_shutdown_internal(pci_priv, guard);
++	if (ret) {
++		/* Keep terminal even if a native power-tail operation failed after
++		 * successful remove. Already executed hardware steps are not undone.
++		 */
++		set_bit(CNSS_DRIVER_UNLOADING, &plat_priv->driver_state);
++		return ret;
++	}
++	pci_priv->driver_ops = NULL;
++	clear_bit(CNSS_DRIVER_REGISTERED, &plat_priv->driver_state);
++	clear_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state);
++	return 0;
++}

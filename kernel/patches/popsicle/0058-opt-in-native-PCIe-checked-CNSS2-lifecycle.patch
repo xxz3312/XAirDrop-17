@@ -1,0 +1,196 @@
+--- a/qcacld-3.0/core/pld/src/pld_pcie.c
++++ b/qcacld-3.0/core/pld/src/pld_pcie.c
+@@ -36,6 +36,11 @@
+ #include "osif_psoc_sync.h"
+ #include "cds_api.h"
+ 
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++#include "mishare_wlan_execution.h"
++#include "wlan_hdd_mishare_host.h"
++#endif
++
+ #ifdef CONFIG_PCI
+ 
+ #ifdef QCA_WIFI_3_0_ADRASTEA
+@@ -95,6 +100,50 @@
+  */
+ static void pld_pcie_remove(struct pci_dev *pdev)
+ {
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	struct device *dev = &pdev->dev;
++	struct pld_context *pld_context;
++	struct osif_psoc_sync *psoc_sync = NULL;
++	bool recorded;
++	int ret;
++
++	ret = opairshare_wlan_execution_remove_begin(THIS_MODULE, dev, &recorded);
++	if (ret)
++		return;
++	/* This exceptional native path has no PSOC transition proof. */
++	if (cds_is_pcie_link_resume_fail()) {
++		ret = -EBUSY;
++		goto refuse;
++	}
++	ret = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
++	if (ret)
++		goto refuse;
++	osif_psoc_sync_wait_for_ops(psoc_sync);
++	pld_context = pld_get_global_context();
++	if (!pld_context || !pld_context->ops || !pld_context->ops->remove) {
++		ret = -ENODEV;
++		goto refuse;
++	}
++	ret = hdd_mishare_remove_prepare(dev);
++	if (ret)
++		goto refuse;
++	cds_set_driver_loaded(false);
++	cds_set_unload_in_progress(true);
++	osif_psoc_sync_unregister(dev);
++	pld_context->ops->remove(dev, PLD_BUS_TYPE_PCIE);
++	pld_del_dev(pld_context, dev);
++	osif_psoc_sync_trans_stop(psoc_sync);
++	osif_psoc_sync_destroy(psoc_sync);
++	if (recorded)
++		opairshare_wlan_execution_remove_end(THIS_MODULE, dev, 0);
++	return;
++refuse:
++	if (recorded)
++		opairshare_wlan_execution_remove_end(THIS_MODULE, dev, ret);
++	/* Retain transition/lookup on refusal; no forced cleanup or replay. */
++	pr_err("MiShare: PCIe remove retained (%d)\n", ret);
++#else
++
+ 	struct pld_context *pld_context;
+ 	int errno;
+ 	struct osif_psoc_sync *psoc_sync = NULL;
+@@ -126,6 +175,7 @@
+ 		osif_psoc_sync_trans_stop(psoc_sync);
+ 		osif_psoc_sync_destroy(psoc_sync);
+ 	}
++#endif
+ }
+ 
+ /**
+@@ -754,10 +804,26 @@
+ 	.id_table   = pld_pcie_id_table,
+ 	.probe      = pld_pcie_probe,
+ 	.remove     = pld_pcie_remove,
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	.idle_restart  = opairshare_wlan_execution_pcie_idle_restart,
++#else
+ 	.idle_restart  = pld_pcie_idle_restart_cb,
++#endif
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	.idle_shutdown = opairshare_wlan_execution_pcie_idle_shutdown,
++#else
+ 	.idle_shutdown = pld_pcie_idle_shutdown_cb,
++#endif
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	.reinit     = opairshare_wlan_execution_pcie_reinit,
++#else
+ 	.reinit     = pld_pcie_reinit,
++#endif
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	.shutdown   = opairshare_wlan_execution_pcie_shutdown,
++#else
+ 	.shutdown   = pld_pcie_shutdown,
++#endif
+ 	.crash_shutdown = pld_pcie_crash_shutdown,
+ 	.modem_status   = pld_pcie_notify_handler,
+ 	.update_status  = pld_pcie_uevent,
+@@ -785,14 +851,62 @@
+ 	.set_therm_cdev_state = pld_pcie_set_thermal_state,
+ };
+ 
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++static const struct mishare_wlan_pcie_execution_ops pld_pcie_execution = {
++	.owner = THIS_MODULE,
++	.reinit = pld_pcie_reinit,
++	.shutdown = pld_pcie_shutdown,
++	.idle_restart = pld_pcie_idle_restart_cb,
++	.idle_shutdown = pld_pcie_idle_shutdown_cb,
++};
++#endif
++
+ int pld_pcie_register_driver(void)
+ {
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	int ret, cleanup;
++
++	ret = opairshare_wlan_execution_register_pcie_v3(&pld_pcie_execution);
++	if (ret)
++		return ret;
++	ret = cnss_wlan_register_driver(&pld_pcie_ops);
++	if (ret) {
++		cleanup = opairshare_wlan_execution_unregister(THIS_MODULE);
++		if (cleanup)
++			return cleanup;
++	}
++	return ret;
++#else
+ 	return cnss_wlan_register_driver(&pld_pcie_ops);
+-}
++#endif
++}
++
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++int pld_pcie_unregister_driver_checked(void)
++{
++	int ret;
++
++	ret = opairshare_wlan_execution_unregister_begin(THIS_MODULE,
++						      !module_is_live(THIS_MODULE));
++	if (ret)
++		return ret;
++	/* Strong checked CNSS2 import; never fall back after admission. */
++	ret = cnss_wlan_unregister_driver_checked_v1(&pld_pcie_ops,
++					   opairshare_wlan_execution_remove_status);
++	return opairshare_wlan_execution_unregister_end(THIS_MODULE, ret);
++}
++#endif
+ 
+ void pld_pcie_unregister_driver(void)
+ {
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	int ret = pld_pcie_unregister_driver_checked();
++
++	if (ret)
++		pr_err("MiShare: PCIe unregister retained (%d)\n", ret);
++#else
+ 	cnss_wlan_unregister_driver(&pld_pcie_ops);
++#endif
+ }
+ #else
+ #ifdef CONFIG_PM
+--- a/qcacld-3.0/core/pld/src/pld_pcie.h
++++ b/qcacld-3.0/core/pld/src/pld_pcie.h
+@@ -30,6 +30,13 @@
+ #include <linux/pci.h>
+ #include "pld_internal.h"
+ 
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++#if !defined(CONFIG_PLD_PCIE_CNSS) || !defined(HIF_PCI) || defined(CONFIG_PLD_PCIE_FW_SIM)
++#error "checked CNSS2 lifecycle requires native PCIe/CNSS"
++#endif
++int pld_pcie_unregister_driver_checked(void);
++#endif
++
+ #ifdef DYNAMIC_SINGLE_CHIP
+ #define PREFIX DYNAMIC_SINGLE_CHIP "/"
+ #else
+--- a/qcacld-3.0/core/pld/src/pld_common.c
++++ b/qcacld-3.0/core/pld/src/pld_common.c
+@@ -358,7 +358,13 @@
+ 	ret = pld_ipci_unregister_driver_checked();
+ 	if (ret)
+ 		return ret;
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	ret = pld_pcie_unregister_driver_checked();
++	if (ret)
++		return ret;
++#else
+ 	pld_pcie_unregister_driver();
++#endif
+ 	pld_snoc_fw_sim_unregister_driver();
+ 	pld_pcie_fw_sim_unregister_driver();
+ 	pld_snoc_unregister_driver();
