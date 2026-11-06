@@ -1,12 +1,12 @@
-## 最新阶段 0123（导出 CRC 类型诊断，待新类型流产物）
+## 最新阶段 0123（ICNSS 参考 CRC 已修复，实际目标总线已纠正）
 
-0122 的 53 处 CRC 差异继续阻断配对。对实际原厂/候选二进制新增只读审计：60 个旧导出均具有有效 AArch64 数据/代码映射，入口前 KCFI 数据字全部一致。候选 DWARF 与原厂内核 BTF 的探索性传递类型遍历检查 2,858 对类型，在归一化后可展开的部分未发现差异，但有 196 条定义不完整路径，且不比较 typedef/限定符；这些结果不能消除 CRC 差异或认证兼容。
+定位到独立构建缺少 gendwarfksyms 稳定模式：沿用内核原有 KABI 注解，设置 KBUILD_GENDWARFKSYMS_STABLE=1 后，60 个旧导出记录全部与原厂匹配，53 处 CRC 差异归零。非稳定/稳定构建的 .text、.init.text、.exit.text 字节哈希一致，60 个旧导出入口数据字一致；provider 与 ICNSS 的记录范围内版本检查通过，没有增加 KABI 规则或放宽 CRC 检查。实际类型流、配置和原有 declonly 规则已保存并核对。
 
-构建基线仍是候选 ACK e2b8ca7，非原厂字符串中的 43b5ab7e247d。官方 common 仓库短提交查询返回 404，仅能证明该次查询未解析，不能认定源码在所有来源都不可得。
+重要纠正：原厂 qca_cld3_peach_v2.ko 实际导入 cnss_wlan_register_driver / cnss_wlan_unregister_driver，依赖 cnss2；固定配置开启 PCIe CNSS、未开启 IPCI ICNSS。因此此前把 ICNSS 作为本机主线不准确。0118–0122 中 IPCI 专用入口的源码/C 验证属于旁支参考，不能作为本机入口已接通的证据；通用主机/runtime 层也仍需核对实际 PCIe 接入。
 
-为追踪真正参与 CRC 的定义，配对构建启用 KBUILD_SYMTYPES 并保留实际 .symtypes、编译 .cmd、配置差异及真实生成 symvers；同时请求完整未使用调试类型，以补足 DWARF 缺失定义。旧导出 CRC 检查保持原样，并核对增加调试信息是否改变既有候选 CRC。该轮 CI 尚待验证，不启用手机路径。见 [0123 说明](POPSICLE-CRC-TYPES-0123.md)。
+新增源码配置与实际原厂导入的总线准入检查及四项回归，57 项 Python 检查通过。默认 CI 不再要求错误总线的配对；ICNSS 仅保留为显式手动触发的 reference-only 构建。严格配对入口遇到 PCIe 目标会拒绝，不会强开 IPCI 或声称目标配对完成。下一步主线是 pld_pcie.c 与 platform/cnss2/pci.c，尚未完成该接入。手机未操作，无线后端仍关闭。见 [0123 说明](POPSICLE-CRC-TYPES-0123.md)。
 
-## 最新阶段 0122（实验版 WLAN 消费者验证通过，平台 ABI 配对阻断）
+## 阶段 0122（实验版 WLAN 消费者验证通过，平台 ABI 配对阻断）
 
 补丁 0053 通过独立编译开关让完整原生 WLAN checked 注销函数调用平台新接口，并直接使用外部 provider 回执查询；不使用目标 GKI 未导出的 symbol_get，也不在失败后回退旧接口。默认构建保留原调用路径，无线后端仍关闭。
 

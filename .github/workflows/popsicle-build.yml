@@ -3,6 +3,10 @@ name: Popsicle diagnostic build
 on:
   workflow_dispatch:
     inputs:
+      icnss_reference:
+        description: Build optional ICNSS reference (target popsicle uses PCIe/CNSS2)
+        type: boolean
+        default: false
       phase:
         description: Diagnostic stage (no installable module)
         type: choice
@@ -16,6 +20,7 @@ on:
     paths:
       - .github/workflows/popsicle-build.yml
       - tools/kernel/popsicle_*.py
+      - tools/kernel/icnss_prefix_audit.py
       - tools/kernel/popsicle_*.sh
       - tools/kernel/passthru_mode_fixture.py
       - tools/kernel/mishare_create_delete_fixture.py
@@ -304,6 +309,8 @@ jobs:
           retention-days: 7
 
   checked-platform:
+    name: Optional ICNSS reference (not target CNSS2)
+    if: github.event_name == 'workflow_dispatch' && inputs.icnss_reference
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
@@ -362,8 +369,8 @@ jobs:
             .popsicle-ci/toolchains/host/usr/bin/bindgen
             .popsicle-ci/toolchains/host/usr/bin/.popsicle-bindgen-source-url
           key: ${{ steps.bindgen.outputs.cache-primary-key }}
-      - name: Strict checked ICNSS and WLAN pair build
-        run: python3 tools/kernel/popsicle_checked_platform.py --work "$WORK"
+      - name: Strict ICNSS reference and target transport audit
+        run: python3 tools/kernel/popsicle_checked_platform.py --reference-only --work "$WORK"
       - name: Upload checked pair diagnostics
         if: always()
         uses: actions/upload-artifact@v4

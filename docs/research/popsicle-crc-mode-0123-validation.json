@@ -1,0 +1,1133 @@
+{
+  "stage": "0123 ICNSS version-generator correction and target transport correction",
+  "stable_source_commit": "74d52eaed6915ad2bbf3bf4acc345a504447bef4",
+  "stable_workflow_run": 42193275385,
+  "stable_workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/42193275385",
+  "nonstable_source_commit": "0ec8000516c3237610139baa0950e61f5c13d788",
+  "nonstable_workflow_run": 42192305451,
+  "generator_config": "CONFIG_GENDWARFKSYMS=y",
+  "fixed_build_mode": "KBUILD_GENDWARFKSYMS_STABLE=1",
+  "legacy_export_count": 60,
+  "legacy_mismatches_before": 53,
+  "legacy_mismatches_after": 0,
+  "all_legacy_export_records_match": true,
+  "same_machine_code_sections": {
+    ".text": "b50971cf3fc41732225071660daa7490d3808374dc4a6407be6b8f69738fec31",
+    ".init.text": "08aa1f906091c26a1ae72423afbaa19f2c17d2c3d462358032337dd5b158dfc9",
+    ".exit.text": "52f7cf0ca0e6ed98efae0805e25645f1ddfd6652c2046eda81153b9f6338d313"
+  },
+  "existing_rule_fields": [
+    "1",
+    "declonly",
+    "cgroup_kmi_ext_info",
+    "",
+    ""
+  ],
+  "kernel_kabi_rules_added_or_edited": false,
+  "CRC_gate_waived": false,
+  "prefix_audit": {
+    "status": "MAPPED_PRE_ENTRY_WORDS_MATCH_ONLY",
+    "stock_sha256": "230263bd64744bc0dcaa7f6de2a98acdfe8a783e00941b47c8b3b4f0b852bfcc",
+    "candidate_sha256": "e228340ae63fcc3121e208c78843137e02a93b0e958cbabadf815fee456f59a4",
+    "mapped_function_count": 60,
+    "changed": {},
+    "stock": {
+      "icnss_get_fw_cap": "0xa9ef91dc",
+      "icnss_is_fw_ready": "0x2fad8a96",
+      "icnss_request_bus_bandwidth": "0xa8fc503e",
+      "icnss_block_shutdown": "0xa2fce979",
+      "icnss_is_fw_down": "0x2fad8a96",
+      "icnss_get_device_config": "0xc006287d",
+      "icnss_is_rejuvenate": "0x2fad8a96",
+      "icnss_is_pdr": "0x2fad8a96",
+      "icnss_is_low_power": "0x2fad8a96",
+      "icnss_thermal_cdev_register": "0x73a7b954",
+      "icnss_thermal_cdev_unregister": "0x3d20fd6d",
+      "icnss_get_curr_therm_cdev_state": "0xa4e41573",
+      "icnss_qmi_send": "0x5ba62dab",
+      "icnss_register_driver_async_data_cb": "0xe6b70aa8",
+      "__icnss_register_driver": "0x9aafdc76",
+      "icnss_unregister_driver": "0x8d0fead5",
+      "icnss_get_user_msi_assignment": "0x783603ba",
+      "icnss_get_msi_irq": "0x7628f40d",
+      "icnss_get_msi_address": "0xbab3b473",
+      "icnss_ce_request_irq": "0xeb4a6a9b",
+      "icnss_ce_free_irq": "0x7adfd0fe",
+      "icnss_enable_irq": "0x120b6142",
+      "icnss_disable_irq": "0x120b6142",
+      "icnss_get_soc_info": "0x0e39c9a4",
+      "icnss_get_mhi_state": "0x2a703c0b",
+      "icnss_set_fw_log_mode": "0xe7476e43",
+      "icnss_force_wake_request": "0x2a703c0b",
+      "icnss_force_wake_release": "0x2a703c0b",
+      "icnss_is_device_awake": "0x2a703c0b",
+      "icnss_is_pci_ep_awake": "0x2a703c0b",
+      "icnss_athdiag_read": "0xaa78d9b4",
+      "icnss_athdiag_write": "0xaa78d9b4",
+      "icnss_wlan_enable": "0x7e65c535",
+      "icnss_wlan_disable": "0x8f1eb266",
+      "icnss_is_qmi_disable": "0x953c5c8a",
+      "icnss_get_ce_id": "0xa8fc503e",
+      "icnss_get_irq": "0xa8fc503e",
+      "icnss_get_audio_shared_iommu_group_cap": "0x953c5c8a",
+      "icnss_get_direct_link_sid": "0x9c07f7f0",
+      "icnss_get_fw_direct_link_cap": "0x953c5c8a",
+      "icnss_audio_is_direct_link_supported": "0x953c5c8a",
+      "icnss_smmu_get_domain": "0x14425004",
+      "icnss_get_wifi_kobj": "0x0181ae10",
+      "icnss_audio_smmu_map": "0x916fea7f",
+      "icnss_audio_smmu_unmap": "0x7a4fc69d",
+      "icnss_get_fw_lpass_shared_mem": "0x3800f6dd",
+      "icnss_smmu_map": "0x0987a492",
+      "icnss_smmu_unmap": "0xadc2d0cd",
+      "icnss_socinfo_get_serial_number": "0x70356ea1",
+      "icnss_trigger_recovery": "0x2a703c0b",
+      "icnss_idle_shutdown": "0x2a703c0b",
+      "icnss_idle_restart": "0x2a703c0b",
+      "icnss_exit_power_save": "0x2a703c0b",
+      "icnss_prevent_l1": "0x2a703c0b",
+      "icnss_allow_l1": "0x6c81b8c8",
+      "icnss_get_iova_info": "0x849ff58d",
+      "icnss_get_cpumask_for_wlan_rx_interrupts": "0xa833aa61",
+      "icnss_get_cpumask_for_wlan_tx_comp_interrupts": "0xa833aa61",
+      "icnss_power_on": "0x2a703c0b",
+      "icnss_power_off": "0x2a703c0b"
+    },
+    "candidate": {
+      "icnss_get_fw_cap": "0xa9ef91dc",
+      "icnss_is_fw_ready": "0x2fad8a96",
+      "icnss_request_bus_bandwidth": "0xa8fc503e",
+      "icnss_block_shutdown": "0xa2fce979",
+      "icnss_is_fw_down": "0x2fad8a96",
+      "icnss_get_device_config": "0xc006287d",
+      "icnss_is_rejuvenate": "0x2fad8a96",
+      "icnss_is_pdr": "0x2fad8a96",
+      "icnss_is_low_power": "0x2fad8a96",
+      "icnss_thermal_cdev_register": "0x73a7b954",
+      "icnss_thermal_cdev_unregister": "0x3d20fd6d",
+      "icnss_get_curr_therm_cdev_state": "0xa4e41573",
+      "icnss_qmi_send": "0x5ba62dab",
+      "icnss_register_driver_async_data_cb": "0xe6b70aa8",
+      "__icnss_register_driver": "0x9aafdc76",
+      "icnss_unregister_driver": "0x8d0fead5",
+      "icnss_get_user_msi_assignment": "0x783603ba",
+      "icnss_get_msi_irq": "0x7628f40d",
+      "icnss_get_msi_address": "0xbab3b473",
+      "icnss_ce_request_irq": "0xeb4a6a9b",
+      "icnss_ce_free_irq": "0x7adfd0fe",
+      "icnss_enable_irq": "0x120b6142",
+      "icnss_disable_irq": "0x120b6142",
+      "icnss_get_soc_info": "0x0e39c9a4",
+      "icnss_get_mhi_state": "0x2a703c0b",
+      "icnss_set_fw_log_mode": "0xe7476e43",
+      "icnss_force_wake_request": "0x2a703c0b",
+      "icnss_force_wake_release": "0x2a703c0b",
+      "icnss_is_device_awake": "0x2a703c0b",
+      "icnss_is_pci_ep_awake": "0x2a703c0b",
+      "icnss_athdiag_read": "0xaa78d9b4",
+      "icnss_athdiag_write": "0xaa78d9b4",
+      "icnss_wlan_enable": "0x7e65c535",
+      "icnss_wlan_disable": "0x8f1eb266",
+      "icnss_is_qmi_disable": "0x953c5c8a",
+      "icnss_get_ce_id": "0xa8fc503e",
+      "icnss_get_irq": "0xa8fc503e",
+      "icnss_get_audio_shared_iommu_group_cap": "0x953c5c8a",
+      "icnss_get_direct_link_sid": "0x9c07f7f0",
+      "icnss_get_fw_direct_link_cap": "0x953c5c8a",
+      "icnss_audio_is_direct_link_supported": "0x953c5c8a",
+      "icnss_smmu_get_domain": "0x14425004",
+      "icnss_get_wifi_kobj": "0x0181ae10",
+      "icnss_audio_smmu_map": "0x916fea7f",
+      "icnss_audio_smmu_unmap": "0x7a4fc69d",
+      "icnss_get_fw_lpass_shared_mem": "0x3800f6dd",
+      "icnss_smmu_map": "0x0987a492",
+      "icnss_smmu_unmap": "0xadc2d0cd",
+      "icnss_socinfo_get_serial_number": "0x70356ea1",
+      "icnss_trigger_recovery": "0x2a703c0b",
+      "icnss_idle_shutdown": "0x2a703c0b",
+      "icnss_idle_restart": "0x2a703c0b",
+      "icnss_exit_power_save": "0x2a703c0b",
+      "icnss_prevent_l1": "0x2a703c0b",
+      "icnss_allow_l1": "0x6c81b8c8",
+      "icnss_get_iova_info": "0x849ff58d",
+      "icnss_get_cpumask_for_wlan_rx_interrupts": "0xa833aa61",
+      "icnss_get_cpumask_for_wlan_tx_comp_interrupts": "0xa833aa61",
+      "icnss_power_on": "0x2a703c0b",
+      "icnss_power_off": "0x2a703c0b"
+    },
+    "limitations": "Actual four-byte data words immediately preceding mapped AArch64 exported function entries, in the recorded KCFI-enabled builds. Does not validate other callers, transitive pointee types, CRC streams, all KCFI sites or loading; never overrides the export CRC gate."
+  },
+  "stable_platform_validation": {
+    "status": "CHECKED_PLATFORM_PAIR_BLOCKED",
+    "variant": "CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER=1",
+    "modules": {
+      "provider": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "8de812b610ac30823a8a06d8dd2a47509e6939aadeb0ce212af9de49d5396652",
+        "version_records": 13,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "icnss2": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "e228340ae63fcc3121e208c78843137e02a93b0e958cbabadf815fee456f59a4",
+        "version_records": 282,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      }
+    },
+    "checked_WLAN_unresolved": [],
+    "platform_export_crc_changes": {},
+    "phone_executed": false,
+    "radio_backend_activation_enabled": false,
+    "version_generator": "gendwarfksyms",
+    "stable_kabi_mode": true,
+    "new_kernel_kabi_rules_added": false,
+    "CRC_gate_waived": false,
+    "limitations": "Diagnostic paired build only. Stock ICNSS must not remain loaded beside its replacement. No platform private layout/KCFI, module replacement procedure, actual loader/firmware, error recovery, module-exit failure or radio interoperability certification.",
+    "removed_stock_provider": "icnss2",
+    "stock_icnss_export_count": 60,
+    "soc_remoteproc_header_sha256": "d9462a7424185a48125a412889d25077bdbe9013dc31d0d0038767cd305eb31c",
+    "platform_soc_dependency_defines": [
+      "CONFIG_QCOM_SOCINFO_MODULE=1",
+      "CONFIG_QCOM_RPROC_COMMON_MODULE=1"
+    ],
+    "platform_config_sha256": "c93bcff9b6599b50c29a24cd1c3937a423cd7a08a65fee4601856bd1cb391b2e",
+    "missing_legacy_platform_exports": [],
+    "candidate_exports_equal_nonstable_0122": false,
+    "nonstable_0122_difference_count": 54,
+    "type_streams_requested": true,
+    "full_unused_debug_types_requested": true,
+    "error": "WLAN object does not require checked ICNSS",
+    "existing_kabi_rules": {
+      "sha256": "d0138eb5d3e35b5620fe8a777534ab6f0474eae442b8b3233e8f9fe5b6b394c7",
+      "size": 32
+    },
+    "type_inputs": [
+      {
+        "name": "kernel.config",
+        "source": "out/.config",
+        "sha256": "94bf002db208377075e9aad55cbc850bdc9d2dd04cbd410d88d4bb75a176b6f3",
+        "size": 223236
+      },
+      {
+        "name": "stock-config-delta.json",
+        "source": "out/stock-config-delta.json",
+        "sha256": "840adae0ad9fe49b2deb44433dd3a93dc872f59f2392b71f1ae20b60f9becb50",
+        "size": 934
+      },
+      {
+        "name": "icnss.Module.symvers",
+        "source": "wlan/platform/icnss2/Module.symvers",
+        "sha256": "b3fe204ba03cfb611d1148b281af502c20734c490e873b02f0724a687aff0cfc",
+        "size": 8041
+      },
+      {
+        "name": "icnss.defconfig",
+        "source": "wlan/platform/icnss2/canoe_gki_defconfig",
+        "sha256": "c93bcff9b6599b50c29a24cd1c3937a423cd7a08a65fee4601856bd1cb391b2e",
+        "size": 175
+      },
+      {
+        "name": "main.symtypes",
+        "source": "wlan/platform/icnss2/main.symtypes",
+        "sha256": "39bae11733e40aabc79d50b91548aa52a9f86bc6a3c28668404bea1e9fe17e61",
+        "size": 595275
+      },
+      {
+        "name": "power.symtypes",
+        "source": "wlan/platform/icnss2/power.symtypes",
+        "sha256": "152db03eff740e5568ec5f7e65f323573f7cf734cb9e1a7f87fd63e1293c6186",
+        "size": 386965
+      },
+      {
+        "name": "module-common.o.cmd",
+        "source": "wlan/platform/icnss2/..module-common.o.cmd",
+        "sha256": "f2514b5692329e951d7d324e8eb8b1c247bfb1ea8e86c853a125daad423fc1e6",
+        "size": 75100
+      },
+      {
+        "name": "Module.symvers.cmd",
+        "source": "wlan/platform/icnss2/.Module.symvers.cmd",
+        "sha256": "72d5cfdb2fa67ff22129a6b9f3b4c5316d1a233ad7e67728faf8bfc44f7cdeb8",
+        "size": 478
+      },
+      {
+        "name": "debug.o.cmd",
+        "source": "wlan/platform/icnss2/.debug.o.cmd",
+        "sha256": "b1ba23c4ebbe7078daf70d870afc259bdc97c88ee4c43241f4bf2ebdfa8c0364",
+        "size": 93261
+      },
+      {
+        "name": "genl.o.cmd",
+        "source": "wlan/platform/icnss2/.genl.o.cmd",
+        "sha256": "9688b5a5c376b1b76d38779bc9728c470cc8b929b0c428242b5796df74f32481",
+        "size": 116375
+      },
+      {
+        "name": "icnss2.ko.cmd",
+        "source": "wlan/platform/icnss2/.icnss2.ko.cmd",
+        "sha256": "bdf227c91efd3192a4441f1d3a030ca27ef44820c505985da7bee497ab97b4dc",
+        "size": 671
+      },
+      {
+        "name": "icnss2.mod.cmd",
+        "source": "wlan/platform/icnss2/.icnss2.mod.cmd",
+        "sha256": "416ada3d4c9e64a75772726fac35c56b25f40bc3b389cd006252e5f48826a3ec",
+        "size": 351
+      },
+      {
+        "name": "icnss2.mod.o.cmd",
+        "source": "wlan/platform/icnss2/.icnss2.mod.o.cmd",
+        "sha256": "fea355a048d80127b73403320e5ba2d6e0f7c8c5535ef5e0003d3049e87aced9",
+        "size": 74548
+      },
+      {
+        "name": "icnss2.o.cmd",
+        "source": "wlan/platform/icnss2/.icnss2.o.cmd",
+        "sha256": "9f4bb4a6bfd80cbc4ec048ea6c93bf40406156c0e43ebb737295b0e6aa6ba198",
+        "size": 445
+      },
+      {
+        "name": "main.o.cmd",
+        "source": "wlan/platform/icnss2/.main.o.cmd",
+        "sha256": "00c3d73425be590a29bfe3bf8c6ade249b24ebd4114caf0aa23b930408709513",
+        "size": 129041
+      },
+      {
+        "name": "modules.order.cmd",
+        "source": "wlan/platform/icnss2/.modules.order.cmd",
+        "sha256": "7d5fa68ba502bb2f943f815df4753b61f64f7bcabcbfcabfb021453e5527cdda",
+        "size": 294
+      },
+      {
+        "name": "power.o.cmd",
+        "source": "wlan/platform/icnss2/.power.o.cmd",
+        "sha256": "27040ef222988f3e5cf46e197a040ee88a6a1a3aa93df96d600ed785585626d7",
+        "size": 106368
+      },
+      {
+        "name": "qmi.o.cmd",
+        "source": "wlan/platform/icnss2/.qmi.o.cmd",
+        "sha256": "5df1c09591ad237d65de439ed785f8af0c71d9111e733524db652937437fd64e",
+        "size": 120083
+      }
+    ]
+  },
+  "all_stable_type_input_hashes_verified": true,
+  "type_input_count": 18,
+  "actual_target_transport": {
+    "status": "SOURCE_PROFILE_AND_RECORDED_STOCK_IMPORTS_AGREE_ONLY",
+    "transport": "PCIE_CNSS",
+    "platform_module": "cnss2",
+    "profile_sha256": "03fff26c9522fb42b4cfd43ccbd930fc29ca4f7b036429814dc7452ecac3fcd1",
+    "stock_wlan_sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+    "stock_platform_imports": [
+      "cnss_athdiag_read",
+      "cnss_athdiag_write",
+      "cnss_audio_is_direct_link_supported",
+      "cnss_audio_smmu_map",
+      "cnss_audio_smmu_unmap",
+      "cnss_auto_resume",
+      "cnss_auto_suspend",
+      "cnss_device_crashed",
+      "cnss_force_collect_rddm",
+      "cnss_force_fw_assert",
+      "cnss_get_audio_shared_iommu_group_cap",
+      "cnss_get_curr_therm_cdev_state",
+      "cnss_get_direct_link_sid",
+      "cnss_get_fw_cap",
+      "cnss_get_fw_files_for_target",
+      "cnss_get_fw_lpass_shared_mem",
+      "cnss_get_msi_address",
+      "cnss_get_msi_irq",
+      "cnss_get_pci_slot",
+      "cnss_get_platform_cap",
+      "cnss_get_soc_info",
+      "cnss_get_user_msi_assignment",
+      "cnss_get_virt_ramdump_mem",
+      "cnss_get_wifi_kobj",
+      "cnss_idle_restart",
+      "cnss_idle_shutdown",
+      "cnss_ipa_wlan_shared_smmu_supported",
+      "cnss_pci_allow_l1",
+      "cnss_pci_force_wake_release",
+      "cnss_pci_force_wake_request",
+      "cnss_pci_force_wake_request_sync",
+      "cnss_pci_get_iova_info",
+      "cnss_pci_is_device_awake",
+      "cnss_pci_is_device_down",
+      "cnss_pci_is_drv_connected",
+      "cnss_pci_link_down",
+      "cnss_pci_lock_reg_window",
+      "cnss_pci_prevent_l1",
+      "cnss_pci_unlock_reg_window",
+      "cnss_qmi_send",
+      "cnss_qmi_send_get",
+      "cnss_qmi_send_put",
+      "cnss_register_driver_async_data_cb",
+      "cnss_remove_pm_qos",
+      "cnss_request_bus_bandwidth",
+      "cnss_request_pm_qos",
+      "cnss_reset_time_sync_period",
+      "cnss_schedule_recovery",
+      "cnss_self_recovery",
+      "cnss_set_fw_log_mode",
+      "cnss_set_host_param",
+      "cnss_set_pcie_gen_speed",
+      "cnss_set_wfc_mode",
+      "cnss_smmu_get_domain",
+      "cnss_smmu_map",
+      "cnss_smmu_unmap",
+      "cnss_thermal_cdev_register",
+      "cnss_thermal_cdev_unregister",
+      "cnss_update_time_sync_period",
+      "cnss_utils_get_wlan_derived_mac_address",
+      "cnss_utils_get_wlan_mac_address",
+      "cnss_utils_get_wlan_unsafe_channel",
+      "cnss_utils_increment_driver_load_cnt",
+      "cnss_utils_set_wlan_unsafe_channel",
+      "cnss_utils_smem_mailbox_write",
+      "cnss_utils_wlan_get_dfs_nol",
+      "cnss_utils_wlan_set_dfs_nol",
+      "cnss_wlan_disable",
+      "cnss_wlan_enable",
+      "cnss_wlan_hw_enable",
+      "cnss_wlan_pm_control",
+      "cnss_wlan_register_driver",
+      "cnss_wlan_unregister_driver"
+    ],
+    "limitations": "Pinned source flag plus recorded original stock ELF imports/dependencies only; not a current phone inventory, active hardware session or radio validation."
+  },
+  "target_WLAN_pair_completed": false,
+  "ICNSS_reference_only": true,
+  "target_CNSS2_entry_integration_complete": false,
+  "phone_executed": false,
+  "radio_backend_activation_enabled": false,
+  "python_tests_passed": 57,
+  "limitations": "ICNSS reference public export CRC/build-mode issue resolved. The recorded popsicle/peach-v2 target imports CNSS2 over PCIe, not ICNSS. Prior IPCI-specific C/source validations do not establish this target entry path. Machine-code and pre-entry-word matches do not certify all private layouts/KCFI or actual loading. Target conversion must use PCIe/CNSS2.",
+  "stable_run_metadata": {
+    "artifacts": [
+      {
+        "id": 13491511378,
+        "name": "popsicle-transport-stop-42193275385-1",
+        "size_in_bytes": 3539,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491511378",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491511378/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:18:46Z",
+        "expires_at": "2026-11-13T09:18:45Z",
+        "updated_at": "2026-11-06T09:18:46Z",
+        "digest": "sha256:263d60bdfb44edc9e2b83ae4fad19f15ba388a01be9db9b95fed5f3f3c318b28",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      },
+      {
+        "id": 13491481583,
+        "name": "popsicle-checked-pair-42193275385-1",
+        "size_in_bytes": 1934829,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491481583",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491481583/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:23:11Z",
+        "expires_at": "2026-11-13T09:23:10Z",
+        "updated_at": "2026-11-06T09:23:11Z",
+        "digest": "sha256:d3868af5253d8d9e7043293718d2ca628d60c4a1f66d1adcbcc2d5cd554cadcc",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      },
+      {
+        "id": 13491330624,
+        "name": "popsicle-stop-admission-42193275385-1",
+        "size_in_bytes": 10989,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491330624",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491330624/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:15:10Z",
+        "expires_at": "2026-11-13T09:15:09Z",
+        "updated_at": "2026-11-06T09:15:10Z",
+        "digest": "sha256:4e9062c14b53e5c21cdb7a7d3df21331edf815073d1294746db7eab47434289e",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      },
+      {
+        "id": 13491107127,
+        "name": "popsicle-htt-callbacks-42193275385-1",
+        "size_in_bytes": 3728,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491107127",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491107127/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:17:48Z",
+        "expires_at": "2026-11-13T09:17:48Z",
+        "updated_at": "2026-11-06T09:17:48Z",
+        "digest": "sha256:c62c386ede8dcd9cab42eac04389090ed011ea1c79449e049aab879fb43984ae",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      },
+      {
+        "id": 13491097309,
+        "name": "popsicle-checked-pair-report-42193275385-1",
+        "size_in_bytes": 5202,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491097309",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13491097309/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:23:12Z",
+        "expires_at": "2026-11-13T09:23:11Z",
+        "updated_at": "2026-11-06T09:23:12Z",
+        "digest": "sha256:bb7745d620264a6cdb9dc36a637dd51948c345ff028b5b66131b04eb66a0cf2b",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      },
+      {
+        "id": 13490667397,
+        "name": "popsicle-ce-buffers-42193275385-1",
+        "size_in_bytes": 2691,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13490667397",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13490667397/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:18:36Z",
+        "expires_at": "2026-11-13T09:18:36Z",
+        "updated_at": "2026-11-06T09:18:36Z",
+        "digest": "sha256:fbfbd667776f1d9edf4e1688c02be0583e32416d3a36771d48d8726670439b35",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      },
+      {
+        "id": 13490622811,
+        "name": "popsicle-ce-stop-42193275385-1",
+        "size_in_bytes": 3448,
+        "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13490622811",
+        "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13490622811/zip",
+        "expired": false,
+        "created_at": "2026-11-06T09:21:24Z",
+        "expires_at": "2026-11-13T09:21:24Z",
+        "updated_at": "2026-11-06T09:21:24Z",
+        "digest": "sha256:3d08d9e795ff99b102a726f2b81ad6fde28f39ac32e6f6c028ea8104a7a04dd3",
+        "workflow_run": {
+          "id": 42193275385,
+          "repository_id": 1433402945,
+          "head_repository_id": 1433402945,
+          "head_branch": "main",
+          "head_sha": "74d52eaed6915ad2bbf3bf4acc345a504447bef4"
+        }
+      }
+    ],
+    "jobs": [
+      {
+        "id": 127810212361,
+        "name": "htt-callbacks",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Fetch pinned WLAN and apply existing patches",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Native HTC registration and HIF callback composite with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 127810212601,
+        "name": "parent-peer-composite",
+        "status": "in_progress",
+        "conclusion": null,
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Fetch pinned WLAN and apply existing patches",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Production HTT peer unmap parser and nbuf ownership with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Native DP peer unmap lookup and map removal with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Native parent and peer composite with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Native heap PDEV dispatcher and final free with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Native PSOC reference lease through PDEV free with sanitizers",
+            "status": "in_progress",
+            "conclusion": null,
+            "number": 8
+          },
+          {
+            "name": "Native heap PSOC dispatcher and final free with sanitizers",
+            "status": "pending",
+            "conclusion": null,
+            "number": 9
+          },
+          {
+            "name": "Native DP VDEV final free and production completion with sanitizers",
+            "status": "pending",
+            "conclusion": null,
+            "number": 10
+          },
+          {
+            "name": "Native DP peer free returning VDEV CHILD reference with sanitizers",
+            "status": "pending",
+            "conclusion": null,
+            "number": 11
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "pending",
+            "conclusion": null,
+            "number": 12
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null,
+            "number": 24
+          }
+        ]
+      },
+      {
+        "id": 127810212624,
+        "name": "ce-buffers",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Fetch pinned WLAN and apply existing patches",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Native residual CE RX and TX cleanup with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 127810212659,
+        "name": "ce-stop",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Fetch pinned WLAN and apply existing patches",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Native CE stop and IPCI producer drain with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 127810212702,
+        "name": "stop-admission",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Fetch pinned WLAN and apply existing patches",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Production host and runtime stop admission with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 127810212760,
+        "name": "checked-platform",
+        "status": "completed",
+        "conclusion": "failure",
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Install host build dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Restore pinned toolchains",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Restore pinned bindgen",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Fetch locked sources and official toolchains",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Save complete toolchains before compilation",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 7
+          },
+          {
+            "name": "Save complete bindgen before compilation",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Strict checked ICNSS and WLAN pair build",
+            "status": "completed",
+            "conclusion": "failure",
+            "number": 9
+          },
+          {
+            "name": "Upload checked pair diagnostics",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Upload compact checked pair report",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 22
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 23
+          }
+        ]
+      },
+      {
+        "id": 127810212773,
+        "name": "transport-stop",
+        "status": "completed",
+        "conclusion": "success",
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Fetch pinned WLAN and apply existing patches",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Native HIF receive and HTC stop ordering with sanitizers",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Run actions/upload-artifact@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 10
+          },
+          {
+            "name": "Complete job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 11
+          }
+        ]
+      },
+      {
+        "id": 127810212905,
+        "name": "diagnostic",
+        "status": "in_progress",
+        "conclusion": null,
+        "run_id": 42193275385,
+        "logs_url": null,
+        "steps": [
+          {
+            "name": "Set up job",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 1
+          },
+          {
+            "name": "Run actions/checkout@v4",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 2
+          },
+          {
+            "name": "Host regression checks",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          },
+          {
+            "name": "Install host build dependencies",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 4
+          },
+          {
+            "name": "Restore pinned toolchains",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 5
+          },
+          {
+            "name": "Restore pinned bindgen",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 6
+          },
+          {
+            "name": "Fetch locked sources and official toolchains",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 7
+          },
+          {
+            "name": "Save complete toolchains before compilation",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 8
+          },
+          {
+            "name": "Save complete bindgen before compilation",
+            "status": "completed",
+            "conclusion": "skipped",
+            "number": 9
+          },
+          {
+            "name": "Compile diagnostic objects",
+            "status": "in_progress",
+            "conclusion": null,
+            "number": 10
+          },
+          {
+            "name": "Check CNSS provider interfaces",
+            "status": "pending",
+            "conclusion": null,
+            "number": 11
+          },
+          {
+            "name": "Strict module linking and complete WLAN dependency gate",
+            "status": "pending",
+            "conclusion": null,
+            "number": 12
+          },
+          {
+            "name": "Compare selected WLAN structure layouts with stock BTF metadata",
+            "status": "pending",
+            "conclusion": null,
+            "number": 13
+          },
+          {
+            "name": "Required recorded module checks (not runtime certification)",
+            "status": "pending",
+            "conclusion": null,
+            "number": 14
+          },
+          {
+            "name": "Upload diagnostics even when interface audit fails",
+            "status": "pending",
+            "conclusion": null,
+            "number": 15
+          },
+          {
+            "name": "Upload compact validation reports",
+            "status": "pending",
+            "conclusion": null,
+            "number": 16
+          },
+          {
+            "name": "Post Run actions/checkout@v4",
+            "status": "pending",
+            "conclusion": null,
+            "number": 32
+          }
+        ]
+      }
+    ]
+  },
+  "artifact_digests_verified": true,
+  "stock_common_lookup_control": {
+    "candidate_prefix": "e2b8ca7c8d05",
+    "candidate_resolved": "e2b8ca7c8d0551a6124b1a7322f5ae532845f1b5",
+    "stock_prefix": "43b5ab7e247d",
+    "stock_lookup_http": 404,
+    "repository": "https://android.googlesource.com/kernel/common",
+    "global_source_unavailability_claimed": false
+  }
+}

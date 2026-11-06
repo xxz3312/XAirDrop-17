@@ -11,9 +11,10 @@ import shutil
 from module_abi import inspect, symvers
 from popsicle_modpost import write_inputs, merge_generated_exports, module_report
 from popsicle_ci import REPO, download
+from popsicle_transport_audit import audit as transport_audit
 
 
-def build(work):
+def build(work,reference_only=False):
     work=work.resolve();tools=work/'toolchains';host=tools/'host';out=work/'out'
     reports=work/'artifacts/reports';logs=work/'artifacts/logs';abi=work/'abi'
     for p in [reports,logs,abi]:p.mkdir(parents=True,exist_ok=True)
@@ -26,6 +27,7 @@ def build(work):
                POPSICLE_HWID_INCLUDE=str(REPO/'kernel/compat/popsicle'),
                KBUILD_GENDWARFKSYMS_STABLE='1')
     report={'status':'BUILD_STARTED','variant':'CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER=1',
+            'reference_only':reference_only,'paired_WLAN_built':False,
             'modules':{},'checked_WLAN_unresolved':[],'platform_export_crc_changes':{},
             'phone_executed':False,'radio_backend_activation_enabled':False,
             'version_generator':'gendwarfksyms','stable_kabi_mode':True,
@@ -119,6 +121,15 @@ def build(work):
             report['modules'][name]=module_report(path,expected,known)
             if report['modules'][name]['status'] not in ['RECORDED_LOADER_CHECKS_MATCH_ONLY','RECORDS_AND_HEADER_MATCH_ONLY']:
                 raise ValueError('Recorded module checks did not pass: '+name)
+        transport=transport_audit(work/'wlan/qcacld-3.0/configs/canoe_gki_peach-v2_defconfig',
+                                  json.loads((REPO/'kernel/abi/popsicle-stock-transport.json').read_text()))
+        report['actual_target_transport']=transport
+        report['icnss_reference_checks_complete']=True
+        if reference_only:
+            report['status']='ICNSS_REFERENCE_LINK_AND_RECORDED_CHECKS_ONLY'
+            return 0
+        if transport['platform_module']!='icnss2':
+            raise ValueError('Target uses PCIe/CNSS2; an ICNSS pair cannot qualify this WLAN')
         paired=abi/'checked-wlan-providers.symvers'
         paired.write_text(filtered.read_text()+provider_sym.read_text()+(platform/'Module.symvers').read_text())
         env['POPSICLE_CHECKED_ICNSS']='1';env['POPSICLE_EXTRA_SYMBOLS']=str(paired)
@@ -139,6 +150,7 @@ def build(work):
         report['modules']['wlan']=module_report(wlan,expected,known)
         if report['modules']['wlan']['status'] not in ['RECORDED_LOADER_CHECKS_MATCH_ONLY','RECORDS_AND_HEADER_MATCH_ONLY']:
             raise ValueError('Checked WLAN recorded module checks failed')
+        report['paired_WLAN_built']=True
         report['status']='CHECKED_PLATFORM_PAIR_LINK_AND_RECORDED_CHECKS_ONLY'
         return 0
     except Exception as error:
@@ -174,5 +186,5 @@ def build(work):
                 for p in produced:bundle.add(p,arcname=p.name)
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--work',type=Path,required=True)
-    args=parser.parse_args();raise SystemExit(build(args.work))
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--work',type=Path,required=True);parser.add_argument('--reference-only',action='store_true',help='Validate ICNSS as a reference component; never claim a target WLAN pair')
+    args=parser.parse_args();raise SystemExit(build(args.work,args.reference_only))
