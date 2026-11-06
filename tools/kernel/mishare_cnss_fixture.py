@@ -92,7 +92,9 @@ static void hdd_shutdown(struct device *d,int bus){(void)d;(void)bus;}
 static int hdd_idle(struct device *d,int bus){(void)d;(void)bus;return 0;}
 NATIVE_PL_CALLBACKS
 NATIVE_PL_REMOVE
-static struct cnss_wlan_driver pld_pcie_ops={NATIVE_PL_SLOTS};
+static struct cnss_wlan_driver pld_pcie_ops={
+NATIVE_PL_SLOTS
+};
 static int cnss_wlan_register_driver(struct cnss_wlan_driver *ops){
  assert(ops==&pld_pcie_ops && ops->reinit==opairshare_wlan_execution_pcie_reinit && ops->shutdown==opairshare_wlan_execution_pcie_shutdown && ops->idle_restart==opairshare_wlan_execution_pcie_idle_restart && ops->idle_shutdown==opairshare_wlan_execution_pcie_idle_shutdown && "EXPECTED_PCIE_CNSS_SLOTS");
  if(!register_error)pci.driver_ops=ops;return register_error;
@@ -229,6 +231,7 @@ int main(void){
  struct cnss_wlan_driver foreign=pld_pcie_ops;
  assert(cnss_wlan_unregister_driver_checked_v1(&foreign,opairshare_wlan_execution_remove_status)==-ENOENT && !test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,&plat.driver_state));
  assert(!pld_pcie_unregister_driver_checked());
+ assert(!atomic_load(&foreign_module.refs));
  puts("MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -307,7 +310,7 @@ def run(wlan,output):
         def mutate(key,old,new,marker):
             part=fragments[key];assert old in part
             changed=code.replace(part,part.replace(old,new,1),1);assert changed!=code;mutations.append((changed,marker))
-        mutate('NATIVE_SHUTDOWN_INTERNAL','if (ret == -EAGAIN || (guard && ret))','if (ret == -EAGAIN)','EXPECTED_CNSS_NO_POWER_TAIL')
+        mutate('NATIVE_SHUTDOWN_INTERNAL','if (ret == -EAGAIN || (guard && ret))','if (ret == -EAGAIN)','EXPECTED_CNSS_PLATFORM_RETAINED')
         mutate('NATIVE_REMOVE_INTERNAL','if (ret)\n\t\t\t\treturn ret;','if (false && ret)\n\t\t\t\treturn ret;','EXPECTED_CNSS_NO_WLAN_TEARDOWN')
         mutate('NATIVE_PL_CHECKED','opairshare_wlan_execution_unregister_end(THIS_MODULE, ret)','opairshare_wlan_execution_unregister_end(THIS_MODULE, 0)','EXPECTED_CNSS_LATE_RETAINED')
         mutate('NATIVE_COMMON_CHECKED','ret = pld_pcie_unregister_driver_checked();\n\tif (ret)','ret = pld_pcie_unregister_driver_checked();\n\tif (false && ret)','EXPECTED_CNSS_LATE_RETAINED')
