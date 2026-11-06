@@ -29,5 +29,13 @@
   "local_package_raw_modules_and_all_scripts_match_inputs": true,
   "phone_executed": false,
   "runtime_certified": false,
-  "limitations": "Host models and static package inspection only. Actual KernelSU installation, Android shell behavior, driver load and RF are not certified."
+  "limitations": "Host models and static package inspection only. Actual KernelSU installation, Android shell behavior, driver load and RF are not certified.",
+  "workflow_run": 42280862448,
+  "controller_source_commit": "fcc6e4157f23610b579fca583cd73a71cf1f2a55",
+  "CI_policy_job": 128109135328,
+  "CI_package_job": 128109191241,
+  "CI_policy_and_package_passed": true,
+  "CI_artifact_id": 13535272525,
+  "CI_artifact_sha256": "b118ecf31849ea66e28ededcf5a12bb10c08586d0094cde6d0f369fa054dea5f",
+  "CI_inner_ZIP_sha256_matches_independently_inspected_local_ZIP": true
 }
