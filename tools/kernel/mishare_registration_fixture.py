@@ -160,10 +160,10 @@ static void setup(void){
 static void scenario(int kind){
  setup();
  if(kind==0){missing_platform=true;assert(hdd_module_init()==-EINVAL);assert(load_calls==50 && sleeps==49 && shared_cleanup==11 && !atomic_load(&wlan_module.refs) && "EXPECTED_CLEAN_RETRY");}
- else if(kind==1){event_error=-EAGAIN;assert(!hdd_module_init());assert(load_calls==1 && !sleeps && !shared_cleanup && mishare_load_error==-EAGAIN && "EXPECTED_QUARANTINE_NO_RETRY");}
+ else if(kind==1){event_error=-EAGAIN;assert(!hdd_module_init() && "EXPECTED_QUARANTINE_NO_RETRY");assert(load_calls==1 && !sleeps && !shared_cleanup && mishare_load_error==-EAGAIN && "EXPECTED_QUARANTINE_NO_RETRY");}
  else if(kind>=2 && kind<=7){fail_bus=kind-1;assert(hdd_module_init()==-EINVAL);assert(rollback_calls==1 && other_cleanup==fail_bus-1 && !context.ops && !context.pld_driver_state && shared_cleanup==11 && !atomic_load(&wlan_module.refs) && "EXPECTED_BUS_ROLLBACK");}
- else if(kind>=8 && kind<=13){fail_bus=kind-7;cleanup_error=-EBUSY;assert(!hdd_module_init());assert(rollback_calls==1 && !other_cleanup && context.ops==&hdd_ops && context.pld_driver_state && !shared_cleanup && mishare_load_error==-EBUSY && "EXPECTED_FULL_GRAPH_RETAINED");}
- else if(kind==14){ctrl_error=-EIO;cleanup_error=-EINPROGRESS;assert(!hdd_module_init());assert(!shared_cleanup && mishare_load_error==-EINPROGRESS && "EXPECTED_LATE_LOAD_RETAINED");}
+ else if(kind>=8 && kind<=13){fail_bus=kind-7;cleanup_error=-EBUSY;assert(!hdd_module_init() && "EXPECTED_FULL_GRAPH_RETAINED");assert(rollback_calls==1 && !other_cleanup && context.ops==&hdd_ops && context.pld_driver_state && !shared_cleanup && mishare_load_error==-EBUSY && "EXPECTED_FULL_GRAPH_RETAINED");}
+ else if(kind==14){ctrl_error=-EIO;cleanup_error=-EINPROGRESS;assert(!hdd_module_init() && "EXPECTED_LATE_LOAD_RETAINED");assert(!shared_cleanup && mishare_load_error==-EINPROGRESS && "EXPECTED_LATE_LOAD_RETAINED");}
  else if(kind==15){assert(!hdd_module_init());assert(!mishare_load_error && pld_registration_retained() && atomic_load(&wlan_module.refs)==1 && "EXPECTED_SUCCESS_PINNED");}
  else if(kind==16){bool receipt=false;plat.cbc_enabled=true;assert(!cnss_wlan_register_driver_checked_v1(&pld_pcie_ops,&receipt));assert(receipt && delayed_calls==1 && pci.driver_ops==&pld_pcie_ops && !event_calls && "EXPECTED_DEFERRED_RECEIPT");}
  else if(kind==17){bool receipt=false;set_bit(CNSS_WLAN_HW_DISABLED,&plat.driver_state);assert(!cnss_wlan_register_driver_checked_v1(&pld_pcie_ops,&receipt));assert(receipt && plat.driver_ops==&pld_pcie_ops && !event_calls && "EXPECTED_HW_DEFERRED_RECEIPT");}
