@@ -47,8 +47,35 @@ sc_wifi_state() {
     case "$sc_wifi_out" in 'Wifi is enabled'*) printf '1\n';; 'Wifi is disabled'*) printf '0\n';; *) return 1;; esac
 }
 sc_hals() {
-    sc_props=$(getprop) || return 1
-    printf '%s\n' "$sc_props" | sed -n 's/^\[init\.svc\.\(vendor\.wifi_hal[^]]*\)\]: \[running\]$/\1/p' | sort
+    # Stream like upstream hal_services(). Android printf may be external:
+    # never pass the complete property dump through an exec argument.
+    # Keep a producer receipt so getprop failure cannot look like no HALs.
+    sc_inventory=$(
+        {
+            if getprop; then sc_prop_rc=0; else sc_prop_rc=$?; fi
+            printf '\nSC_GETPROP_RC:%s\n' "$sc_prop_rc"
+        } | sed -n -e 's/^\[init\.svc\.\(vendor\.wifi_hal[^]]*\)\]: \[running\]$/\1/p' -e '/^SC_GETPROP_RC:/p'
+    ) || return 1
+    sc_receipt=; sc_services=
+    while IFS= read -r sc_line; do
+        case "$sc_line" in
+            SC_GETPROP_RC:*)
+                [ -z "$sc_receipt" ] || return 1
+                sc_receipt=$sc_line;;
+            '') ;;
+            *)
+                sc_valid_hal "$sc_line" || return 1
+                if [ -z "$sc_services" ]; then sc_services=$sc_line
+                else sc_services="$sc_services
+$sc_line"; fi;;
+        esac
+    done <<EOF
+$sc_inventory
+EOF
+    [ "$sc_receipt" = SC_GETPROP_RC:0 ] || return 1
+    sort <<EOF
+$sc_services
+EOF
 }
 sc_valid_hal() {
     case "$1" in vendor.wifi_hal*) ;; *) return 1;; esac

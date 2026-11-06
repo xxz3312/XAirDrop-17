@@ -19,7 +19,8 @@ class StockCNSSBundleTests(unittest.TestCase):
     def integrity_fixture(self, root):
         for name, content in {'customize.sh': 'installer', 'module.prop': 'old version',
                               'CHECK_FIRST.txt': 'old instructions', 'driver.ko': 'retained ELF',
-                              'controller.sh': 'retained script'}.items():
+                              'controller.sh': 'retained script',
+                              'popsicle-stock-cnss-io.sh': 'old IO adapter'}.items():
             (root / name).write_text(content)
 
     def checksum(self, root, name):
@@ -63,6 +64,7 @@ class StockCNSSBundleTests(unittest.TestCase):
         baseline = {'bundle_sha256': '2a07638505b70bfaf2f8eba3bdce33185dc5ea61f2d34a4e0024fd34fa1e6ade', 'files': old}
         (root / 'module.prop').write_text('new version')
         (root / 'CHECK_FIRST.txt').write_text('new instructions')
+        (root / 'popsicle-stock-cnss-io.sh').write_text('streamed IO adapter')
         if mutate_retained:
             (root / 'driver.ko').write_text('modified driver')
         bundle.write_integrity(root)
@@ -73,15 +75,16 @@ class StockCNSSBundleTests(unittest.TestCase):
                     archive.write(path, path.name)
         return package, baseline
 
-    def test_checker_update_contains_exactly_three_non_executable_files(self):
+    def test_IO_update_contains_only_the_four_allowlisted_files(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             package, baseline = self.update_fixture(root)
             output = root / 'update.zip'
             report = bundle.checker_update(package, output, baseline)
-            self.assertFalse(report['retained_modules_and_scripts_changed'])
+            self.assertFalse(report['retained_modules_and_unlisted_scripts_changed'])
+            self.assertTrue(report['runtime_IO_adapter_updated'])
             with zipfile.ZipFile(output) as archive:
-                self.assertEqual(sorted(archive.namelist()), ['CHECK_FIRST.txt', 'SHA256SUMS', 'module.prop'])
+                self.assertEqual(sorted(archive.namelist()), ['CHECK_FIRST.txt', 'SHA256SUMS', 'module.prop', 'popsicle-stock-cnss-io.sh'])
 
     def test_checker_update_refuses_changed_driver_even_with_new_valid_checksum(self):
         with tempfile.TemporaryDirectory() as folder:

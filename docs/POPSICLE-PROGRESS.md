@@ -1,3 +1,7 @@
+## 最新阶段 0138（修复整份属性表触发外部 printf 参数过长）
+
+0137 手机 archive/check 已通过，但 backup 在 HAL 枚举阶段触发 printf Argument list too long；在快照目录创建、关闭 Wi-Fi 和驱动动作之前停止。按上游流式筛选 getprop，并保留生产者退出码回执，避免外部大参数。45 项回归及实际四文件覆盖模拟通过；只改 IO 的 sc_hals，主控制器/状态机/raw ELF 不变。约 5.3 KB 小修复包，不需重装或重启；尚待 CI 与手机 backup。见 [0138 修复](POPSICLE-HAL-STREAM-FIX-0138.md)。
+
 ## 最新阶段 0137（修复 KSU 安装器删除 customize.sh 导致的运行期误阻断）
 
 手机已加载原厂 CNSS2/WLAN，0136 保留文件 SHA 匹配，唯一包校验错误是安装期 customize.sh 被 KSU 正常删除。新增安装/运行期独立清单，保留文件缺失/篡改仍阻断。41 项测试及实际完整安装清理、旧包三文件修复模拟通过；约 1.7 KB 修复包不含驱动/脚本，只更新校验表、说明与版本。两份 raw ELF 和运行脚本不变，无手机驱动操作。CI 42285579522 的 policy/package 已通过；下载的小包外层摘要/内层字节与本地模拟包匹配。尚待手机修复后 check。见 [0137 修复](POPSICLE-KSU-CHECKER-FIX-0137.md)。

@@ -53,24 +53,24 @@ jobs:
         run: |
           python3 tools/kernel/stock_cnss_bundle.py \
             --artifact "$RUNNER_TEMP/stock-cnss/accepted.zip" \
-            --output "$RUNNER_TEMP/stock-cnss/XAirDrop-17-stock-cnss-0137.zip" \
-            --checker-update "$RUNNER_TEMP/stock-cnss/XAirDrop-17-stock-cnss-checker-fix-0137.zip"
+            --output "$RUNNER_TEMP/stock-cnss/XAirDrop-17-stock-cnss-0138.zip" \
+            --checker-update "$RUNNER_TEMP/stock-cnss/XAirDrop-17-stock-cnss-hal-fix-0138.zip"
       - name: Upload experimental package and digest
         uses: actions/upload-artifact@v4
         with:
-          name: xairdrop-stock-cnss-0137-${{ github.run_id }}
+          name: xairdrop-stock-cnss-0138-${{ github.run_id }}
           path: |
-            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-0137.zip
-            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-0137.json
+            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-0138.zip
+            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-0138.json
           if-no-files-found: error
           compression-level: 0
           retention-days: 7
       - name: Upload checker-only update
         uses: actions/upload-artifact@v4
         with:
-          name: xairdrop-stock-cnss-checker-fix-0137-${{ github.run_id }}
+          name: xairdrop-stock-cnss-hal-fix-0138-${{ github.run_id }}
           path: |
-            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-checker-fix-0137.zip
-            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-checker-fix-0137.json
+            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-hal-fix-0138.zip
+            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-hal-fix-0138.json
           if-no-files-found: error
           retention-days: 7

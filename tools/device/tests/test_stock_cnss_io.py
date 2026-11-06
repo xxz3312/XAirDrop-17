@@ -81,6 +81,33 @@ sc_capture fake
             result = self.shell('getprop(){ return 1; };sc_wait_hals(){ return 0; };' + check)
             self.assertNotEqual(result.returncode, 0)
 
+    def test_large_property_dump_works_with_external_printf_and_sorted_hal_names(self):
+        result = self.shell(r'''
+printf(){ /usr/bin/printf "$@"; }
+getprop(){ python3 -c '[print("[unrelated.%d]: [%s]"%(i,"x"*200)) for i in range(12000)]; print("[init.svc.vendor.wifi_hal_z]: [running]"); print("[init.svc.vendor.wifi_hal_legacy]: [running]"); print("[init.svc.vendor.wifi_hal_stopped]: [stopped]"); print("[init.svc_debug_pid.vendor.wifi_hal_legacy]: [123]")'; }
+sc_hals
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip().splitlines(), ['vendor.wifi_hal_legacy', 'vendor.wifi_hal_z'])
+
+    def test_stream_receipt_failure_or_duplicate_is_not_a_valid_inventory(self):
+        for body in ["echo '[init.svc.vendor.wifi_hal_legacy]: [running]';return 7",
+                     "echo 'SC_GETPROP_RC:0'",
+                     "echo 'SC_GETPROP_RC:bad'"]:
+            result = self.shell('getprop(){ ' + body + '; };sc_hals')
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse(result.stdout)
+
+    def test_stream_filter_or_sort_failure_is_propagated(self):
+        for tool in ['sed', 'sort']:
+            result = self.shell("getprop(){ echo '[init.svc.vendor.wifi_hal_legacy]: [running]'; };" + tool + '(){ return 1; };sc_hals')
+            self.assertNotEqual(result.returncode, 0)
+
+    def test_valid_empty_hal_inventory_is_distinct_from_read_failure(self):
+        result = self.shell("getprop(){ echo '[unrelated]: [value]'; };sc_hals")
+        self.assertEqual(result.returncode, 0)
+        self.assertFalse(result.stdout.strip())
+
     def test_runtime_module_commands_have_fixed_targets_and_no_parameters(self):
         prefix = '''
 SC_WLAN=qca_cld3_peach_v2;SC_PROVIDER=opairshare_wonder_provider;SC_BUNDLE=/private/bundle

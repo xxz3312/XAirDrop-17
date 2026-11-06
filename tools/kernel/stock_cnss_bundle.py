@@ -40,7 +40,9 @@ def checker_update(package, output, baseline=None):
         raise ValueError('Unknown original 0136 bundle')
     if output.exists():
         raise ValueError('Update output exists')
-    allowed = {'module.prop', 'CHECK_FIRST.txt'}
+    # 0138 updates the IO adapter only; driver bytes, policy engine,
+    # controller, deployment identity and remaining runtime files stay pinned.
+    allowed = {'module.prop', 'CHECK_FIRST.txt', 'popsicle-stock-cnss-io.sh'}
     with zipfile.ZipFile(package) as source:
         names = source.namelist()
         if len(names) != len(set(names)) or any(Path(n).is_absolute() or '..' in Path(n).parts for n in names):
@@ -52,7 +54,7 @@ def checker_update(package, output, baseline=None):
                 or set(current) != set(names) - {'customize.sh', 'INSTALL_SHA256SUMS', 'SHA256SUMS'}):
             raise ValueError('Unexpected runtime manifest scope')
         if any(current[n] != baseline['files'][n] for n in expected - allowed):
-            raise ValueError('A retained module/script changed; no checker-only update allowed')
+            raise ValueError('An unlisted module/script changed; no IO-only update allowed')
         for name, digest in current.items():
             value = hashlib.sha256()
             with source.open(name) as stream:
@@ -68,7 +70,8 @@ def checker_update(package, output, baseline=None):
                 info.external_attr = (stat.S_IFREG | 0o600) << 16
                 target.writestr(info, source.read(name))
     return {'sha256': sha(output), 'bytes': output.stat().st_size,
-            'files': sorted(allowed | {'SHA256SUMS'}), 'retained_modules_and_scripts_changed': False}
+            'files': sorted(allowed | {'SHA256SUMS'}), 'retained_modules_and_unlisted_scripts_changed': False,
+            'runtime_IO_adapter_updated': True}
 
 
 def sha(path):
@@ -185,7 +188,7 @@ def build(modules, output, accepted=None):
         (bundle / 'acceptance.json').write_text(json.dumps(accepted, indent=2) + '\n')
         (bundle / 'stock-cnss-imports.json').write_text(json.dumps(gate, indent=2) + '\n')
         (bundle / 'CHECK_FIRST.txt').write_text(
-            'Experimental 0137 WLAN/provider diagnostic trial; stock CNSS2 retained.\n'
+            'Experimental 0138 WLAN/provider diagnostic trial; stock CNSS2 retained.\n'
             'Not an Apple discovery/file transfer release; no RF activation parameters.\n'
             'Install/boot never starts the trial. Do not press Action before reviewing check.\n'
             'Termux root: /system/bin/sh /data/adb/modules/xairdrop17_stock_cnss/popsicle-stock-cnssctl.sh check\n'

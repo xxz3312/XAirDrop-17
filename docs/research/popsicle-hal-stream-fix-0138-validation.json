@@ -1,0 +1,39 @@
+{
+  "stage": "0138",
+  "phone_backup_log_sha256": "66370b1753174ce8d304a07f209f3b393401b35fcf45e458fcdfe2d3da11fad9",
+  "phone_backup_completed": false,
+  "observed_failure": "external printf: Argument list too long while forwarding complete getprop dump",
+  "failure_before_snapshot_directory_and_kernel_actions": true,
+  "local_tests_passed": 45,
+  "large_property_dump_with_external_printf_test_passed": true,
+  "streamed_getprop_exit_receipt_and_filter_sort_failures_tested": true,
+  "only_sc_hals_changed_in_IO_adapter": true,
+  "actual_installed_0137_four_file_overlay_checksums_passed": true,
+  "package": {
+    "bundle_sha256": "65cea4e8d4b014a08914e7e10377ddc7accb26c7417a59278d42741ed65aad2c",
+    "bytes": 167960243,
+    "kernel_modules": [
+      "opairshare_wonder_provider.ko",
+      "qca_cld3_peach_v2.ko"
+    ],
+    "stock_cnss2_retained": true,
+    "autostart": false,
+    "runtime_certified": false,
+    "checker_update": {
+      "sha256": "4fefcdae475055fedad2f4e8a3474282d4b361b83dd6991360874f7b3af5c2dd",
+      "bytes": 5335,
+      "files": [
+        "CHECK_FIRST.txt",
+        "SHA256SUMS",
+        "module.prop",
+        "popsicle-stock-cnss-io.sh"
+      ],
+      "retained_modules_and_unlisted_scripts_changed": false,
+      "runtime_IO_adapter_updated": true
+    }
+  },
+  "candidate_raw_ELF_changed": false,
+  "main_controller_and_policy_engine_changed": false,
+  "phone_corrected_backup_executed": false,
+  "runtime_certified": false
+}
