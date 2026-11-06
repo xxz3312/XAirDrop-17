@@ -1,3 +1,11 @@
+## 最新阶段 0122（实验版 WLAN 消费者与平台配对构建，待 CI）
+
+补丁 0053 通过独立编译开关让完整原生 WLAN checked 注销函数调用平台新接口，并直接使用外部 provider 回执查询；不使用目标 GKI 未导出的 symbol_get，也不在失败后回退旧接口。默认构建保留原调用路径，无线后端仍关闭。
+
+新增独立 checked-platform CI 作业，从固定 canoe_gki ICNSS 配置构建真实平台模块和 provider，移除本次替换模块的原厂 symvers 条目，再用真实生成的导出表链接实验 WLAN。要求原有 ICNSS 导出齐全且 CRC 不变、新接口真实导出、WLAN 确实导入新接口且不导入旧注销接口、依赖及版本记录通过；不放宽 modpost，不改写版本。新增两组消费者成功、两组失败保留及旧接口回退错误注入。53 项 Python 检查、脚本语法、八作业 YAML、源码组装及补丁正反检查通过；实际平台构建与 C 复验待 CI。
+
+配对构建产物仅作诊断，不自动打包进安装模块、不替换手机平台驱动。手机加载、平台配置/私有 ABI/KCFI、卸载替换顺序、固件与无线实测仍需验收。见 [0122 说明](POPSICLE-CHECKED-PAIR-0122.md)。
+
 ## 最新阶段 0121（可选 ICNSS 注销扩展源码，生产 C 联合验证通过）
 
 补丁 0052 为锁定平台源码增加独立 `icnss_unregister_driver_checked_v1`，不扩展原生 ops 结构体。同步、不可中断事件携带本次归属和外部回执查询；remove 返回后先检查结果，失败保留 ops/PROBED/UNLOADING/关机阻塞，设置终止状态位并拒绝后续 checked/legacy 注销重放。无 probe 的 checked 清理暂时拒绝，未提供强制恢复接口。

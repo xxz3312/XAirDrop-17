@@ -42,7 +42,8 @@ struct icnss_driver_ops {void (*remove)(struct device *);};
 struct platform_device {struct device dev;};
 struct icnss_priv {unsigned long state;struct icnss_driver_ops *ops;struct platform_device *pdev;};
 static struct platform_device pdev;
-static struct icnss_driver_ops native_ops={.remove=pld_ipci_remove},foreign_ops;
+static struct icnss_driver_ops pld_ipci_ops={.remove=pld_ipci_remove},foreign_ops;
+#define native_ops pld_ipci_ops
 static struct icnss_priv platform;
 static int posts,post_error,power_offs,blocks,unblocks;
 static bool platform_missing,swap_before_worker;
@@ -71,6 +72,8 @@ NATIVE_CHECKED_ENTRY
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 NATIVE_LEGACY_ENTRY
 #pragma GCC diagnostic pop
+#define CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER 1
+NATIVE_PLD_CHECKED
 static int dummy_reinit(struct device *d) {(void)d;return 0;}
 static void dummy_shutdown(struct device *d) {(void)d;}
 static const struct mishare_wlan_execution_ops execution_descriptor={.owner=THIS_MODULE,.reinit=dummy_reinit,.shutdown=dummy_shutdown,.idle_restart=dummy_reinit,.idle_shutdown=dummy_reinit};
@@ -78,7 +81,7 @@ static int status_calls;
 static int receipt_status(struct device *d) {status_calls++;return opairshare_wlan_execution_remove_status(d);}
 static void skipped_remove(struct device *d) {(void)d;}
 static void pending_remove(struct device *d) {bool rec=false;assert(!opairshare_wlan_execution_remove_begin(THIS_MODULE,d,&rec) && rec);}
-static void prepare(bool going) {
+static void prepare_base(bool going) {
  assert(!execution_ops.owner && !unregister_scope && !atomic_load(&wlan_module.refs));
  atomic_store(&wlan_module.deny,going);expect_final_return=false;
  pdev.dev=device;platform=(struct icnss_priv){.ops=&native_ops,.pdev=&pdev};
@@ -86,6 +89,9 @@ static void prepare(bool going) {
  native_ops.remove=pld_ipci_remove;transition_error=prepare_error=vendor_calls=sync_destroys=sync_unregisters=remove_calls=0;
  posts=post_error=power_offs=blocks=unblocks=status_calls=0;context_missing=platform_missing=swap_before_worker=false;sync_state.active=0;
  assert(!opairshare_wlan_execution_register_v2(&execution_descriptor));
+}
+static void prepare(bool going) {
+ prepare_base(going);
  assert(!opairshare_wlan_execution_unregister_begin(THIS_MODULE,going));
  assert(opairshare_wlan_execution_unregister_begin(&foreign_module,false)==-EBUSY);
 }
@@ -135,7 +141,20 @@ static void admission_case(int kind) {
  assert(!remove_calls && !power_offs && !blocks && !status_calls && "EXPECTED_ADMISSION_NO_SIDE_EFFECTS");
  assert(opairshare_wlan_execution_unregister_end(THIS_MODULE,expected)==expected && execution_ops.owner && atomic_load(&wlan_module.refs)==1);
 }
+static void consumer_case(bool going,bool fail) {
+ prepare_base(going);if(fail)prepare_error=-EUCLEAN;
+ int ret=pld_ipci_unregister_driver_checked();
+ if(fail) {
+  assert(ret==-EUCLEAN && !power_offs && platform.ops==&native_ops && unregister_scope && execution_ops.owner && atomic_load(&wlan_module.refs)==(going?0:1) && "EXPECTED_CONSUMER_GUARD");
+ } else assert(!ret && power_offs==1 && !platform.ops && !unregister_scope && !execution_ops.owner && !atomic_load(&wlan_module.refs) && "EXPECTED_CONSUMER_GUARD");
+}
 int main(void) {
+ for(int going=0;going<2;going++) {
+  consumer_case(going,false);
+  pid_t c=fork();assert(c>=0);if(!c){consumer_case(going,true);_Exit(0);}
+  int s;assert(waitpid(c,&s,0)==c && WIFEXITED(s) && !WEXITSTATUS(s) && "EXPECTED_CONSUMER_CHILD");
+ }
+
  /* Preserve existing numeric state values and fit the native state word. */
  assert(ICNSS_REBOOT_REGISTERED==28 && ICNSS_DRIVER_UNREGISTER_FAILED==29);
  assert(opairshare_wlan_execution_remove_status(NULL)==-EINVAL);
@@ -171,6 +190,7 @@ def assemble(wlan):
     _,existing,_=execution_assemble(wlan)
     fragments={
         'NATIVE_REMOVE':existing['NATIVE_REMOVE'],
+        'NATIVE_PLD_CHECKED':existing['NATIVE_CHECKED'],
         'NATIVE_STATE':extract((wlan/'platform/icnss2/main.h').read_text(),r'^enum icnss_driver_state\s*\{.*?^\};'),
         'NATIVE_HANDLER':extract(platform,r'^struct icnss_unregister_guard_v1\s*\{.*?^\};')+'\n'+extract(platform,r'^static int icnss_driver_event_unregister_driver\([^;{]+?\)\s*\{.*?^\}'),
         'NATIVE_CHECKED_ENTRY':extract(platform,r'^int icnss_unregister_driver_checked_v1\([^;{]+?\)\s*\{.*?^\}'),
@@ -200,6 +220,7 @@ def run(wlan,output):
         (provider.replace('else if (unregister_completed_dev != dev)','else if (false && unregister_completed_dev != dev)',1),code,'EXPECTED_RECEIPT_DEVICE'),
         (provider.replace('ret = unregister_error;\n    else if (unregister_remove_dev','ret = 0;\n    else if (unregister_remove_dev',1),code,'EXPECTED_PLATFORM_REMOVE_ERROR'),
     ]
+    mutations.append((provider,code.replace('ret = icnss_unregister_driver_checked_v1(&pld_ipci_ops,\n\t\t\t\t      opairshare_wlan_execution_remove_status);','ret = icnss_unregister_driver(&pld_ipci_ops);',1),'EXPECTED_CONSUMER_GUARD'))
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         for name in ['module.h','mutex.h','string.h']:(d/'linux'/name).write_text('/* modeled */\n')
@@ -214,7 +235,7 @@ def run(wlan,output):
             (d/'execution.c').write_text(changed);source.write_text(changed_code);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=30)
             assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[:2000])
-    report={'status':'MISHARE_ICNSS_CHECKED_UNREGISTER_FIXTURE_PASS_ONLY','source_commit':subprocess.check_output(['git','-C',str(wlan),'rev-parse','HEAD'],text=True).strip(),'fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256((ROOT/'kernel/provider/mishare_wlan_execution.h').read_bytes()).hexdigest(),'native_platform_sha256':hashlib.sha256(platform.encode()).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'success_cases':2,'isolated_remove_failure_cases':12,'isolated_admission_cases':7,'legacy_compatibility_limit_cases':1,'negative_controls_rejected':len(mutations),'event_handler_thread':'real pthread created/joined by modeled synchronous event_post','sanitizers':['address','undefined','leak detection'],'optional_platform_binary_built':False,'native_WLAN_consumer_uses_optional_entry':False,'phone_executed':False,'limitations':'Production provider, complete native PLD remove, actual ICNSS unregister handler/new checked entry/legacy entry execute against modeled module API, event post, synchronization, vendor removal, shutdown block and power-off. Native event scheduler, completion primitive, real platform binary/ABI/firmware/loader are not executed. A failure retains flags and shutdown block permanently without a recovery API. No-probe checked cleanup refuses. Existing unguarded entry remains legacy on first use; shipped WLAN consumer is unchanged. This optional platform contract is not yet target-linked/deployed and does not protect phone unregister. Other shutdown/recovery paths remain uncoordinated; module-exit cannot veto loader removal.'}
+    report={'status':'MISHARE_ICNSS_CHECKED_UNREGISTER_FIXTURE_PASS_ONLY','source_commit':subprocess.check_output(['git','-C',str(wlan),'rev-parse','HEAD'],text=True).strip(),'fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256((ROOT/'kernel/provider/mishare_wlan_execution.h').read_bytes()).hexdigest(),'native_platform_sha256':hashlib.sha256(platform.encode()).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'consumer_success_cases':2,'consumer_failure_cases':2,'success_cases':2,'isolated_remove_failure_cases':12,'isolated_admission_cases':7,'legacy_compatibility_limit_cases':1,'negative_controls_rejected':len(mutations),'event_handler_thread':'real pthread created/joined by modeled synchronous event_post','sanitizers':['address','undefined','leak detection'],'optional_platform_binary_built':False,'native_WLAN_consumer_uses_optional_entry':True,'phone_executed':False,'limitations':'Production provider, complete native PLD remove, actual ICNSS unregister handler/new checked entry/legacy entry execute against modeled module API, event post, synchronization, vendor removal, shutdown block and power-off. Native event scheduler, completion primitive, real platform binary/ABI/firmware/loader are not executed. A failure retains flags and shutdown block permanently without a recovery API. No-probe checked cleanup refuses. Existing unguarded entry remains legacy on first use; default WLAN consumer is unchanged; opt-in native consumer executes here. This optional platform contract is not yet target-linked/deployed and does not protect phone unregister. Other shutdown/recovery paths remain uncoordinated; module-exit cannot veto loader removal.'}
     output.parent.mkdir(parents=True,exist_ok=True);output.write_text(json.dumps(report,indent=2)+'\n');print(out,end='')
 
 if __name__=='__main__':

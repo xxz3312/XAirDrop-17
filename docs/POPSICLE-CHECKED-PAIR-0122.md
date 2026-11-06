@@ -1,0 +1,11 @@
+# 0122 Opt-in WLAN consumer and strict platform pair build
+
+Patch 0053 wires the complete native PLD checked unregister function to the new platform entry only when `CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER` is explicitly enabled. It passes the external provider's read-only receipt query and propagates the platform result into scope completion. There is no fallback after failure. Default builds remain on the original path; no unsupported GKI symbol_get or private address lookup is used.
+
+`POPSICLE_CHECKED_ICNSS=1` selects the separate diagnostic WLAN compile variant. The independent checked-platform job prepares the pinned kernel, builds provider and full ICNSS using pinned `canoe_gki_defconfig` options, removes precisely the replaced stock ICNSS entries from extra symvers, and links the variant WLAN against real generated ICNSS/provider exports. This is a paired replacement design; stock and rebuilt ICNSS cannot coexist as duplicate providers.
+
+Strict gates require every prior ICNSS export with unchanged CRC, the new checked export, no missing provider dependencies, strong WLAN imports of the new API without the old unregister API, actual ICNSS/provider module dependencies, exact new import CRC and recorded module header/version checks. The original stock export table is never edited. Modpost relaxation, synthetic exports and binary version rewriting are refused. Pair reports and diagnostic binaries are uploaded separately from default builds.
+
+The native composite fixture now executes the actual opt-in PLD checked function through platform events and receipt observation, in both live and GOING models, including successful scope release and failed scope retention. A ninth mutation restores the original platform call inside the opt-in consumer and must fail. Default-path execution and inherited host/runtime fixtures remain required.
+
+Local 53 Python tests, Python/shell syntax, eight-job YAML parsing, native fixture assembly and patch forward/reverse checks pass. Target pair build and production C tests are pending CI. Platform flags are from the locked source target config, not independently recovered phone platform build options; full platform private layout/KCFI, real loader replacement, module-exit failure, firmware and radio interoperability remain unverified. No install package or phone operation is enabled.

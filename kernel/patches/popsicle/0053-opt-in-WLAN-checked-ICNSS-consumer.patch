@@ -1,0 +1,21 @@
+From: XAirDrop-17
+Subject: [PATCH] Opt-in WLAN consumer of checked ICNSS unregister
+
+--- a/qcacld-3.0/core/pld/src/pld_ipci.c
++++ b/qcacld-3.0/core/pld/src/pld_ipci.c
+@@ -645,7 +645,15 @@
+ 	if (ret)
+ 		return ret;
+ 	/* ICNSS must drain synchronous remove callbacks before returning. */
++#ifdef CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER
++	/* Strong import: this variant requires the rebuilt checked platform.
++	 * Never fall back to the original platform API after admission.
++	 */
++	ret = icnss_unregister_driver_checked_v1(&pld_ipci_ops,
++				      opairshare_wlan_execution_remove_status);
++#else
+ 	ret = icnss_unregister_driver(&pld_ipci_ops);
++#endif
+ 	return opairshare_wlan_execution_unregister_end(THIS_MODULE, ret);
+ }
+ /* MISHARE_SSR_STOP_END:unregister_ipci_checked */
