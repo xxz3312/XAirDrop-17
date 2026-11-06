@@ -1,7 +1,7 @@
 """Restore bounded optional ICNSS unregister extension to pinned source."""
 import re
 
-ORIGINALS = {'debug_failed_state': '', 'dump_name': 'const char *icnss_get_wlan_str(enum cnss_host_dump_type type)\n', 'dump_run': 'int icnss_do_host_ramdump(struct icnss_priv *priv,\n', 'dump_collect': 'void icnss_collect_host_dump_info(struct icnss_priv *priv)\n','handler': 'static int icnss_driver_event_unregister_driver(struct icnss_priv '
+ORIGINALS = {'soc_rproc_include': '#include <linux/remoteproc/qcom_rproc.h>\n','debug_failed_state': '', 'dump_name': 'const char *icnss_get_wlan_str(enum cnss_host_dump_type type)\n', 'dump_run': 'int icnss_do_host_ramdump(struct icnss_priv *priv,\n', 'dump_collect': 'void icnss_collect_host_dump_info(struct icnss_priv *priv)\n','handler': 'static int icnss_driver_event_unregister_driver(struct icnss_priv '
             '*priv,\n'
             '\t\t\t\t\t\t\t void *data)\n'
             '{\n'

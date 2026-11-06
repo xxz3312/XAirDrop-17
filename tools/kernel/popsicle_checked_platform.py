@@ -67,7 +67,7 @@ def build(work):
         includes=[work/'soc/include',work/'soc/drivers/soc/qcom',work/'soc/drivers/remoteproc',
                   work/'wlan/platform/inc',work/'wlan/platform/cnss_utils']
         # DDK dependencies use the SoC remoteproc header, which extends the
-        # common GKI declaration set. Preinclude the real pinned header only
+        # common GKI declaration set. Select the real pinned header only
         # after checking the shared guard; never reconstruct declarations.
         rproc=work/'soc/include/linux/remoteproc/qcom_rproc.h'
         common_rproc=work/'common/include/linux/remoteproc/qcom_rproc.h'
@@ -77,7 +77,15 @@ def build(work):
         for header in [rproc,common_rproc]:
             if '#ifndef __QCOM_RPROC_H__' not in header.read_text():
                 raise ValueError('Remoteproc header guard contract changed')
-        flags+=['-include',str(rproc)]
+        overlay=abi/'icnss-include';overlay.mkdir(exist_ok=True)
+        alias=overlay/'mishare_soc_qcom_rproc.h'
+        if alias.is_symlink():
+            if alias.resolve()!=rproc.resolve():raise ValueError('Unexpected SoC header alias')
+        elif alias.exists():raise ValueError('Refusing non-symlink SoC header alias')
+        else:alias.symlink_to(rproc.resolve())
+        # Include at the native source position, after pr_fmt is defined.
+        # Forcing this header before the source would initialize printk early.
+        flags+=['-I'+str(overlay),'-DCONFIG_MISHARE_CHECKED_ICNSS_PLATFORM=1']
         report['soc_remoteproc_header_sha256']=digest
         report['platform_soc_dependency_defines']=['CONFIG_QCOM_SOCINFO_MODULE=1','CONFIG_QCOM_RPROC_COMMON_MODULE=1']
         report['platform_config_sha256']=hashlib.sha256(config.read_bytes()).hexdigest()

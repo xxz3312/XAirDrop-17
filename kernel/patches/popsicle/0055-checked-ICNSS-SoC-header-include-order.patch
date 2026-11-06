@@ -1,0 +1,20 @@
+From: XAirDrop-17
+Subject: [PATCH] Select reviewed SoC remoteproc header at normal include position
+
+--- a/platform/icnss2/main.c
++++ b/platform/icnss2/main.c
+@@ -44,7 +44,14 @@
+ #include <linux/soc/qcom/smem.h>
+ #include <linux/soc/qcom/smem_state.h>
+ #include <linux/remoteproc.h>
++
++/* MISHARE_ICNSS_BEGIN:soc_rproc_include */
++#ifdef CONFIG_MISHARE_CHECKED_ICNSS_PLATFORM
++#include "mishare_soc_qcom_rproc.h"
++#else
+ #include <linux/remoteproc/qcom_rproc.h>
++#endif
++/* MISHARE_ICNSS_END:soc_rproc_include */
+ #include <linux/soc/qcom/pdr.h>
+ #include <linux/remoteproc.h>
+ #include <trace/hooks/remoteproc.h>
