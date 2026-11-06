@@ -42,5 +42,16 @@
   "repaired_original_bundle_all_8_checksums_verified": true,
   "retained_module_bytes_changed": false,
   "updated_manifest_changes_only_observed_kernel_release": true,
-  "phone_corrected_check_executed": false
+  "phone_corrected_check_executed": true,
+  "phone_corrected_check_result": "CHECK_PASS_RECORDED_IDENTITY_ONLY",
+  "source_corrected_check_sha256": "5f6fc1e7ae94340f206d5d2c84143e020cbf4eba50be479d214cf428d6f76484",
+  "phone_corrected_check_exit_code": 0,
+  "phone_corrected_script_and_manifest_sha256": {
+    "popsicle-pairctl.sh": "e3ae836db4926ac710798e937a3d62c824e7f6b9bf3b442f0ae12012f42f78df",
+    "deployment.tsv": "6b0be58a6886b9320aa6f001ba378d1f808bb362357e20b0651df42783db60b0",
+    "SHA256SUMS": "1ad74e91c12d95ef17625aee9da178387e07a0a65fae87e6af03da806782ac95"
+  },
+  "phone_corrected_check_checksum_OK_count": 16,
+  "phone_original_module_files_and_loaded_notes_match": true,
+  "phone_backup_executed_observed": false
 }

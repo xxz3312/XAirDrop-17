@@ -8,7 +8,7 @@
 
 增加具体阻断输出，包括目录归属、可写权限、缺失文件、运行版本、holder、已加载 note 和原厂文件路径/哈希。更正后的 check 仍为只读。
 
-[工作流 42259977562](https://github.com/xxz3312/XAirDrop-17/actions/runs/42259977562) 的 tests 和 prepare 作业通过。92 项回归覆盖全部 512 种三位权限和 1700/1755/1777/4755，以及非 root、链接、非法模式、完整 uname 生成规则、小包不得修改保留模块或其他身份等合同。手机 Shell 上修复后的执行结果尚未回传，不能将主机测试算作手机检查已通过。
+[工作流 42259977562](https://github.com/xxz3312/XAirDrop-17/actions/runs/42259977562) 的 tests 和 prepare 作业通过。92 项回归覆盖全部 512 种三位权限和 1700/1755/1777/4755，以及非 root、链接、非法模式、完整 uname 生成规则、小包不得修改保留模块或其他身份等合同。手机 Shell 修复后结果现已回传：脚本/清单/校验表 SHA 匹配修复包，八项文件校验通过，完整 uname、活动 boot、原厂已加载 note、holders 和两份磁盘模块文件 SHA 匹配，最终 CHECK_PASS_RECORDED_IDENTITY_ONLY、exit 0。此次仅执行只读检查，不代表模块运行或 RF 通过。
 
 Artifacts 中的 `popsicle-checker-fix-0132-42259977562` 只有三个文件：popsicle-pairctl.sh、deployment.tsv、SHA256SUMS，ZIP 共 5469 字节，SHA256 为 `9d0def8a2ef319aa17f2cd12d8aa4bfddb6ddff7e20786eed6b90ce49fb6482d`。下载后已核对脚本源码、清单唯一变更字段与全部保留文件摘要；将三个文件覆盖到已验收的原 0131 包后，八项完整校验均匹配。驱动、策略核心、验收 JSON 和原 README 不变，没有 `.ko`、分区写入或自动执行入口。
 
