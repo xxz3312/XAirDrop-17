@@ -21,7 +21,7 @@
 ## 验证与边界
 
 - 本地 100 项 Python 回归通过；Python 语法和 diff 空白检查通过。
-- C 编译仅在 Actions 执行。新增独立 bridge-controller 作业，对实际控制器头文件运行 ASan/UBSan 模型，覆盖一次分配、分阶段推进、配置变更拒绝、启动各阶段故障、等待/失败后继续退出、错误所有权合同以及空控制器退出；同时运行已有 session fixture。
+- C 编译仅在 Actions 执行。运行 [42291190028](https://github.com/xxz3312/XAirDrop-17/actions/runs/42291190028) 的 bridge-controller 作业 `128144727847` 已成功，日志包含 session/bridge 两个 PASS_ONLY 标志，未见 sanitizer 报错；完整目标编译仍在运行。新增独立 bridge-controller 作业，对实际控制器头文件运行 ASan/UBSan 模型，覆盖一次分配、分阶段推进、配置变更拒绝、启动各阶段故障、等待/失败后继续退出、错误所有权合同以及空控制器退出；同时运行已有 session fixture。
 - 新头文件随 CI setup 复制到真实 WLAN，由 host.c 包含，完整目标编译继续检查真实头文件兼容性。
 - 模型中的 host、锁、父级寿命和完成事件并非真实内核。这个对象不获取父级租约；调用者仍须持 RTNL/PSOC transition，并在每次异步调用之间保留同一 HDD/组件/固件生命周期。
 - 没有自动 worker、公开 Wonder 回调连接或新手机包。当前 backend init 仍为 EOPNOTSUPP。radio UP 不代表 RX/TX、AWDL 或 Apple 就绪。

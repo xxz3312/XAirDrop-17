@@ -1,6 +1,6 @@
 ## 最新代码阶段 0141（桥接 host 会话控制器已实现，公开回调尚未启用）
 
-按两个上游实现内部 host 分配→runtime 附着→异步 session→退出控制器，固定会话身份，启动失败不重放，退出等待/失败保留权威 host。radio UP 不作为 Wonder 初始化成功；不获取父级生命周期租约，不自动启动。100 项本地 Python 回归通过，新增 Actions ASan/UBSan 独立模型作业；完整目标编译待 CI。手机继续保持当前状态，无新安装包，不重复 apply。见 [0141 实现和边界](POPSICLE-WONDER-BRIDGE-0141.md)。
+按两个上游实现内部 host 分配→runtime 附着→异步 session→退出控制器，固定会话身份，启动失败不重放，退出等待/失败保留权威 host。radio UP 不作为 Wonder 初始化成功；不获取父级生命周期租约，不自动启动。100 项本地 Python 回归通过，Actions 42291190028 的独立 session/bridge ASan/UBSan 模型作业已通过；完整目标编译仍在运行。手机继续保持当前状态，无新安装包，不重复 apply。见 [0141 实现和边界](POPSICLE-WONDER-BRIDGE-0141.md)。
 
 ## 最新实机阶段 0140（普通 Wi-Fi 收发与系统连通性短时通过，Wonder 会话仍待接入）
 
