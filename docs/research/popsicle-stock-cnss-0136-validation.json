@@ -1,0 +1,33 @@
+{
+  "stage": "0136",
+  "payload_source_commit": "93d2ea7571c723159dff83253003e427fd5677b9",
+  "accepted_payload_run": 42271965465,
+  "device_adapter_implemented": true,
+  "KSU_manual_action_implemented": true,
+  "boot_autostart_implemented": false,
+  "candidate_cnss2_in_package": false,
+  "local_tests": {
+    "import_gate": 8,
+    "deployment_policy": 12,
+    "device_IO_helpers": 10,
+    "bundle_negative_cases": 6
+  },
+  "shell_syntax_passed": true,
+  "local_package": {
+    "bundle_sha256": "2a07638505b70bfaf2f8eba3bdce33185dc5ea61f2d34a4e0024fd34fa1e6ade",
+    "bytes": 167959028,
+    "kernel_modules": [
+      "opairshare_wonder_provider.ko",
+      "qca_cld3_peach_v2.ko"
+    ],
+    "stock_cnss2_retained": true,
+    "autostart": false,
+    "runtime_certified": false
+  },
+  "local_package_entries_verified": 16,
+  "local_package_checksums_verified": 15,
+  "local_package_raw_modules_and_all_scripts_match_inputs": true,
+  "phone_executed": false,
+  "runtime_certified": false,
+  "limitations": "Host models and static package inspection only. Actual KernelSU installation, Android shell behavior, driver load and RF are not certified."
+}

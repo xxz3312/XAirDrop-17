@@ -1,3 +1,7 @@
+## 最新阶段 0136（设备端适配器与 KSU 手动入口已实现，实机未执行）
+
+参考两个上游接入固定目标模块操作、Wi-Fi/HAL 确认及管道捕获框架输出，保留原厂 CNSS2；独立状态/日志、SHA/note/boot/固件门禁、失败不重放，旧 pair 事务明确阻断。KSU 安装和开机不加载，Action 仅手动调用一次 apply。严格打包器固定取用已验收 0133 raw ELF，不含 cnss2.ko，不改二进制；36 项本地测试与 shell 语法通过，实际实验 ZIP 的 16 个条目/15 项摘要复核一致。尚待 CI 包生成/下载验收与手机只读 check，不计实机安装或运行通过。见 [0136 设备端和 KSU 包](POPSICLE-STOCK-CNSS-KSU-0136.md)。
+
 ## 最新阶段 0135（新 ELF 原厂 CNSS2 导入通过，独立部署核心已实现）
 
 七项必选 CI 成功。完整/精简 ZIP 摘要、64 份 JSON 一致性和五个真实 ELF 复核通过；新 WLAN 含 590 条版本记录，64 项原厂 CNSS2 导入 CRC 匹配，checked_v1/live-arm 均无残留。provider 实际消费者导入 CRC 匹配。新增独立、无 IO 的启动状态机，只允许切换 WLAN/provider，原厂 CNSS2 前后身份持续检查，副作用有 intent/returned/done，失败不重试；12 项故障模型与八项导入测试本地通过。设备端适配器/KSU 包尚未实现，无手机执行或运行认证。见 [0135 验收与边界](POPSICLE-STOCK-CNSS-POLICY-0135.md)。

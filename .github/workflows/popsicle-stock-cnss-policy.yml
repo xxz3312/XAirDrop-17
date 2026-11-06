@@ -6,11 +6,18 @@ on:
     paths:
       - .github/workflows/popsicle-stock-cnss-policy.yml
       - tools/device/popsicle-stock-cnss-engine.sh
+      - tools/device/popsicle-stock-cnss-io.sh
+      - tools/device/popsicle-stock-cnssctl.sh
+      - tools/device/stock-cnss-ksu/**
       - tools/device/tests/test_stock_cnss_engine.py
+      - tools/device/tests/test_stock_cnss_io.py
+      - tools/device/tests/test_stock_cnss_bundle.py
       - tools/kernel/stock_cnss_audit.py
       - tools/kernel/test_stock_cnss_audit.py
+      - tools/kernel/stock_cnss_bundle.py
 permissions:
   contents: read
+  actions: read
 jobs:
   policy:
     runs-on: ubuntu-24.04
@@ -22,5 +29,37 @@ jobs:
       - name: Check stock CNSS2 imports and inject deployment failures
         run: |
           sh -n tools/device/popsicle-stock-cnss-engine.sh
+          sh -n tools/device/popsicle-stock-cnss-io.sh
+          sh -n tools/device/popsicle-stock-cnssctl.sh
+          for script in tools/device/stock-cnss-ksu/*.sh; do sh -n "$script"; done
           python3 -m unittest discover -s tools/kernel -p test_stock_cnss_audit.py -v
-          python3 -m unittest discover -s tools/device/tests -p test_stock_cnss_engine.py -v
+          python3 -m unittest discover -s tools/device/tests -p 'test_stock_cnss*.py' -v
+  package:
+    needs: policy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Download the exact accepted diagnostic artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/stock-cnss"
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/13531954238/zip > "$RUNNER_TEMP/stock-cnss/accepted.zip"
+      - name: Verify raw ELF and prepare manual KSU package
+        run: |
+          python3 tools/kernel/stock_cnss_bundle.py \
+            --artifact "$RUNNER_TEMP/stock-cnss/accepted.zip" \
+            --output "$RUNNER_TEMP/stock-cnss/XAirDrop-17-stock-cnss-0136.zip"
+      - name: Upload experimental package and digest
+        uses: actions/upload-artifact@v4
+        with:
+          name: xairdrop-stock-cnss-0136-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-0136.zip
+            ${{ runner.temp }}/stock-cnss/XAirDrop-17-stock-cnss-0136.json
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
