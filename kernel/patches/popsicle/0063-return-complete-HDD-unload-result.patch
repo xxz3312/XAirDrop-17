@@ -1,0 +1,166 @@
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -20757,7 +20757,7 @@
+ 
+ 
+ /* MISHARE_SSR_STOP_BEGIN:unload_forward */
+-static void hdd_driver_unload_internal(bool *private_refused);
++static void hdd_driver_unload_internal(bool *private_refused, int *private_result);
+ /* MISHARE_SSR_STOP_END:unload_forward */
+ static void hdd_wlan_soft_driver_unload(void)
+ {
+@@ -20773,7 +20773,7 @@
+ 	g_soft_unload = true;
+ 
+ /* MISHARE_SSR_STOP_BEGIN:unload_soft_call */
+-	hdd_driver_unload_internal(&private_refused);
++	hdd_driver_unload_internal(&private_refused, NULL);
+ 	if (private_refused)
+ 		g_soft_unload = false;
+ /* MISHARE_SSR_STOP_END:unload_soft_call */
+@@ -22359,7 +22359,7 @@
+ 						 upper_blocked);
+ }
+ /* MISHARE_SSR_STOP_END:unload_helper */
+-static void hdd_driver_unload_internal(bool *private_refused)
++static void hdd_driver_unload_internal(bool *private_refused, int *private_result)
+ {
+ 	struct osif_driver_sync *driver_sync = NULL;
+ 	struct hdd_context *hdd_ctx;
+@@ -22374,6 +22374,12 @@
+ 		*private_refused = false;
+ /* MISHARE_SSR_STOP_END:unload_local */
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:result_initial */
++	/* Only the complete native tail may publish success. */
++	if (private_result)
++		*private_result = -EINPROGRESS;
++/* MISHARE_SSR_STOP_END:result_initial */
+ 	soft_unload = hdd_get_wlan_driver_status();
+ 	if (soft_unload) {
+ 		pr_info("%s: Soft Unloading driver v%s\n", WLAN_MODULE_NAME,
+@@ -22394,10 +22400,25 @@
+ 	 */
+ 	if (!cds_is_pcie_link_resume_fail()) {
+ 		status = osif_driver_sync_trans_start_wait(&driver_sync);
++
++/* MISHARE_SSR_STOP_BEGIN:result_assert */
++#ifndef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
+ 		QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
++#endif
++/* MISHARE_SSR_STOP_END:result_assert */
++
+ 		if (QDF_IS_STATUS_ERROR(status)) {
+ 			hdd_err("Unable to unload wlan; status:%u", status);
+ 			hdd_place_marker(NULL, "UNLOAD FAILURE", NULL);
++
++/* MISHARE_SSR_STOP_BEGIN:result_transition */
++			if (private_result)
++				*private_result = qdf_status_to_os_return(status);
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++			if (private_refused)
++				*private_refused = true;
++#endif
++/* MISHARE_SSR_STOP_END:result_transition */
+ 			return;
+ 		}
+ 	}
+@@ -22410,6 +22431,11 @@
+ 	if (mishare_ret) {
+ 		if (private_refused)
+ 			*private_refused = true;
++
++/* MISHARE_SSR_STOP_BEGIN:result_admission */
++		if (private_result)
++			*private_result = mishare_ret;
++/* MISHARE_SSR_STOP_END:result_admission */
+ 		hdd_err("MiShare: unload refused before global teardown (%d)",
+ 			mishare_ret);
+ 		if (driver_sync)
+@@ -22457,6 +22483,16 @@
+ /* MISHARE_SSR_STOP_BEGIN:unload_checked_unregister */
+ 	mishare_ret = wlan_hdd_unregister_driver_checked();
+ 	if (mishare_ret) {
++
++/* MISHARE_SSR_STOP_BEGIN:result_unregister */
++		if (private_result)
++			*private_result = mishare_ret;
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++		if (private_refused)
++			*private_refused = true;
++		hdd_mishare_quarantine_load(mishare_ret);
++#endif
++/* MISHARE_SSR_STOP_END:result_unregister */
+ 		hdd_err("MiShare: unregister retained before component teardown (%d)",
+ 			mishare_ret);
+ 		return;
+@@ -22465,10 +22501,26 @@
+ 
+ 	if (!cds_is_pcie_link_resume_fail()) {
+ 		status = osif_driver_sync_trans_start_wait(&driver_sync);
++
++/* MISHARE_SSR_STOP_BEGIN:result_late_assert */
++#ifndef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
+ 		QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
++#endif
++/* MISHARE_SSR_STOP_END:result_late_assert */
++
+ 		if (QDF_IS_STATUS_ERROR(status)) {
+ 			hdd_err("Unable to unload wlan; status:%u", status);
+ 			hdd_place_marker(NULL, "UNLOAD FAILURE", NULL);
++
++/* MISHARE_SSR_STOP_BEGIN:result_late_transition */
++			if (private_result)
++				*private_result = qdf_status_to_os_return(status);
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++			if (private_refused)
++				*private_refused = true;
++			hdd_mishare_quarantine_load(qdf_status_to_os_return(status));
++#endif
++/* MISHARE_SSR_STOP_END:result_late_transition */
+ 			return;
+ 		}
+ 	}
+@@ -22494,14 +22546,40 @@
+ 	hdd_qdf_deinit();
+ 	qdf_mem_check_prealloc_leaks();
+ 	hdd_place_marker(NULL, "UNLOAD DONE", NULL);
++
++/* MISHARE_SSR_STOP_BEGIN:result_success */
++	if (private_result)
++		*private_result = 0;
++/* MISHARE_SSR_STOP_END:result_success */
+ }
+ /* MISHARE_SSR_STOP_BEGIN:unload_wrapper */
+ void hdd_driver_unload(void)
+ {
+-	hdd_driver_unload_internal(NULL);
++	hdd_driver_unload_internal(NULL, NULL);
+ }
+ /* MISHARE_SSR_STOP_END:unload_wrapper */
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:result_entry */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++/* Controller must hold a module reference and serialize all load/mode/unload
++ * entries through the entire call. No execution-reference release here.
++ * This result is a teardown receipt only, not a retry/recovery permission.
++ */
++int hdd_mishare_driver_unload_checked(void)
++{
++	bool refused;
++	int result = -EINPROGRESS;
++
++	if (READ_ONCE(mishare_load_error))
++		return READ_ONCE(mishare_load_error);
++	if (hdd_get_wlan_driver_status())
++		return -EBUSY;
++	hdd_driver_unload_internal(&refused, &result);
++	return result;
++}
++#endif
++/* MISHARE_SSR_STOP_END:result_entry */
+ 
+ #ifdef FEATURE_WLAN_RESIDENT_DRIVER
+ EXPORT_SYMBOL(hdd_driver_unload);

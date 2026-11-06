@@ -1287,6 +1287,7 @@ def run(wlan, output):
     assert remove_ssr_stop_additions(unload_native) in original_main, 'Unbounded native unload delta'
     assert unload_native.index('osif_driver_sync_wait_for_ops(')<unload_native.index('hdd_mishare_unload_ready(')<unload_native.index('cds_set_driver_loaded(false)')<unload_native.index('wlan_hdd_unregister_driver_checked(')<unload_native.index('hdd_component_deinit(')
     unload_prefix=unload_native[:unload_native.index('\thif_ctx = cds_get_context(QDF_MODULE_ID_HIF);')]+ '\tunload_reached++;\n}\n'
+    unload_prefix='static int qdf_status_to_os_return(int status) { return status ? -EPERM : 0; }\n'+unload_prefix
     unload_wrappers=extract(main,r'^void hdd_driver_unload\([^;{]+?\)\s*\{.*?^\}')+'\n'+extract(main,r'^static void hdd_wlan_soft_driver_unload\([^;{]+?\)\s*\{.*?^\}')
     assert remove_ssr_stop_additions(extract(main,r'^static void hdd_wlan_soft_driver_unload\([^;{]+?\)\s*\{.*?^\}')) in original_main
 

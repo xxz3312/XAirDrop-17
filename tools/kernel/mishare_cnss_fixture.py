@@ -116,7 +116,9 @@ NATIVE_COMMON_CHECKED
 NATIVE_HDD_CHECKED
 #define hdd_err(...) ((void)0)
 static int component_deinits;
-static void late_unload(void){int mishare_ret;NATIVE_LATE_GUARD component_deinits++;}
+/* Full quarantine executes separately in the complete unload fixture. */
+static int hdd_mishare_quarantine_load(int error){return error;}
+static void late_unload(void){int mishare_ret;int *private_result=NULL;bool *private_refused=NULL;NATIVE_LATE_GUARD component_deinits++;}
 static struct cnss_plat_data *cnss_get_plat_priv_by_driver_ops(struct cnss_wlan_driver *ops){(void)ops;return plat_missing?NULL:&plat;}
 static unsigned int cnss_get_timeout(struct cnss_plat_data *p,int what){(void)p;(void)what;return 1;}
 static int wait_for_completion_timeout(int *c,unsigned int timeout){(void)c;(void)timeout;return 1;}

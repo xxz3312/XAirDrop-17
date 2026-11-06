@@ -199,6 +199,14 @@ int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host);
  */
 int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
                                             u32 freq, u8 nss_2g, u8 nss_5g);
+#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
+/* Complete HDD teardown result for a future external controller. The caller
+ * must pin WLAN and exclude every load/mode/unload entry for the entire call.
+ * No final module-reference release and no retry permission on failure.
+ * Not exported, installed as a callback, or exposed to userspace yet.
+ */
+int hdd_mishare_driver_unload_checked(void);
+#endif
 /* Internal HDD factory, also requires RTNL and the parent transition. */
 struct hdd_adapter *hdd_mishare_host_adapter_open(struct hdd_context *hdd, u8 *mac);
 #endif

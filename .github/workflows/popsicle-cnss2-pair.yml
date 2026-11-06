@@ -16,6 +16,7 @@ on:
       - kernel/patches/popsicle/0060-*.patch
       - kernel/patches/popsicle/0061-*.patch
       - kernel/patches/popsicle/0062-*.patch
+      - kernel/patches/popsicle/0063-*.patch
 permissions:
   contents: read
 jobs:
