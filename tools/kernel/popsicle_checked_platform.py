@@ -63,9 +63,23 @@ def build(work):
         settings=[line.split('=',1) for line in config.read_text().splitlines() if line.startswith('CONFIG_')]
         options=[name+'='+value for name,value in settings]
         flags=[f'-D{name}{"_MODULE" if value=="m" else ""}=1' for name,value in settings if value in ['y','m']]
-        flags+=['-DCONFIG_WCNSS_MEM_PRE_ALLOC=1','-DCONFIG_ARM_SMMU_MODULE=1','-DCONFIG_QCOM_IOMMU_UTIL_MODULE=1']
+        flags+=['-DCONFIG_QCOM_SOCINFO_MODULE=1','-DCONFIG_QCOM_RPROC_COMMON_MODULE=1','-DCONFIG_WCNSS_MEM_PRE_ALLOC=1','-DCONFIG_ARM_SMMU_MODULE=1','-DCONFIG_QCOM_IOMMU_UTIL_MODULE=1']
         includes=[work/'soc/include',work/'soc/drivers/soc/qcom',work/'soc/drivers/remoteproc',
                   work/'wlan/platform/inc',work/'wlan/platform/cnss_utils']
+        # DDK dependencies use the SoC remoteproc header, which extends the
+        # common GKI declaration set. Preinclude the real pinned header only
+        # after checking the shared guard; never reconstruct declarations.
+        rproc=work/'soc/include/linux/remoteproc/qcom_rproc.h'
+        common_rproc=work/'common/include/linux/remoteproc/qcom_rproc.h'
+        digest=hashlib.sha256(rproc.read_bytes()).hexdigest()
+        if digest!='d9462a7424185a48125a412889d25077bdbe9013dc31d0d0038767cd305eb31c':
+            raise ValueError('Unreviewed SoC remoteproc header')
+        for header in [rproc,common_rproc]:
+            if '#ifndef __QCOM_RPROC_H__' not in header.read_text():
+                raise ValueError('Remoteproc header guard contract changed')
+        flags+=['-include',str(rproc)]
+        report['soc_remoteproc_header_sha256']=digest
+        report['platform_soc_dependency_defines']=['CONFIG_QCOM_SOCINFO_MODULE=1','CONFIG_QCOM_RPROC_COMMON_MODULE=1']
         report['platform_config_sha256']=hashlib.sha256(config.read_bytes()).hexdigest()
         platform=work/'wlan/platform/icnss2'
         command(make+[f'M={platform}',f'WLAN_PLATFORM_ROOT={work}/wlan/platform',

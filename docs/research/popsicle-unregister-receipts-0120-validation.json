@@ -3,7 +3,7 @@
   "source_commit": "5960f32fdfd13306aa26842f26c3e42375f5e9b8",
   "workflow_run": 42102327073,
   "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/42102327073",
-  "stage_offline_acceptance_complete": false,
+  "stage_offline_acceptance_complete": true,
   "fast_production_C_validation_passed": true,
   "python_kernel_tests_passed": 53,
   "fixture_source_assembly_passed": true,
@@ -51,8 +51,8 @@
     {
       "id": 127508059430,
       "name": "parent-peer-composite",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "run_id": 42102327073,
       "logs_url": null,
       "steps": [
@@ -76,71 +76,77 @@
         },
         {
           "name": "Production HTT peer unmap parser and nbuf ownership with sanitizers",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 4
         },
         {
           "name": "Native DP peer unmap lookup and map removal with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 5
         },
         {
           "name": "Native parent and peer composite with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 6
         },
         {
           "name": "Native heap PDEV dispatcher and final free with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 7
         },
         {
           "name": "Native PSOC reference lease through PDEV free with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 8
         },
         {
           "name": "Native heap PSOC dispatcher and final free with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 9
         },
         {
           "name": "Native DP VDEV final free and production completion with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 10
         },
         {
           "name": "Native DP peer free returning VDEV CHILD reference with sanitizers",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 11
         },
         {
           "name": "Run actions/upload-artifact@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 12
         },
         {
           "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 24
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
         }
       ]
     },
     {
       "id": 127508059637,
       "name": "ce-buffers",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "run_id": 42102327073,
       "logs_url": null,
       "steps": [
@@ -164,29 +170,35 @@
         },
         {
           "name": "Native residual CE RX and TX cleanup with sanitizers",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 4
         },
         {
           "name": "Run actions/upload-artifact@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 5
         },
         {
           "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
         }
       ]
     },
     {
       "id": 127508059719,
       "name": "htt-callbacks",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "run_id": 42102327073,
       "logs_url": null,
       "steps": [
@@ -210,29 +222,35 @@
         },
         {
           "name": "Native HTC registration and HIF callback composite with sanitizers",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 4
         },
         {
           "name": "Run actions/upload-artifact@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 5
         },
         {
           "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
         }
       ]
     },
     {
       "id": 127508059834,
       "name": "ce-stop",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "run_id": 42102327073,
       "logs_url": null,
       "steps": [
@@ -256,21 +274,27 @@
         },
         {
           "name": "Native CE stop and IPCI producer drain with sanitizers",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 4
         },
         {
           "name": "Run actions/upload-artifact@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 5
         },
         {
           "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
         }
       ]
     },
@@ -329,8 +353,8 @@
     {
       "id": 127508059984,
       "name": "diagnostic",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "run_id": 42102327073,
       "logs_url": null,
       "steps": [
@@ -390,59 +414,65 @@
         },
         {
           "name": "Compile diagnostic objects",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 10
         },
         {
           "name": "Check CNSS provider interfaces",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 11
         },
         {
           "name": "Strict module linking and complete WLAN dependency gate",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 12
         },
         {
           "name": "Compare selected WLAN structure layouts with stock BTF metadata",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 13
         },
         {
           "name": "Required recorded module checks (not runtime certification)",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 14
         },
         {
           "name": "Upload diagnostics even when interface audit fails",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 15
         },
         {
           "name": "Upload compact validation reports",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 16
         },
         {
           "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 32
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33
         }
       ]
     },
     {
       "id": 127508060131,
       "name": "transport-stop",
-      "status": "in_progress",
-      "conclusion": null,
+      "status": "completed",
+      "conclusion": "success",
       "run_id": 42102327073,
       "logs_url": null,
       "steps": [
@@ -466,21 +496,27 @@
         },
         {
           "name": "Native HIF receive and HTC stop ordering with sanitizers",
-          "status": "in_progress",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 4
         },
         {
           "name": "Run actions/upload-artifact@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 5
         },
         {
           "name": "Post Run actions/checkout@v4",
-          "status": "pending",
-          "conclusion": null,
+          "status": "completed",
+          "conclusion": "success",
           "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
         }
       ]
     }
@@ -725,5 +761,297 @@
       "leak detection"
     ],
     "limitations": "Production external provider and full native IPCI register/unregister/reinit/shutdown functions execute with modeled module loader, ICNSS registration and vendor callbacks. Real pthread close versus callback overlap is exercised; native DSC, firmware, real rmmod and ICNSS unregister/error-path drain contracts are not executed. SSR shutdown/reinit and idle shutdown/restart slots use this boundary; physical remove outside unregister, crash shutdown, other native callback types and managed metadata self-detach remain outside certification. Checked IPCI/PLD/HDD unregister now propagates receipts before global clearing; native module-exit cannot veto loader unload; no hot-unplug or forced-unload safety."
-  }
+  },
+  "full_validation_artifact": {
+    "id": 13452186210,
+    "name": "popsicle-validation-42102327073-1",
+    "size_in_bytes": 122279,
+    "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13452186210",
+    "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13452186210/zip",
+    "expired": false,
+    "created_at": "2026-11-05T20:40:09Z",
+    "expires_at": "2026-11-12T20:40:08Z",
+    "updated_at": "2026-11-05T20:40:09Z",
+    "digest": "sha256:64ff2e52b169621d20bab0f94bdab30476592f90e345217b6c365dd22a902768",
+    "workflow_run": {
+      "id": 42102327073,
+      "repository_id": 1433402945,
+      "head_repository_id": 1433402945,
+      "head_branch": "main",
+      "head_sha": "5960f32fdfd13306aa26842f26c3e42375f5e9b8"
+    }
+  },
+  "full_artifact_digest_verified": true,
+  "module_validation": {
+    "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+    "modules": {
+      "wonder_sysctl": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+        "version_records": 6,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "opairshare_wonder_provider": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "d2a6d87a6c2eb28dd140cac118006c83a688b359b20b00dc0dc3d5640ef85cff",
+        "version_records": 13,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "opairshare_route_b_probe": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+        "version_records": 3,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wonder": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+        "version_records": 110,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wlan": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "30c10eb9faf3e54b889185eea2ef4d0b467d5108179fa11decbd00049f3fe4f8",
+        "version_records": 590,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      }
+    },
+    "wlan_unresolved": [],
+    "limitations": "Diagnostic .ko files only. No independent C type, private layout, KCFI, BTF, GKI access, firmware, loading or AirDrop certification."
+  },
+  "host_module": {
+    "status": "HOST_HELPER_SYMBOLS_PRESENT_ONLY",
+    "sha256": "30c10eb9faf3e54b889185eea2ef4d0b467d5108179fa11decbd00049f3fe4f8",
+    "symbols": [
+      "mishare_wonder_host_create_locked",
+      "mishare_wonder_host_destroy_locked",
+      "mishare_wonder_host_handoff_idle_locked",
+      "mishare_wonder_host_idle_prepare_locked",
+      "mishare_wonder_host_ssr_prepare_locked",
+      "mishare_ssr_stop_begin_locked",
+      "mishare_ssr_stop_step_locked",
+      "mishare_ssr_stop_finish_locked",
+      "mishare_ssr_stop_pause_locked",
+      "mishare_ssr_stop_resume_locked",
+      "hdd_mishare_resume_stop_modules",
+      "hdd_mishare_resume_shutdown",
+      "mishare_ssr_stop_remove_ready_locked",
+      "hdd_mishare_module_remove_ready",
+      "hdd_mishare_remove_prepare",
+      "mishare_wonder_host_reclaim_handoff_ssr_locked",
+      "mishare_wonder_host_adapter_owned",
+      "mishare_ssr_stop_unload_ready_locked",
+      "mishare_runtime_any_busy",
+      "hdd_mishare_module_unload_ready",
+      "hdd_mishare_unload_ready",
+      "hdd_wlan_shutdown",
+      "mishare_wonder_host_session_step_locked",
+      "hdd_mishare_host_adapter_open",
+      "mishare_wonder_backend_register",
+      "mishare_wonder_backend_unregister",
+      "mishare_vdev_txn_init",
+      "mishare_vdev_txn_begin",
+      "mishare_vdev_txn_submitted",
+      "mishare_vdev_txn_response",
+      "mishare_vdev_txn_timeout",
+      "mishare_events_bind",
+      "mishare_events_unbind",
+      "mishare_events_begin",
+      "mishare_events_submitted",
+      "mishare_events_snapshot",
+      "mishare_events_notify",
+      "mishare_events_begin_vdev",
+      "mishare_command_submit_start",
+      "mishare_command_submit_stop",
+      "passthru_mlme_ops",
+      "mishare_wonder_host_vdev_create_locked",
+      "mishare_wonder_host_vdev_destroy_locked",
+      "mishare_runtime_create",
+      "mishare_runtime_destroy",
+      "mishare_runtime_snapshot",
+      "mishare_runtime_allocated",
+      "mishare_runtime_prepare_free",
+      "mishare_runtime_freed",
+      "mishare_runtime_ndi_create",
+      "mishare_runtime_ndi_delete_owned",
+      "mishare_runtime_ndi_delete_event",
+      "mishare_ndi_native_create",
+      "mishare_ndi_tgt_create",
+      "mishare_ndi_wire_create",
+      "mishare_ndi_native_delete",
+      "mishare_ndi_native_dp_detach",
+      "mishare_ndi_release_stats",
+      "mishare_runtime_ndi_prepare",
+      "mishare_runtime_ndi_peer_event",
+      "mishare_ndi_legacy_prepare",
+      "mishare_ndi_legacy_release",
+      "mishare_ndi_wma_bind",
+      "mishare_ndi_wma_unbind",
+      "mishare_ndi_self_peer_create",
+      "mishare_ndi_self_peer_delete",
+      "mishare_runtime_ndi_session",
+      "mishare_ndi_pe_post",
+      "mishare_runtime_ndi_pe_event",
+      "mishare_runtime_ndi_channel",
+      "mishare_ndi_channel_post",
+      "mishare_runtime_ndi_channel_event",
+      "mishare_runtime_ndi_start_plan",
+      "mishare_ndi_start_plan_build",
+      "mishare_ndi_start_plan_wma_check",
+      "mishare_ndi_start_plan_post",
+      "mishare_runtime_ndi_start_plan_event",
+      "mishare_runtime_ndi_start",
+      "mishare_radio_open",
+      "mishare_radio_snapshot",
+      "mishare_radio_drain",
+      "mishare_ndi_radio_prepare",
+      "mishare_ndi_radio_start_response",
+      "mishare_ndi_radio_host_up",
+      "mishare_ndi_radio_mark_down",
+      "mishare_ndi_radio_start_pm_release",
+      "mishare_runtime_quiesce_psoc",
+      "mishare_runtime_platform_available",
+      "mishare_runtime_work_allowed",
+      "mishare_events_quiesce_psoc",
+      "mishare_radio_quiesce_psoc",
+      "mishare_runtime_work_get",
+      "mishare_runtime_work_enter",
+      "mishare_runtime_work_exit",
+      "mishare_runtime_work_put",
+      "mishare_runtime_mc_stopped",
+      "mishare_runtime_reclaim_host",
+      "mishare_runtime_recovery_candidates",
+      "mishare_runtime_recovery_open",
+      "mishare_runtime_recovery_close",
+      "mishare_runtime_reclaim_ndi",
+      "mishare_ndi_recovery_timer_deinit",
+      "mishare_ndi_recovery_dp_detach",
+      "mishare_runtime_psoc_busy",
+      "mishare_wonder_host_stop_ready_locked",
+      "mishare_runtime_reclaim_batch",
+      "mishare_wonder_host_psoc_busy",
+      "mishare_wonder_host_reclaim_ssr_locked",
+      "mishare_ndi_reset_context_release",
+      "mishare_ndi_reset_context_check",
+      "mishare_ndi_reset_pe_check",
+      "mishare_ndi_reset_pe_release",
+      "mishare_ndi_reset_prepared_timer_deinit",
+      "mishare_ndi_reset_context_finish",
+      "mishare_ndi_reset_prepared_dp_detach",
+      "mishare_runtime_reclaim_final",
+      "mishare_raw_tx_sync",
+      "mishare_action_tx_sync",
+      "mishare_radio_ssr_cancel_check",
+      "mishare_radio_ssr_cancel_release",
+      "mishare_runtime_radio_start_flushed",
+      "mishare_runtime_radio_start_refused",
+      "mishare_runtime_radio_start_aborted",
+      "mishare_runtime_radio_prepared_aborted",
+      "mishare_runtime_radio_sm_entry_aborted",
+      "mishare_runtime_radio_init_rejected",
+      "mishare_radio_native_init_rejected"
+    ],
+    "missing": [],
+    "limitations": "Actual linked symbol presence only; not host registration, firmware or radio validation.",
+    "dependencies": [
+      "cfg80211,opairshare_wonder_provider,cnss_utils,cnss_nl,ipam,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+    ]
+  },
+  "provider_execution_module": {
+    "status": "PROVIDER_EXECUTION_V2_EXPORTS_PRESENT_ONLY",
+    "required": [
+      "opairshare_wlan_execution_register_v2",
+      "opairshare_wlan_execution_close",
+      "opairshare_wlan_execution_unregister",
+      "opairshare_wlan_execution_reinit",
+      "opairshare_wlan_execution_shutdown",
+      "opairshare_wlan_execution_idle_restart",
+      "opairshare_wlan_execution_idle_shutdown",
+      "opairshare_wlan_execution_unregister_begin",
+      "opairshare_wlan_execution_unregister_end",
+      "opairshare_wlan_execution_remove_begin",
+      "opairshare_wlan_execution_remove_end"
+    ],
+    "missing": [],
+    "v1_registration_alias": false,
+    "sha256": "d2a6d87a6c2eb28dd140cac118006c83a688b359b20b00dc0dc3d5640ef85cff",
+    "limitations": "Linked/exported private ABI names only; no callback, loader or radio certification."
+  },
+  "selected_layouts_status": "SELECTED_LAYOUTS_MATCH_ONLY",
+  "large_diagnostic_archive_downloaded": false
 }

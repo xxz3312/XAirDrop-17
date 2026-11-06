@@ -149,11 +149,6 @@ static void consumer_case(bool going,bool fail) {
  } else assert(!ret && power_offs==1 && !platform.ops && !unregister_scope && !execution_ops.owner && !atomic_load(&wlan_module.refs) && "EXPECTED_CONSUMER_GUARD");
 }
 int main(void) {
- for(int going=0;going<2;going++) {
-  consumer_case(going,false);
-  pid_t c=fork();assert(c>=0);if(!c){consumer_case(going,true);_Exit(0);}
-  int s;assert(waitpid(c,&s,0)==c && WIFEXITED(s) && !WEXITSTATUS(s) && "EXPECTED_CONSUMER_CHILD");
- }
 
  /* Preserve existing numeric state values and fit the native state word. */
  assert(ICNSS_REBOOT_REGISTERED==28 && ICNSS_DRIVER_UNREGISTER_FAILED==29);
@@ -178,6 +173,11 @@ int main(void) {
   assert(power_offs==1 && !platform.ops && !status_calls && "EXPECTED_LEGACY_COMPATIBILITY_LIMIT");_Exit(0);
  }
  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+ for(int going=0;going<2;going++) {
+  consumer_case(going,false);
+  pid_t c=fork();assert(c>=0);if(!c){consumer_case(going,true);_Exit(0);}
+  int s;assert(waitpid(c,&s,0)==c && WIFEXITED(s) && !WEXITSTATUS(s) && "EXPECTED_CONSUMER_CHILD");
+ }
  puts("MISHARE_ICNSS_CHECKED_UNREGISTER_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -185,7 +185,7 @@ int main(void) {
 
 def assemble(wlan):
     platform=(wlan/NATIVE).read_text()
-    for path in [NATIVE,'platform/icnss2/main.h','platform/inc/icnss2.h']:
+    for path in [NATIVE,'platform/icnss2/main.h','platform/inc/icnss2.h','platform/icnss2/debug.c']:
         assert restore((wlan/path).read_text())==subprocess.check_output(['git','-C',str(wlan),'show','HEAD:'+path],text=True),path
     _,existing,_=execution_assemble(wlan)
     fragments={

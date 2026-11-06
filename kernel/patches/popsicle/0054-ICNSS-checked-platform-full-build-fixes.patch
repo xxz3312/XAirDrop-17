@@ -1,0 +1,56 @@
+From: XAirDrop-17
+Subject: [PATCH] Complete ICNSS failure-state diagnostics and internal dump declarations
+
+--- a/platform/icnss2/main.c
++++ b/platform/icnss2/main.c
+@@ -1569,7 +1569,10 @@
+ 	kfree(dev);
+ }
+ 
+-const char *icnss_get_wlan_str(enum cnss_host_dump_type type)
++
++/* MISHARE_ICNSS_BEGIN:dump_name */
++static const char *icnss_get_wlan_str(enum cnss_host_dump_type type)
++/* MISHARE_ICNSS_END:dump_name */
+ {
+ 	switch (type) {
+ 	case CNSS_HOST_WLAN_LOGS:
+@@ -1805,7 +1808,10 @@
+     }
+ }
+ 
+-int icnss_do_host_ramdump(struct icnss_priv *priv,
++
++/* MISHARE_ICNSS_BEGIN:dump_run */
++static int icnss_do_host_ramdump(struct icnss_priv *priv,
++/* MISHARE_ICNSS_END:dump_run */
+ 			  struct cnss_ssr_driver_dump_entry *ssr_entry,
+ 			  size_t num_entries_loaded)
+ {
+@@ -1905,7 +1911,10 @@
+ 	return ret;
+ }
+ 
+-void icnss_collect_host_dump_info(struct icnss_priv *priv)
++
++/* MISHARE_ICNSS_BEGIN:dump_collect */
++static void icnss_collect_host_dump_info(struct icnss_priv *priv)
++/* MISHARE_ICNSS_END:dump_collect */
+ {
+ 	struct cnss_ssr_driver_dump_entry *ssr_entry;
+ 	size_t num_entries_loaded = 0;
+--- a/platform/icnss2/debug.c
++++ b/platform/icnss2/debug.c
+@@ -451,6 +451,12 @@
+ 		case ICNSS_SOC_WAKE_DONE:
+ 			seq_puts(s, "ICNSS_SOC_WAKE_DONE");
+ 			continue;
++
++/* MISHARE_ICNSS_BEGIN:debug_failed_state */
++		case ICNSS_DRIVER_UNREGISTER_FAILED:
++			seq_puts(s, "ICNSS_DRIVER_UNREGISTER_FAILED");
++			continue;
++/* MISHARE_ICNSS_END:debug_failed_state */
+ 		case ICNSS_REBOOT_REGISTERED:
+ 			seq_puts(s, "ICNSS_REBOOT_REGISTERED");
+ 		}
