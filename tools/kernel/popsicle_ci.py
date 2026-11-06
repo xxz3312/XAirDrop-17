@@ -18,6 +18,7 @@ from btf_layout import Btf, RecordedLayouts, compare
 from module_cfg80211_ops import audit as audit_cfg80211_ops
 from module_mac80211_ops import audit as audit_mac80211_ops
 from popsicle_backend_audit import audited_inventory
+from stock_cnss_audit import audit as audit_stock_cnss
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -721,6 +722,12 @@ def modules(work, link_only=False):
         check_mishare_host_symbols(work, path, 'mishare-host-module.json')
         merge_generated_exports(known, symvers([path.parent / 'Module.symvers']))
         result['modules']['wlan'] = module_report(path, expected, known)
+        stock_cnss = audit_stock_cnss(inspect(path), json.loads(
+            (REPO / 'kernel/abi/popsicle-stock-exports.json').read_text()))
+        (reports / 'stock-cnss-imports.json').write_text(
+            json.dumps(stock_cnss, indent=2) + '\n')
+        if stock_cnss['status'] != 'STOCK_CNSS2_IMPORTS_MATCH_ONLY':
+            raise ValueError('Default WLAN must retain the captured original CNSS2 imports')
         result['status'] = result['modules']['wlan']['status']
         if result['status'] != 'REJECT' and any(
                 record['status'] == 'REVIEW_KERNEL_RELEASE' for record in result['modules'].values()):

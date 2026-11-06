@@ -1,3 +1,7 @@
+## 最新阶段 0133（保留原厂 CNSS2 的源码分支可复用，重构建尚待验证）
+
+实测 0130 WLAN ELF 的 62 项原厂 CNSS2 导入 CRC 匹配，但另有两个 checked_v1 强导入和外部 live-unload arm，不能直接配原厂运行。源码已有宏关闭分支，回到原厂 register/unregister 和原生 PCIe callbacks；会失去 checked 注册保留、外部受控热卸载等保证。新增默认 WLAN 链接产物门禁，拒绝 checked/live-arm 残留、旧 CNSS2 CRC 差异和依赖遗漏，八项新回归通过，实际旧 ELF 按预期拒绝。完整构建/新部署合同尚待完成，无新手机包；原 0131 pairctl 不适用于新路线。见 [0133 依赖审查](POPSICLE-STOCK-CNSS-REVIEW-0133.md)。
+
 ## 最新实机结果 0132（备份通过，apply 期间重启，运行验收未通过）
 
 Termux 改用管道 tee 后 backup 成功，原厂副本校验和 Wi-Fi/HAL 状态保存通过。随后 apply 中原厂两模块移除返回、provider 插入及 note 验证通过，最后记录 intent:insert:cnss2 后手机重启；缺少 CNSS2 insmod 执行/返回证据，候选 WLAN 未到加载阶段。重启后原厂模块 note 与活动 boot 摘要匹配。pstore 空、DropBox 无上次内核/看门狗记录，厂商历史无本次条目；当前日志不能判定根因。暂停原包 apply/restore 重试，保留事务，先审查卸载生命周期和改进故障前取证。见 [0132 实机重启事件](POPSICLE-RUNTIME-INCIDENT-0132.md)。下面“尚未操作手机”等表述是各历史阶段当时的状态，不代表当前实机结果。
