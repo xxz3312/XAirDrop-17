@@ -11,3 +11,5 @@ getprop 非零、回执缺失/重复/非法、sed/sort 失败或非法服务名�
 小包仅 CHECK_FIRST.txt、SHA256SUMS、module.prop、popsicle-stock-cnss-io.sh，5335 字节；不含 ELF、不调用驱动、不触及 boot/init_boot。生成器以 0136 原始保留文件 SHA 为基准，只允许新增 IO helper 及说明/版本变动，所有未列入允许集合的脚本和两份驱动必须保持原字节。
 
 已安装用户不必重装/重启，修复后可直接重新 backup。此前 NO_RUNNING_WIFI_HAL 出现在 mkdir 前，因此不应删除状态目录；若状态不符应保留并检查。完整 0138 包供未来安装使用，仍无自动加载，保留安装/运行期独立清单。当前主机模拟通过，手机修复后 backup 尚待回传，不代表 Android 调用或驱动运行验收。见 [验证 JSON](research/popsicle-hal-stream-fix-0138-validation.json)。
+
+[CI 42288035806](https://github.com/xxz3312/XAirDrop-17/actions/runs/42288035806) 的 policy/package 已通过；下载的小包 artifact 摘要匹配，内层修复 ZIP 与本地验收包字节一致，SHA256 为 4fefcdae475055fedad2f4e8a3474282d4b361b83dd6991360874f7b3af5c2dd。手机修复后结果尚待回传。

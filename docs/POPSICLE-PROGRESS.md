@@ -1,6 +1,6 @@
 ## 最新阶段 0138（修复整份属性表触发外部 printf 参数过长）
 
-0137 手机 archive/check 已通过，但 backup 在 HAL 枚举阶段触发 printf Argument list too long；在快照目录创建、关闭 Wi-Fi 和驱动动作之前停止。按上游流式筛选 getprop，并保留生产者退出码回执，避免外部大参数。45 项回归及实际四文件覆盖模拟通过；只改 IO 的 sc_hals，主控制器/状态机/raw ELF 不变。约 5.3 KB 小修复包，不需重装或重启；尚待 CI 与手机 backup。见 [0138 修复](POPSICLE-HAL-STREAM-FIX-0138.md)。
+0137 手机 archive/check 已通过，但 backup 在 HAL 枚举阶段触发 printf Argument list too long；在快照目录创建、关闭 Wi-Fi 和驱动动作之前停止。按上游流式筛选 getprop，并保留生产者退出码回执，避免外部大参数。45 项回归及实际四文件覆盖模拟通过；只改 IO 的 sc_hals，主控制器/状态机/raw ELF 不变。约 5.3 KB 小修复包，不需重装或重启；CI 42288035806 的 policy/package 已通过，下载小包摘要/内层字节与本地包一致；尚待手机 backup。见 [0138 修复](POPSICLE-HAL-STREAM-FIX-0138.md)。
 
 ## 最新阶段 0137（修复 KSU 安装器删除 customize.sh 导致的运行期误阻断）
 

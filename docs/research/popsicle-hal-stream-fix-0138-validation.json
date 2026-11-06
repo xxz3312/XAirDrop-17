@@ -35,5 +35,13 @@
   "candidate_raw_ELF_changed": false,
   "main_controller_and_policy_engine_changed": false,
   "phone_corrected_backup_executed": false,
-  "runtime_certified": false
+  "runtime_certified": false,
+  "source_commit": "7887bbe53635800a9c929229f36a29c6f1be4d81",
+  "workflow_run": 42288035806,
+  "CI_policy_job": 128133855285,
+  "CI_package_job": 128133908165,
+  "CI_policy_and_package_passed": true,
+  "CI_fix_artifact_id": 13538142746,
+  "CI_fix_artifact_sha256": "8216a35334ff194c2fdeb12a4f8653cec31d1aad4d3bdd2b9d49958984808351",
+  "downloaded_CI_fix_artifact_digest_and_exact_inner_bytes_verified": true
 }
