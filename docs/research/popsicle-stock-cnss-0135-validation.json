@@ -1,0 +1,83 @@
+{
+  "stage": "0135",
+  "build_source_commit": "93d2ea7571c723159dff83253003e427fd5677b9",
+  "workflow_run": 42271965465,
+  "diagnostic_job": 128078523569,
+  "required_jobs_success": 7,
+  "optional_icnss_job": "skipped",
+  "full_artifact_id": 13531954238,
+  "full_artifact_sha256": "3a02e14cc3ecc4f0dfad378fd470293d17d834ba94aefa747b8dccc9f7c65f51",
+  "compact_artifact_id": 13532749036,
+  "compact_artifact_sha256": "5becf321ba2b06bc77e009c54e04c203c7dde0d33514ab9c301b5887e97046d2",
+  "full_and_compact_identical_json_report_count": 64,
+  "all_5_actual_ELF_SHA_and_version_counts_verified": true,
+  "all_5_actual_ELF_imports_have_version_records": true,
+  "actual_module_records": {
+    "wonder_sysctl": {
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "note_sha256": "5d3d7236a5d7058973d6f4bd45a897bbc76933ce23e20b81c1597fc87c5096a5",
+      "version_records": 6,
+      "dependencies": [
+        ""
+      ]
+    },
+    "opairshare_wonder_provider": {
+      "sha256": "6350d0c61615acb831296c2e3ae742f7d74993fb18d808f03f3ba17b2e5e6a74",
+      "note_sha256": "a0e4e2123e6dd71a2dcb0f44fcabb8fcce22da97215447ab6e451afcedf570fd",
+      "version_records": 15,
+      "dependencies": [
+        ""
+      ]
+    },
+    "opairshare_route_b_probe": {
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "note_sha256": "379297a39a1b92b43ebc62c342c90049ee44699607be671ce6b326dec9fbe74e",
+      "version_records": 3,
+      "dependencies": [
+        "opairshare_wonder_provider"
+      ]
+    },
+    "wonder": {
+      "sha256": "5b3f854a476804de14c68c3e503bfc7cd327cbc76962dcb186e1dcc24ca43166",
+      "note_sha256": "83b2ad935aff118e8b3009bd44b95c255879076a086c0e81426284e08ac54fac",
+      "version_records": 110,
+      "dependencies": [
+        "cfg80211,mac80211,opairshare_wonder_provider"
+      ]
+    },
+    "wlan": {
+      "sha256": "c6ec40e51669c2c5175e4320603b915e6e6ced95c592ec241ff38b3cb678b3d2",
+      "note_sha256": "88600269ff0d056a465a7b55d6888508a2458d917eac4661a262ede6643eb9f2",
+      "version_records": 590,
+      "dependencies": [
+        "cfg80211,opairshare_wonder_provider,cnss_utils,cnss_nl,ipam,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+      ]
+    }
+  },
+  "actual_wlan_cnss2_import_count": 64,
+  "actual_wlan_versions_count": 590,
+  "actual_wlan_checked_or_live_arm_imports": [],
+  "actual_wlan_cnss2_crc_mismatches": {},
+  "actual_private_provider_import_CRCs_match": {
+    "qca_cld3_peach_v2": [
+      "opairshare_set_wonder_managed_priv_data",
+      "opairshare_wlan_execution_close"
+    ],
+    "wonder": [
+      "opairshare_wonder_managed_control"
+    ],
+    "opairshare_route_b_probe": [
+      "opairshare_set_wonder_priv_data"
+    ]
+  },
+  "provider_actual_export_count": 22,
+  "downloaded_stop_artifact_verified_production_hash_records": 41,
+  "local_import_tests_passed": 8,
+  "local_deployment_policy_tests_passed": 12,
+  "device_adapter_implemented": false,
+  "KSU_installable_bundle_created": false,
+  "phone_executed": false,
+  "runtime_certified": false,
+  "RF_certified": false,
+  "limitations": "Actual ELF records and selected CI evidence only. No full private layout/KCFI, runtime teardown, loader or Apple interoperability certificate."
+}

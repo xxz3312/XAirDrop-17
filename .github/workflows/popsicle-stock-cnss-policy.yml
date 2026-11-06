@@ -1,0 +1,26 @@
+name: Popsicle stock CNSS2 policy
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/popsicle-stock-cnss-policy.yml
+      - tools/device/popsicle-stock-cnss-engine.sh
+      - tools/device/tests/test_stock_cnss_engine.py
+      - tools/kernel/stock_cnss_audit.py
+      - tools/kernel/test_stock_cnss_audit.py
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check stock CNSS2 imports and inject deployment failures
+        run: |
+          sh -n tools/device/popsicle-stock-cnss-engine.sh
+          python3 -m unittest discover -s tools/kernel -p test_stock_cnss_audit.py -v
+          python3 -m unittest discover -s tools/device/tests -p test_stock_cnss_engine.py -v

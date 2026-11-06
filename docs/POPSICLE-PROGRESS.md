@@ -1,3 +1,7 @@
+## 最新阶段 0135（新 ELF 原厂 CNSS2 导入通过，独立部署核心已实现）
+
+七项必选 CI 成功。完整/精简 ZIP 摘要、64 份 JSON 一致性和五个真实 ELF 复核通过；新 WLAN 含 590 条版本记录，64 项原厂 CNSS2 导入 CRC 匹配，checked_v1/live-arm 均无残留。provider 实际消费者导入 CRC 匹配。新增独立、无 IO 的启动状态机，只允许切换 WLAN/provider，原厂 CNSS2 前后身份持续检查，副作用有 intent/returned/done，失败不重试；12 项故障模型与八项导入测试本地通过。设备端适配器/KSU 包尚未实现，无手机执行或运行认证。见 [0135 验收与边界](POPSICLE-STOCK-CNSS-POLICY-0135.md)。
+
 ## 最新阶段 0133（保留原厂 CNSS2 的源码分支可复用，重构建尚待验证）
 
 实测 0130 WLAN ELF 的 62 项原厂 CNSS2 导入 CRC 匹配，但另有两个 checked_v1 强导入和外部 live-unload arm，不能直接配原厂运行。源码已有宏关闭分支，回到原厂 register/unregister 和原生 PCIe callbacks；会失去 checked 注册保留、外部受控热卸载等保证。新增默认 WLAN 链接产物门禁，拒绝 checked/live-arm 残留、旧 CNSS2 CRC 差异和依赖遗漏，八项新回归通过，实际旧 ELF 按预期拒绝。完整构建/新部署合同尚待完成，无新手机包；原 0131 pairctl 不适用于新路线。见 [0133 依赖审查](POPSICLE-STOCK-CNSS-REVIEW-0133.md)。
