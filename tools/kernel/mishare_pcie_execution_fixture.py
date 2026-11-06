@@ -175,7 +175,7 @@ def run(wlan,output):
         for name in ['module.h','mutex.h','string.h']:(d/'linux'/name).write_text('/* modeled module API */\n')
         (d/'mishare_wlan_execution.h').write_bytes(header)
         source=d/'test.c';exe=d/'test'
-        command=['cc','-std=c11','-Wall','-Wextra','-Werror','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I'+str(d),str(source),'-o',str(exe)]
+        command=['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-pthread','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I'+str(d),str(source),'-o',str(exe)]
         env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',UBSAN_OPTIONS='halt_on_error=1')
         def execute(p,c):
             (d/'execution.c').write_text(p);source.write_text(c);subprocess.run(command,check=True)
