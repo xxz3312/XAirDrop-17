@@ -127,7 +127,7 @@ class BundleContractTests(unittest.TestCase):
         mods={}
         for role,name in bundle.NAMES.items():
             p=self.root/'binaries'/(name+'.ko');p.write_bytes(name.encode());mods[role]={'sha256':bundle.sha(p),'vermagic':['exact kernel'],'vermagic_stock_loader_match':True,'stock_loader_kernel_sha256':'loader'}
-        self.accept={'phone_executed':False,'pair_result_accepted':True,'provider_control_parameter_owner_and_ops_relocations_verified':True,'provider_control_parameter_permission':'0200','pair_report':{'status':'CHECKED_PLATFORM_PAIR_LINK_AND_RECORDED_CHECKS_ONLY','paired_WLAN_built':True,'CRC_gate_waived':False,'radio_backend_activation_enabled':False,'export_surface':{'match':True,'legacy_count':81},'modules':mods}}
+        self.accept={'source_commit':'test','phone_executed':False,'pair_result_accepted':True,'provider_control_parameter_owner_and_ops_relocations_verified':True,'provider_control_parameter_permission':'0200','pair_report':{'status':'CHECKED_PLATFORM_PAIR_LINK_AND_RECORDED_CHECKS_ONLY','paired_WLAN_built':True,'CRC_gate_waived':False,'radio_backend_activation_enabled':False,'export_surface':{'match':True,'legacy_count':81},'modules':mods}}
         self.policy=json.loads((ROOT/'kernel/abi/popsicle-pair-deployment.json').read_text())
         for m in self.accept['pair_report']['modules'].values():m['stock_loader_kernel_sha256']=self.policy['loader_kernel_sha256']
         def inspect(p):return {'modinfo':{'name':[p.stem],'vermagic':['exact kernel']},'versions':{'opairshare_wlan_live_unload_arm_v1':'0x12345678'}}
@@ -165,3 +165,63 @@ class BundleContractTests(unittest.TestCase):
     def test_missing_recorded_stock_loader_match_is_rejected(self):
         self.accept['pair_report']['modules']['provider']['vermagic_stock_loader_match']=False
         with self.assertRaises(ValueError):self.verify()
+
+    def test_bundle_manifest_uses_observed_uname_not_vermagic_token(self):
+        import zipfile
+        out=self.root/'out.zip';bundle.build(self.root,out,self.accept,self.policy)
+        with zipfile.ZipFile(out) as z:
+            manifest=dict(line.split('\t',1) for line in z.read('deployment.tsv').decode().splitlines())
+        self.assertEqual(manifest['kernel'],self.policy['kernel_release'])
+        self.assertNotEqual(manifest['kernel'],self.policy['vermagic'].split()[0])
+
+    def small_update_base(self):
+        import zipfile
+        out=self.root/'full.zip';bundle.build(self.root,out,self.accept,self.policy)
+        with zipfile.ZipFile(out) as z:
+            data={n:z.read(n) for n in z.namelist()}
+        files={name:hashlib.sha256(value).hexdigest() for name,value in data.items() if name!='SHA256SUMS'}
+        manifest=dict(line.split('\t',1) for line in data['deployment.tsv'].decode().splitlines());manifest['kernel']=self.policy['vermagic'].split()[0]
+        return out,{'schema':1,'files':files,'manifest':manifest,'bundle_sha256':'old'},data
+    def test_small_update_contains_only_checker_manifest_and_checksums(self):
+        out,base,_=self.small_update_base();directory=self.root/'small'
+        result=bundle.write_checker_update(out,directory,base,self.policy)
+        self.assertEqual({p.name for p in directory.iterdir()},{'popsicle-pairctl.sh','deployment.tsv','SHA256SUMS'})
+        self.assertFalse(result['retained_module_bytes_changed'])
+    def test_small_update_rejects_rechecksummed_changed_driver(self):
+        import zipfile
+        out,base,data=self.small_update_base();data['kernel/cnss2.ko']=b'changed driver'
+        data['SHA256SUMS']=''.join(hashlib.sha256(v).hexdigest()+'  '+n+'\n' for n,v in sorted(data.items()) if n!='SHA256SUMS').encode()
+        bad=self.root/'bad.zip'
+        with zipfile.ZipFile(bad,'w') as z:
+            for n,v in data.items():z.writestr(n,v)
+        with self.assertRaisesRegex(ValueError,'retained file'):
+            bundle.write_checker_update(bad,self.root/'small',base,self.policy)
+        self.assertFalse((self.root/'small').exists())
+    def test_small_update_rejects_changed_nonrelease_identity(self):
+        out,base,_=self.small_update_base();base['manifest']['boot_sha256']='0'*64
+        with self.assertRaisesRegex(ValueError,'non-kernel-release identity'):
+            bundle.write_checker_update(out,self.root/'small',base,self.policy)
+
+class DevicePermissionTests(unittest.TestCase):
+    def function(self):
+        s=(ROOT/'tools/device/popsicle-pairctl.sh').read_text()
+        return s[s.index('pp_private() {'):s.index('\npp_verify_bundle()')]
+    def test_every_group_other_permission_combination_in_real_function(self):
+        function=self.function()
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'file';path.write_bytes(b'x')
+            modes=[format(n,'03o') for n in range(512)]+['1700','1755','1777','4755']
+            script='pp_message(){ :; }; stat(){ case "$2" in %u) echo 0;;%a) echo "$TEST_MODE";;esac; }\n'+function+'\nwhile read -r TEST_MODE;do if pp_private "$FILE";then echo "$TEST_MODE:0";else echo "$TEST_MODE:1";fi;done'
+            r=subprocess.run(['sh','-c',script],input='\n'.join(modes)+'\n',capture_output=True,text=True,env=dict(os.environ,FILE=str(path)))
+            self.assertEqual(r.returncode,0,r.stderr)
+            for line in r.stdout.splitlines():
+                mode,rc=line.split(':');self.assertEqual(int(rc),int(bool(int(mode,8)&0o022)),mode)
+            self.assertEqual(len(r.stdout.splitlines()),len(modes))
+    def test_nonroot_owner_symlink_and_invalid_mode_stay_blocked(self):
+        function=self.function()
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'file';path.write_bytes(b'x');link=Path(tmp)/'link';link.symlink_to(path)
+            script='pp_message(){ :; }; stat(){ case "$2" in %u) echo "$OWNER";;%a) echo "$MODE";;esac; }\n'+function+'\npp_private "$FILE"'
+            for uid,mode,file in [('123','700',path),('0','700',link),('0','700x',path),('0','70',path),('0','722',path)]:
+                r=subprocess.run(['sh','-c',script],capture_output=True,text=True,env=dict(os.environ,OWNER=uid,MODE=mode,FILE=str(file)))
+                self.assertNotEqual(r.returncode,0,(uid,mode,file))

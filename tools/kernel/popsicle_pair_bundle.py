@@ -75,7 +75,7 @@ def build(pair,output,acceptance=None,policy=None):
     output.parent.mkdir(parents=True,exist_ok=True)
     with tempfile.TemporaryDirectory(dir=output.parent) as tmp:
         bundle=Path(tmp)/'pair';(bundle/'kernel').mkdir(parents=True)
-        values={'schema':'1','device':policy['device'],'firmware':policy['firmware'],'kernel':policy['vermagic'].split()[0],
+        values={'schema':'1','device':policy['device'],'firmware':policy['firmware'],'kernel':policy['kernel_release'],
                 'runtime_certified':'false','boot_sha256':policy['boot_sha256'],'source_commit':acceptance['source_commit']}
         for role,m in modules.items():
             copied=bundle/'kernel'/(m['name']+'.ko');shutil.copyfile(m['path'],copied)
@@ -105,5 +105,50 @@ def build(pair,output,acceptance=None,policy=None):
     return {'status':'EXPERIMENTAL_MANUAL_PAIR_BUNDLE_PREPARED_ONLY','sha256':sha(output),'size':output.stat().st_size,
             'source_commit':acceptance['source_commit'],'runtime_certified':False,'phone_executed':False}
 
+
+
+def write_checker_update(bundle_path,output_dir,baseline=None,policy=None):
+    """Stage only the two changed files and their complete checksum list.
+
+    Any change to a retained file, kernel module or other manifest identity
+    rejects this small update. The user keeps the original audited drivers.
+    """
+    baseline=baseline or json.loads((ROOT/'kernel/abi/popsicle-checker-base-0131.json').read_text())
+    policy=policy or json.loads((ROOT/'kernel/abi/popsicle-pair-deployment.json').read_text())
+    allowed={'popsicle-pairctl.sh','deployment.tsv'}
+    with zipfile.ZipFile(bundle_path) as z:
+        names=[n.filename for n in z.infolist()]
+        if len(names)!=len(set(names)) or set(names)!=set(baseline['files'])|{'SHA256SUMS'}:
+            raise ValueError('Unexpected update bundle members')
+        checks={}
+        for line in z.read('SHA256SUMS').decode().splitlines():
+            digest,name=line.split('  ',1)
+            if name in checks or len(digest)!=64:raise ValueError('Invalid checksum list')
+            checks[name]=digest
+        if set(checks)!=set(baseline['files']):raise ValueError('Incomplete update checksums')
+        for name,digest in checks.items():
+            h=hashlib.sha256()
+            with z.open(name) as f:
+                while data:=f.read(1024*1024):h.update(data)
+            if h.hexdigest()!=digest:raise ValueError('Corrupt update member: '+name)
+            if name not in allowed and digest!=baseline['files'][name]:
+                raise ValueError('Small update would change retained file: '+name)
+        rows=[line.split('\t',1) for line in z.read('deployment.tsv').decode().splitlines()]
+        manifest=dict(rows)
+        if len(rows)!=len(manifest):raise ValueError('Duplicate update manifest keys')
+        expected=dict(baseline['manifest']);expected['kernel']=policy['kernel_release']
+        if manifest!=expected:raise ValueError('Small update changed non-kernel-release identity')
+        if z.read('popsicle-pairctl.sh')!=(ROOT/'tools/device/popsicle-pairctl.sh').read_bytes():
+            raise ValueError('Checker does not match current source')
+        output_dir.mkdir(parents=True,exist_ok=False)
+        for name in sorted(allowed|{'SHA256SUMS'}):(output_dir/name).write_bytes(z.read(name))
+    return {'status':'CHECKER_DATA_ONLY_UPDATE','files':sorted(allowed|{'SHA256SUMS'}),'retained_module_bytes_changed':False,'base_bundle_sha256':baseline['bundle_sha256']}
+
+
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--pair',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args();print(json.dumps(build(a.pair,a.output),indent=2))
+    p=argparse.ArgumentParser(description=__doc__)
+    p.add_argument('--pair',type=Path,required=True);p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--checker-update',type=Path)
+    a=p.parse_args();result=build(a.pair,a.output)
+    if a.checker_update:result['checker_update']=write_checker_update(a.output,a.checker_update)
+    print(json.dumps(result,indent=2))

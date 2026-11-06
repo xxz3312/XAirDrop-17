@@ -35,7 +35,12 @@ pp_key() {
 pp_environment() {
     [ "$(getprop ro.product.device)" = "$(pp_key device)" ] || return 1
     [ "$(getprop ro.build.version.incremental)" = "$(pp_key firmware)" ] || return 1
-    [ "$(uname -r)" = "$(pp_key kernel)" ] || return 1
+    running_release=$(uname -r)
+    expected_release=$(pp_key kernel) || return 1
+    [ "$running_release" = "$expected_release" ] || {
+        pp_message "KERNEL_RELEASE_MISMATCH:actual=$running_release:expected=$expected_release"
+        return 1
+    }
     [ "$(uname -m)" = aarch64 ] || return 1
     [ "$(getprop sys.boot_completed)" = 1 ] || return 1
     [ -r /proc/sys/kernel/random/boot_id ] || return 1
@@ -45,12 +50,22 @@ pp_environment() {
     [ -b "$boot" ] && [ "$(pp_hash "$boot")" = "$(pp_key boot_sha256)" ] || return 1
 }
 pp_private() {
-    [ ! -L "$1" ] && [ "$(stat -c %u "$1")" = 0 ] || return 1
+    [ ! -L "$1" ] || { pp_message "PRIVATE_SYMLINK:$1"; return 1; }
+    owner=$(stat -c %u "$1") || { pp_message "PRIVATE_STAT_FAILED:$1"; return 1; }
+    [ "$owner" = 0 ] || { pp_message "PRIVATE_OWNER:$1:uid=$owner"; return 1; }
     mode=$(stat -c %a "$1") || return 1
-    [ "$((0$mode & 022))" = 0 ]
+    # Textual octal digits: Android mksh need not interpret leading-zero
+    # arithmetic literals like dash/bash. Never convert mode using 0$mode.
+    case "$mode" in ''|*[!0-7]*) pp_message "PRIVATE_MODE_INVALID:$1:$mode"; return 1;; esac
+    case "${#mode}" in 3|4) ;; *) pp_message "PRIVATE_MODE_INVALID:$1:$mode"; return 1;; esac
+    case "$mode" in *[2367][0-7]|*[0-7][2367])
+        pp_message "PRIVATE_WRITABLE:$1:mode=$mode"; return 1;;
+    esac
+    return 0
 }
+
 pp_verify_bundle() {
-    case "$BUNDLE" in /data/adb/*) ;; *) return 1;; esac
+    case "$BUNDLE" in /data/adb/*) ;; *) pp_message "BUNDLE_LOCATION:$BUNDLE"; return 1;; esac
     parent=$BUNDLE
     while :; do
         pp_private "$parent" || return 1
@@ -59,7 +74,8 @@ pp_verify_bundle() {
     done
     pp_private "$BUNDLE/kernel" || return 1
     for f in SHA256SUMS deployment.tsv popsicle-pairctl.sh popsicle-pair-engine.sh kernel/cnss2.ko kernel/qca_cld3_peach_v2.ko kernel/opairshare_wonder_provider.ko; do
-        [ -f "$BUNDLE/$f" ] && pp_private "$BUNDLE/$f" || return 1
+        [ -f "$BUNDLE/$f" ] || { pp_message "BUNDLE_FILE_MISSING:$f"; return 1; }
+        pp_private "$BUNDLE/$f" || return 1
     done
     (cd "$BUNDLE" && sha256sum -c SHA256SUMS) || return 1
     [ "$(pp_key schema)" = 1 ] || return 1
@@ -76,12 +92,15 @@ pp_expect_absent() { [ ! -d "/sys/module/$1" ]; }
 pp_expect_module() {
     [ -d "/sys/module/$1" ] && [ "$(cat "/sys/module/$1/initstate")" = live ] || return 1
     note="/sys/module/$1/notes/.note.gnu.build-id"
-    [ -f "$note" ] && [ "$(pp_hash "$note")" = "$(pp_key "$2.$1.note_sha256")" ]
+    [ -f "$note" ] || { pp_message "LOADED_NOTE_MISSING:$1"; return 1; }
+    actual_note=$(pp_hash "$note") || return 1
+    expected_note=$(pp_key "$2.$1.note_sha256") || return 1
+    [ "$actual_note" = "$expected_note" ] || { pp_message "LOADED_NOTE_MISMATCH:$1:actual=$actual_note:expected=$expected_note"; return 1; }
 }
 pp_holders() {
     [ -d "/sys/module/$1/holders" ] || return 1
     names=$(ls -1 "/sys/module/$1/holders") || return 1
-    [ "$names" = "$2" ]
+    [ "$names" = "$2" ] || { pp_message "HOLDERS_MISMATCH:$1:actual=[$names]:expected=[$2]"; return 1; }
 }
 pp_zero_refs() { [ "$(cat "/sys/module/$1/refcnt")" = 0 ]; }
 pp_healthy() {
@@ -98,6 +117,7 @@ pp_stock_path() {
         f="$d/$1.ko"
         if [ -f "$f" ] && [ "$(pp_hash "$f")" = "$(pp_key "stock.$1.sha256")" ]; then printf '%s\n' "$f"; return 0; fi
     done
+    pp_message "STOCK_FILE_MISSING_OR_HASH_MISMATCH:$1"
     return 1
 }
 pp_running_hals() {

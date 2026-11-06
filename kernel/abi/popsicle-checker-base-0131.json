@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "bundle_sha256": "b7fe3645c7c464269958c3fdb8879685c76cd427f5af429295efec811309acda",
+  "files": {
+    "README.txt": "1a1403e2c42708052079f87cedd20fbd352a2da53ae94390f3082d2cf75ce2be",
+    "acceptance.json": "e0d08d9647ea50c308723f401ff2aaac980a17cb0e51a75f2963141d533d687b",
+    "deployment.tsv": "b0cd4a36d75cfcb8a41ba0762e5f11c852d090942068cf1b6a72499ed9ca379b",
+    "kernel/cnss2.ko": "0dbe386b1a9dc47559da846358077b8f43993902b1761c2033bdeffe63b17016",
+    "kernel/opairshare_wonder_provider.ko": "1398aedf1972a94257aff0e32408f312f88da74ac8814cdbe673071d10d54868",
+    "kernel/qca_cld3_peach_v2.ko": "cac81dee8b2cf99bef8f32bc977d0ca86833a9caa8585c7305c9d3eadc251dbf",
+    "popsicle-pair-engine.sh": "e4a51028d8aa90f97bdc0e23ecd38293ad1ecc4e0b103273a2651691778f8a09",
+    "popsicle-pairctl.sh": "739212b680c0342ec78e69e165f322da6184ef6de42bc908e5673c8694f30fba"
+  },
+  "manifest": {
+    "boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93",
+    "candidate.cnss2.note_sha256": "ec13cf489e1a6590aef13667fdc77227b4580248c80bb7f0e3ad15825bd173ec",
+    "candidate.cnss2.sha256": "0dbe386b1a9dc47559da846358077b8f43993902b1761c2033bdeffe63b17016",
+    "candidate.opairshare_wonder_provider.note_sha256": "3643563cbf020b3984c51b12426f0648c8fd80eeed2221317aedc5e5b19229ec",
+    "candidate.opairshare_wonder_provider.sha256": "1398aedf1972a94257aff0e32408f312f88da74ac8814cdbe673071d10d54868",
+    "candidate.qca_cld3_peach_v2.note_sha256": "acc26ce72127f6631ab9ed72bfbcbba3b588237771d5d41c55af16cd343ca3ea",
+    "candidate.qca_cld3_peach_v2.sha256": "cac81dee8b2cf99bef8f32bc977d0ca86833a9caa8585c7305c9d3eadc251dbf",
+    "device": "popsicle",
+    "firmware": "OS4.0.5.0.XPBCNXM",
+    "kernel": "6.12.69-android16-6-4k",
+    "runtime_certified": "false",
+    "schema": "1",
+    "source_commit": "07530b1a618c84238bffe035060267b8eca5817b",
+    "stock.cnss2.note_sha256": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3",
+    "stock.cnss2.sha256": "6e0494f4535ee6e7923493abe75db2e50e3216cf204334639a52d84e23c51a37",
+    "stock.qca_cld3_peach_v2.note_sha256": "e2db5a4c55b3664d2aa3d5ce4dc24af67df31f58d88f4e65121fd5aa0b050ecd",
+    "stock.qca_cld3_peach_v2.sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75"
+  }
+}

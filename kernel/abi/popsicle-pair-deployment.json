@@ -17,5 +17,7 @@
   "runtime_certified": false,
   "loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
   "loader_evidence_sha256": "72d76c6964567da860f3605073aee9bb1abd7696540e9aefa79eeed416fff4b8",
-  "boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93"
+  "boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93",
+  "kernel_release": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "kernel_release_source": "Observed uname -r in the uploaded 0131 status; active boot SHA and both loaded stock note SHA values match the audited capture."
 }

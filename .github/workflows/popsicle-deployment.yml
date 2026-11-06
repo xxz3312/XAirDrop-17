@@ -10,6 +10,7 @@ on:
       - tools/kernel/popsicle_pair_bundle.py
       - tools/kernel/test_popsicle_pair_deployment.py
       - kernel/abi/popsicle-pair-deployment.json
+      - kernel/abi/popsicle-checker-base-0131.json
 permissions:
   contents: read
   actions: read
@@ -53,9 +54,15 @@ jobs:
       - name: Prepare manual experimental bundle without installing
         run: |
           mkdir output
-          python3 tools/kernel/popsicle_pair_bundle.py --pair pair --output output/popsicle-checked-pair-0131.zip > output/preparation.json
+          python3 tools/kernel/popsicle_pair_bundle.py --pair pair --output output/popsicle-checked-pair-0131.zip --checker-update checker-update > output/preparation.json
       - uses: actions/upload-artifact@v4
         with:
           name: popsicle-pair-preparation-0131-${{ github.run_id }}
           path: output/
+          retention-days: 7
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-checker-fix-0132-${{ github.run_id }}
+          path: checker-update/
           retention-days: 7

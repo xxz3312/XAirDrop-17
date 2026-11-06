@@ -1,0 +1,27 @@
+{
+  "stage": "0132",
+  "source_status_sha256": "2a12bebc27ac51f62b224c8bd0d54313c81a2ddc008273a9b344e91f28c08168",
+  "source_check_sha256": "ebacd36370301da580af35e292c778245e1dc9ebc700b510caa6ba113e51bc4e",
+  "source_trace_sha256": "ac525e9bef6198497db2de57d4ea6ba56be0f4f320c6c328f753d4f6f0991d90",
+  "device": "popsicle",
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "kernel_release": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "active_boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93",
+  "active_boot_matches_audited_capture": true,
+  "stock_loaded_note_hashes_match": true,
+  "observed_failure": {
+    "function": "pp_private",
+    "mode_text": "700",
+    "arithmetic_result_text": "20",
+    "location": "bundle root before any checksum checks or lifecycle effects"
+  },
+  "cause": "Leading-zero arithmetic portability defect in the checker, not a writable bundle mode",
+  "kernel_rule_defect": "Module vermagic release token was incorrectly used as the complete running uname release",
+  "phone_driver_replacement_executed": false,
+  "runtime_certified": false,
+  "phone_read_only_checks_observed": true,
+  "observed_stock_loaded_note_sha256": {
+    "cnss2": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3",
+    "qca_cld3_peach_v2": "e2db5a4c55b3664d2aa3d5ce4dc24af67df31f58d88f4e65121fd5aa0b050ecd"
+  }
+}
