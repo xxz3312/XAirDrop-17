@@ -38,7 +38,7 @@ static QDF_STATUS osif_driver_sync_trans_start_wait(struct osif_driver_sync **s)
 static void osif_driver_sync_wait_for_ops(struct osif_driver_sync *s){assert(s==&sync);waits++;}
 static int hdd_mishare_unload_ready(void){admitted++;return admission_error;}
 static void osif_driver_sync_trans_stop(struct osif_driver_sync *s){assert(s==&sync);}
-static void *cds_get_context(int id){return id==QDF_MODULE_ID_HIF?(no_hif?NULL:&sync):(no_hdd?NULL:&hdd);}
+static void *cds_get_context(int id){return id==QDF_MODULE_ID_HIF?(no_hif?NULL:(void *)&sync):(no_hdd?NULL:(void *)&hdd);}
 static void qdf_rtpm_sync_resume(void){}
 static void cds_set_driver_loaded(bool b){assert(!b);globals_set++;}
 static void cds_set_unload_in_progress(bool b){assert(b);globals_set++;}
