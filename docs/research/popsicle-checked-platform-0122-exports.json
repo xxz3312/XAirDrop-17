@@ -1,0 +1,1163 @@
+{
+  "source_commit": "4cdc506c3cb965eeb4ec85c1385f01a158ee3f18",
+  "workflow_run": 42188446777,
+  "candidate_sha256": "fe4dd7334e5ba74fe5eb9de81ee1be9cc6910709b020910e5d13668670b8da1d",
+  "candidate_exports": {
+    "__icnss_register_driver": {
+      "crc": "0x8da8ce8b",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_allow_l1": {
+      "crc": "0x33369f48",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_athdiag_read": {
+      "crc": "0x68471808",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_athdiag_write": {
+      "crc": "0xdfbba642",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_audio_is_direct_link_supported": {
+      "crc": "0x9c62463f",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_audio_smmu_map": {
+      "crc": "0x9da28113",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_audio_smmu_unmap": {
+      "crc": "0x079064c9",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_block_shutdown": {
+      "crc": "0xd8bb9cf8",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_ce_free_irq": {
+      "crc": "0xcc3053e6",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_ce_request_irq": {
+      "crc": "0xda9e56f2",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_disable_irq": {
+      "crc": "0x6cac02d7",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_enable_irq": {
+      "crc": "0x6cac02d7",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_exit_power_save": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_force_wake_release": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_force_wake_request": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_audio_shared_iommu_group_cap": {
+      "crc": "0x9c62463f",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_ce_id": {
+      "crc": "0xc1fdfed1",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_cpumask_for_wlan_rx_interrupts": {
+      "crc": "0x9507c8ce",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_cpumask_for_wlan_tx_comp_interrupts": {
+      "crc": "0x9507c8ce",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_curr_therm_cdev_state": {
+      "crc": "0xbee0839b",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_device_config": {
+      "crc": "0xe3d7cc3b",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_direct_link_sid": {
+      "crc": "0x46fe4839",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_fw_cap": {
+      "crc": "0x3e3e7a5e",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_fw_direct_link_cap": {
+      "crc": "0x9c62463f",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_fw_lpass_shared_mem": {
+      "crc": "0xed3e4a50",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_iova_info": {
+      "crc": "0x7be5ca79",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_irq": {
+      "crc": "0x33632b21",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_mhi_state": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_msi_address": {
+      "crc": "0xe94752e7",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_msi_irq": {
+      "crc": "0xb7ffb064",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_soc_info": {
+      "crc": "0x28a97fda",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_user_msi_assignment": {
+      "crc": "0x64e8b397",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_get_wifi_kobj": {
+      "crc": "0x8fc1da60",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_idle_restart": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_idle_shutdown": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_device_awake": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_fw_down": {
+      "crc": "0x5e505530",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_fw_ready": {
+      "crc": "0x5e505530",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_low_power": {
+      "crc": "0x5e505530",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_pci_ep_awake": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_pdr": {
+      "crc": "0x5e505530",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_qmi_disable": {
+      "crc": "0x9c62463f",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_is_rejuvenate": {
+      "crc": "0x5e505530",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_power_off": {
+      "crc": "0x9a5b7a37",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_power_on": {
+      "crc": "0x9a5b7a37",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_prevent_l1": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_qmi_send": {
+      "crc": "0x03aab92b",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_register_driver_async_data_cb": {
+      "crc": "0x4946277b",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_request_bus_bandwidth": {
+      "crc": "0xe220e671",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_set_fw_log_mode": {
+      "crc": "0x56206f23",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_smmu_get_domain": {
+      "crc": "0xb9ce4272",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_smmu_map": {
+      "crc": "0xda000c07",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_smmu_unmap": {
+      "crc": "0x546504ae",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_socinfo_get_serial_number": {
+      "crc": "0x971eaa4c",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_thermal_cdev_register": {
+      "crc": "0xd0dd5ff6",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_thermal_cdev_unregister": {
+      "crc": "0x847be38c",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_trigger_recovery": {
+      "crc": "0x31587507",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_unregister_driver": {
+      "crc": "0xf79f607e",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_unregister_driver_checked_v1": {
+      "crc": "0x9af78c47",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_wlan_disable": {
+      "crc": "0x508e5b34",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    },
+    "icnss_wlan_enable": {
+      "crc": "0x52e21d01",
+      "namespace": "",
+      "export_type": "EXPORT_SYMBOL"
+    }
+  },
+  "missing_legacy_exports": [],
+  "legacy_export_crc_mismatches": {
+    "__icnss_register_driver": {
+      "stock": "0xd18cf709",
+      "generated": "0x8da8ce8b"
+    },
+    "icnss_allow_l1": {
+      "stock": "0xbf0228d3",
+      "generated": "0x33369f48"
+    },
+    "icnss_athdiag_read": {
+      "stock": "0xf817da27",
+      "generated": "0x68471808"
+    },
+    "icnss_athdiag_write": {
+      "stock": "0x3064184d",
+      "generated": "0xdfbba642"
+    },
+    "icnss_audio_is_direct_link_supported": {
+      "stock": "0x275aab7a",
+      "generated": "0x9c62463f"
+    },
+    "icnss_audio_smmu_map": {
+      "stock": "0x6e372690",
+      "generated": "0x9da28113"
+    },
+    "icnss_audio_smmu_unmap": {
+      "stock": "0x1ecd48b3",
+      "generated": "0x079064c9"
+    },
+    "icnss_ce_free_irq": {
+      "stock": "0x14540dcc",
+      "generated": "0xcc3053e6"
+    },
+    "icnss_ce_request_irq": {
+      "stock": "0xfa346e2a",
+      "generated": "0xda9e56f2"
+    },
+    "icnss_disable_irq": {
+      "stock": "0x1921a9af",
+      "generated": "0x6cac02d7"
+    },
+    "icnss_enable_irq": {
+      "stock": "0x1921a9af",
+      "generated": "0x6cac02d7"
+    },
+    "icnss_exit_power_save": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_force_wake_release": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_force_wake_request": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_get_audio_shared_iommu_group_cap": {
+      "stock": "0x275aab7a",
+      "generated": "0x9c62463f"
+    },
+    "icnss_get_ce_id": {
+      "stock": "0x847b776a",
+      "generated": "0xc1fdfed1"
+    },
+    "icnss_get_cpumask_for_wlan_rx_interrupts": {
+      "stock": "0x1ca67bb9",
+      "generated": "0x9507c8ce"
+    },
+    "icnss_get_cpumask_for_wlan_tx_comp_interrupts": {
+      "stock": "0x1ca67bb9",
+      "generated": "0x9507c8ce"
+    },
+    "icnss_get_curr_therm_cdev_state": {
+      "stock": "0x410f5a81",
+      "generated": "0xbee0839b"
+    },
+    "icnss_get_direct_link_sid": {
+      "stock": "0x79795860",
+      "generated": "0x46fe4839"
+    },
+    "icnss_get_fw_cap": {
+      "stock": "0xdb7c3377",
+      "generated": "0x3e3e7a5e"
+    },
+    "icnss_get_fw_direct_link_cap": {
+      "stock": "0x275aab7a",
+      "generated": "0x9c62463f"
+    },
+    "icnss_get_fw_lpass_shared_mem": {
+      "stock": "0xf1813b08",
+      "generated": "0xed3e4a50"
+    },
+    "icnss_get_iova_info": {
+      "stock": "0x013fcebc",
+      "generated": "0x7be5ca79"
+    },
+    "icnss_get_irq": {
+      "stock": "0xa0362250",
+      "generated": "0x33632b21"
+    },
+    "icnss_get_mhi_state": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_get_msi_address": {
+      "stock": "0xccba17ec",
+      "generated": "0xe94752e7"
+    },
+    "icnss_get_msi_irq": {
+      "stock": "0xc131799a",
+      "generated": "0xb7ffb064"
+    },
+    "icnss_get_soc_info": {
+      "stock": "0xe8fd8c98",
+      "generated": "0x28a97fda"
+    },
+    "icnss_get_user_msi_assignment": {
+      "stock": "0xdf4f15e5",
+      "generated": "0x64e8b397"
+    },
+    "icnss_get_wifi_kobj": {
+      "stock": "0x0545466b",
+      "generated": "0x8fc1da60"
+    },
+    "icnss_idle_restart": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_idle_shutdown": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_is_device_awake": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_is_pci_ep_awake": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_is_qmi_disable": {
+      "stock": "0x275aab7a",
+      "generated": "0x9c62463f"
+    },
+    "icnss_power_off": {
+      "stock": "0x7115f67e",
+      "generated": "0x9a5b7a37"
+    },
+    "icnss_power_on": {
+      "stock": "0x7115f67e",
+      "generated": "0x9a5b7a37"
+    },
+    "icnss_prevent_l1": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_qmi_send": {
+      "stock": "0xa5c8e89b",
+      "generated": "0x03aab92b"
+    },
+    "icnss_register_driver_async_data_cb": {
+      "stock": "0xc348d329",
+      "generated": "0x4946277b"
+    },
+    "icnss_request_bus_bandwidth": {
+      "stock": "0x90b871e8",
+      "generated": "0xe220e671"
+    },
+    "icnss_set_fw_log_mode": {
+      "stock": "0x0ff5a10e",
+      "generated": "0x56206f23"
+    },
+    "icnss_smmu_get_domain": {
+      "stock": "0x1ed8eee2",
+      "generated": "0xb9ce4272"
+    },
+    "icnss_smmu_map": {
+      "stock": "0x0163a18f",
+      "generated": "0xda000c07"
+    },
+    "icnss_smmu_unmap": {
+      "stock": "0x46ed6aee",
+      "generated": "0x546504ae"
+    },
+    "icnss_socinfo_get_serial_number": {
+      "stock": "0x5e640187",
+      "generated": "0x971eaa4c"
+    },
+    "icnss_thermal_cdev_register": {
+      "stock": "0x7bea9653",
+      "generated": "0xd0dd5ff6"
+    },
+    "icnss_thermal_cdev_unregister": {
+      "stock": "0xb0d0d70f",
+      "generated": "0x847be38c"
+    },
+    "icnss_trigger_recovery": {
+      "stock": "0x8f529130",
+      "generated": "0x31587507"
+    },
+    "icnss_unregister_driver": {
+      "stock": "0xb9cb0555",
+      "generated": "0xf79f607e"
+    },
+    "icnss_wlan_disable": {
+      "stock": "0xba25fc27",
+      "generated": "0x508e5b34"
+    },
+    "icnss_wlan_enable": {
+      "stock": "0xab216dc6",
+      "generated": "0x52e21d01"
+    }
+  },
+  "legacy_export_count": 60,
+  "legacy_export_crc_match_count": 7,
+  "new_checked_export_present": true,
+  "candidate_modinfo": {
+    "license": [
+      "GPL v2"
+    ],
+    "description": [
+      "iWCN CORE platform driver"
+    ],
+    "name": [
+      "icnss2"
+    ],
+    "depends": [
+      "socinfo,pdr_interface,cnss_prealloc,rproc_qcom_common,pinctrl-msm,wlan_firmware_service,qmi_helpers"
+    ],
+    "alias": [
+      "of:N*T*Cqcom,wcn6750",
+      "of:N*T*Cqcom,wcn6750C*",
+      "of:N*T*Cqcom,icnss",
+      "of:N*T*Cqcom,icnssC*",
+      "of:N*T*Cqcom,wcn6450",
+      "of:N*T*Cqcom,wcn6450C*",
+      "of:N*T*Cqcom,wcn7750",
+      "of:N*T*Cqcom,wcn7750C*",
+      "of:N*T*Cqcom,icnss-direct-link",
+      "of:N*T*Cqcom,icnss-direct-linkC*"
+    ],
+    "vermagic": [
+      "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+    ]
+  },
+  "direct_device_layout": {
+    "candidate_size": 912,
+    "stock_size": 912,
+    "candidate_members": [
+      {
+        "name": "kobj",
+        "bit_offset": 0,
+        "bitfield_size": 0
+      },
+      {
+        "name": "parent",
+        "bit_offset": 768,
+        "bitfield_size": 0
+      },
+      {
+        "name": "p",
+        "bit_offset": 832,
+        "bitfield_size": 0
+      },
+      {
+        "name": "init_name",
+        "bit_offset": 896,
+        "bitfield_size": 0
+      },
+      {
+        "name": "type",
+        "bit_offset": 960,
+        "bitfield_size": 0
+      },
+      {
+        "name": "bus",
+        "bit_offset": 1024,
+        "bitfield_size": 0
+      },
+      {
+        "name": "driver",
+        "bit_offset": 1088,
+        "bitfield_size": 0
+      },
+      {
+        "name": "platform_data",
+        "bit_offset": 1152,
+        "bitfield_size": 0
+      },
+      {
+        "name": "driver_data",
+        "bit_offset": 1216,
+        "bitfield_size": 0
+      },
+      {
+        "name": "mutex",
+        "bit_offset": 1280,
+        "bitfield_size": 0
+      },
+      {
+        "name": "links",
+        "bit_offset": 1664,
+        "bitfield_size": 0
+      },
+      {
+        "name": "power",
+        "bit_offset": 2112,
+        "bitfield_size": 0
+      },
+      {
+        "name": "pm_domain",
+        "bit_offset": 4736,
+        "bitfield_size": 0
+      },
+      {
+        "name": "em_pd",
+        "bit_offset": 4800,
+        "bitfield_size": 0
+      },
+      {
+        "name": "pins",
+        "bit_offset": 4864,
+        "bitfield_size": 0
+      },
+      {
+        "name": "msi",
+        "bit_offset": 4928,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_ops",
+        "bit_offset": 5056,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_mask",
+        "bit_offset": 5120,
+        "bitfield_size": 0
+      },
+      {
+        "name": "coherent_dma_mask",
+        "bit_offset": 5184,
+        "bitfield_size": 0
+      },
+      {
+        "name": "bus_dma_limit",
+        "bit_offset": 5248,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_range_map",
+        "bit_offset": 5312,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_parms",
+        "bit_offset": 5376,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_pools",
+        "bit_offset": 5440,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_mem",
+        "bit_offset": 5568,
+        "bitfield_size": 0
+      },
+      {
+        "name": "cma_area",
+        "bit_offset": 5632,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_io_tlb_mem",
+        "bit_offset": 5696,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_io_tlb_pools",
+        "bit_offset": 5760,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_io_tlb_lock",
+        "bit_offset": 5888,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_uses_io_tlb",
+        "bit_offset": 5920,
+        "bitfield_size": 0
+      },
+      {
+        "name": "archdata",
+        "bit_offset": 5928,
+        "bitfield_size": 0
+      },
+      {
+        "name": "of_node",
+        "bit_offset": 5952,
+        "bitfield_size": 0
+      },
+      {
+        "name": "fwnode",
+        "bit_offset": 6016,
+        "bitfield_size": 0
+      },
+      {
+        "name": "devt",
+        "bit_offset": 6080,
+        "bitfield_size": 0
+      },
+      {
+        "name": "id",
+        "bit_offset": 6112,
+        "bitfield_size": 0
+      },
+      {
+        "name": "devres_lock",
+        "bit_offset": 6144,
+        "bitfield_size": 0
+      },
+      {
+        "name": "devres_head",
+        "bit_offset": 6208,
+        "bitfield_size": 0
+      },
+      {
+        "name": "class",
+        "bit_offset": 6336,
+        "bitfield_size": 0
+      },
+      {
+        "name": "groups",
+        "bit_offset": 6400,
+        "bitfield_size": 0
+      },
+      {
+        "name": "release",
+        "bit_offset": 6464,
+        "bitfield_size": 0
+      },
+      {
+        "name": "iommu_group",
+        "bit_offset": 6528,
+        "bitfield_size": 0
+      },
+      {
+        "name": "iommu",
+        "bit_offset": 6592,
+        "bitfield_size": 0
+      },
+      {
+        "name": "physical_location",
+        "bit_offset": 6656,
+        "bitfield_size": 0
+      },
+      {
+        "name": "removable",
+        "bit_offset": 6720,
+        "bitfield_size": 0
+      },
+      {
+        "name": "offline_disabled",
+        "bit_offset": 6752,
+        "bitfield_size": 1
+      },
+      {
+        "name": "offline",
+        "bit_offset": 6753,
+        "bitfield_size": 1
+      },
+      {
+        "name": "of_node_reused",
+        "bit_offset": 6754,
+        "bitfield_size": 1
+      },
+      {
+        "name": "state_synced",
+        "bit_offset": 6755,
+        "bitfield_size": 1
+      },
+      {
+        "name": "can_match",
+        "bit_offset": 6756,
+        "bitfield_size": 1
+      },
+      {
+        "name": "dma_coherent",
+        "bit_offset": 6757,
+        "bitfield_size": 1
+      },
+      {
+        "name": "dma_skip_sync",
+        "bit_offset": 6758,
+        "bitfield_size": 1
+      },
+      {
+        "name": "dma_iommu",
+        "bit_offset": 6759,
+        "bitfield_size": 1
+      },
+      {
+        "name": "__kabi_reserved1",
+        "bit_offset": 6784,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved2",
+        "bit_offset": 6848,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved3",
+        "bit_offset": 6912,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved4",
+        "bit_offset": 6976,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved5",
+        "bit_offset": 7040,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved6",
+        "bit_offset": 7104,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved7",
+        "bit_offset": 7168,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved8",
+        "bit_offset": 7232,
+        "bitfield_size": 0
+      }
+    ],
+    "stock_members": [
+      {
+        "name": "kobj",
+        "bit_offset": 0,
+        "bitfield_size": 0
+      },
+      {
+        "name": "parent",
+        "bit_offset": 768,
+        "bitfield_size": 0
+      },
+      {
+        "name": "p",
+        "bit_offset": 832,
+        "bitfield_size": 0
+      },
+      {
+        "name": "init_name",
+        "bit_offset": 896,
+        "bitfield_size": 0
+      },
+      {
+        "name": "type",
+        "bit_offset": 960,
+        "bitfield_size": 0
+      },
+      {
+        "name": "bus",
+        "bit_offset": 1024,
+        "bitfield_size": 0
+      },
+      {
+        "name": "driver",
+        "bit_offset": 1088,
+        "bitfield_size": 0
+      },
+      {
+        "name": "platform_data",
+        "bit_offset": 1152,
+        "bitfield_size": 0
+      },
+      {
+        "name": "driver_data",
+        "bit_offset": 1216,
+        "bitfield_size": 0
+      },
+      {
+        "name": "mutex",
+        "bit_offset": 1280,
+        "bitfield_size": 0
+      },
+      {
+        "name": "links",
+        "bit_offset": 1664,
+        "bitfield_size": 0
+      },
+      {
+        "name": "power",
+        "bit_offset": 2112,
+        "bitfield_size": 0
+      },
+      {
+        "name": "pm_domain",
+        "bit_offset": 4736,
+        "bitfield_size": 0
+      },
+      {
+        "name": "em_pd",
+        "bit_offset": 4800,
+        "bitfield_size": 0
+      },
+      {
+        "name": "pins",
+        "bit_offset": 4864,
+        "bitfield_size": 0
+      },
+      {
+        "name": "msi",
+        "bit_offset": 4928,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_ops",
+        "bit_offset": 5056,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_mask",
+        "bit_offset": 5120,
+        "bitfield_size": 0
+      },
+      {
+        "name": "coherent_dma_mask",
+        "bit_offset": 5184,
+        "bitfield_size": 0
+      },
+      {
+        "name": "bus_dma_limit",
+        "bit_offset": 5248,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_range_map",
+        "bit_offset": 5312,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_parms",
+        "bit_offset": 5376,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_pools",
+        "bit_offset": 5440,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_mem",
+        "bit_offset": 5568,
+        "bitfield_size": 0
+      },
+      {
+        "name": "cma_area",
+        "bit_offset": 5632,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_io_tlb_mem",
+        "bit_offset": 5696,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_io_tlb_pools",
+        "bit_offset": 5760,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_io_tlb_lock",
+        "bit_offset": 5888,
+        "bitfield_size": 0
+      },
+      {
+        "name": "dma_uses_io_tlb",
+        "bit_offset": 5920,
+        "bitfield_size": 0
+      },
+      {
+        "name": "archdata",
+        "bit_offset": 5928,
+        "bitfield_size": 0
+      },
+      {
+        "name": "of_node",
+        "bit_offset": 5952,
+        "bitfield_size": 0
+      },
+      {
+        "name": "fwnode",
+        "bit_offset": 6016,
+        "bitfield_size": 0
+      },
+      {
+        "name": "devt",
+        "bit_offset": 6080,
+        "bitfield_size": 0
+      },
+      {
+        "name": "id",
+        "bit_offset": 6112,
+        "bitfield_size": 0
+      },
+      {
+        "name": "devres_lock",
+        "bit_offset": 6144,
+        "bitfield_size": 0
+      },
+      {
+        "name": "devres_head",
+        "bit_offset": 6208,
+        "bitfield_size": 0
+      },
+      {
+        "name": "class",
+        "bit_offset": 6336,
+        "bitfield_size": 0
+      },
+      {
+        "name": "groups",
+        "bit_offset": 6400,
+        "bitfield_size": 0
+      },
+      {
+        "name": "release",
+        "bit_offset": 6464,
+        "bitfield_size": 0
+      },
+      {
+        "name": "iommu_group",
+        "bit_offset": 6528,
+        "bitfield_size": 0
+      },
+      {
+        "name": "iommu",
+        "bit_offset": 6592,
+        "bitfield_size": 0
+      },
+      {
+        "name": "physical_location",
+        "bit_offset": 6656,
+        "bitfield_size": 0
+      },
+      {
+        "name": "removable",
+        "bit_offset": 6720,
+        "bitfield_size": 0
+      },
+      {
+        "name": "offline_disabled",
+        "bit_offset": 6752,
+        "bitfield_size": 1
+      },
+      {
+        "name": "offline",
+        "bit_offset": 6753,
+        "bitfield_size": 1
+      },
+      {
+        "name": "of_node_reused",
+        "bit_offset": 6754,
+        "bitfield_size": 1
+      },
+      {
+        "name": "state_synced",
+        "bit_offset": 6755,
+        "bitfield_size": 1
+      },
+      {
+        "name": "can_match",
+        "bit_offset": 6756,
+        "bitfield_size": 1
+      },
+      {
+        "name": "dma_coherent",
+        "bit_offset": 6757,
+        "bitfield_size": 1
+      },
+      {
+        "name": "dma_skip_sync",
+        "bit_offset": 6758,
+        "bitfield_size": 1
+      },
+      {
+        "name": "dma_iommu",
+        "bit_offset": 6759,
+        "bitfield_size": 1
+      },
+      {
+        "name": "__kabi_reserved1",
+        "bit_offset": 6784,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved2",
+        "bit_offset": 6848,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved3",
+        "bit_offset": 6912,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved4",
+        "bit_offset": 6976,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved5",
+        "bit_offset": 7040,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved6",
+        "bit_offset": 7104,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved7",
+        "bit_offset": 7168,
+        "bitfield_size": 0
+      },
+      {
+        "name": "__kabi_reserved8",
+        "bit_offset": 7232,
+        "bitfield_size": 0
+      }
+    ],
+    "direct_size_and_member_offsets_match": true,
+    "stock_btf_sha256": "cc91023777fb757859cbc861302f7a303ede19c10a93823d6b99c5d5dbd699d7",
+    "candidate_module_sha256": "fe4dd7334e5ba74fe5eb9de81ee1be9cc6910709b020910e5d13668670b8da1d",
+    "limitations": "Direct device size, member names, bit offsets and bitfield widths only. Does not compare member types or transitive pointee definitions, genksyms type streams, KCFI or private platform layouts. Does not explain or waive CRC differences."
+  },
+  "strict_pair_gate_waived": false,
+  "limitations": "Actual linked candidate export table, modinfo and narrow direct device layout comparison only. Export CRC mismatch remains unresolved and blocks paired replacement; neither matching direct layout nor successful modpost certifies ABI/KCFI or loading."
+}

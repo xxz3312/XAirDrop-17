@@ -1,0 +1,1243 @@
+{
+  "stage": "0122 opt-in WLAN consumer and strict ICNSS platform pair build",
+  "source_commit": "4cdc506c3cb965eeb4ec85c1385f01a158ee3f18",
+  "workflow_run": 42188446777,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/42188446777",
+  "stage_offline_acceptance_complete": false,
+  "fast_production_C_validation_passed": true,
+  "checked_platform_pair_build_passed": false,
+  "python_kernel_tests_passed": 53,
+  "fixture_sha256": "f8384c6df0df2cc61af951eef98d94ef557a0d8c966a7b8b3b8855f010ec1174",
+  "external_fixture_sha256": "23a1cf4b7a8e384d73fe3a71a991f4557cdde80d591244b99663e716683cffc6",
+  "provider_sha256": "9ac067d8cd527e5991f5ebb99eb7d684cf8f12d4cfab3617269b1b1c9bdac579",
+  "execution_header_sha256": "e30965262d0dbd3a92c9c64aa4d8da77fbaaa29826088260ffee6b6b8db40aa0",
+  "native_platform_sha256": "0606649746c69f8bbef7a0e563450673dd92ec50fdee3626d453c75cddbd54d3",
+  "native_fragments_sha256": {
+    "NATIVE_REMOVE": "2a41f7d4af3d000f9fde0e563281d78d35f42311d796b62804620fd6c0da8e61",
+    "NATIVE_PLD_CHECKED": "a772d5b02223f4d497a12e9a53f6b943e4f2314acb67541439bf3e3df911553b",
+    "NATIVE_STATE": "89b48aca333dac454111a2ad1a255534c851dd022088e18b0184640e380ed766",
+    "NATIVE_HANDLER": "554b47cbf06b615c95b67a874730e9947b87c74e6e0d04619b003a91f70dca9e",
+    "NATIVE_CHECKED_ENTRY": "1b8237b5a5d8a81c398c47d8bc7c557babe5b36ec2a178b93297ce2941f16706",
+    "NATIVE_LEGACY_ENTRY": "090d78fbdeec81abcb763a13252d3cbd0557fe21c80b08761a4fee8b865669c4"
+  },
+  "pair_builder_sha256": "dafb701e34328eb3463b60472a28be9df4447530aa5b711ac0779ddad2ade734",
+  "trial_builder_sha256": "13c50a87d08cb0bdad71b2575ca61fd1298270d992e82db9805b15102f699b64",
+  "native_checked_consumer_sha256": "a772d5b02223f4d497a12e9a53f6b943e4f2314acb67541439bf3e3df911553b",
+  "first_attempt": {
+    "run": 42186159596,
+    "consumer_functional_tests_passed_before_mutation_marker_failure": true,
+    "mutation_refusal_caught_earlier_by_consumer": true,
+    "platform_compile_passed": false,
+    "issues": [
+      "new enum missing debug switch arm",
+      "internal dump helpers missing static scope",
+      "SoC SOCINFO/RPROC dependency configuration and real header selection"
+    ],
+    "checks_relaxed": false
+  },
+  "default_WLAN_uses_optional_entry": false,
+  "opt_in_WLAN_consumer_uses_optional_entry": true,
+  "new_platform_guard_deployed": false,
+  "phone_platform_config_independently_verified": false,
+  "platform_private_layout_KCFI_verified": false,
+  "module_loader_executed": false,
+  "phone_executed": false,
+  "radio_backend_activation_enabled": false,
+  "airdrop_verified": false,
+  "second_attempt": {
+    "run": 42186887834,
+    "fast_C_passed": true,
+    "pair_build_passed": false,
+    "reason": "forcing SoC header before source initialized printk before pr_fmt",
+    "fix": "normal-position unique header alias to hash-verified real SoC header; no declaration reconstruction"
+  },
+  "third_attempt": {
+    "run": 42187470937,
+    "fast_C_passed": true,
+    "complete_native_ICNSS_object_compiled": true,
+    "pair_link_passed": false,
+    "missing_provider_exports": [
+      "socinfo_get_serial_number",
+      "pdr_restart_pd",
+      "pdr_handle_release",
+      "pdr_handle_alloc",
+      "pdr_add_lookup",
+      "msm_gpio_mpm_wake_set"
+    ],
+    "resolved_from_existing_stock_vendor_boot_archive": true,
+    "all_six_stock_import_crcs_match_real_export_providers": true
+  },
+  "stock_provider_table_sha256": "6e2610986e0dd67706ffe4aee2fb8533e07b19b34f1b897aa37ae27b8ee7ccae",
+  "provider_recovery": {
+    "firmware": "OS4.0.5.0.XPBCNXM",
+    "source_archive": "17pm-airdrop-extra-20261025-162440.tar.gz",
+    "archive_sha256": "974268f5d81561377a9a5eaed29cf653560b3f834f864e525fc9d8091a9056ac",
+    "vendor_boot_sha256": "77d7941a8cf074e5fcf15dd36508405ae536ea28636dc0b321ed96e54727c630",
+    "source_stock_icnss_archive": "17pm-airdrop-baseline-20261025-153730.tar.gz",
+    "source_stock_icnss_sha256": "230263bd64744bc0dcaa7f6de2a98acdfe8a783e00941b47c8b3b4f0b852bfcc",
+    "all_six_stock_icnss_import_crcs_match_real_exports": true,
+    "symbols": {
+      "pdr_add_lookup": {
+        "provider": "pdr_interface",
+        "crc": "0x1668891b"
+      },
+      "pdr_handle_alloc": {
+        "provider": "pdr_interface",
+        "crc": "0x9f786dec"
+      },
+      "pdr_handle_release": {
+        "provider": "pdr_interface",
+        "crc": "0xe37e953d"
+      },
+      "pdr_restart_pd": {
+        "provider": "pdr_interface",
+        "crc": "0x8802535a"
+      },
+      "msm_gpio_mpm_wake_set": {
+        "provider": "pinctrl-msm",
+        "crc": "0xd7c04c7b"
+      },
+      "socinfo_get_serial_number": {
+        "provider": "socinfo",
+        "crc": "0x0f600de8"
+      }
+    },
+    "providers_added": [
+      {
+        "name": "pdr_interface",
+        "sha256": "018d978b2c553e88214472baf241364635dcfe9cb8e09423bbab6552f49614e5",
+        "source": "vendor_boot.img ramdisk ",
+        "symbols_found": [
+          "pdr_add_lookup",
+          "pdr_handle_alloc",
+          "pdr_handle_release",
+          "pdr_restart_pd"
+        ],
+        "exports": 4
+      },
+      {
+        "name": "pinctrl-msm",
+        "sha256": "f58468677124d84afac7c1c018d829bfb1841a04fe4ce99ccb24e983da77a41f",
+        "source": "vendor_boot.img ramdisk ",
+        "symbols_found": [
+          "msm_gpio_mpm_wake_set"
+        ],
+        "exports": 12
+      },
+      {
+        "name": "socinfo",
+        "sha256": "31340d1992ee81b0e270d5c457f4a1173d257b33bd331e4fc3d367846997dfa3",
+        "source": "vendor_boot.img ramdisk ",
+        "symbols_found": [
+          "socinfo_get_serial_number"
+        ],
+        "exports": 13
+      }
+    ],
+    "method": "Verified vendor_boot v4 ramdisk layout; strict LZ4 legacy block decompression; bounded CPIO parse; actual AArch64 __ksymtab/__kcrctab relocation-based exports including license and namespace. No imported CRCs substituted as providers.",
+    "limitations": "Actual stock export evidence for the recorded firmware only. Does not certify rebuilt platform private layout/configuration/KCFI, replacement loading or radio."
+  },
+  "four_regenerated_fixture_hashes_verified": true,
+  "fast_artifact_digest_verified": true,
+  "pair_compact_artifact_digest_verified": true,
+  "pair_binary_artifact_digest_verified": true,
+  "jobs": [
+    {
+      "id": 127794287254,
+      "name": "stop-admission",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Fetch pinned WLAN and apply existing patches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Production host and runtime stop admission with sanitizers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 127794287345,
+      "name": "diagnostic",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Host regression checks",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install host build dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Restore pinned toolchains",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Restore pinned bindgen",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Fetch locked sources and official toolchains",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Save complete toolchains before compilation",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Save complete bindgen before compilation",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Compile diagnostic objects",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 10
+        },
+        {
+          "name": "Check CNSS provider interfaces",
+          "status": "pending",
+          "conclusion": null,
+          "number": 11
+        },
+        {
+          "name": "Strict module linking and complete WLAN dependency gate",
+          "status": "pending",
+          "conclusion": null,
+          "number": 12
+        },
+        {
+          "name": "Compare selected WLAN structure layouts with stock BTF metadata",
+          "status": "pending",
+          "conclusion": null,
+          "number": 13
+        },
+        {
+          "name": "Required recorded module checks (not runtime certification)",
+          "status": "pending",
+          "conclusion": null,
+          "number": 14
+        },
+        {
+          "name": "Upload diagnostics even when interface audit fails",
+          "status": "pending",
+          "conclusion": null,
+          "number": 15
+        },
+        {
+          "name": "Upload compact validation reports",
+          "status": "pending",
+          "conclusion": null,
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 32
+        }
+      ]
+    },
+    {
+      "id": 127794287462,
+      "name": "ce-stop",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Fetch pinned WLAN and apply existing patches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Native CE stop and IPCI producer drain with sanitizers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 127794287470,
+      "name": "ce-buffers",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Fetch pinned WLAN and apply existing patches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Native residual CE RX and TX cleanup with sanitizers",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 10
+        }
+      ]
+    },
+    {
+      "id": 127794287520,
+      "name": "transport-stop",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Fetch pinned WLAN and apply existing patches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Native HIF receive and HTC stop ordering with sanitizers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    },
+    {
+      "id": 127794287587,
+      "name": "parent-peer-composite",
+      "status": "in_progress",
+      "conclusion": null,
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Fetch pinned WLAN and apply existing patches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Production HTT peer unmap parser and nbuf ownership with sanitizers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Native DP peer unmap lookup and map removal with sanitizers",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 5
+        },
+        {
+          "name": "Native parent and peer composite with sanitizers",
+          "status": "pending",
+          "conclusion": null,
+          "number": 6
+        },
+        {
+          "name": "Native heap PDEV dispatcher and final free with sanitizers",
+          "status": "pending",
+          "conclusion": null,
+          "number": 7
+        },
+        {
+          "name": "Native PSOC reference lease through PDEV free with sanitizers",
+          "status": "pending",
+          "conclusion": null,
+          "number": 8
+        },
+        {
+          "name": "Native heap PSOC dispatcher and final free with sanitizers",
+          "status": "pending",
+          "conclusion": null,
+          "number": 9
+        },
+        {
+          "name": "Native DP VDEV final free and production completion with sanitizers",
+          "status": "pending",
+          "conclusion": null,
+          "number": 10
+        },
+        {
+          "name": "Native DP peer free returning VDEV CHILD reference with sanitizers",
+          "status": "pending",
+          "conclusion": null,
+          "number": 11
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 12
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "pending",
+          "conclusion": null,
+          "number": 24
+        }
+      ]
+    },
+    {
+      "id": 127794287696,
+      "name": "checked-platform",
+      "status": "completed",
+      "conclusion": "failure",
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Install host build dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Restore pinned toolchains",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Restore pinned bindgen",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Fetch locked sources and official toolchains",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Save complete toolchains before compilation",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7
+        },
+        {
+          "name": "Save complete bindgen before compilation",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Strict checked ICNSS and WLAN pair build",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 9
+        },
+        {
+          "name": "Upload checked pair diagnostics",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Upload compact checked pair report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ]
+    },
+    {
+      "id": 127794287866,
+      "name": "htt-callbacks",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 42188446777,
+      "logs_url": null,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Fetch pinned WLAN and apply existing patches",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Native HTC registration and HIF callback composite with sanitizers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13489325179,
+      "name": "popsicle-checked-pair-42188446777-1",
+      "size_in_bytes": 937155,
+      "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13489325179",
+      "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13489325179/zip",
+      "expired": false,
+      "created_at": "2026-11-06T08:36:19Z",
+      "expires_at": "2026-11-13T08:36:17Z",
+      "updated_at": "2026-11-06T08:36:19Z",
+      "digest": "sha256:ff8ee6206f05865d59f6f64686d786a6a13226bf74d31c41ca20fe671ffcf930",
+      "workflow_run": {
+        "id": 42188446777,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "4cdc506c3cb965eeb4ec85c1385f01a158ee3f18"
+      }
+    },
+    {
+      "id": 13488955919,
+      "name": "popsicle-stop-admission-42188446777-1",
+      "size_in_bytes": 10989,
+      "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13488955919",
+      "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13488955919/zip",
+      "expired": false,
+      "created_at": "2026-11-06T08:35:18Z",
+      "expires_at": "2026-11-13T08:35:17Z",
+      "updated_at": "2026-11-06T08:35:18Z",
+      "digest": "sha256:1261198e67ffa304dc5e23703e03408f56bcfc2169935af74fd772f8e098e573",
+      "workflow_run": {
+        "id": 42188446777,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "4cdc506c3cb965eeb4ec85c1385f01a158ee3f18"
+      }
+    },
+    {
+      "id": 13488239210,
+      "name": "popsicle-checked-pair-report-42188446777-1",
+      "size_in_bytes": 4512,
+      "url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13488239210",
+      "archive_download_url": "https://api.github.com/repos/xxz3312/XAirDrop-17/actions/artifacts/13488239210/zip",
+      "expired": false,
+      "created_at": "2026-11-06T08:36:20Z",
+      "expires_at": "2026-11-13T08:36:19Z",
+      "updated_at": "2026-11-06T08:36:20Z",
+      "digest": "sha256:b8ea74e938edbc3de1eebf7fdfe6a2175aae60e4f5eb5db4063be30a8f9a5b86",
+      "workflow_run": {
+        "id": 42188446777,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "4cdc506c3cb965eeb4ec85c1385f01a158ee3f18"
+      }
+    }
+  ],
+  "host_validation": {
+    "status": "MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY",
+    "negative_stop_controls_rejected": 6,
+    "negative_parent_controls_rejected": 7,
+    "negative_idle_controls_rejected": 13,
+    "negative_handoff_ssr_controls_rejected": 6,
+    "negative_reset_controls_rejected": 5,
+    "negative_ssr_stop_controls_rejected": 8,
+    "negative_ssr_prepare_controls_rejected": 7,
+    "ssr_prepare_contract_cases": 18,
+    "ssr_journal_scenarios": 8,
+    "ssr_resume_scenarios": 17,
+    "ssr_upper_scenarios": 16,
+    "external_execution_unload_cases": 2,
+    "negative_external_execution_unload_controls_rejected": 1,
+    "stop_lease_cases": 4,
+    "negative_stop_module_lease_controls_rejected": 6,
+    "independent_stop_module_API_ledger": true,
+    "synthetic_scope_reset_is_not_production_cleanup": true,
+    "module_host_cases": 5,
+    "negative_module_controls_rejected": 3,
+    "module_api_is_modeled": true,
+    "unload_scenarios": 17,
+    "soft_unload_scenarios": 4,
+    "negative_unload_controls_rejected": 9,
+    "native_unload_sha256": "2aa2db783ae49737a77b8548ad95e6ea1499651c8f781b8986af398b2c37ed3c",
+    "native_unload_prefix_sha256": "b80bdbe152fbefc6107b322bb1f574148e0178373de0ef77d5442ba188840504",
+    "remove_scenarios": 17,
+    "negative_remove_controls_rejected": 10,
+    "native_remove_source_sha256": "646b128a9a2a1598ffce109cc143c5298be1afed5f08e1a59f9aa2101d85691d",
+    "native_remove_function_sha256": {
+      "hdd_mishare_module_remove_ready": "9d6ab08778c2d134789040731603730185fc8c36d01106c4cfc566458d6f638a",
+      "hdd_mishare_remove_prepare": "6b9c300ae09a15935933b778ade60da6b16c646caf508edbcb4a308b4e7eea2c",
+      "pld_ipci_remove": "2a41f7d4af3d000f9fde0e563281d78d35f42311d796b62804620fd6c0da8e61"
+    },
+    "native_sync_resume_sha256": "c2d14fe2e694c21878c35be3f164c23693e7c640274015fb9418ca811746cf1d",
+    "native_sync_source_sha256": "21b209a91f1ac48037e92bd8ec159f82b1337ab6630772fb03789547c639a6ee",
+    "negative_ssr_upper_controls_rejected": 10,
+    "negative_ssr_resume_controls_rejected": 10,
+    "negative_ssr_journal_controls_rejected": 8,
+    "native_module_begin_sha256": "826218af85f0bc6f237712b8849c1f14c299480953956065a3a197080080ed5a",
+    "native_module_finish_sha256": "1d96dcd6f79e3c206a35e12bab89df15e1761837a1a4b72b1aa1f16a4babde37",
+    "native_module_resume_sha256": "f5929e3bae9c7e8ed8d57fae5b384e15bb68ead59b2e6bb44fd6f261ba989802",
+    "ssr_stop_contract_cases": 15,
+    "native_reset_contract_cases": 62,
+    "parent_identity_rejections": 36,
+    "production_sha256": {
+      "wlan_hdd_mishare_backend.c": "593fc986f2744d03e95bb1c5b312018b335af9450ccb73739a0bace9036af375",
+      "wlan_hdd_mishare_backend.h": "4e60f518ed53281c7d82d62ff27a6d31d80ef941aac28c16c9470dcb896231f9",
+      "wlan_hdd_mishare_ndi.h": "b3936028da783b4bf5091a5ebc570d42a5d53a9b5a24fc05b81ac6cd92e02db0",
+      "wlan_hdd_mishare_runtime.h": "ee2ba627048ac3820c9698ae65768a136939c91abb64ded8c32e926cb3749060",
+      "wlan_hdd_mishare_radio.h": "6a3ada63adfb09de5e82e371c35209461cc3e08cc4b376aed9ea329fe187f108",
+      "wlan_mishare_mgmt_diag.h": "f267795df26a37cce53a081d58e022bb420bcb0fbd0879376e30f5ac32656eb3",
+      "wma_mishare_raw_tx.h": "77b49a549e52eaa185218c8685f01b8a4f7b856932d4c3a48f38d0c2073801ce",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8",
+      "wlan_hdd_mishare_radio_mlme.h": "10423cc042ae3d061efe316733d1d582ddc4b287f692beca42757d9962ad33c3",
+      "mishare_raw_protocol.h": "d0a99550d621d1d146bd4c0b54375b1d049a1808f234556500f512e4aa335d4e",
+      "wlan_hdd_mishare_events.h": "6ee0f88ea590f972c754cf2318bba94bf03e2881edd7ba08a49ab45ce10f066d",
+      "wlan_hdd_mishare_events.c": "68c7c0cf267ebf9ccd4517a90909e262e3c586a98e29f2cf77c2afc0896fe442",
+      "wlan_hdd_mishare_commands.c": "adc1b5eb12937bde9d3beae7d6ac37c44fe0d8d235edd7726252dca034a5972c",
+      "wlan_hdd_mishare_host.c": "0d7a47a8e51f6eeec11330a8f7771ddc728e48cf13c191dca1f9c588b384a5c3",
+      "wlan_hdd_mishare_module_lease.h": "2eeb847e6a0b719533c0ce04555a9f255e1f8bfb8d9b209e9382d7776624840f",
+      "wlan_hdd_mishare_runtime.c": "b831742a33c0c779421279881f7eb92357260f0d1172d11b4b2622624e592902",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_mgmt_rx.h": "393f834a40f05832b74618c495509d3ba7c5d7401e54d27a7051bbc61dea1472",
+      "wlan_hdd_mishare_session.h": "59ce9373d9832718108c36d1bfe48ffe9d581197a547ef63ef78589c904b09ef",
+      "wlan_hdd_mishare_host.h": "7a3e1c9ee06e9f4b53a4ac66888b5e4da304dfb10a5e3e03a9f9aeed47c01b94",
+      "wlan_hdd_mishare_mgmt_rx.c": "68f65a3aaebab333c15de683129b7e57c1a6017d5a72b3a4e59e29bb80d876e3",
+      "wlan_hdd_mishare_commands.h": "c692a595444c79be0b9ba4835311563c513c47d0ecf1a84f5b7efe8c416a5fe8",
+      "wlan_hdd_mishare_raw_tx.h": "b92a492c9661004fa1e010525fb26d33822f47ce5cb164a1e3ac497e38fe21a3",
+      "wlan_hdd_mishare_radio.c": "b7354f0c40292db51c261463b2f7842d2f7a8b42c66bb72560acfc2f06c0af8f"
+    },
+    "fixture_sha256": "c7dc4b6e2a6aef7a6a4ccfd8516355e04d7874b939fdc0f5d8f44b33c3da6146",
+    "production_ssr_prepare_sha256": "840bd8270eeee844e8b6df76ad4a8686c025eac12c90afbb4b8d4540fd0408dd",
+    "native_idle_sha256": "8c0e3f8f4ec0a56b19972a3cf6e6ad4f1846def6cd18ef0f252cd7477120f912",
+    "native_reset_sha256": "3aa1ac31c07c0a228c165e0860db048515ce9e9e70ec2d0984876dad03fda3ec",
+    "native_reset_original_sha256": "26775aaea3601971df5e55401c41b6c2665350088a8d4f6f063489562af78b3f",
+    "native_ssr_source_sha256": {
+      "qcacld-3.0/core/hdd/src/wlan_hdd_main.c": "b72e616fd01501bc7324b3a3e59d02fcc15e982b624db9eb1d8c44bea8ced512",
+      "qcacld-3.0/core/hdd/src/wlan_hdd_power.c": "3fed261709584410292da4c55d020c528a924d45c8f327fe47c5edbf28faf275",
+      "qcacld-3.0/core/hdd/src/wlan_hdd_driver_ops.c": "b35b1109e9bd9f3a612333eedc850b9bb8417e68148ca454e7ee7bf29858a9c9",
+      "qca-wifi-host-cmn/qdf/linux/src/qdf_status.c": "bd037f03b0841127bf981766346da6a95dccab2fd60a6892f0f0e5f1351fcf39"
+    },
+    "native_ssr_function_sha256": {
+      "hdd_wlan_shutdown": "1d33881c68012763213ace08af10602ba42b369b88ea6ba4fd677c13128237d6",
+      "__hdd_soc_recovery_shutdown": "9f9567b96ac4589a27ea88d317bd70406a3dd66052d6d0b467fcca5f9ca40826",
+      "hdd_soc_recovery_reinit": "867891c971da3888f31c3761076e2c2b7242ffba38c41ac59fd1192b27bc07e7",
+      "qdf_status_from_os_return": "e33a705f85917990de3cce9e12d73ba593d23fc0e146d46c3835ced581aa1454",
+      "post_disable_section": "3fa56051317da57c7400d37875ecd1feffacf2c7e6bacd42834d31ba97801a3b",
+      "power_completion_helpers": "c4bf3e0022983f7c22184fcc0b01be7689c7e7efdf4deffee8fdd80388e401de"
+    },
+    "native_mode_stop_sha256": "f9686d00c6211df39eb994f34fd792b7407cbd1113a4fbccb37e6efc248f37d0",
+    "native_mode_request_prefix_sha256": "9dee78cb845d8b3bc58af1ba1d23748ce6993b13500117ed923448a86bae0eb1",
+    "checks": [
+      "actual native post-disable calls production SSR preparation and qualified host reclamation; failed CDS disable never admits cleanup",
+      "SSR prepare uses RTNL trylock, preserves empty/standalone/caller-owned/foreign-parent admission and exact recovery qualification, and unlocks on every pending/error/success result",
+      "asynchronous runtime token, quarantine policy and sync-close failure retain registry authority for later qualified polling",
+      "native SSR post-disable prefix refuses retained owners before modeled parent close and preserves CDS failure instead of entering its assert/teardown continuation",
+      "complete native power shutdown and SoC shutdown/reinit functions propagate private stop errors, retain failure across owner retirement, reject duplicate stop and block reinit with failure notification",
+      "native QDF errno-to-status converter executes unchanged; production post-disable qualified retirement success permits normal completion under modeled qualification, but metadata retirement plus pending parent stop still blocks",
+      "no-private-owner recovery, legacy status handling, HIF-missing and EPPING behavior preserved; suspended/IPA/capture power branches execute with modeled primitives",
+      "native hdd_reset_all_adapters skips exact registered private adapters before any link reset and balances current/next iterator references",
+      "caller-owned, runtime-attached, pending ordinary drain and handed-off pending SSR hosts retain ownership through native reset; modeled quarantine child also skips reset",
+      "empty registry and mixed STA/P2P/SAP/unowned PAS preserve native queue/WMM/scan/stop and VDEV reference boundaries; owned pointer at first/middle/last position",
+      "NULL lookup during pre-adapter construction is false; publication and global ownership lookup use the same registry lock",
+      "same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded",
+      "qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership",
+      "SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots",
+      "empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances",
+      "explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address",
+      "native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted",
+      "RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins",
+      "post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup",
+      "device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back",
+      "pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once",
+      "all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token",
+      "idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors",
+      "SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff",
+      "runtime token restored on incomplete coverage, asynchronous wait and policy rejection",
+      "host and idle inhibition retained after runtime retirement if sync close fails",
+      "runtime-free host still requires exact-psoc registry emptiness",
+      "complete native idle shutdown defers tracked DOWN host before module stop",
+      "host tracked before sync/adapter allocation and retained through adapter/sync close",
+      "failed create rolls back idle inhibition",
+      "pending runtime drain and sync mismatch retain idle inhibition",
+      "foreign psoc and no owner preserve native idle stop result",
+      "failed psoc transition and open-interface paths preserve native flow",
+      "invalid input",
+      "owner allocation failure",
+      "sync allocation failure",
+      "adapter creation failure",
+      "context rejection",
+      "existing adapter rejection",
+      "duplicate owner rejection",
+      "running/open/session rejection retaining owner",
+      "sync registry mismatch retaining owner",
+      "unregister/drain/close/destroy ordering",
+      "repeat destroy",
+      "ordinary wrapper rejection",
+      "ndo_open rejection",
+      "factory registered-netdev failure rollback"
+    ],
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "limitations": "Complete native power shutdown/internal SoC shutdown/reinit and a bounded post-disable section execute against modeled CDS/parent-stop/probe/IRQ primitives. The native post-disable call now invokes production host preparation and qualified reclamation. SSR qualification results and later parent/probe operations remain models; no fake CDS callback performs retirement. Only explicit POST_DISABLED transient waits have a native module-suffix resume API; the native reinit callback performs one qualified module poll and the shared power tail before clearing the upper gate; pending/hard failures retain the transition; no independent worker/timer is installed; hard failures have no reset API; this is failure admission/propagation, not a complete recovery coordinator. Explicit native driver unload prefix now refuses globally retained private owners/journal before unload flags, bus unregister and component teardown. Full unload body, kernel module exit veto and module text references remain uncoordinated. Independent journal and upper power leases execute against a separate module-API ledger; successful module finish does not release the power lease before its tail ACK. Inherited scope reset discards synthetic retained references between cases and is not a production reset API. Linux loader/refcount concurrency and return-to-caller safety are not executed. IPCI remove preflight now refuses private lifetimes before sync unregister and preserves the transition; its actual callback, hardware disappearance and complete module unload remain uncoordinated and modeled here. Other bus remove paths are unchanged. Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. Native SSR post-disable now reaches the qualified bridge; native reinit-triggered continuation is installed; independent retry scheduling and physical-remove coordination remain unconnected. This does not certify native kernel locking, teardown or radio validation."
+  },
+  "runtime_validation": {
+    "status": "MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY",
+    "module_api_is_modeled": true,
+    "negative_module_controls_rejected": 3,
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "424b5d558405ac8066b8894377f76e3a3bcaee09b1543a8fc4d03e6faf947b3d",
+    "object_manager_sha256": "56c582ef61014a0f409abd1ce5da1aa03d0f989bc365a4a3c0b2d4e7c0ff0739",
+    "production_sha256": {
+      "wlan_hdd_mishare_runtime.c": "b831742a33c0c779421279881f7eb92357260f0d1172d11b4b2622624e592902",
+      "wlan_hdd_mishare_runtime.h": "ee2ba627048ac3820c9698ae65768a136939c91abb64ded8c32e926cb3749060",
+      "wlan_hdd_mishare_events.c": "68c7c0cf267ebf9ccd4517a90909e262e3c586a98e29f2cf77c2afc0896fe442",
+      "wlan_hdd_mishare_events.h": "6ee0f88ea590f972c754cf2318bba94bf03e2881edd7ba08a49ab45ce10f066d",
+      "wlan_hdd_mishare_txn.c": "9c61cfc2f9ffa55a998dd40df7f33b7f3c0bd65a1b1f8d2d49831f8bb3a057b3",
+      "wlan_hdd_mishare_txn.h": "b436c8e1fba15407c29541f95d751a64304ea6a6e33583ecab5ace5cabb1bed8"
+    },
+    "checks": [
+      "native origin edits exclusively restored to pinned baseline",
+      "allocation observation before component dispatch",
+      "free veto before parent detach",
+      "completion strictly after native storage free",
+      "actual production owner/events/transaction C",
+      "owned and observer references unwind outside registry lock",
+      "constructor NULL before and after observation",
+      "duplicate owner and duplicate MAC rejection",
+      "reference/bind/allocation and MLME validation failures",
+      "nonblocking delayed-reference cleanup retains owner",
+      "failed attached component quarantines before free/ID detach",
+      "parent detach failure retains owner",
+      "unknown delete failure retains all references in isolated child"
+    ],
+    "limitations": "Owner, event and transaction C plus complete native final-free function with object-manager creation/components/ref/synchronization/parent-detach stubs. No full object-manager/component construction or native locking/scheduler, actual recovery/drain, ID reuse, firmware, module load or radio certification. Quarantined child intentionally retains resources until process exit; modeled component/parent cleanup retry does not certify a production recovery API."
+  },
+  "external_execution_validation": {
+    "status": "MISHARE_EXTERNAL_EXECUTION_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "23a1cf4b7a8e384d73fe3a71a991f4557cdde80d591244b99663e716683cffc6",
+    "provider_sha256": "9ac067d8cd527e5991f5ebb99eb7d684cf8f12d4cfab3617269b1b1c9bdac579",
+    "execution_header_sha256": "e30965262d0dbd3a92c9c64aa4d8da77fbaaa29826088260ffee6b6b8db40aa0",
+    "native_ipci_sha256": "646b128a9a2a1598ffce109cc143c5298be1afed5f08e1a59f9aa2101d85691d",
+    "native_fragments_sha256": {
+      "NATIVE_REINIT": "93255a0be9b5526f1be9296fe6572dd013058ff4b6d9de624f54edd53bd94aa1",
+      "NATIVE_SHUTDOWN": "4ba94bfe8ae88d1ee0f0a73850e1f57cf5d1b9c2ac8dac5f6af1cdf8bffaf0d2",
+      "NATIVE_IDLE_RESTART": "977067db7d6bfbe3141b3209d80fa2801c65512f1dc87fdc86fafa9b455e74fe",
+      "NATIVE_IDLE_SHUTDOWN": "58d53340a9094bcfc546a3e9931e09f5153bc809987dea1ac19831b915385a39",
+      "NATIVE_IDLE_SLOTS": "5ee39214132da81c389abb52ed4308d8d9b54fc2ccc6a89a1f2693e929adcc0c",
+      "NATIVE_REGISTER": "d723b162f2cf2b6c2d186efe5701e852f4ed1af5df2854a28b74daaad20e1e96",
+      "NATIVE_REMOVE": "2a41f7d4af3d000f9fde0e563281d78d35f42311d796b62804620fd6c0da8e61",
+      "NATIVE_CHECKED": "a772d5b02223f4d497a12e9a53f6b943e4f2314acb67541439bf3e3df911553b",
+      "NATIVE_LATE_GUARD": "c4df8b8b48f33caf1f46b40017c389f59c82b5315af28952d41557907c4737ff",
+      "NATIVE_COMMON_CHECKED": "72d04fd32ac0c1b430dfa3d01ffb8b680b96482839c430b2fe050515f0aae1ec",
+      "NATIVE_HDD_CHECKED": "945d08ed73bbb3f10ec97f5527e5e701b138f9ae09a920614886509b55876727",
+      "NATIVE_UNREGISTER": "ac423968d19142c585b30d0b0ebbde9b38970d4ea2763344bde4d27a43275f79",
+      "NATIVE_DESCRIPTOR": "ba9f963fd59d0e52496acefa8bf3cf6e32e8aa3cfb6ffa0c458ebbfc36b8c1ac",
+      "NATIVE_SLOTS": "c3f626ff799a345a003d335c278d2dbd7b7531e1519e964c3d33e92113841259"
+    },
+    "negative_controls_rejected": 14,
+    "idle_specific_controls_rejected": 3,
+    "unregister_receipt_scenarios": 12,
+    "retained_failure_child_universes": 7,
+    "concurrent_callback_kinds": [
+      "SSR reinit",
+      "idle shutdown",
+      "idle restart"
+    ],
+    "registration_export": "opairshare_wlan_execution_register_v2",
+    "registration_v1_alias_exported": false,
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "limitations": "Production external provider and full native IPCI register/unregister/reinit/shutdown functions execute with modeled module loader, ICNSS registration and vendor callbacks. Real pthread close versus callback overlap is exercised; native DSC, firmware, real rmmod and ICNSS unregister/error-path drain contracts are not executed. SSR shutdown/reinit and idle shutdown/restart slots use this boundary; physical remove outside unregister, crash shutdown, other native callback types and managed metadata self-detach remain outside certification. Checked IPCI/PLD/HDD unregister now propagates receipts before global clearing; native module-exit cannot veto loader unload; no hot-unplug or forced-unload safety."
+  },
+  "icnss_checked_validation": {
+    "status": "MISHARE_ICNSS_CHECKED_UNREGISTER_FIXTURE_PASS_ONLY",
+    "source_commit": "36df473046706a5259942e1bf7222108dbbb860f",
+    "fixture_sha256": "f8384c6df0df2cc61af951eef98d94ef557a0d8c966a7b8b3b8855f010ec1174",
+    "provider_sha256": "9ac067d8cd527e5991f5ebb99eb7d684cf8f12d4cfab3617269b1b1c9bdac579",
+    "execution_header_sha256": "e30965262d0dbd3a92c9c64aa4d8da77fbaaa29826088260ffee6b6b8db40aa0",
+    "native_platform_sha256": "0606649746c69f8bbef7a0e563450673dd92ec50fdee3626d453c75cddbd54d3",
+    "native_fragments_sha256": {
+      "NATIVE_REMOVE": "2a41f7d4af3d000f9fde0e563281d78d35f42311d796b62804620fd6c0da8e61",
+      "NATIVE_PLD_CHECKED": "a772d5b02223f4d497a12e9a53f6b943e4f2314acb67541439bf3e3df911553b",
+      "NATIVE_STATE": "89b48aca333dac454111a2ad1a255534c851dd022088e18b0184640e380ed766",
+      "NATIVE_HANDLER": "554b47cbf06b615c95b67a874730e9947b87c74e6e0d04619b003a91f70dca9e",
+      "NATIVE_CHECKED_ENTRY": "1b8237b5a5d8a81c398c47d8bc7c557babe5b36ec2a178b93297ce2941f16706",
+      "NATIVE_LEGACY_ENTRY": "090d78fbdeec81abcb763a13252d3cbd0557fe21c80b08761a4fee8b865669c4"
+    },
+    "consumer_success_cases": 2,
+    "consumer_failure_cases": 2,
+    "success_cases": 2,
+    "isolated_remove_failure_cases": 12,
+    "isolated_admission_cases": 7,
+    "legacy_compatibility_limit_cases": 1,
+    "negative_controls_rejected": 9,
+    "event_handler_thread": "real pthread created/joined by modeled synchronous event_post",
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "optional_platform_binary_built": false,
+    "native_WLAN_consumer_uses_optional_entry": true,
+    "phone_executed": false,
+    "limitations": "Production provider, complete native PLD remove, actual ICNSS unregister handler/new checked entry/legacy entry execute against modeled module API, event post, synchronization, vendor removal, shutdown block and power-off. Native event scheduler, completion primitive, real platform binary/ABI/firmware/loader are not executed. A failure retains flags and shutdown block permanently without a recovery API. No-probe checked cleanup refuses. Existing unguarded entry remains legacy on first use; default WLAN consumer is unchanged; opt-in native consumer executes here. This optional platform contract is not yet target-linked/deployed and does not protect phone unregister. Other shutdown/recovery paths remain uncoordinated; module-exit cannot veto loader removal."
+  },
+  "paired_build_validation": {
+    "status": "CHECKED_PLATFORM_PAIR_BLOCKED",
+    "variant": "CONFIG_MISHARE_CHECKED_ICNSS_UNREGISTER=1",
+    "modules": {},
+    "checked_WLAN_unresolved": [],
+    "platform_export_crc_changes": {
+      "__icnss_register_driver": {
+        "stock": "0xd18cf709",
+        "generated": "0x8da8ce8b"
+      },
+      "icnss_allow_l1": {
+        "stock": "0xbf0228d3",
+        "generated": "0x33369f48"
+      },
+      "icnss_athdiag_read": {
+        "stock": "0xf817da27",
+        "generated": "0x68471808"
+      },
+      "icnss_athdiag_write": {
+        "stock": "0x3064184d",
+        "generated": "0xdfbba642"
+      },
+      "icnss_audio_is_direct_link_supported": {
+        "stock": "0x275aab7a",
+        "generated": "0x9c62463f"
+      },
+      "icnss_audio_smmu_map": {
+        "stock": "0x6e372690",
+        "generated": "0x9da28113"
+      },
+      "icnss_audio_smmu_unmap": {
+        "stock": "0x1ecd48b3",
+        "generated": "0x079064c9"
+      },
+      "icnss_ce_free_irq": {
+        "stock": "0x14540dcc",
+        "generated": "0xcc3053e6"
+      },
+      "icnss_ce_request_irq": {
+        "stock": "0xfa346e2a",
+        "generated": "0xda9e56f2"
+      },
+      "icnss_disable_irq": {
+        "stock": "0x1921a9af",
+        "generated": "0x6cac02d7"
+      },
+      "icnss_enable_irq": {
+        "stock": "0x1921a9af",
+        "generated": "0x6cac02d7"
+      },
+      "icnss_exit_power_save": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_force_wake_release": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_force_wake_request": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_get_audio_shared_iommu_group_cap": {
+        "stock": "0x275aab7a",
+        "generated": "0x9c62463f"
+      },
+      "icnss_get_ce_id": {
+        "stock": "0x847b776a",
+        "generated": "0xc1fdfed1"
+      },
+      "icnss_get_cpumask_for_wlan_rx_interrupts": {
+        "stock": "0x1ca67bb9",
+        "generated": "0x9507c8ce"
+      },
+      "icnss_get_cpumask_for_wlan_tx_comp_interrupts": {
+        "stock": "0x1ca67bb9",
+        "generated": "0x9507c8ce"
+      },
+      "icnss_get_curr_therm_cdev_state": {
+        "stock": "0x410f5a81",
+        "generated": "0xbee0839b"
+      },
+      "icnss_get_direct_link_sid": {
+        "stock": "0x79795860",
+        "generated": "0x46fe4839"
+      },
+      "icnss_get_fw_cap": {
+        "stock": "0xdb7c3377",
+        "generated": "0x3e3e7a5e"
+      },
+      "icnss_get_fw_direct_link_cap": {
+        "stock": "0x275aab7a",
+        "generated": "0x9c62463f"
+      },
+      "icnss_get_fw_lpass_shared_mem": {
+        "stock": "0xf1813b08",
+        "generated": "0xed3e4a50"
+      },
+      "icnss_get_iova_info": {
+        "stock": "0x013fcebc",
+        "generated": "0x7be5ca79"
+      },
+      "icnss_get_irq": {
+        "stock": "0xa0362250",
+        "generated": "0x33632b21"
+      },
+      "icnss_get_mhi_state": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_get_msi_address": {
+        "stock": "0xccba17ec",
+        "generated": "0xe94752e7"
+      },
+      "icnss_get_msi_irq": {
+        "stock": "0xc131799a",
+        "generated": "0xb7ffb064"
+      },
+      "icnss_get_soc_info": {
+        "stock": "0xe8fd8c98",
+        "generated": "0x28a97fda"
+      },
+      "icnss_get_user_msi_assignment": {
+        "stock": "0xdf4f15e5",
+        "generated": "0x64e8b397"
+      },
+      "icnss_get_wifi_kobj": {
+        "stock": "0x0545466b",
+        "generated": "0x8fc1da60"
+      },
+      "icnss_idle_restart": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_idle_shutdown": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_is_device_awake": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_is_pci_ep_awake": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_is_qmi_disable": {
+        "stock": "0x275aab7a",
+        "generated": "0x9c62463f"
+      },
+      "icnss_power_off": {
+        "stock": "0x7115f67e",
+        "generated": "0x9a5b7a37"
+      },
+      "icnss_power_on": {
+        "stock": "0x7115f67e",
+        "generated": "0x9a5b7a37"
+      },
+      "icnss_prevent_l1": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_qmi_send": {
+        "stock": "0xa5c8e89b",
+        "generated": "0x03aab92b"
+      },
+      "icnss_register_driver_async_data_cb": {
+        "stock": "0xc348d329",
+        "generated": "0x4946277b"
+      },
+      "icnss_request_bus_bandwidth": {
+        "stock": "0x90b871e8",
+        "generated": "0xe220e671"
+      },
+      "icnss_set_fw_log_mode": {
+        "stock": "0x0ff5a10e",
+        "generated": "0x56206f23"
+      },
+      "icnss_smmu_get_domain": {
+        "stock": "0x1ed8eee2",
+        "generated": "0xb9ce4272"
+      },
+      "icnss_smmu_map": {
+        "stock": "0x0163a18f",
+        "generated": "0xda000c07"
+      },
+      "icnss_smmu_unmap": {
+        "stock": "0x46ed6aee",
+        "generated": "0x546504ae"
+      },
+      "icnss_socinfo_get_serial_number": {
+        "stock": "0x5e640187",
+        "generated": "0x971eaa4c"
+      },
+      "icnss_thermal_cdev_register": {
+        "stock": "0x7bea9653",
+        "generated": "0xd0dd5ff6"
+      },
+      "icnss_thermal_cdev_unregister": {
+        "stock": "0xb0d0d70f",
+        "generated": "0x847be38c"
+      },
+      "icnss_trigger_recovery": {
+        "stock": "0x8f529130",
+        "generated": "0x31587507"
+      },
+      "icnss_unregister_driver": {
+        "stock": "0xb9cb0555",
+        "generated": "0xf79f607e"
+      },
+      "icnss_wlan_disable": {
+        "stock": "0xba25fc27",
+        "generated": "0x508e5b34"
+      },
+      "icnss_wlan_enable": {
+        "stock": "0xab216dc6",
+        "generated": "0x52e21d01"
+      }
+    },
+    "phone_executed": false,
+    "radio_backend_activation_enabled": false,
+    "limitations": "Diagnostic paired build only. Stock ICNSS must not remain loaded beside its replacement. No platform private layout/KCFI, module replacement procedure, actual loader/firmware, error recovery, module-exit failure or radio interoperability certification.",
+    "removed_stock_provider": "icnss2",
+    "stock_icnss_export_count": 60,
+    "soc_remoteproc_header_sha256": "d9462a7424185a48125a412889d25077bdbe9013dc31d0d0038767cd305eb31c",
+    "platform_soc_dependency_defines": [
+      "CONFIG_QCOM_SOCINFO_MODULE=1",
+      "CONFIG_QCOM_RPROC_COMMON_MODULE=1"
+    ],
+    "platform_config_sha256": "c93bcff9b6599b50c29a24cd1c3937a423cd7a08a65fee4601856bd1cb391b2e",
+    "missing_legacy_platform_exports": [],
+    "error": "Rebuilt ICNSS legacy export surface differs from stock; inspect report"
+  },
+  "native_platform_candidate_ko_linked": true,
+  "legacy_export_crc_mismatch_count": 53,
+  "legacy_exports_missing": 0,
+  "device_direct_layout_match": true,
+  "CRC_gate_waived": false,
+  "new_checked_export_present": true,
+  "WLAN_paired_target_link_attempted": false,
+  "actual_candidate_exports_report": "popsicle-checked-platform-0122-exports.json"
+}
