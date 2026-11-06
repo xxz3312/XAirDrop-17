@@ -130,6 +130,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  bridge-controller:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Bridge and session ownership regression checks
+        run: |
+          python3 tools/kernel/mishare_session_driver_fixture.py
+          python3 tools/kernel/mishare_bridge_fixture.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-bridge-report-${{ github.run_id }}
+          path: .popsicle-ci/artifacts/reports/mishare-bridge-fixture.json
+          if-no-files-found: error
+          retention-days: 7
   stop-admission:
     runs-on: ubuntu-24.04
     steps:

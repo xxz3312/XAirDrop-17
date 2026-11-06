@@ -16,6 +16,7 @@
 #include "wlan_hdd_mishare_host.h"
 #include "wlan_hdd_mishare_runtime.h"
 #include "wlan_hdd_mishare_session.h"
+#include "wlan_hdd_mishare_bridge.h"
 
 struct mishare_wonder_host {
     struct mishare_wonder_host *next;

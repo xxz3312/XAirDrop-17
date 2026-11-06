@@ -1,3 +1,7 @@
+## 最新代码阶段 0141（桥接 host 会话控制器已实现，公开回调尚未启用）
+
+按两个上游实现内部 host 分配→runtime 附着→异步 session→退出控制器，固定会话身份，启动失败不重放，退出等待/失败保留权威 host。radio UP 不作为 Wonder 初始化成功；不获取父级生命周期租约，不自动启动。100 项本地 Python 回归通过，新增 Actions ASan/UBSan 独立模型作业；完整目标编译待 CI。手机继续保持当前状态，无新安装包，不重复 apply。见 [0141 实现和边界](POPSICLE-WONDER-BRIDGE-0141.md)。
+
 ## 最新实机阶段 0140（普通 Wi-Fi 收发与系统连通性短时通过，Wonder 会话仍待接入）
 
 HAL running，5240 MHz STA 网络显示 VALIDATED；采样网口收约 19.4 MB/发约 4.75 MB，errors/dropped 均为 0。新驱动 ready 后约四分钟日志未见明确 panic/Oops/BUG/CFI/未知符号或版本冲突；固件直接查找失败已经 fallback 找到并收到 FW ready。仍有 trace cfg 缺失及 MLO/TWT/P2P、roam/速率统计告警，不能宣称日志全净或长期稳定。已核对上游原生 Wonder ops；当前 managed bridge init 仍返回 EOPNOTSUPP。下一阶段回到源码接入 typed init/poll/retire，不让用户重复 apply，不计 AWDL/Apple 功能完成。见 [0140 审查](POPSICLE-ACTIVE-REVIEW-0140.md)。
