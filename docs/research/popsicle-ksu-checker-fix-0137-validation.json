@@ -33,5 +33,15 @@
   "candidate_ELF_and_runtime_scripts_changed": false,
   "phone_corrected_check_executed": false,
   "phone_driver_replacement_executed": false,
-  "runtime_certified": false
+  "runtime_certified": false,
+  "source_commit": "59f63454ae5ac8ed557346d60305f3424d4a993b",
+  "workflow_run": 42285579522,
+  "CI_policy_job": 128125400611,
+  "CI_package_job": 128125465541,
+  "CI_policy_and_package_passed": true,
+  "CI_full_artifact_id": 13537935800,
+  "CI_fix_artifact_id": 13537461676,
+  "CI_fix_artifact_sha256": "53d4ccb4395f148c632d695f0a3ba863411b4f95bac06a7187dbb2f344127fb9",
+  "downloaded_CI_fix_archive_digest_verified": true,
+  "downloaded_inner_fix_ZIP_exact_bytes_match_local_verified_package": true
 }

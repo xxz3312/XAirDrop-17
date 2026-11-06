@@ -11,3 +11,5 @@ INSTALL_SHA256SUMS 校验 customize.sh、运行期清单和其他安装文件；
 小包生成器以原 0136 ZIP 摘要和全部文件 SHA 为固定基准，强制所有保留脚本/驱动摘要不变，另外验证新包内实际文件字节，拒绝其他改动。现有已安装用户只需应用小包，不必重装或重启。未来安装使用完整 0137 包。两份 raw ELF 完全复用 0133，未重编译/strip/修改。
 
 当前仅主机模拟通过，修复后的手机 check 尚未回传，驱动未执行。修复后仍可能出现 LEGACY_STATE_PRESERVED；该结果与本次 customize.sh 问题不同，应保留旧事务后单独核对，不能删除状态继续试验。见 [验证记录](research/popsicle-ksu-checker-fix-0137-validation.json)。
+
+[CI 42285579522](https://github.com/xxz3312/XAirDrop-17/actions/runs/42285579522) 的 policy/package 已通过；下载的小包 artifact 摘要与 GitHub digest 匹配，内层修复 ZIP 与已模拟验收的本地 ZIP 逐字相同，SHA256 为 e36c4150c62c07aadb1012605cf1d9b175acb7292bb097953920c454fae1472f。手机修复后的结果仍待回传。
