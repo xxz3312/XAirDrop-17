@@ -11,7 +11,7 @@ import tempfile
 from mishare_execution_fixture import COMMON, extract
 
 ROOT=Path(__file__).resolve().parents[2]
-FILES=['platform/cnss2/main.h','platform/cnss2/pci.h','platform/cnss2/bus.h','platform/cnss2/bus.c','platform/cnss2/main.c','platform/inc/cnss2.h','platform/cnss2/pci.c','platform/cnss2/debug.c']
+FILES=['platform/cnss2/main.h','platform/cnss2/pci.h','platform/cnss2/bus.h','platform/cnss2/bus.c','platform/cnss2/main.c','platform/inc/cnss2.h','platform/cnss2/pci.c','platform/cnss2/debug.c','platform/cnss2/power.c','platform/cnss_utils/cnss_common.h','platform/cnss_utils/wlan_firmware_service_v01.h']
 BODY=r'''
 #define CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER 1
 #define BIT(x) (1UL<<(x))
@@ -241,10 +241,11 @@ def native_function(text,name):return extract(text,r'^(?:static )?(?:int|void) '
 
 
 def verify_platform_origin(wlan):
-    # All eight platform files are restored byte-for-byte by just this patch.
+    # All eleven platform files are restored byte-for-byte by just this patch.
     with tempfile.TemporaryDirectory() as tmp:
         t=Path(tmp)
         for f in FILES:(t/f).parent.mkdir(parents=True,exist_ok=True);(t/f).write_bytes((wlan/f).read_bytes())
+        subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0061-restore-upstream-TSF-SMMU-Wonder-and-direct-refill.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0060-CNSS2-terminal-state-debug-and-local-helper.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0059-select-real-SoC-MHI-headers-for-checked-CNSS2.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0057-checked-PEACH-CNSS2-remove-before-power-tail.patch')],cwd=t,check=True,capture_output=True)
@@ -321,7 +322,7 @@ def run(wlan,output):
         for changed,marker in mutations:
             bad=execute(changed)
             if bad.returncode!=-6 or marker not in bad.stderr:raise ValueError((marker,bad.returncode,bad.stderr[:1800]))
-    report={'status':'MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY','fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256(header).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'platform_source_sha256':{f:hashlib.sha256((wlan/f).read_bytes()).hexdigest() for f in FILES},'success_cases':2,'isolated_failure_cases':9,'isolated_admission_cases':7,'negative_controls_rejected':len(mutations),'platform_origin_files_restored':8,'sanitizers':['address','undefined','leak detection'],'production_opt_in_consumer_executed':True,'default_build_opt_in_enabled':False,'CNSS2_binary_built':False,'phone_executed':False,'limitations':'Real provider, native PCIe register/checked unregister/remove, PLD/HDD refusal chain, CNSS2 checked/legacy entry, event routing, bus handler, complete native remove and qca6290 shutdown bodies. Five selected native ops slots and pthread synchronous event post; hardware/module/sync/HDD bodies are models. Only PEACH stable probed PCIe is admitted. Native power-tail errors retain remaining ownership but cannot undo already completed WLAN/MHI steps. Default consumer is unchanged; no real CNSS2 pair, ABI/KCFI, loader, RF, concurrent native power/recovery coordinator or module-exit veto is certified.'}
+    report={'status':'MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY','fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256(header).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'platform_source_sha256':{f:hashlib.sha256((wlan/f).read_bytes()).hexdigest() for f in FILES},'success_cases':2,'isolated_failure_cases':9,'isolated_admission_cases':7,'negative_controls_rejected':len(mutations),'platform_origin_files_restored':11,'sanitizers':['address','undefined','leak detection'],'production_opt_in_consumer_executed':True,'default_build_opt_in_enabled':False,'CNSS2_binary_built':False,'phone_executed':False,'limitations':'Real provider, native PCIe register/checked unregister/remove, PLD/HDD refusal chain, CNSS2 checked/legacy entry, event routing, bus handler, complete native remove and qca6290 shutdown bodies. Five selected native ops slots and pthread synchronous event post; hardware/module/sync/HDD bodies are models. Only PEACH stable probed PCIe is admitted. Native power-tail errors retain remaining ownership but cannot undo already completed WLAN/MHI steps. Default consumer is unchanged; no real CNSS2 pair, ABI/KCFI, loader, RF, concurrent native power/recovery coordinator or module-exit veto is certified.'}
     output.write_text(json.dumps(report,indent=2)+'\n');print(good.stdout,end='')
 
 if __name__=='__main__':

@@ -1,0 +1,63 @@
+{
+  "stage": "0127",
+  "origin": "https://git.codelinaro.org/clo/la/platform/vendor/qcom-opensource/wlan/platform",
+  "upstream_tag": "WLAN.LA.1.0.r1-09600-pakala.0",
+  "upstream_commit": "258997efffa91e0d32702e1b89d58e6cc00a5610",
+  "upstream_commit_author": "lnxbuild",
+  "mirror_repository": "LineageOS/android_kernel_oneplus_sm8750-modules",
+  "file_git_blobs": {
+    "inc/cnss2.h": "0077b45ab2d75453ad5402e0d4e8ad979293edd8",
+    "cnss2/main.c": "aa8b9c9831fcc7e17556d901555fdbeffa65f7b5",
+    "cnss2/main.h": "101555452b2774c4fd39ba4cd140474104238154",
+    "cnss2/pci.c": "ca34cb13949b96291b9e6f02037ebfea87156b04",
+    "cnss2/pci.h": "dd080d0868c4a54bd2ee9cba34d2cba97450904d",
+    "cnss2/power.c": "5b55862916c18387b17d74fce5ffb22fcc64bae4",
+    "cnss_utils/cnss_common.h": "929340e13c30971812bbde29ec3b2d95ed1afb9c",
+    "cnss_utils/wlan_firmware_service_v01.h": "83d05175a4f9423a211a8dd88e1d68c2a5d093e1"
+  },
+  "stock_fw_cap_disassembly": {
+    "capability_5_reads_bit": 7,
+    "stock_fw_caps_load_offset": "0x1d80",
+    "previous_candidate_fw_caps_load_offset": "0x1d50",
+    "method": "Capstone 5.0.3, AArch64 function bytes from verified stock and prior compiled ELF; no binary mutation"
+  },
+  "port_scope": [
+    "complete TSF GPIO/MMIO/IRQ lifecycle",
+    "native vendor Wonder component probe/remove and setter",
+    "SMMU S1 getter wrapper",
+    "six-entry cnss_fw_caps and real DIRECT_REFILL bit 0x80"
+  ],
+  "target_adaptations": [
+    "Move generic platform drvdata null check after Wonder-device branch, so an unpublished companion can be removed without leaving a dangling platform pointer",
+    "Keep private opairshare provider exports distinct; no duplicate CNSS setter export",
+    "Leave actual target platform configuration and strict 81-record gate enabled"
+  ],
+  "CRC_records_edited": false,
+  "radio_backend_enabled": false,
+  "phone_executed": false,
+  "source_sha256": {
+    "inc/cnss2.h": "179f2c3df3ce3849daf06a04c5c8d839a09031cb407521d5687df95c59c2372b",
+    "cnss2/main.c": "9a948ac47fffdc5344e7de50ccfb84aa04fdcb2968532fc303ede491fb6c5326",
+    "cnss2/main.h": "54a2cf1e68e2db29450a33554f3403d975647e687143d98908b754bd0964292a",
+    "cnss2/pci.c": "52f68884f40bbea9bf629a72b9e0838276bd77c44fd518469d0a874d309727ca",
+    "cnss2/pci.h": "7e77e83582de428d4997a7627c7afbc91225c5d1aa759e28ac1fe9bedd75e579",
+    "cnss2/power.c": "84cc6312aee104a9d19a699cd1fc7b86f28503deeb101b2fe6d7bd3d7f847dc4",
+    "cnss_utils/cnss_common.h": "28f6525dc2ed745c274ec47aca4860008aaedf78af314b589cc66fe28a9070db",
+    "cnss_utils/wlan_firmware_service_v01.h": "c7c98fd6897a482590bc41fea2daf9ce0058f1f67c27a29e6e049d1f5834a422"
+  },
+  "upstream_function_sha256": {
+    "cnss_get_wlan_tsf_gpio_info": "3841759dbd74dd2afe4c48d569d58dbf0c2324efac336a224a2ede58088e1209",
+    "cnss_get_tsf_ts_info": "046500d4310e21a0b326b5cae0cee996ecbce8dbb2cfc05b027138c3c2d6ff40",
+    "cnss_read_tsf_irq_ts": "d2cfa5d25a0df29940fc52ad8edfb2271f06cd5957b83aa434e417c57b0b7b94",
+    "cnss_wlan_tsf_capture_threaded_handler": "0ec174255a11bf6cf519f16d1480aa489949a2590c118943152ae280eabddfd4",
+    "cnss_wlan_tsf_capture_irq_handler": "f17b4a9af6504d2294fc257ec04bf4dc4111a7fb372be2346f5a097b9502549f",
+    "cnss_wlan_tsf_init": "ddf08330649b4ecdcfe8d1d4a894194255acb3ba8f5d499a8a7b103a38aea9f6",
+    "cnss_wlan_tsf_deinit": "a637f390f6d1a23780d2b8f5a8f71a5416c75845cffb5c1daa7c1d91a18781c0",
+    "cnss_register_tsf_captured_handler": "d9d83aed82e2eb992a0898272fbcbef6d1203a5200fbd5aed1160948bcda3192",
+    "cnss_unregister_tsf_captured_handler": "3fb69d5708f06e22fd8e78bf13eeb630928ec1349f052f3ae0003d247d984def",
+    "cnss_set_vendor_wonder_priv_data": "cd7a2cb3c4e617c32d805dad0beda6b607c54b15ba9c30ceff2cd8e614935b55",
+    "cnss_vendor_wonder_dev_probe": "81a7af90306309397ab1a4b50e1800b1aeb1cd2ea0ffaf115a6a4bc56915c2fb",
+    "cnss_vendor_wonder_dev_remove": "f53246350de24dff964e1c377008607189dc199d82a5ae3e967298b15e217f4f",
+    "cnss_smmu_s1_enabled": "839d752992c90fa07d966490ae1351024022210094ff37782872d0b1e44fbb52"
+  }
+}

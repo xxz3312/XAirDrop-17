@@ -1,0 +1,590 @@
+--- a/platform/inc/cnss2.h
++++ b/platform/inc/cnss2.h
+@@ -81,6 +81,9 @@
+ 	int (*runtime_suspend)(struct pci_dev *pdev);
+ 	int (*runtime_resume)(struct pci_dev *pdev);
+ };
++
++/* Imported Qualcomm TSF callback ABI; see popsicle-cnss2-upstream-0127.json. */
++typedef void (*wlan_tsf_handler_t)(void *, uint64_t);
+ 
+ enum cnss_driver_status {
+ 	CNSS_UNINITIALIZED,
+@@ -234,6 +237,7 @@
+ 	CNSS_FW_CAP_CALDB_SEG_DDR_SUPPORT,
+ 	CNSS_FW_CAP_WLAN_DUMP_OVER_BT_SUPPORT,
+ 	CNSS_FW_CAP_BT_DUMP_OVER_WLAN_SUPPORT,
++	CNSS_FW_CAP_DIRECT_REFILL_SUPPORT,
+ };
+ 
+ enum cnss_remote_mem_type {
+@@ -274,6 +278,7 @@
+ 					u32 target_type, u32 target_version);
+ extern int cnss_get_platform_cap(struct device *dev,
+ 				 struct cnss_platform_cap *cap);
++extern bool cnss_smmu_s1_enabled(struct device *dev);
+ extern struct iommu_domain *cnss_smmu_get_domain(struct device *dev);
+ extern int cnss_smmu_map(struct device *dev,
+ 			 phys_addr_t paddr, uint32_t *iova_addr, size_t size);
+@@ -345,7 +350,11 @@
+ extern int cnss_reset_afcmem(struct device *dev, uint8_t slotid);
+ extern bool cnss_get_fw_cap(struct device *dev, enum cnss_fw_caps fw_cap);
+ extern bool cnss_audio_is_direct_link_supported(struct device *dev);
+-extern int cnss_get_wlan_tsf_gpio(struct device *dev);
++extern int cnss_register_tsf_captured_handler(struct device *dev,
++					      wlan_tsf_handler_t handler,
++					      void *ctx);
++extern int cnss_unregister_tsf_captured_handler(struct device *dev,
++						void *ctx);
+ extern bool cnss_ipa_wlan_shared_smmu_supported(struct device *dev);
+ extern int cnss_set_wfc_mode(struct device *dev, struct cnss_wfc_cfg cfg);
+ extern int cnss_thermal_cdev_register(struct device *dev,
+@@ -369,4 +378,5 @@
+ extern int cnss_set_cxpc(struct device *dev, enum cxpc_status arg);
+ extern int cnss_pci_get_iova_info(struct device *dev, u64 *addr, u64 *size);
+ 
++extern int cnss_set_vendor_wonder_priv_data(const void *priv_data);
+ #endif /* _NET_CNSS2_H */
+--- a/platform/cnss_utils/wlan_firmware_service_v01.h
++++ b/platform/cnss_utils/wlan_firmware_service_v01.h
+@@ -504,6 +504,7 @@
+ #define QMI_WLFW_CE_CMN_CFG_SUPPORT_V01 ((u64)0x10ULL)
+ #define QMI_WLFW_WLAN_DUMP_OVER_BT_SUPPORT_V01 ((u64)0x20ULL)
+ #define QMI_WLFW_BT_DUMP_OVER_WLAN_SUPPORT_V01 ((u64)0x40ULL)
++#define QMI_WLFW_DIRECT_REFILL_SUPPORT_V01 ((u64)0x80ULL)
+ 
+ #define QMI_WLFW_DIRECT_LINK_SKU_SUPPORT_V01 ((u64)0x01ULL)
+ 
+--- a/platform/cnss_utils/cnss_common.h
++++ b/platform/cnss_utils/cnss_common.h
+@@ -28,4 +28,5 @@
+ #define WCN6450_DEVICE_ID	0x6450
+ #define WCN7750_DEVICE_ID	0x7750
+ #define DIRECT_LINK_DEVICE_ID	0xffff
++#define WONDER_VENDOR_DEVICE_ID	0xfffe
+ #define ADRASTEA_DEVICE_ID	0xabcd
+--- a/platform/cnss2/main.h
++++ b/platform/cnss2/main.h
+@@ -484,6 +484,21 @@
+ 	void __iomem *cmd_base_addr_io;
+ };
+ 
++struct cnss_irq_ts_info {
++	bool is_valid_addr;
++	resource_size_t cmd_ts_addr;
++	void __iomem *cmd_ts_addr_io;
++};
++
++struct cnss_wlan_tsf_info {
++	int wlan_tsf_gpio;
++	int irq_num;
++	void *context;
++	uint64_t host_time_us;
++	wlan_tsf_handler_t wlan_tsf_handler;
++	struct cnss_irq_ts_info irq_ts_info;
++};
++
+ struct cnss_cpr_info {
+ 	resource_size_t tcs_cmd_data_addr;
+ 	void __iomem *tcs_cmd_data_addr_io;
+@@ -598,7 +613,7 @@
+ 	struct list_head clk_list;
+ 	struct cnss_pinctrl_info pinctrl_info;
+ 	struct cnss_sol_gpio sol_gpio;
+-	int wlan_tsf_gpio;
++	struct cnss_wlan_tsf_info tsf_info;
+ #if IS_ENABLED(CONFIG_MSM_SUBSYSTEM_RESTART)
+ 	struct cnss_subsys_info subsys_info;
+ #endif
+@@ -843,7 +858,6 @@
+ 			 size_t num_entries_loaded);
+ void cnss_set_pin_connect_status(struct cnss_plat_data *plat_priv);
+ int cnss_get_cpr_info(struct cnss_plat_data *plat_priv);
+-void cnss_get_wlan_tsf_gpio_info(struct cnss_plat_data *plat_priv);
+ int cnss_update_cpr_info(struct cnss_plat_data *plat_priv);
+ int cnss_va_to_pa(struct device *dev, size_t size, void *va, dma_addr_t dma,
+ 		  phys_addr_t *pa, unsigned long attrs);
+--- a/platform/cnss2/power.c
++++ b/platform/cnss2/power.c
+@@ -70,7 +70,6 @@
+ #define XO_CLK_GPIO			"qcom,xo-clk-gpio"
+ #define SW_CTRL_GPIO			"qcom,sw-ctrl-gpio"
+ #define WLAN_SW_CTRL_GPIO		"qcom,wlan-sw-ctrl-gpio"
+-#define TSF_SYNC_GPIO			"qcom,wlan-tsf-gpio"
+ #define WLAN_EN_ACTIVE			"wlan_en_active"
+ #define WLAN_EN_SLEEP			"wlan_en_sleep"
+ #define WLAN_VREGS_PROP			"wlan_vregs"
+@@ -1721,32 +1720,7 @@
+ 	return ret;
+ }
+ 
+-void cnss_get_wlan_tsf_gpio_info(struct cnss_plat_data *plat_priv)
+-{
+-	struct device *dev = &plat_priv->plat_dev->dev;
+-
+-	if (of_find_property(dev->of_node, TSF_SYNC_GPIO, NULL)) {
+-		plat_priv->wlan_tsf_gpio = of_get_named_gpio(dev->of_node,
+-							     TSF_SYNC_GPIO, 0);
+-		cnss_pr_dbg("WLAN TSF GPIO: %d\n", plat_priv->wlan_tsf_gpio);
+-		return;
+-	}
+-
+-	plat_priv->wlan_tsf_gpio = -EINVAL;
+-}
+-
+-int cnss_get_wlan_tsf_gpio(struct device *device)
+-{
+-	struct cnss_plat_data *plat_priv = cnss_bus_dev_to_plat_priv(device);
+-
+-	if (!plat_priv) {
+-		cnss_pr_err("plat_priv is NULL!\n");
+-		return -EINVAL;
+-	}
+-
+-	return plat_priv->wlan_tsf_gpio;
+-}
+-EXPORT_SYMBOL(cnss_get_wlan_tsf_gpio);
++
+ 
+ #if IS_ENABLED(CONFIG_MSM_QMP)
+ /**
+--- a/platform/cnss2/pci.c
++++ b/platform/cnss2/pci.c
+@@ -6281,6 +6281,14 @@
+ 
+ 	return false;
+ }
++bool cnss_smmu_s1_enabled(struct device *dev)
++{
++	struct cnss_pci_data *pci_priv = cnss_get_pci_priv(to_pci_dev(dev));
++
++	return cnss_pci_is_smmu_s1_enabled(pci_priv);
++}
++EXPORT_SYMBOL(cnss_smmu_s1_enabled);
++
+ struct iommu_domain *cnss_smmu_get_domain(struct device *dev)
+ {
+ 	struct cnss_pci_data *pci_priv = cnss_get_pci_priv(to_pci_dev(dev));
+--- a/platform/cnss2/main.c
++++ b/platform/cnss2/main.c
+@@ -4,6 +4,7 @@
+  * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+  */
+ 
++#include <linux/component.h>
+ #include <linux/delay.h>
+ #include <linux/devcoredump.h>
+ #include <linux/elf.h>
+@@ -54,6 +55,15 @@
+ #endif
+ #endif
+ 
++/* Qualcomm TSF companion interfaces, pinned source in 0127 evidence. */
++#define TSF_SYNC_GPIO		"qcom,wlan-tsf-gpio"
++#define TSF_IRQ_TS		"tsf_irq_ts"
++#define TSF_IRQ_TS_OP_VALID	BIT(0)
++#define TSF_IRQ_TS_OP_OVERFLOW	BIT(8)
++#define TSF_IRQ_TS_OP_OFFSET	0x0
++#define TSF_IRQ_TS_LO_OFFSET	0x4
++#define TSF_IRQ_TS_HI_OFFSET	0x8
++
+ #define CNSS_DUMP_FORMAT_VER		0x11
+ #define CNSS_DUMP_FORMAT_VER_V2		0x22
+ #define CNSS_DUMP_MAGIC_VER_V2		0x42445953
+@@ -735,6 +745,10 @@
+ 	case CNSS_FW_CAP_BT_DUMP_OVER_WLAN_SUPPORT:
+ 		is_supported = !!(plat_priv->fw_caps &
+ 				  QMI_WLFW_BT_DUMP_OVER_WLAN_SUPPORT_V01);
++		break;
++	case CNSS_FW_CAP_DIRECT_REFILL_SUPPORT:
++		is_supported = !!(plat_priv->fw_caps &
++				  QMI_WLFW_DIRECT_REFILL_SUPPORT_V01);
+ 		break;
+ 	default:
+ 		cnss_pr_err("Invalid FW Capability: 0x%x\n", fw_cap);
+@@ -6397,6 +6411,213 @@
+ 	}
+ }
+ 
++static int cnss_get_wlan_tsf_gpio_info(struct cnss_plat_data *plat_priv)
++{
++	struct device *dev = &plat_priv->plat_dev->dev;
++	struct cnss_wlan_tsf_info *tsf_info = &plat_priv->tsf_info;
++
++	tsf_info->wlan_tsf_gpio = -EINVAL;
++	tsf_info->irq_num = -EINVAL;
++
++	if (!of_find_property(dev->of_node, TSF_SYNC_GPIO, NULL))
++		return -EINVAL;
++
++	tsf_info->wlan_tsf_gpio = of_get_named_gpio(dev->of_node,
++						    TSF_SYNC_GPIO, 0);
++	cnss_pr_dbg("WLAN TSF GPIO: %d\n", tsf_info->wlan_tsf_gpio);
++	if (tsf_info->wlan_tsf_gpio < 0)
++		return -EINVAL;
++
++	return 0;
++}
++
++static int cnss_get_tsf_ts_info(struct cnss_plat_data *plat_priv)
++{
++	struct platform_device *plat_dev = plat_priv->plat_dev;
++	struct device *dev = &plat_dev->dev;
++	struct resource *res;
++	resource_size_t addr_len;
++	void __iomem *base_addr;
++
++	res = platform_get_resource_byname(plat_dev, IORESOURCE_MEM,
++					   TSF_IRQ_TS);
++	if (!res) {
++		cnss_pr_dbg("TSF_IRQ_TS address is not present\n");
++		return -ENOMEM;
++	}
++
++	addr_len = resource_size(res);
++	base_addr = devm_ioremap(dev, res->start, addr_len);
++	if (!base_addr) {
++		cnss_pr_dbg("Failed to get ts base address\n");
++		return -ENOMEM;
++	}
++	plat_priv->tsf_info.irq_ts_info.cmd_ts_addr = res->start;
++	plat_priv->tsf_info.irq_ts_info.cmd_ts_addr_io = base_addr;
++	plat_priv->tsf_info.irq_ts_info.is_valid_addr = true;
++
++	cnss_pr_dbg("TSF_IRQ_TS base address is %pa with length %pa base_addr %pa\n",
++		    &plat_priv->tsf_info.irq_ts_info.cmd_ts_addr, &addr_len,
++		    &plat_priv->tsf_info.irq_ts_info.cmd_ts_addr_io);
++
++	return 0;
++}
++
++static void cnss_read_tsf_irq_ts(struct cnss_wlan_tsf_info *tsf_info)
++{
++	uint64_t data_val;
++	void __iomem *tsf_cmd;
++
++	if (!tsf_info->irq_ts_info.is_valid_addr)
++		return;
++
++	tsf_cmd = tsf_info->irq_ts_info.cmd_ts_addr_io;
++	data_val = readl_relaxed(tsf_cmd + TSF_IRQ_TS_OP_OFFSET);
++	if (!(data_val & TSF_IRQ_TS_OP_VALID))
++		return;
++
++	if (data_val & TSF_IRQ_TS_OP_OVERFLOW)
++		cnss_pr_dbg("tsf irq timestamp overflow detected\n");
++	data_val = readl_relaxed(tsf_cmd + TSF_IRQ_TS_LO_OFFSET);
++	data_val |= ((uint64_t)readl_relaxed(tsf_cmd + TSF_IRQ_TS_HI_OFFSET)) << 32;
++	if (!data_val)
++		return;
++
++	if (data_val * 10 < data_val) {
++		do_div(data_val, TIME_CLOCK_FREQ_HZ / 100000);
++		tsf_info->host_time_us = data_val * 10;
++		return;
++	}
++
++	data_val = data_val * 10;
++	do_div(data_val, TIME_CLOCK_FREQ_HZ / 100000);
++	tsf_info->host_time_us = data_val;
++}
++
++static irqreturn_t cnss_wlan_tsf_capture_threaded_handler(int irq, void *ctx)
++{
++	struct cnss_wlan_tsf_info *tsf_info = ctx;
++
++	if (!tsf_info)
++		return IRQ_HANDLED;
++
++	if (tsf_info->irq_num < 0 || tsf_info->irq_num != irq ||
++	    !tsf_info->wlan_tsf_handler || !tsf_info->context)
++		return IRQ_HANDLED;
++
++	cnss_read_tsf_irq_ts(tsf_info);
++	tsf_info->wlan_tsf_handler(tsf_info->context, tsf_info->host_time_us);
++
++	return IRQ_HANDLED;
++}
++
++static irqreturn_t cnss_wlan_tsf_capture_irq_handler(int irq, void *ctx)
++{
++	struct cnss_wlan_tsf_info *tsf_info = ctx;
++	struct cnss_plat_data *plat_priv;
++
++	if (!tsf_info)
++		return IRQ_HANDLED;
++
++	plat_priv = container_of(tsf_info, struct cnss_plat_data, tsf_info);
++	tsf_info->host_time_us = cnss_get_host_timestamp(plat_priv);
++
++	return IRQ_WAKE_THREAD;
++}
++
++static int cnss_wlan_tsf_init(struct cnss_wlan_tsf_info *tsf_info)
++{
++	int ret;
++
++	if (tsf_info->wlan_tsf_gpio < 0)
++		return -EINVAL;
++
++	ret = gpio_request(tsf_info->wlan_tsf_gpio, "wlan_tsf_gpio");
++	if (ret) {
++		cnss_pr_err("Failed to request TSF GPIO %d, err = %d\n",
++				tsf_info->wlan_tsf_gpio, ret);
++		return ret;
++	}
++
++	gpio_direction_input(tsf_info->wlan_tsf_gpio);
++	tsf_info->irq_num = gpio_to_irq(tsf_info->wlan_tsf_gpio);
++	cnss_pr_dbg("WLAN TSF IRQ: %d\n", tsf_info->irq_num);
++	if (tsf_info->irq_num < 0) {
++		gpio_free(tsf_info->wlan_tsf_gpio);
++		return -EINVAL;
++	}
++
++	ret = request_threaded_irq(tsf_info->irq_num,
++				   cnss_wlan_tsf_capture_irq_handler,
++				   cnss_wlan_tsf_capture_threaded_handler,
++				   IRQF_SHARED | IRQF_TRIGGER_RISING,
++				   "wlan_tsf", (void *)tsf_info);
++	if (ret) {
++		gpio_free(tsf_info->wlan_tsf_gpio);
++		cnss_pr_err("Failed to request TSF IRQ, err = %d\n", ret);
++	}
++
++	cnss_pr_dbg("request irq[%d], result: %d\n", tsf_info->irq_num, ret);
++	return ret;
++}
++
++static void cnss_wlan_tsf_deinit(struct cnss_wlan_tsf_info *tsf_info)
++{
++	if (tsf_info->irq_num >= 0)
++		free_irq(tsf_info->irq_num, (void *)tsf_info);
++
++	if (tsf_info->wlan_tsf_gpio >= 0)
++		gpio_free(tsf_info->wlan_tsf_gpio);
++
++	tsf_info->irq_num = -EINVAL;
++	tsf_info->wlan_tsf_handler = NULL;
++	tsf_info->context = NULL;
++}
++
++int cnss_register_tsf_captured_handler(struct device *dev,
++				       wlan_tsf_handler_t handler,
++				       void *ctx)
++{
++	struct cnss_plat_data *plat_priv = cnss_bus_dev_to_plat_priv(dev);
++	struct cnss_wlan_tsf_info *tsf_info;
++	int ret;
++
++	if (!plat_priv) {
++		cnss_pr_err("plat_priv is NULL!\n");
++		return -EINVAL;
++	}
++
++	tsf_info = &plat_priv->tsf_info;
++	ret = cnss_wlan_tsf_init(tsf_info);
++	if (ret) {
++		cnss_pr_err("wlan tsf irq is not initialized\n");
++		return -EINVAL;
++	}
++
++	tsf_info->wlan_tsf_handler = handler;
++	tsf_info->context = ctx;
++	return 0;
++}
++EXPORT_SYMBOL(cnss_register_tsf_captured_handler);
++
++int cnss_unregister_tsf_captured_handler(struct device *dev, void *ctx)
++{
++	struct cnss_plat_data *plat_priv = cnss_bus_dev_to_plat_priv(dev);
++	struct cnss_wlan_tsf_info *tsf_info;
++
++	if (!plat_priv) {
++		cnss_pr_err("plat_priv is NULL!\n");
++		return -EINVAL;
++	}
++
++	tsf_info = &plat_priv->tsf_info;
++	cnss_wlan_tsf_deinit(tsf_info);
++	tsf_info->wlan_tsf_handler = NULL;
++	tsf_info->context = NULL;
++	return 0;
++}
++EXPORT_SYMBOL(cnss_unregister_tsf_captured_handler);
++
+ static int cnss_misc_init(struct cnss_plat_data *plat_priv)
+ {
+ 	int ret;
+@@ -6562,6 +6783,8 @@
+ 	{ .name = "qcaconv", .driver_data = 0, },
+ 	{ .name = "direct-link", .driver_data = DIRECT_LINK_DEVICE_ID, },
+ 	{ .name = "fig", .driver_data = FIG_DEVICE_ID, },
++	{ .name = "vendor-wlan-wonder",
++	  .driver_data = WONDER_VENDOR_DEVICE_ID, },
+ 	{ },
+ };
+ 
+@@ -6599,6 +6822,9 @@
+ 	{
+ 		.compatible = "qcom,cnss-fig",
+ 		.data = (void *)&cnss_platform_id_table[10]},
++	{
++		.compatible = "qcom,cnss-vendor-wlan-wonder",
++		.data = (void *)&cnss_platform_id_table[11]},
+ 	{ },
+ };
+ MODULE_DEVICE_TABLE(of, cnss_of_match_table);
+@@ -7029,6 +7255,105 @@
+ 	init_completion(&plat_priv->xdump_helper.wl_over_bt_complete);
+ }
+ 
++/**
++ * cnss_vendor_wonder_comp_bind - vendor wonder device component bind
++ *  callback
++ * @comp: vendor wonder device
++ * @master: master device
++ * @master_data: master data
++ *
++ * Return: 0 on success else errno
++ */
++static
++int cnss_vendor_wonder_comp_bind(struct device *comp, struct device *master,
++				 void *master_data)
++{
++	cnss_pr_info("vendor wonder bound to master device %s\n",
++		     dev_name(master));
++	return 0;
++}
++
++/**
++ * cnss_vendor_wonder_comp_unbind - vendor wonder device component unbind
++ *  callback
++ * @comp: vendor wonder device
++ * @master: master device
++ * @master_data: master data
++ *
++ * Return: None
++ */
++static
++void cnss_vendor_wonder_comp_unbind(struct device *comp, struct device *master,
++				    void *master_data)
++{
++	cnss_pr_info("vendor wonder unbound to master device\n");
++}
++
++static struct platform_device *wonder_plat_dev;
++static const void *wonder_priv_data;
++
++static const struct component_ops wonder_comp_ops = {
++	.bind = cnss_vendor_wonder_comp_bind,
++	.unbind = cnss_vendor_wonder_comp_unbind,
++};
++
++static inline int cnss_add_vendor_wonder_component(void)
++{
++	platform_set_drvdata(wonder_plat_dev, (void *)wonder_priv_data);
++
++	return component_add(&wonder_plat_dev->dev, &wonder_comp_ops);
++}
++
++static inline void cnss_del_vendor_wonder_component(void)
++{
++	component_del(&wonder_plat_dev->dev, &wonder_comp_ops);
++	platform_set_drvdata(wonder_plat_dev, NULL);
++}
++
++int cnss_set_vendor_wonder_priv_data(const void *priv_data)
++{
++	wonder_priv_data = priv_data;
++
++	if (!wonder_plat_dev) {
++		cnss_pr_info("vendor wonder plat device not available\n");
++		return 0;
++	}
++
++	if (wonder_priv_data)
++		cnss_add_vendor_wonder_component();
++	else
++		cnss_del_vendor_wonder_component();
++
++	return 0;
++}
++EXPORT_SYMBOL(cnss_set_vendor_wonder_priv_data);
++
++static int cnss_vendor_wonder_dev_probe(struct platform_device *plat_dev)
++{
++	if (!wonder_plat_dev) {
++		cnss_pr_info("wlan vendor wonder device probed!\n");
++		wonder_plat_dev = plat_dev;
++
++		if (wonder_priv_data)
++			return cnss_add_vendor_wonder_component();
++
++		return 0;
++	} else {
++		cnss_pr_info("wlan vendor wonder device already exists!\n");
++		return -EEXIST;
++	}
++}
++
++static void cnss_vendor_wonder_dev_remove(void)
++{
++	if (wonder_plat_dev && wonder_priv_data)
++		cnss_del_vendor_wonder_component();
++
++	cnss_pr_info("wlan vendor wonder device removed!\n");
++	wonder_plat_dev = NULL;
++	wonder_priv_data = NULL;
++}
++
+ static int cnss_probe(struct platform_device *plat_dev)
+ {
+ 	int ret = 0;
+@@ -7048,6 +7373,8 @@
+ 	if (device_id->driver_data == DIRECT_LINK_DEVICE_ID) {
+ 		cnss_pr_info("cnss direct link device probed!\n");
+ 		return 0;
++	} else if (device_id->driver_data == WONDER_VENDOR_DEVICE_ID) {
++		return cnss_vendor_wonder_dev_probe(plat_dev);
+ 	}
+ 
+ 	if (cnss_get_plat_priv(plat_dev)) {
+@@ -7118,7 +7445,9 @@
+ 	cnss_power_misc_params_init(plat_priv);
+ 	cnss_get_tcs_info(plat_priv);
+ 	cnss_get_cpr_info(plat_priv);
+-	cnss_get_wlan_tsf_gpio_info(plat_priv);
++	ret = cnss_get_wlan_tsf_gpio_info(plat_priv);
++	if (!ret)
++		cnss_get_tsf_ts_info(plat_priv);
+ 	cnss_aop_interface_init(plat_priv);
+ 	cnss_init_control_params(plat_priv);
+ 	cnss_get_cpumask_for_wlan_txrx_intr(plat_priv);
+@@ -7228,11 +7557,6 @@
+ 	const struct platform_device_id *device_id;
+ 	int ret = 0;
+ 
+-	if (!plat_priv) {
+-		cnss_pr_err("plat priv is null\n");
+-		goto out;
+-	}
+-
+ 	of_id = of_match_device(cnss_of_match_table, &plat_dev->dev);
+ 	if (!of_id || !of_id->data) {
+ 		cnss_pr_err("cnss remove failed to find of match device!\n");
+@@ -7243,6 +7567,14 @@
+ 	device_id = of_id->data;
+ 	if (device_id->driver_data == DIRECT_LINK_DEVICE_ID) {
+ 		cnss_pr_info("cnss direct link device removed!\n");
++		goto out;
++	} else if (device_id->driver_data == WONDER_VENDOR_DEVICE_ID) {
++		cnss_vendor_wonder_dev_remove();
++		goto out;
++	}
++
++	if (!plat_priv) {
++		cnss_pr_err("plat priv is null\n");
+ 		goto out;
+ 	}
+ 
