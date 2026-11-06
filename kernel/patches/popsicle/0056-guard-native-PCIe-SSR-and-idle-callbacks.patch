@@ -1,0 +1,40 @@
+--- a/qcacld-3.0/core/pld/src/pld_pcie.c
++++ b/qcacld-3.0/core/pld/src/pld_pcie.c
+@@ -174,6 +174,8 @@
+ 	struct pld_context *pld_context;
+ 
+ 	pld_context = pld_get_global_context();
++	if (!pld_context || !pld_context->ops)
++		return -ENODEV;
+ 	if (pld_context->ops->idle_restart)
+ 		return pld_context->ops->idle_restart(&pdev->dev,
+ 						      PLD_BUS_TYPE_PCIE);
+@@ -194,7 +196,9 @@
+ 	struct pld_context *pld_context;
+ 
+ 	pld_context = pld_get_global_context();
+-	if (pld_context->ops->shutdown)
++	if (!pld_context || !pld_context->ops)
++		return -ENODEV;
++	if (pld_context->ops->idle_shutdown)
+ 		return pld_context->ops->idle_shutdown(&pdev->dev,
+ 						       PLD_BUS_TYPE_PCIE);
+ 
+@@ -217,6 +221,8 @@
+ 	struct pld_context *pld_context;
+ 
+ 	pld_context = pld_get_global_context();
++	if (!pld_context || !pld_context->ops)
++		return -ENODEV;
+ 	if (pld_context->ops->reinit)
+ 		return pld_context->ops->reinit(&pdev->dev,
+ 				PLD_BUS_TYPE_PCIE, pdev, (void *)id);
+@@ -237,6 +243,8 @@
+ 	struct pld_context *pld_context;
+ 
+ 	pld_context = pld_get_global_context();
++	if (!pld_context || !pld_context->ops)
++		return;
+ 	if (pld_context->ops->shutdown)
+ 		pld_context->ops->shutdown(&pdev->dev, PLD_BUS_TYPE_PCIE);
+ }

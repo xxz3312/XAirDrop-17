@@ -93,6 +93,7 @@ on:
       - tools/kernel/mishare_txn_fixture.py
       - tools/kernel/mishare_mlme_fixture.py
       - tools/kernel/mishare_execution_fixture.py
+      - tools/kernel/mishare_pcie_execution_fixture.py
       - tools/kernel/mishare_icnss_fixture.py
       - tools/kernel/mishare_icnss_origins.py
       - tools/kernel/mishare_host_fixture.py
@@ -144,6 +145,7 @@ jobs:
           python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
           python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
           python3 tools/kernel/mishare_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-execution.json
+          python3 tools/kernel/mishare_pcie_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-pcie-execution.json
           python3 tools/kernel/mishare_icnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-icnss.json
       - uses: actions/upload-artifact@v4
         with:
@@ -152,6 +154,7 @@ jobs:
             stop-host.json
             stop-runtime.json
             stop-execution.json
+            stop-pcie-execution.json
             stop-icnss.json
           if-no-files-found: error
           retention-days: 7

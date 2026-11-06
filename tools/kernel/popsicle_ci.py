@@ -647,11 +647,14 @@ def modules(work, link_only=False):
                                 'opairshare_wlan_execution_idle_restart', 'opairshare_wlan_execution_idle_shutdown',
                                 'opairshare_wlan_execution_unregister_begin', 'opairshare_wlan_execution_unregister_end',
                                 'opairshare_wlan_execution_remove_begin', 'opairshare_wlan_execution_remove_end',
-                                'opairshare_wlan_execution_remove_status']
+                                'opairshare_wlan_execution_remove_status',
+                                'opairshare_wlan_execution_register_pcie_v3',
+                                'opairshare_wlan_execution_pcie_reinit', 'opairshare_wlan_execution_pcie_shutdown',
+                                'opairshare_wlan_execution_pcie_idle_restart', 'opairshare_wlan_execution_pcie_idle_shutdown']
                     missing = sorted(symbol for symbol in required
                                      if symbol not in defined or '__ksymtab_' + symbol not in defined)
                     v1_alias = '__ksymtab_opairshare_wlan_execution_register' in defined
-                    contract = {'status': 'PROVIDER_EXECUTION_V2_EXPORTS_PRESENT_ONLY'
+                    contract = {'status': 'PROVIDER_EXECUTION_V2_PCIE_V3_EXPORTS_PRESENT_ONLY'
                                 if not missing and not v1_alias else 'REJECT',
                                 'required': required, 'missing': missing, 'v1_registration_alias': v1_alias,
                                 'sha256': hashlib.sha256(path.read_bytes()).hexdigest(),

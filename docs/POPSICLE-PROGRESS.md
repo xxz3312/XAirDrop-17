@@ -1,3 +1,9 @@
+## 最新阶段 0124（PCIe 类型化边界与原生回调修复，待 Actions 验证）
+
+已按实际 PCIe/CNSS2 签名新增独立 v3 描述符与四个外部入口，保留设备 ID，沿用共享 owner/引用/关闭保护；v2 布局不变，错总线拒绝。补丁 0056 修复四个原生回调的空 context/ops 访问及 idle_shutdown 指针检查错误。新增真实 provider + 四个原生 PCIe 回调 C 夹具、四类并发关闭和六项错误注入，接入默认 CI，真实 provider 导出门禁扩展为 17 项。
+
+57 项本地 Python 回归、源码组装与独立补丁正反检查通过。生产 PCIe 注册槽位尚未切换，CNSS2 checked 注销/清空/断电返回链尚未接入；本阶段不计作实机入口保护完成。手机未操作，无线后端仍关闭。详见 [0124 边界与限制](POPSICLE-PCIE-BOUNDARY-0124.md)。
+
 ## 最新阶段 0123（ICNSS 参考 CRC 已修复，实际目标总线已纠正）
 
 定位到独立构建缺少 gendwarfksyms 稳定模式：沿用内核原有 KABI 注解，设置 KBUILD_GENDWARFKSYMS_STABLE=1 后，60 个旧导出记录全部与原厂匹配，53 处 CRC 差异归零。非稳定/稳定构建的 .text、.init.text、.exit.text 字节哈希一致，60 个旧导出入口数据字一致；provider 与 ICNSS 的记录范围内版本检查通过，没有增加 KABI 规则或放宽 CRC 检查。实际类型流、配置和原有 declonly 规则已保存并核对。

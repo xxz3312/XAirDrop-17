@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* External return boundary for the private IPCI SSR callbacks. */
+/* External return boundary for the private WLAN SSR/idle callbacks. */
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/errno.h>
@@ -8,6 +8,7 @@
 
 static DEFINE_MUTEX(execution_lock);
 static struct mishare_wlan_execution_ops execution_ops;
+static struct mishare_wlan_pcie_execution_ops execution_pcie_ops;
 static unsigned int execution_active;
 static bool execution_closing;
 static bool unregister_scope, unregister_pin;
@@ -43,6 +44,36 @@ int opairshare_wlan_execution_register_v2(const struct mishare_wlan_execution_op
     return ret;
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_register_v2);
+
+
+int opairshare_wlan_execution_register_pcie_v3(const struct mishare_wlan_pcie_execution_ops *ops)
+{
+    int ret = 0;
+
+    if (!ops || !ops->owner || !ops->reinit || !ops->shutdown ||
+        !ops->idle_restart || !ops->idle_shutdown)
+        return -EINVAL;
+    mutex_lock(&execution_lock);
+    if (execution_ops.owner) {
+        if (execution_pcie_ops.owner != ops->owner ||
+            execution_pcie_ops.reinit != ops->reinit ||
+            execution_pcie_ops.shutdown != ops->shutdown ||
+            execution_pcie_ops.idle_restart != ops->idle_restart ||
+            execution_pcie_ops.idle_shutdown != ops->idle_shutdown)
+            ret = -EBUSY;
+        else if (execution_closing)
+            ret = -ESHUTDOWN;
+        else
+            ret = -EALREADY;
+    } else {
+        execution_pcie_ops = *ops;
+        execution_ops.owner = ops->owner;
+        execution_closing = false;
+    }
+    mutex_unlock(&execution_lock);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_register_pcie_v3);
 
 int opairshare_wlan_execution_close(struct module *owner)
 {
@@ -82,6 +113,7 @@ int opairshare_wlan_execution_unregister(struct module *owner)
             ret = -EBUSY;
         else {
             memset(&execution_ops, 0, sizeof(execution_ops));
+            memset(&execution_pcie_ops, 0, sizeof(execution_pcie_ops));
             execution_closing = false;
         }
     }
@@ -90,19 +122,24 @@ int opairshare_wlan_execution_unregister(struct module *owner)
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_unregister);
 
-static int execution_enter(struct mishare_wlan_execution_ops *ops)
+static int execution_enter(struct mishare_wlan_execution_ops *ops,
+                           struct mishare_wlan_pcie_execution_ops *pcie)
 {
     int ret = 0;
 
     mutex_lock(&execution_lock);
     if (!execution_ops.owner)
         ret = -ENODEV;
+    else if (!!execution_pcie_ops.owner != !!pcie)
+        ret = -EPROTOTYPE;
     else if (execution_closing)
         ret = -ESHUTDOWN;
     else if (!try_module_get(execution_ops.owner))
         ret = -ESHUTDOWN;
     else {
         *ops = execution_ops;
+        if (pcie)
+            *pcie = execution_pcie_ops;
         execution_active++;
     }
     mutex_unlock(&execution_lock);
@@ -127,7 +164,7 @@ int opairshare_wlan_execution_reinit(struct device *dev)
 
     if (!dev)
         return -EINVAL;
-    ret = execution_enter(&ops);
+    ret = execution_enter(&ops, NULL);
     if (ret)
         return ret;
     ret = ops.reinit(dev);
@@ -140,7 +177,7 @@ void opairshare_wlan_execution_shutdown(struct device *dev)
 {
     struct mishare_wlan_execution_ops ops;
 
-    if (!dev || execution_enter(&ops))
+    if (!dev || execution_enter(&ops, NULL))
         return;
     ops.shutdown(dev);
     execution_leave(ops.owner);
@@ -155,7 +192,7 @@ int opairshare_wlan_execution_idle_restart(struct device *dev)
 
     if (!dev)
         return -EINVAL;
-    ret = execution_enter(&ops);
+    ret = execution_enter(&ops, NULL);
     if (ret)
         return ret;
     ret = ops.idle_restart(dev);
@@ -171,7 +208,7 @@ int opairshare_wlan_execution_idle_shutdown(struct device *dev)
 
     if (!dev)
         return -EINVAL;
-    ret = execution_enter(&ops);
+    ret = execution_enter(&ops, NULL);
     if (ret)
         return ret;
     ret = ops.idle_shutdown(dev);
@@ -292,6 +329,7 @@ int opairshare_wlan_execution_unregister_end(struct module *owner, int result)
             release = unregister_pin;
             unregister_pin = unregister_scope = false;
             memset(&execution_ops, 0, sizeof(execution_ops));
+            memset(&execution_pcie_ops, 0, sizeof(execution_pcie_ops));
             execution_closing = false;
         }
     }
@@ -329,3 +367,70 @@ int opairshare_wlan_execution_remove_status(struct device *dev)
     return ret;
 }
 EXPORT_SYMBOL(opairshare_wlan_execution_remove_status);
+
+/* PCIe functions are directly assignable to cnss_wlan_driver slots. No
+ * callback-pointer cast or WLAN trampoline may stand between CNSS2 and these
+ * entries. The descriptor is copied under the same lock as its owner pin.
+ */
+int opairshare_wlan_execution_pcie_reinit(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+    struct mishare_wlan_execution_ops base;
+    struct mishare_wlan_pcie_execution_ops ops;
+    int ret;
+
+    if (!pdev)
+        return -EINVAL;
+    ret = execution_enter(&base, &ops);
+    if (ret)
+        return ret;
+    ret = ops.reinit(pdev, id);
+    execution_leave(base.owner);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_pcie_reinit);
+
+void opairshare_wlan_execution_pcie_shutdown(struct pci_dev *pdev)
+{
+    struct mishare_wlan_execution_ops base;
+    struct mishare_wlan_pcie_execution_ops ops;
+
+    if (!pdev || execution_enter(&base, &ops))
+        return;
+    ops.shutdown(pdev);
+    execution_leave(base.owner);
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_pcie_shutdown);
+
+int opairshare_wlan_execution_pcie_idle_restart(struct pci_dev *pdev, const struct pci_device_id *id)
+{
+    struct mishare_wlan_execution_ops base;
+    struct mishare_wlan_pcie_execution_ops ops;
+    int ret;
+
+    if (!pdev)
+        return -EINVAL;
+    ret = execution_enter(&base, &ops);
+    if (ret)
+        return ret;
+    ret = ops.idle_restart(pdev, id);
+    execution_leave(base.owner);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_pcie_idle_restart);
+
+int opairshare_wlan_execution_pcie_idle_shutdown(struct pci_dev *pdev)
+{
+    struct mishare_wlan_execution_ops base;
+    struct mishare_wlan_pcie_execution_ops ops;
+    int ret;
+
+    if (!pdev)
+        return -EINVAL;
+    ret = execution_enter(&base, &ops);
+    if (ret)
+        return ret;
+    ret = ops.idle_shutdown(pdev);
+    execution_leave(base.owner);
+    return ret;
+}
+EXPORT_SYMBOL(opairshare_wlan_execution_pcie_idle_shutdown);

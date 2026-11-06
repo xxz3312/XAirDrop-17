@@ -4,6 +4,8 @@
 #include <linux/types.h>
 struct module;
 struct device;
+struct pci_dev;
+struct pci_device_id;
 
 /* V2 registration has a distinct export: old three-entry descriptors must
  * never be read as this larger callback table. Rebuild provider and WLAN as
@@ -21,6 +23,23 @@ struct mishare_wlan_execution_ops {
     int (*idle_shutdown)(struct device *dev);
 };
 int opairshare_wlan_execution_register_v2(const struct mishare_wlan_execution_ops *ops);
+/* V3 has PCIe-native signatures, including the original device ID. V2's
+ * layout and export remain unchanged. Exactly one transport can register.
+ * These four entries are prepared for CNSS2 integration; exporting them alone
+ * does not connect the native CNSS2 registration/unregister lifecycle.
+ */
+struct mishare_wlan_pcie_execution_ops {
+    struct module *owner;
+    int (*reinit)(struct pci_dev *pdev, const struct pci_device_id *id);
+    void (*shutdown)(struct pci_dev *pdev);
+    int (*idle_restart)(struct pci_dev *pdev, const struct pci_device_id *id);
+    int (*idle_shutdown)(struct pci_dev *pdev);
+};
+int opairshare_wlan_execution_register_pcie_v3(const struct mishare_wlan_pcie_execution_ops *ops);
+int opairshare_wlan_execution_pcie_reinit(struct pci_dev *pdev, const struct pci_device_id *id);
+void opairshare_wlan_execution_pcie_shutdown(struct pci_dev *pdev);
+int opairshare_wlan_execution_pcie_idle_restart(struct pci_dev *pdev, const struct pci_device_id *id);
+int opairshare_wlan_execution_pcie_idle_shutdown(struct pci_dev *pdev);
 int opairshare_wlan_execution_close(struct module *owner);
 int opairshare_wlan_execution_unregister(struct module *owner);
 int opairshare_wlan_execution_reinit(struct device *dev);
