@@ -1,0 +1,528 @@
+{
+  "stage": "0127",
+  "fast_source_commit": "5027fcae10e08ecf8038e14fb7fcf07051fa2c34",
+  "fast_run_id": 42220557896,
+  "fast_job_id": 127901240730,
+  "fast_artifact_id": 13503726245,
+  "fast_artifact_sha256": "90769d8aea1e6eaffc2dfd9089ea738723c3f1dafdd5b63899f3bc0b394848c3",
+  "seven_fixture_hashes_reassembled_and_matched": true,
+  "eleven_platform_files_reverse_restored_to_pinned_source": true,
+  "local_python_tests": 62,
+  "native_interface_report": {
+    "status": "MISHARE_CNSS_INTERFACES_FIXTURE_PASS_ONLY",
+    "fixture_sha256": "704ffe74cb81394d159cd7e926d415b1a99efa529e3d843e0499b2964badaaf9",
+    "native_fragments_sha256": {
+      "cnss_get_wlan_tsf_gpio_info": "3841759dbd74dd2afe4c48d569d58dbf0c2324efac336a224a2ede58088e1209",
+      "cnss_get_tsf_ts_info": "046500d4310e21a0b326b5cae0cee996ecbce8dbb2cfc05b027138c3c2d6ff40",
+      "cnss_read_tsf_irq_ts": "d2cfa5d25a0df29940fc52ad8edfb2271f06cd5957b83aa434e417c57b0b7b94",
+      "cnss_wlan_tsf_capture_threaded_handler": "0ec174255a11bf6cf519f16d1480aa489949a2590c118943152ae280eabddfd4",
+      "cnss_wlan_tsf_capture_irq_handler": "f17b4a9af6504d2294fc257ec04bf4dc4111a7fb372be2346f5a097b9502549f",
+      "cnss_wlan_tsf_init": "ddf08330649b4ecdcfe8d1d4a894194255acb3ba8f5d499a8a7b103a38aea9f6",
+      "cnss_wlan_tsf_deinit": "a637f390f6d1a23780d2b8f5a8f71a5416c75845cffb5c1daa7c1d91a18781c0",
+      "cnss_register_tsf_captured_handler": "d9d83aed82e2eb992a0898272fbcbef6d1203a5200fbd5aed1160948bcda3192",
+      "cnss_unregister_tsf_captured_handler": "3fb69d5708f06e22fd8e78bf13eeb630928ec1349f052f3ae0003d247d984def",
+      "cnss_set_vendor_wonder_priv_data": "cd7a2cb3c4e617c32d805dad0beda6b607c54b15ba9c30ceff2cd8e614935b55",
+      "cnss_vendor_wonder_dev_probe": "81a7af90306309397ab1a4b50e1800b1aeb1cd2ea0ffaf115a6a4bc56915c2fb",
+      "cnss_vendor_wonder_dev_remove": "f53246350de24dff964e1c377008607189dc199d82a5ae3e967298b15e217f4f",
+      "cnss_smmu_s1_enabled": "839d752992c90fa07d966490ae1351024022210094ff37782872d0b1e44fbb52",
+      "cnss_pci_is_smmu_s1_enabled": "913bff1d33052b9e4e06fa6f0834a35a7510339c7f611cc22716597679e2e54b",
+      "cnss_get_fw_cap": "ebfa1e8ec8b3756ffc52a3df070df07f5f53ee1f8fe8585af373ea01e5a203d0",
+      "types": "3c60c4aa2f31e3add1497f5990f037591a4350c23205c82030538f78c5957fba",
+      "constants": "cec2e5cf5dbb4a706bd3be96a85a5a5541c37093fdc4b3115915f749161c46ce",
+      "wonder_block": "680f183da0de06fd8d43bd20f2f93ac0c8221226bd703607731abeef817fb9ad"
+    },
+    "exact_upstream_functions_checked": 13,
+    "timestamp_cases": 6,
+    "GPIO_IRQ_failure_cases": 4,
+    "wonder_success_lifecycles": 3,
+    "negative_controls_rejected": 7,
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "phone_executed": false,
+    "limitations": "Complete native restored functions against modeled GPIO/MMIO/IRQ/component/device lookup APIs. IRQ drain is a sequential admitted-callback model, not kernel concurrency. Preserves upstream timestamp conversion, caller-balanced TSF register/unregister and component semantics; no repeat-remove, concurrent publishers, failed component-add recovery, native loader or RF certification. Export CRCs and actual private layouts require the independent real paired build."
+  },
+  "native_checked_report": {
+    "status": "MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY",
+    "fixture_sha256": "04acf375ea522f9f3594bed4430eca61676b0ee39eaa7cf85270928eb081b587",
+    "provider_sha256": "273c91f4b2b66a87f179becbe440702d9364884bc345a867be9bc0111505b26c",
+    "execution_header_sha256": "235550f51cd548052164ab1fd398c23cf60ec69b2e5620bb20dd13fa4c25aad0",
+    "native_fragments_sha256": {
+      "NATIVE_DEVICE_ID": "375f48eabf194cd6d740d76bfcf22672e3c8070a9c370fb215f7932e8542804c",
+      "NATIVE_ENUM": "eceea863e252fbb6f19f7ef7cb2a9bd8ffeded5fb490fa431f57eb4ae8482ab7",
+      "NATIVE_GUARD": "216e5d7c6e294e29dfffdbe53ed41559ec6359f0a47d3323527847117962af07",
+      "NATIVE_PL_CALLBACKS": "9489d724ae382480a9bac84e7906b614b9889e0b7059733047c837d50b02baa3",
+      "NATIVE_PL_REMOVE": "8cbe29d741880931c5e1ca8d9e914f19e85b2ab38786a001707f72856907222e",
+      "NATIVE_PL_DESCRIPTOR": "9ee89a701ea709ee9e4f4d16d6cd261c8ec9b8cb52435dcccbb27ba94c3099c2",
+      "NATIVE_PL_REGISTER": "428ca9791b666fe4173648d37452daed32f2d7ddceb114bfec0b76433474f66e",
+      "NATIVE_PL_CHECKED": "19af208c87d19f53621b4def2c0cf79d548e66c13aeb2105de69d685122fe9c2",
+      "NATIVE_PL_UNREGISTER": "e0198e512123369f50ff2ead9c4f74dfeca88f5266b08807bdc35700e0a6ac32",
+      "NATIVE_COMMON_CHECKED": "43d3153e3671c26bf095a6ae80792530db47d8518e3330cf1ec586acecffe278",
+      "NATIVE_HDD_CHECKED": "945d08ed73bbb3f10ec97f5527e5e701b138f9ae09a920614886509b55876727",
+      "NATIVE_LATE_GUARD": "c4df8b8b48f33caf1f46b40017c389f59c82b5315af28952d41557907c4737ff",
+      "NATIVE_REMOVE_INTERNAL": "b1d57a0f2984331e9421eda78ec391ba89858ba1f09f58cc6c16af1e2b3b358c",
+      "NATIVE_REMOVE_WRAPPER": "3e5422203f7a6b8346620718a353543f6246c01e42f4ff7b0619553e0e2145a0",
+      "NATIVE_SHUTDOWN_INTERNAL": "aeadcf0cfb12d07111b5b35790ce83e296526d3732e946e6813fedc04a0c9b76",
+      "NATIVE_SHUTDOWN_WRAPPER": "ac0391d005de55aa72110233cbf43b0b002d61d8dba60d2c78a589f91f1ca7b0",
+      "NATIVE_LEGACY_HANDLER": "0c31a5baabfd1377242558cfacf200b5b3c69c391ff2db18f1b661a95a180b24",
+      "NATIVE_CHECKED_HANDLER": "04eaf51832fcbc89406008dab93e2ac87cf38de8a80f6dd3d54b48edf6b34e06",
+      "NATIVE_BUS_CHECKED": "6341ce5e97094b621e97dc3349fadcf741f4483d100bb10d07e4e5319b53f0b4",
+      "NATIVE_CHECKED_ENTRY": "6d06318ccd1f1ea9af69ce1b6a2c3d3398a3a02723d617d33e5a190f7e8dce9b",
+      "NATIVE_LEGACY_ENTRY": "cb2a2763f5f0ad9b41b4c63cfc38e02e17354f825c0b2062bce2034af0d4fd83",
+      "NATIVE_EVENT_ROUTE": "2c2884f91208bb318d71a36b9ec30e847bb51447f8e08c7198fb62dba3b41751",
+      "NATIVE_PL_SLOTS": "d5caa293fc1554a235530dea00fffd12eb95286c2a2a61137caee698f2a8b20c"
+    },
+    "platform_source_sha256": {
+      "platform/cnss2/main.h": "7379e498e523426ac5e66ffe4208488ecfbaae08d7b65332f8083ce30af325cb",
+      "platform/cnss2/pci.h": "2e59f85accca59faec4f2513d3961282e6310175b6b56239360e4963e08d5364",
+      "platform/cnss2/bus.h": "b97e385316537c359a3cb0b32b29a47f5e497e07cb630c9627d2854a548c356a",
+      "platform/cnss2/bus.c": "e42d8924d1e76c5cd57c9445dce02fc2c3e61075a06f9470d8ad26d60e6cff3b",
+      "platform/cnss2/main.c": "0c1fd5de13536ff8f22b5e18d5372324428248d35dd4764a266df0a12e815826",
+      "platform/inc/cnss2.h": "661525127c427ed192c8bf35f1f2dacc431139b27ce7fbe477c84dc55237522d",
+      "platform/cnss2/pci.c": "c36a0e76a6a259a57bd7128478cc348e27a0fe649d47a4ff807e35101ea471d1",
+      "platform/cnss2/debug.c": "1c209bfa3751cf73e1a4081c37bd7243efecae764d8e520bc9a32d0fd90191c3",
+      "platform/cnss2/power.c": "d10a21ed094133673daac6a15489934a5c83fa531b9f55fbcce9f3b82c275293",
+      "platform/cnss_utils/cnss_common.h": "4ac7aba24ac7ce497e5af8ab58c9de4a0dc616090a29ac773523652c53251c54",
+      "platform/cnss_utils/wlan_firmware_service_v01.h": "129c14e0171354c1a81700e357ff1c73a0fc78fcd427bd669588cbe1038de4a8"
+    },
+    "success_cases": 2,
+    "isolated_failure_cases": 9,
+    "isolated_admission_cases": 7,
+    "negative_controls_rejected": 6,
+    "platform_origin_files_restored": 11,
+    "sanitizers": [
+      "address",
+      "undefined",
+      "leak detection"
+    ],
+    "production_opt_in_consumer_executed": true,
+    "default_build_opt_in_enabled": false,
+    "CNSS2_binary_built": false,
+    "phone_executed": false,
+    "limitations": "Real provider, native PCIe register/checked unregister/remove, PLD/HDD refusal chain, CNSS2 checked/legacy entry, event routing, bus handler, complete native remove and qca6290 shutdown bodies. Five selected native ops slots and pthread synchronous event post; hardware/module/sync/HDD bodies are models. Only PEACH stable probed PCIe is admitted. Native power-tail errors retain remaining ownership but cannot undo already completed WLAN/MHI steps. Default consumer is unchanged; no real CNSS2 pair, ABI/KCFI, loader, RF, concurrent native power/recovery coordinator or module-exit veto is certified."
+  },
+  "pair_source_commit": "08afec94d643ad9cc369baaabe01a99d829f3e91",
+  "pair_run_id": 42219949711,
+  "pair_result_accepted": true,
+  "phone_executed": false,
+  "pair_job_id": 127899214137,
+  "pair_artifact_id": 13503242842,
+  "pair_artifact_sha256": "f72f725d3f97b2987cebb2d0f8d5fedc3f5da02924a2c4a15fdd952bf7b13e14",
+  "pair_report_artifact_id": 13503128400,
+  "pair_report_artifact_sha256": "d6e0cbfd2dda7e59db70ad9e87e23b6f7eb824a9f7fce43969ff8924427cb96e",
+  "pair_report": {
+    "status": "CHECKED_PLATFORM_PAIR_LINK_AND_RECORDED_CHECKS_ONLY",
+    "variant": "CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER=1",
+    "paired_WLAN_built": true,
+    "modules": {
+      "provider": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "30f01d8311e01f799b72402ba42c80beecd8d4741fffad980e42d9a3044f327c",
+        "version_records": 13,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "cnss2": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "f17964d6f54af70309d42ee21cff7a54b0e9a23508750491244cb82ab5a5ba9b",
+        "version_records": 364,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      },
+      "wlan": {
+        "status": "RECORDED_LOADER_CHECKS_MATCH_ONLY",
+        "sha256": "91394e4edc22ce52d6fe3f98d8252d31bc347cddbcb29e7c59312aa5ef77c918",
+        "version_records": 601,
+        "version_record_mismatches": {},
+        "layout": {
+          "section_size": 1600,
+          "init_offset": 392,
+          "exit_offset": 1528
+        },
+        "undefined_without_version": [],
+        "vermagic": [
+          "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+        ],
+        "vermagic_exact_match": false,
+        "vermagic_reference_loader_match": true,
+        "vermagic_stock_loader_match": true,
+        "stock_loader_kernel_sha256": "f6cf6ea11ea55b989b551f97a7cc1f83368ba7d9367d6e1cbd86b1752e82c998",
+        "btf_present": false,
+        "limitations": "Modpost copies provider CRCs into imports; matching records do not independently validate C declarations, private types, KCFI, full structure layout, GKI access, firmware, loading or AirDrop operation."
+      }
+    },
+    "checked_WLAN_unresolved": [],
+    "platform_export_crc_changes": {},
+    "phone_executed": false,
+    "radio_backend_activation_enabled": false,
+    "version_generator": "gendwarfksyms",
+    "stable_kabi_mode": true,
+    "new_kernel_kabi_rules_added": false,
+    "CRC_gate_waived": false,
+    "limitations": "Diagnostic paired build only. Stock CNSS2 must not remain loaded beside its replacement. No platform private layout/KCFI, module replacement procedure, actual loader/firmware, error recovery, module-exit failure or radio interoperability certification.",
+    "removed_stock_provider": "cnss2",
+    "stock_cnss2_export_count": 81,
+    "parent_MHI_buffer_default": {
+      "value": 32768,
+      "Kbuild_sha256": "5dae4841168d3456c95e695c4d3c8d2e73370c6ddcf6f24f4491f3c61445888f",
+      "Kconfig_sha256": "52bb498ea0c22898e75988cb7ecf8cc0d707de5f97b14d31d565f60f794b3d31"
+    },
+    "soc_config_sha256": "efa1a94176ead2177fd3d2cde5e46885130a6fa9dc710da22c60d9ded2ae6379",
+    "soc_selected_config": {
+      "CONFIG_PCI_MSM": "m",
+      "CONFIG_MHI_BUS": "m",
+      "CONFIG_MHI_BUS_MISC": "y",
+      "CONFIG_IPC_LOGGING": "m",
+      "CONFIG_QCOM_SMEM": "m",
+      "CONFIG_QCOM_SOCINFO": "m"
+    },
+    "soc_header_sha256": {
+      "include/linux/mhi.h": "8333c4d98f2403f57e96b47e18276f152315a9799ce7e40fb07af0f6b7cd9cc1",
+      "include/linux/mhi_misc.h": "7c379f95aaf129dae35c13d58cd1ad96efd59cb1d20663b0dfab40793a28050c"
+    },
+    "platform_config_sha256": "bed3c9d017f8491bb0e799f7a05ce018c2ea920556057d1a7c752d9fe19fe0d7",
+    "export_surface": {
+      "match": true,
+      "legacy_count": 81,
+      "missing": [],
+      "changed": {},
+      "unexpected_extra": [],
+      "checked_export_valid": true
+    },
+    "type_streams_requested": true,
+    "actual_target_transport": {
+      "status": "SOURCE_PROFILE_AND_RECORDED_STOCK_IMPORTS_AGREE_ONLY",
+      "transport": "PCIE_CNSS",
+      "platform_module": "cnss2",
+      "profile_sha256": "03fff26c9522fb42b4cfd43ccbd930fc29ca4f7b036429814dc7452ecac3fcd1",
+      "stock_wlan_sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+      "stock_platform_imports": [
+        "cnss_athdiag_read",
+        "cnss_athdiag_write",
+        "cnss_audio_is_direct_link_supported",
+        "cnss_audio_smmu_map",
+        "cnss_audio_smmu_unmap",
+        "cnss_auto_resume",
+        "cnss_auto_suspend",
+        "cnss_device_crashed",
+        "cnss_force_collect_rddm",
+        "cnss_force_fw_assert",
+        "cnss_get_audio_shared_iommu_group_cap",
+        "cnss_get_curr_therm_cdev_state",
+        "cnss_get_direct_link_sid",
+        "cnss_get_fw_cap",
+        "cnss_get_fw_files_for_target",
+        "cnss_get_fw_lpass_shared_mem",
+        "cnss_get_msi_address",
+        "cnss_get_msi_irq",
+        "cnss_get_pci_slot",
+        "cnss_get_platform_cap",
+        "cnss_get_soc_info",
+        "cnss_get_user_msi_assignment",
+        "cnss_get_virt_ramdump_mem",
+        "cnss_get_wifi_kobj",
+        "cnss_idle_restart",
+        "cnss_idle_shutdown",
+        "cnss_ipa_wlan_shared_smmu_supported",
+        "cnss_pci_allow_l1",
+        "cnss_pci_force_wake_release",
+        "cnss_pci_force_wake_request",
+        "cnss_pci_force_wake_request_sync",
+        "cnss_pci_get_iova_info",
+        "cnss_pci_is_device_awake",
+        "cnss_pci_is_device_down",
+        "cnss_pci_is_drv_connected",
+        "cnss_pci_link_down",
+        "cnss_pci_lock_reg_window",
+        "cnss_pci_prevent_l1",
+        "cnss_pci_unlock_reg_window",
+        "cnss_qmi_send",
+        "cnss_qmi_send_get",
+        "cnss_qmi_send_put",
+        "cnss_register_driver_async_data_cb",
+        "cnss_remove_pm_qos",
+        "cnss_request_bus_bandwidth",
+        "cnss_request_pm_qos",
+        "cnss_reset_time_sync_period",
+        "cnss_schedule_recovery",
+        "cnss_self_recovery",
+        "cnss_set_fw_log_mode",
+        "cnss_set_host_param",
+        "cnss_set_pcie_gen_speed",
+        "cnss_set_wfc_mode",
+        "cnss_smmu_get_domain",
+        "cnss_smmu_map",
+        "cnss_smmu_unmap",
+        "cnss_thermal_cdev_register",
+        "cnss_thermal_cdev_unregister",
+        "cnss_update_time_sync_period",
+        "cnss_utils_get_wlan_derived_mac_address",
+        "cnss_utils_get_wlan_mac_address",
+        "cnss_utils_get_wlan_unsafe_channel",
+        "cnss_utils_increment_driver_load_cnt",
+        "cnss_utils_set_wlan_unsafe_channel",
+        "cnss_utils_smem_mailbox_write",
+        "cnss_utils_wlan_get_dfs_nol",
+        "cnss_utils_wlan_set_dfs_nol",
+        "cnss_wlan_disable",
+        "cnss_wlan_enable",
+        "cnss_wlan_hw_enable",
+        "cnss_wlan_pm_control",
+        "cnss_wlan_register_driver",
+        "cnss_wlan_unregister_driver"
+      ],
+      "limitations": "Pinned source flag plus recorded original stock ELF imports/dependencies only; not a current phone inventory, active hardware session or radio validation."
+    },
+    "checked_WLAN_dependencies": [
+      "cfg80211",
+      "opairshare_wonder_provider",
+      "cnss_utils",
+      "cnss_nl",
+      "ipam",
+      "cnss_prealloc",
+      "qcom_iommu_util",
+      "hwid",
+      "qmi_helpers",
+      "cnss2"
+    ],
+    "checked_import_crc": "0x45b39d2b",
+    "existing_kabi_rules": {
+      "sha256": "d0138eb5d3e35b5620fe8a777534ab6f0474eae442b8b3233e8f9fe5b6b394c7",
+      "size": 32
+    },
+    "type_inputs": [
+      {
+        "name": "kernel.config",
+        "source": "out/.config",
+        "sha256": "94bf002db208377075e9aad55cbc850bdc9d2dd04cbd410d88d4bb75a176b6f3",
+        "size": 223236
+      },
+      {
+        "name": "stock-config-delta.json",
+        "source": "out/stock-config-delta.json",
+        "sha256": "840adae0ad9fe49b2deb44433dd3a93dc872f59f2392b71f1ae20b60f9becb50",
+        "size": 934
+      },
+      {
+        "name": "cnss2.Module.symvers",
+        "source": "wlan/platform/cnss2/Module.symvers",
+        "sha256": "9c69abb147124713223450bac0e1e68937845669d24c5a1e0710033331bc978c",
+        "size": 10714
+      },
+      {
+        "name": "cnss2.defconfig",
+        "source": "wlan/platform/cnss2/canoe_gki_defconfig",
+        "sha256": "bed3c9d017f8491bb0e799f7a05ce018c2ea920556057d1a7c752d9fe19fe0d7",
+        "size": 350
+      },
+      {
+        "name": "main.symtypes",
+        "source": "wlan/platform/cnss2/main.symtypes",
+        "sha256": "bcd3603b02853ffe769e0dec46c03951f453158ad129f8d5a6e9163c49ded1be",
+        "size": 592710
+      },
+      {
+        "name": "pci.symtypes",
+        "source": "wlan/platform/cnss2/pci.symtypes",
+        "sha256": "77a7830fa65cc6d5abed8eb0cf641e7b11264a98dee7e6c214ce771e804ff142",
+        "size": 610960
+      },
+      {
+        "name": "pci_qcom.symtypes",
+        "source": "wlan/platform/cnss2/pci_qcom.symtypes",
+        "sha256": "3269c80880cf25c41e317c5cbc4a3db633ff26fae7994ec9011b4a9b76f4a4f3",
+        "size": 540554
+      },
+      {
+        "name": "module-common.o.cmd",
+        "source": "wlan/platform/cnss2/..module-common.o.cmd",
+        "sha256": "eedd8dec44d7d89642d01cbe382f25ccdab715dcc0a924c409fe01449b7e6b49",
+        "size": 75479
+      },
+      {
+        "name": "Module.symvers.cmd",
+        "source": "wlan/platform/cnss2/.Module.symvers.cmd",
+        "sha256": "9095c6a5dfbae28508f2000e4b0354d509e843cbb551b2894268a8b0824e4268",
+        "size": 475
+      },
+      {
+        "name": "bus.o.cmd",
+        "source": "wlan/platform/cnss2/.bus.o.cmd",
+        "sha256": "c0be3c89a569212e8a6ebe6ab9858b6554252e7e1e06b4583e28626f65da40fd",
+        "size": 124095
+      },
+      {
+        "name": "cnss2.ko.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.ko.cmd",
+        "sha256": "141269277be74899832defb677e897e4b4307185da9341c789626aae9e64aeb2",
+        "size": 662
+      },
+      {
+        "name": "cnss2.mod.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.mod.cmd",
+        "sha256": "0d320d509c568bf33e9e8ab95dd4230d99eec9d79608e092a37bd63f65673122",
+        "size": 395
+      },
+      {
+        "name": "cnss2.mod.o.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.mod.o.cmd",
+        "sha256": "705961ae23f01ab60a65bd24daa2d11797370e66ada7d62fa02f069d73187069",
+        "size": 74912
+      },
+      {
+        "name": "cnss2.o.cmd",
+        "source": "wlan/platform/cnss2/.cnss2.o.cmd",
+        "sha256": "18e8a72b3f869e2fec5a17c8ab01de4078cc0dd5a0aed7f21f9bb218d485ad21",
+        "size": 439
+      },
+      {
+        "name": "coexistence_service_v01.o.cmd",
+        "source": "wlan/platform/cnss2/.coexistence_service_v01.o.cmd",
+        "sha256": "553ae0b810da4b4f333569b97f74728e3979c4d8a9376d76dba6ef8f2a27b3f1",
+        "size": 62595
+      },
+      {
+        "name": "debug.o.cmd",
+        "source": "wlan/platform/cnss2/.debug.o.cmd",
+        "sha256": "887eec776a292928da0943973fff98a9053e2b270f118bfa85d9950a1a3b1e11",
+        "size": 124207
+      },
+      {
+        "name": "genl.o.cmd",
+        "source": "wlan/platform/cnss2/.genl.o.cmd",
+        "sha256": "7b14e2f05c8f01dab7b591f8bcac77cfaa1517703b39d2e969fb3455b362d76c",
+        "size": 122664
+      },
+      {
+        "name": "main.o.cmd",
+        "source": "wlan/platform/cnss2/.main.o.cmd",
+        "sha256": "6d606b0ef922c69ec22a1312503288e962ad6d54bda71ab467acd16dda29732c",
+        "size": 129430
+      },
+      {
+        "name": "modules.order.cmd",
+        "source": "wlan/platform/cnss2/.modules.order.cmd",
+        "sha256": "a8a60b72ffe46f29bfc62338e31679fbad7e06738835345efa5828524c076dfd",
+        "size": 290
+      },
+      {
+        "name": "pci.o.cmd",
+        "source": "wlan/platform/cnss2/.pci.o.cmd",
+        "sha256": "a6879707ca48edb7d36c3e1a64b83f923c81c356cda36148bc60acc9fe17b716",
+        "size": 129571
+      },
+      {
+        "name": "pci_qcom.o.cmd",
+        "source": "wlan/platform/cnss2/.pci_qcom.o.cmd",
+        "sha256": "493600b2e6200223e293f7013d67f4bd190e72be4653e3e2fb89455975291149",
+        "size": 124430
+      },
+      {
+        "name": "power.o.cmd",
+        "source": "wlan/platform/cnss2/.power.o.cmd",
+        "sha256": "7e2736d5cb0a7d0d1f84f23d52df187ac8ad71158762b497b1fd93b2a0e31df8",
+        "size": 125473
+      },
+      {
+        "name": "qmi.o.cmd",
+        "source": "wlan/platform/cnss2/.qmi.o.cmd",
+        "sha256": "70cea61bb336058811962cb46eb26f4f0c2e4dc9a308e35d0a415ec75c989018",
+        "size": 122804
+      }
+    ]
+  },
+  "actual_module_hashes_and_type_inputs_verified": true,
+  "stock_export_records_exact_match_count": 81,
+  "stock_export_pre_entry_words_match_count": 81,
+  "native_PCIe_callback_pre_entry_words": {
+    "pld_pcie_reinit": {
+      "stock_function": "pld_pcie_reinit",
+      "stock": "0x868326f0",
+      "provider_function": "opairshare_wlan_execution_pcie_reinit",
+      "provider": "0x868326f0"
+    },
+    "pld_pcie_shutdown": {
+      "stock_function": "pld_pcie_shutdown",
+      "stock": "0xb24c9d29",
+      "provider_function": "opairshare_wlan_execution_pcie_shutdown",
+      "provider": "0xb24c9d29"
+    },
+    "pld_pcie_idle_restart_cb": {
+      "stock_function": "pld_pcie_idle_restart_cb",
+      "stock": "0x868326f0",
+      "provider_function": "opairshare_wlan_execution_pcie_idle_restart",
+      "provider": "0x868326f0"
+    },
+    "pld_pcie_idle_shutdown_cb": {
+      "stock_function": "pld_pcie_idle_shutdown_cb",
+      "stock": "0xfcb3be7f",
+      "provider_function": "opairshare_wlan_execution_pcie_idle_shutdown",
+      "provider": "0xfcb3be7f"
+    }
+  },
+  "linked_WLAN_ops_slots": {
+    "16": "pld_pcie_remove",
+    "24": "opairshare_wlan_execution_pcie_idle_restart",
+    "32": "opairshare_wlan_execution_pcie_idle_shutdown",
+    "40": "opairshare_wlan_execution_pcie_reinit",
+    "48": "opairshare_wlan_execution_pcie_shutdown"
+  },
+  "actual_checked_WLAN_import_crc": "0x45b39d2b",
+  "actual_checked_WLAN_dependencies": [
+    "cfg80211",
+    "opairshare_wonder_provider",
+    "cnss_utils",
+    "cnss_nl",
+    "ipam",
+    "cnss_prealloc",
+    "qcom_iommu_util",
+    "hwid",
+    "qmi_helpers",
+    "cnss2"
+  ],
+  "actual_WLAN_version_record_count": 601,
+  "pre_entry_word_limitations": "Four-byte mapped AArch64 data words at known entries only; no all-site KCFI, private layout, loader or radio certification.",
+  "selected_native_field_loads": {
+    "stock": {
+      "fw_caps_load": "x8, [x0, #0x1d80]",
+      "sku_features_load": "w21, [x0, #0x1d88]",
+      "function_code_sha256": "702afdc97392764bfaf01fa864ed11c7ca6047c0951af3798d274ce0432c1398"
+    },
+    "compiled": {
+      "fw_caps_load": "x8, [x0, #0x1d80]",
+      "sku_features_load": "w21, [x0, #0x1d88]",
+      "function_code_sha256": "702afdc97392764bfaf01fa864ed11c7ca6047c0951af3798d274ce0432c1398"
+    }
+  },
+  "selected_field_load_limitations": "Two actual instruction operands only; not a full private structure layout audit."
+}
