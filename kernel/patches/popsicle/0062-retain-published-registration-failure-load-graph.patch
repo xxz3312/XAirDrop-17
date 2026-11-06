@@ -1,0 +1,516 @@
+--- a/platform/cnss2/pci.c
++++ b/platform/cnss2/pci.c
+@@ -3441,6 +3441,8 @@
+ 		return -ENODEV;
+ 
+ 	plat_priv = pci_priv->plat_priv;
++	if (test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state))
++		return -ESHUTDOWN;
+ 	if (test_bit(CNSS_IN_REBOOT, &plat_priv->driver_state)) {
+ 		cnss_pr_err("Reboot is in progress, skip driver probe\n");
+ 		return -EINVAL;
+@@ -4374,7 +4376,8 @@
+ 			       pci_priv->driver_ops);
+ }
+ 
+-int cnss_wlan_register_driver(struct cnss_wlan_driver *driver_ops)
++static int cnss_wlan_register_driver_internal(struct cnss_wlan_driver *driver_ops,
++					      bool *may_hold_wlan)
+ {
+ 	int ret = 0;
+ 	struct cnss_plat_data *plat_priv;
+@@ -4418,6 +4421,8 @@
+ 				}
+ 				cnss_pr_info("WLAN register driver deferred for device ID: 0x%x due to HW disable\n",
+ 					     id_table->device);
++				if (may_hold_wlan)
++					*may_hold_wlan = true;
+ 				plat_priv->driver_ops = driver_ops;
+ 				return 0;
+ 			}
+@@ -4469,6 +4474,8 @@
+ 	    test_bit(CNSS_COLD_BOOT_CAL_DONE, &plat_priv->driver_state))
+ 		goto register_driver;
+ 
++	if (may_hold_wlan)
++		*may_hold_wlan = true;
+ 	pci_priv->driver_ops = driver_ops;
+ 	/* If Cold Boot Calibration is enabled, it is the 1st step in init
+ 	 * sequence.CBC is done on file system_ready trigger. Qcacld will be
+@@ -4484,12 +4491,19 @@
+ 	return 0;
+ register_driver:
+ 	reinit_completion(&plat_priv->power_up_complete);
++	if (may_hold_wlan)
++		*may_hold_wlan = true;
+ 	ret = cnss_driver_event_post(plat_priv,
+ 				     CNSS_DRIVER_EVENT_REGISTER_DRIVER,
+ 				     CNSS_EVENT_SYNC_UNKILLABLE,
+ 				     driver_ops);
+ 
+ 	return ret;
++}
++
++int cnss_wlan_register_driver(struct cnss_wlan_driver *driver_ops)
++{
++	return cnss_wlan_register_driver_internal(driver_ops, NULL);
+ }
+ EXPORT_SYMBOL(cnss_wlan_register_driver);
+ 
+@@ -9162,3 +9176,28 @@
+ 	clear_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state);
+ 	return 0;
+ }
++
++/* False means this call never reached a publication site. True is
++ * conservative, including synchronous event-post failure after admission.
++ * The caller must retain WLAN text and its whole load graph on such failure.
++ */
++int cnss_wlan_register_driver_checked_v1(struct cnss_wlan_driver *driver_ops,
++				       bool *may_hold_wlan)
++{
++	struct cnss_plat_data *plat_priv;
++	int ret;
++
++	if (!driver_ops || !may_hold_wlan)
++		return -EINVAL;
++	*may_hold_wlan = false;
++	plat_priv = cnss_get_plat_priv_by_driver_ops(driver_ops);
++	if (!plat_priv)
++		return -EAGAIN;
++	mutex_lock(&plat_priv->driver_ops_lock);
++	ret = cnss_wlan_register_driver_internal(driver_ops, may_hold_wlan);
++	if (ret && *may_hold_wlan)
++		set_bit(CNSS_MISHARE_UNREGISTER_TERMINAL, &plat_priv->driver_state);
++	mutex_unlock(&plat_priv->driver_ops_lock);
++	return ret;
++}
++EXPORT_SYMBOL(cnss_wlan_register_driver_checked_v1);
+--- a/platform/inc/cnss2.h
++++ b/platform/inc/cnss2.h
+@@ -253,6 +253,8 @@
+ };
+ 
+ extern int cnss_wlan_register_driver(struct cnss_wlan_driver *driver);
++int cnss_wlan_register_driver_checked_v1(struct cnss_wlan_driver *driver,
++				       bool *may_hold_wlan);
+ extern void cnss_wlan_unregister_driver(struct cnss_wlan_driver *driver);
+ int cnss_wlan_unregister_driver_checked_v1(struct cnss_wlan_driver *driver,
+ 				   int (*remove_status)(struct device *dev));
+--- a/qcacld-3.0/core/pld/src/pld_pcie.c
++++ b/qcacld-3.0/core/pld/src/pld_pcie.c
+@@ -851,6 +851,34 @@
+ 	.set_therm_cdev_state = pld_pcie_set_thermal_state,
+ };
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_pcie_state */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++static bool pld_pcie_load_pin;
++static bool pld_pcie_execution_installed;
++static bool pld_pcie_platform_retained;
++
++bool pld_pcie_registration_retained(void)
++{
++	return pld_pcie_platform_retained || pld_pcie_execution_installed;
++}
++
++/* Only the module-init clean-error tail calls this after complete HDD load
++ * cleanup has returned. Successful loads stay pinned pending a controlled
++ * live-unload path; this is not a force-reset or a quarantine recovery API.
++ */
++int pld_pcie_registration_release_clean(void)
++{
++	if (pld_pcie_registration_retained())
++		return -EBUSY;
++	if (pld_pcie_load_pin) {
++		pld_pcie_load_pin = false;
++		module_put(THIS_MODULE);
++	}
++	return 0;
++}
++#endif
++/* MISHARE_SSR_STOP_END:reg_pcie_state */
+ #ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
+ static const struct mishare_wlan_pcie_execution_ops pld_pcie_execution = {
+ 	.owner = THIS_MODULE,
+@@ -861,40 +889,75 @@
+ };
+ #endif
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_pcie_register */
+ int pld_pcie_register_driver(void)
+ {
+ #ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	bool may_hold_wlan = true;
+ 	int ret, cleanup;
+ 
++	if (pld_pcie_registration_retained())
++		return -ESHUTDOWN;
++	if (!pld_pcie_load_pin) {
++		if (!try_module_get(THIS_MODULE))
++			return -ESHUTDOWN;
++		pld_pcie_load_pin = true;
++	}
+ 	ret = opairshare_wlan_execution_register_pcie_v3(&pld_pcie_execution);
+ 	if (ret)
+ 		return ret;
+-	ret = cnss_wlan_register_driver(&pld_pcie_ops);
+-	if (ret) {
++	pld_pcie_execution_installed = true;
++	ret = cnss_wlan_register_driver_checked_v1(&pld_pcie_ops, &may_hold_wlan);
++	if (!ret && !may_hold_wlan) {
++		/* An impossible receipt must not release code or load storage. */
++		may_hold_wlan = true;
++		ret = -EUCLEAN;
++	}
++	pld_pcie_platform_retained = may_hold_wlan;
++	if (ret && !may_hold_wlan) {
+ 		cleanup = opairshare_wlan_execution_unregister(THIS_MODULE);
+-		if (cleanup)
++		if (!cleanup)
++			pld_pcie_execution_installed = false;
++		else {
++			pld_pcie_platform_retained = true;
+ 			return cleanup;
++		}
++	} else if (ret) {
++		opairshare_wlan_execution_close(THIS_MODULE);
+ 	}
+ 	return ret;
+ #else
+ 	return cnss_wlan_register_driver(&pld_pcie_ops);
+ #endif
+ }
++/* MISHARE_SSR_STOP_END:reg_pcie_register */
++
+ 
+ #ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++
++/* MISHARE_SSR_STOP_BEGIN:reg_pcie_unregister */
+ int pld_pcie_unregister_driver_checked(void)
+ {
+ 	int ret;
+ 
+-	ret = opairshare_wlan_execution_unregister_begin(THIS_MODULE,
+-						      !module_is_live(THIS_MODULE));
++	if (!module_is_live(THIS_MODULE))
++		return -ESHUTDOWN;
++	ret = opairshare_wlan_execution_unregister_begin(THIS_MODULE, false);
+ 	if (ret)
+ 		return ret;
+ 	/* Strong checked CNSS2 import; never fall back after admission. */
+ 	ret = cnss_wlan_unregister_driver_checked_v1(&pld_pcie_ops,
+ 					   opairshare_wlan_execution_remove_status);
+-	return opairshare_wlan_execution_unregister_end(THIS_MODULE, ret);
+-}
++	ret = opairshare_wlan_execution_unregister_end(THIS_MODULE, ret);
++	if (!ret) {
++		pld_pcie_platform_retained = false;
++		pld_pcie_execution_installed = false;
++	}
++	return ret;
++}
++/* MISHARE_SSR_STOP_END:reg_pcie_unregister */
++
+ #endif
+ 
+ void pld_pcie_unregister_driver(void)
+--- a/qcacld-3.0/core/pld/src/pld_pcie.h
++++ b/qcacld-3.0/core/pld/src/pld_pcie.h
+@@ -35,6 +35,11 @@
+ #error "checked CNSS2 lifecycle requires native PCIe/CNSS"
+ #endif
+ int pld_pcie_unregister_driver_checked(void);
++/* MISHARE_SSR_STOP_BEGIN:reg_pcie_decl */
++bool pld_pcie_registration_retained(void);
++int pld_pcie_registration_release_clean(void);
++/* MISHARE_SSR_STOP_END:reg_pcie_decl */
++
+ #endif
+ 
+ #ifdef DYNAMIC_SINGLE_CHIP
+--- a/qcacld-3.0/core/pld/inc/pld_common.h
++++ b/qcacld-3.0/core/pld/inc/pld_common.h
+@@ -698,6 +698,11 @@
+  * Return: 0 for success
+  *         Non zero failure code for errors
+  */
++
++/* MISHARE_SSR_STOP_BEGIN:reg_common_decl */
++bool pld_registration_retained(void);
++int pld_registration_release_clean(void);
++/* MISHARE_SSR_STOP_END:reg_common_decl */
+ int pld_register_driver(struct pld_driver_ops *ops);
+ 
+ /**
+--- a/qcacld-3.0/core/pld/src/pld_common.c
++++ b/qcacld-3.0/core/pld/src/pld_common.c
+@@ -90,6 +90,26 @@
+ 
+ static struct pld_context *pld_ctx;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_common_helpers */
++bool pld_registration_retained(void)
++{
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	return pld_pcie_registration_retained();
++#else
++	return false;
++#endif
++}
++
++int pld_registration_release_clean(void)
++{
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	return pld_pcie_registration_release_clean();
++#else
++	return 0;
++#endif
++}
++/* MISHARE_SSR_STOP_END:reg_common_helpers */
+ int pld_init(void)
+ {
+ 	struct pld_context *pld_context;
+@@ -113,6 +133,15 @@
+ 	struct pld_context *pld_context;
+ 	unsigned long flags;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_deinit_guard */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	if (pld_registration_retained()) {
++		pr_err("MiShare: PLD deinit retained registration\n");
++		return;
++	}
++#endif
++/* MISHARE_SSR_STOP_END:reg_deinit_guard */
+ 	pld_context = pld_ctx;
+ 	if (!pld_context) {
+ 		pld_ctx = NULL;
+@@ -237,9 +266,14 @@
+ 		return NULL;
+ }
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_common_register */
+ int pld_register_driver(struct pld_driver_ops *ops)
+ {
+ 	int ret = 0;
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	int cleanup;
++#endif
+ 	struct pld_context *pld_context;
+ 
+ 	pld_context = pld_get_global_context();
+@@ -317,6 +351,28 @@
+ 
+ 	return ret;
+ 
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++fail_ipci:
++fail_usb:
++fail_pcie_fw_sim:
++fail_snoc_fw_sim:
++fail_sdio:
++fail_snoc:
++	cleanup = pld_pcie_unregister_driver_checked();
++	if (cleanup)
++		return cleanup;
++	/* No other bus or shared state is dismantled before PCIe drain. */
++	if (pld_context->pld_driver_state & PLD_USB_REGISTERED)
++		pld_usb_unregister_driver();
++	if (pld_context->pld_driver_state & PLD_PCIE_FW_SIM_REGISTERED)
++		pld_pcie_fw_sim_unregister_driver();
++	if (pld_context->pld_driver_state & PLD_SNOC_FW_SIM_REGISTERED)
++		pld_snoc_fw_sim_unregister_driver();
++	if (pld_context->pld_driver_state & PLD_SDIO_REGISTERED)
++		pld_sdio_unregister_driver();
++	if (pld_context->pld_driver_state & PLD_SNOC_REGISTERED)
++		pld_snoc_unregister_driver();
++#else
+ fail_ipci:
+ 	pld_usb_unregister_driver();
+ fail_usb:
+@@ -329,12 +385,19 @@
+ 	pld_snoc_unregister_driver();
+ fail_snoc:
+ 	pld_pcie_unregister_driver();
++#endif
+ fail_pcie:
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	if (pld_registration_retained())
++		return ret;
++#endif
+ 	pld_context->pld_driver_state = 0;
+ 	pld_context->ops = NULL;
+ out:
+ 	return ret;
+ }
++/* MISHARE_SSR_STOP_END:reg_common_register */
++
+ 
+ 
+ /* MISHARE_SSR_STOP_BEGIN:unregister_common_checked */
+--- a/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
++++ b/qcacld-3.0/core/hdd/src/wlan_hdd_main.c
+@@ -652,6 +652,37 @@
+ 	wlan_start_ret_val = ret;
+ 	complete_all(&wlan_start_comp);
+ }
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_state */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++static int mishare_load_error;
++static DEFINE_MUTEX(mishare_load_error_lock);
++module_param_named(mishare_load_error, mishare_load_error, int, 0444);
++MODULE_PARM_DESC(mishare_load_error, "Read-only retained WLAN initialization error; reboot required");
++
++static int hdd_mishare_quarantine_load(int error)
++{
++	int ret;
++
++	mutex_lock(&mishare_load_error_lock);
++	if (!mishare_load_error) {
++		/* COMING is live to try_module_get. The loader must see init success
++		 * for this retained graph: an init error frees text despite refs.
++		 */
++		if (!try_module_get(THIS_MODULE)) {
++			mutex_unlock(&mishare_load_error_lock);
++			return -ESHUTDOWN;
++		}
++		WRITE_ONCE(mishare_load_error, error ? error : -EUCLEAN);
++	}
++	ret = mishare_load_error;
++	mutex_unlock(&mishare_load_error_lock);
++	hdd_start_complete(ret);
++	hdd_err("MiShare: WLAN load quarantined (%d); keeping all load resources", ret);
++	return ret;
++}
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_state */
++
+ 
+ #ifdef WLAN_FEATURE_LOCAL_PKT_CAPTURE
+ /**
+@@ -22055,6 +22086,13 @@
+ 	enum QDF_GLOBAL_MODE mode;
+ 	int errno;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_mode */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	if (READ_ONCE(mishare_load_error))
++		return READ_ONCE(mishare_load_error);
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_mode */
+ 	errno = hdd_parse_driver_mode(kmessage, &mode);
+ 	if (errno) {
+ 		hdd_err_rl("Failed to parse driver mode '%s'", kmessage);
+@@ -22085,6 +22123,13 @@
+ 
+ 	while (true) {
+ 		errno = wlan_hdd_register_driver();
++
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_retry */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++		if (errno && pld_registration_retained())
++			return errno;
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_retry */
+ 		if (errno != -EAGAIN)
+ 			return errno;
+ 		hdd_nofl_info("Retry Platform Driver Registration; errno:%d count:%d",
+@@ -22119,6 +22164,13 @@
+ 	int errno;
+ 	bool soft_load;
+ 
++
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_load_entry */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	if (READ_ONCE(mishare_load_error))
++		return READ_ONCE(mishare_load_error);
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_load_entry */
+ 	pr_info("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
+ 		g_wlan_driver_version);
+ 	hdd_place_marker(NULL, "START LOADING", NULL);
+@@ -22218,8 +22270,27 @@
+ 	return 0;
+ 
+ unregister_driver:
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_load_unregister */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	{
++		int cleanup = wlan_hdd_unregister_driver_checked();
++
++		if (cleanup)
++			return hdd_mishare_quarantine_load(cleanup);
++	}
++#else
+ 	wlan_hdd_unregister_driver();
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_load_unregister */
++
+ pld_deinit:
++
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_load_fail */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	if (pld_registration_retained())
++		return hdd_mishare_quarantine_load(errno);
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_load_fail */
+ 	status = osif_driver_sync_trans_start(&driver_sync);
+ 	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
+ 
+@@ -22277,6 +22348,13 @@
+ /* MISHARE_SSR_STOP_BEGIN:unload_helper */
+ int hdd_mishare_module_unload_ready(bool upper_blocked)
+ {
++
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_unload */
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	if (READ_ONCE(mishare_load_error))
++		return READ_ONCE(mishare_load_error);
++#endif
++/* MISHARE_SSR_STOP_END:reg_hdd_unload */
+ 	return mishare_ssr_stop_unload_ready_locked(&mishare_module_stop,
+ 						 upper_blocked);
+ }
+@@ -22569,13 +22647,33 @@
+ 	return 0;
+ }
+ #else
++
++/* MISHARE_SSR_STOP_BEGIN:reg_hdd_module_init */
+ static int hdd_module_init(void)
+ {
++#ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER
++	int ret = hdd_driver_load();
++
++	if (ret && READ_ONCE(mishare_load_error))
++		return 0; /* Resident quarantine; never announce functional success. */
++	if (ret) {
++		int cleanup = pld_registration_release_clean();
++
++		if (cleanup) {
++			hdd_mishare_quarantine_load(cleanup);
++			return 0;
++		}
++		return -EINVAL;
++	}
++	return 0;
++#else
+ 	if (hdd_driver_load())
+ 		return -EINVAL;
+-
+ 	return 0;
+-}
++#endif
++}
++/* MISHARE_SSR_STOP_END:reg_hdd_module_init */
++
+ #endif
+ #else
+ static int __init hdd_module_init(void)

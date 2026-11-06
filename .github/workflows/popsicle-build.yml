@@ -94,6 +94,7 @@ on:
       - tools/kernel/mishare_mlme_fixture.py
       - tools/kernel/mishare_execution_fixture.py
       - tools/kernel/mishare_pcie_execution_fixture.py
+      - tools/kernel/mishare_registration_fixture.py
       - tools/kernel/mishare_cnss_fixture.py
       - tools/kernel/mishare_cnss_interfaces_fixture.py
       - tools/kernel/mishare_icnss_fixture.py
@@ -142,6 +143,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Native registration rollback and HDD load retention
+        run: python3 tools/kernel/mishare_registration_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-registration.json
       - name: Native PCIe and CNSS2 checked lifecycle with sanitizers
         run: python3 tools/kernel/mishare_cnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss.json
       - name: Restored native CNSS2 interfaces with sanitizers
@@ -161,6 +164,7 @@ jobs:
             stop-runtime.json
             stop-execution.json
             stop-pcie-execution.json
+            stop-registration.json
             stop-cnss.json
             stop-cnss-interfaces.json
             stop-icnss.json

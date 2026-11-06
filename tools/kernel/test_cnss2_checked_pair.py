@@ -27,3 +27,14 @@ class CNSS2ExportSurfaceTests(unittest.TestCase):
         for changed in [{k:v for k,v in self.actual.items() if k!=REQUIRED},
                         dict(self.actual,**{REQUIRED:{'crc':'0x87654321','export_type':'EXPORT_SYMBOL_GPL','namespace':''}})]:
             self.assertFalse(check_export_surface(self.stock,changed,REQUIRED)['match'])
+
+    def test_registration_extension_requires_explicit_allowlist_and_contract(self):
+        name='cnss_wlan_register_driver_checked_v1'
+        self.actual[name]=copy.deepcopy(self.actual[REQUIRED])
+        self.assertFalse(check_export_surface(self.stock,self.actual,REQUIRED)['match'])
+        self.assertTrue(check_export_surface(self.stock,self.actual,REQUIRED,(name,))['match'])
+        for field,value in [('export_type','EXPORT_SYMBOL_GPL'),('namespace','OTHER')]:
+            changed=copy.deepcopy(self.actual);changed[name][field]=value
+            self.assertFalse(check_export_surface(self.stock,changed,REQUIRED,(name,))['match'])
+        del self.actual[name]
+        self.assertFalse(check_export_surface(self.stock,self.actual,REQUIRED,(name,))['match'])

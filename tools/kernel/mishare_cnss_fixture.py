@@ -95,11 +95,13 @@ NATIVE_PL_REMOVE
 static struct cnss_wlan_driver pld_pcie_ops={
 NATIVE_PL_SLOTS
 };
-static int cnss_wlan_register_driver(struct cnss_wlan_driver *ops){
+static int cnss_wlan_register_driver_internal(struct cnss_wlan_driver *ops,bool *may_hold_wlan){
  assert(ops==&pld_pcie_ops && ops->reinit==opairshare_wlan_execution_pcie_reinit && ops->shutdown==opairshare_wlan_execution_pcie_shutdown && ops->idle_restart==opairshare_wlan_execution_pcie_idle_restart && ops->idle_shutdown==opairshare_wlan_execution_pcie_idle_shutdown && "EXPECTED_PCIE_CNSS_SLOTS");
- if(!register_error)pci.driver_ops=ops;return register_error;
+ *may_hold_wlan=!register_error;if(!register_error)pci.driver_ops=ops;return register_error;
 }
 static int cnss_wlan_unregister_driver_checked_v1(struct cnss_wlan_driver *,int (*)(struct device *));
+static int cnss_wlan_register_driver_checked_v1(struct cnss_wlan_driver *,bool *);
+NATIVE_PCIE_REG_STATE
 NATIVE_PL_DESCRIPTOR
 NATIVE_PL_REGISTER
 NATIVE_PL_CHECKED
@@ -157,6 +159,7 @@ static int cnss_driver_event_post(struct cnss_plat_data *p,int type,int flags,vo
  assert(!pthread_create(&thread,NULL,event_thread,&e));assert(!pthread_join(thread,NULL));return e.ret;
 }
 NATIVE_CHECKED_ENTRY
+NATIVE_REGISTER_CHECKED
 NATIVE_LEGACY_ENTRY
 static void no_receipt(struct pci_dev *p){(void)p;}
 static void reset(void){
@@ -186,7 +189,7 @@ static void retained_failure(int kind){
  }
  if(kind!=3 && kind!=4){late_unload();assert(!component_deinits && "EXPECTED_CNSS_LATE_RETAINED");}
  else assert(pld_pcie_unregister_driver_checked()==-ENODEV);
- assert(unregister_scope && execution_pcie_ops.owner==THIS_MODULE && atomic_load(&wlan_module.refs)==1 && "EXPECTED_CNSS_PIN_RETAINED");
+ assert(unregister_scope && execution_pcie_ops.owner==THIS_MODULE && atomic_load(&wlan_module.refs)==2 && "EXPECTED_CNSS_PIN_RETAINED");
  assert(test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,&plat.driver_state) && pci.driver_ops && test_bit(CNSS_DRIVER_REGISTERED,&plat.driver_state) && "EXPECTED_CNSS_PLATFORM_RETAINED");
  assert(!other_bus_calls && !power_off && !mhi_deinit && "EXPECTED_CNSS_NO_POWER_TAIL");
  if(kind!=8)assert(!native_removed && !sync_unregistered && !sync_destroyed && !del_dev_count && test_bit(CNSS_DRIVER_PROBED,&plat.driver_state) && "EXPECTED_CNSS_NO_WLAN_TEARDOWN");
@@ -210,27 +213,29 @@ static void admission_failure(int kind){
  case 5:set_bit(CNSS_DRIVER_IDLE_SHUTDOWN,&plat.driver_state);break;
  case 6:plat.xdump_helper.dumping_bt_over_wl=true;break;
  }
- int ret=pld_pcie_unregister_driver_checked();assert(ret<0 && unregister_scope && atomic_load(&wlan_module.refs)==1);
+ int ret=pld_pcie_unregister_driver_checked();assert(ret<0 && unregister_scope && atomic_load(&wlan_module.refs)==2);
  assert(!native_removed && !power_off && !mhi_off && !pm_resume && pci.driver_ops && "EXPECTED_CNSS_ADMISSION");
  assert(test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,&plat.driver_state));
 }
 static void isolated(void (*f)(int),int n){for(int k=0;k<n;k++){pid_t p=fork();assert(p>=0);if(!p){f(k);_Exit(0);}int status;assert(waitpid(p,&status,0)==p && WIFEXITED(status) && !WEXITSTATUS(status) && "EXPECTED_CNSS_CHILD");}}
 int main(void){
  isolated(retained_failure,9);isolated(admission_failure,7);
- for(int borrowed=0;borrowed<2;borrowed++){
-  reset();assert(!pld_pcie_register_driver());atomic_store(&wlan_module.deny,borrowed);
+ for(int pass=0;pass<1;pass++){
+  reset();assert(!pld_pcie_register_driver());(void)pass;
   int gets=atomic_load(&execution_get_count);assert(!wlan_hdd_unregister_driver_checked());
   assert(!context.ops && !context.pld_driver_state && other_bus_calls==5 && "EXPECTED_CNSS_SUCCESS_CHAIN");
-  assert(!execution_ops.owner && !execution_pcie_ops.owner && !unregister_scope && !atomic_load(&wlan_module.refs));
+  assert(!execution_ops.owner && !execution_pcie_ops.owner && !unregister_scope && atomic_load(&wlan_module.refs)==1);
   assert(native_removed==1 && sync_destroyed==1 && del_dev_count==1 && power_off==1 && mhi_deinit==1 && !pci.driver_ops && "EXPECTED_CNSS_SUCCESS_POWER");
   assert(!test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,&plat.driver_state));
-  assert(atomic_load(&execution_get_count)==gets+!borrowed);
+  assert(atomic_load(&execution_get_count)==gets+1);
+  assert(!pld_pcie_registration_release_clean() && !atomic_load(&wlan_module.refs));
  }
- reset();register_error=-EIO;assert(pld_pcie_register_driver()==-EIO && !execution_ops.owner && !execution_pcie_ops.owner);
+ reset();register_error=-EIO;assert(pld_pcie_register_driver()==-EIO && !execution_ops.owner && !execution_pcie_ops.owner);assert(!pld_pcie_registration_release_clean());
  reset();assert(!pld_pcie_register_driver());
  struct cnss_wlan_driver foreign=pld_pcie_ops;
  assert(cnss_wlan_unregister_driver_checked_v1(&foreign,opairshare_wlan_execution_remove_status)==-ENOENT && !test_bit(CNSS_MISHARE_UNREGISTER_TERMINAL,&plat.driver_state));
  assert(!pld_pcie_unregister_driver_checked());
+ assert(!pld_pcie_registration_release_clean());
  assert(!atomic_load(&foreign_module.refs));
  puts("MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY");return 0;
 }
@@ -245,6 +250,7 @@ def verify_platform_origin(wlan):
     with tempfile.TemporaryDirectory() as tmp:
         t=Path(tmp)
         for f in FILES:(t/f).parent.mkdir(parents=True,exist_ok=True);(t/f).write_bytes((wlan/f).read_bytes())
+        subprocess.run(['git','apply','--reverse','--include=platform/**',str(ROOT/'kernel/patches/popsicle/0062-retain-published-registration-failure-load-graph.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0061-restore-upstream-TSF-SMMU-Wonder-and-direct-refill.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0060-CNSS2-terminal-state-debug-and-local-helper.patch')],cwd=t,check=True,capture_output=True)
         subprocess.run(['git','apply','--reverse',str(ROOT/'kernel/patches/popsicle/0059-select-real-SoC-MHI-headers-for-checked-CNSS2.patch')],cwd=t,check=True,capture_output=True)
@@ -262,6 +268,7 @@ def assemble(wlan):
        'NATIVE_GUARD':extract((wlan/'platform/cnss2/pci.h').read_text(),r'^struct cnss_mishare_unregister_guard \{.*?^\};'),
        'NATIVE_PL_CALLBACKS':'\n'.join(native_function(pld,n) for n in ['pld_pcie_reinit','pld_pcie_shutdown','pld_pcie_idle_restart_cb','pld_pcie_idle_shutdown_cb']),
        'NATIVE_PL_REMOVE':native_function(pld,'pld_pcie_remove'),
+       'NATIVE_PCIE_REG_STATE':extract(pld,r'/\* MISHARE_SSR_STOP_BEGIN:reg_pcie_state \*/.*?/\* MISHARE_SSR_STOP_END:reg_pcie_state \*/'),
        'NATIVE_PL_DESCRIPTOR':extract(pld,r'^static const struct mishare_wlan_pcie_execution_ops pld_pcie_execution = \{.*?^\};'),
        'NATIVE_PL_REGISTER':native_function(pld,'pld_pcie_register_driver'),
        'NATIVE_PL_CHECKED':native_function(pld,'pld_pcie_unregister_driver_checked'),
@@ -277,6 +284,7 @@ def assemble(wlan):
        'NATIVE_CHECKED_HANDLER':native_function(pci,'cnss_pci_unregister_driver_checked_hdlr'),
        'NATIVE_BUS_CHECKED':native_function((wlan/'platform/cnss2/bus.c').read_text(),'cnss_bus_unregister_driver_checked_hdlr'),
        'NATIVE_CHECKED_ENTRY':native_function(pci,'cnss_wlan_unregister_driver_checked_v1'),
+       'NATIVE_REGISTER_CHECKED':native_function(pci,'cnss_wlan_register_driver_checked_v1'),
        'NATIVE_LEGACY_ENTRY':native_function(pci,'cnss_wlan_unregister_driver'),
        'NATIVE_EVENT_ROUTE':extract((wlan/'platform/cnss2/main.c').read_text(),r'^\t\tcase CNSS_DRIVER_EVENT_UNREGISTER_DRIVER:.*?\n\t\t\tbreak;'),
     }
@@ -322,7 +330,7 @@ def run(wlan,output):
         for changed,marker in mutations:
             bad=execute(changed)
             if bad.returncode!=-6 or marker not in bad.stderr:raise ValueError((marker,bad.returncode,bad.stderr[:1800]))
-    report={'status':'MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY','fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256(header).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'platform_source_sha256':{f:hashlib.sha256((wlan/f).read_bytes()).hexdigest() for f in FILES},'success_cases':2,'isolated_failure_cases':9,'isolated_admission_cases':7,'negative_controls_rejected':len(mutations),'platform_origin_files_restored':11,'sanitizers':['address','undefined','leak detection'],'production_opt_in_consumer_executed':True,'default_build_opt_in_enabled':False,'CNSS2_binary_built':False,'phone_executed':False,'limitations':'Real provider, native PCIe register/checked unregister/remove, PLD/HDD refusal chain, CNSS2 checked/legacy entry, event routing, bus handler, complete native remove and qca6290 shutdown bodies. Five selected native ops slots and pthread synchronous event post; hardware/module/sync/HDD bodies are models. Only PEACH stable probed PCIe is admitted. Native power-tail errors retain remaining ownership but cannot undo already completed WLAN/MHI steps. Default consumer is unchanged; no real CNSS2 pair, ABI/KCFI, loader, RF, concurrent native power/recovery coordinator or module-exit veto is certified.'}
+    report={'status':'MISHARE_CNSS_CHECKED_FIXTURE_PASS_ONLY','fixture_sha256':hashlib.sha256(code.encode()).hexdigest(),'provider_sha256':hashlib.sha256(provider.encode()).hexdigest(),'execution_header_sha256':hashlib.sha256(header).hexdigest(),'native_fragments_sha256':{k:hashlib.sha256(v.encode()).hexdigest() for k,v in fragments.items()},'platform_source_sha256':{f:hashlib.sha256((wlan/f).read_bytes()).hexdigest() for f in FILES},'success_cases':1,'isolated_failure_cases':9,'isolated_admission_cases':7,'negative_controls_rejected':len(mutations),'platform_origin_files_restored':11,'sanitizers':['address','undefined','leak detection'],'production_opt_in_consumer_executed':True,'default_build_opt_in_enabled':False,'CNSS2_binary_built':False,'phone_executed':False,'limitations':'Real provider, native PCIe register/checked unregister/remove and checked platform register wrapper (internal registration is modeled), PLD/HDD refusal chain, CNSS2 checked/legacy entry, event routing, bus handler, complete native remove and qca6290 shutdown bodies. Five selected native ops slots and pthread synchronous event post; hardware/module/sync/HDD bodies are models. Only PEACH stable probed PCIe is admitted. Native power-tail errors retain remaining ownership but cannot undo already completed WLAN/MHI steps. Default consumer is unchanged; no real CNSS2 pair, ABI/KCFI, loader, RF, concurrent native power/recovery coordinator or module-exit veto is certified.'}
     output.write_text(json.dumps(report,indent=2)+'\n');print(good.stdout,end='')
 
 if __name__=='__main__':

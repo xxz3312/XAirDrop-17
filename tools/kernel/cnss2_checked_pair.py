@@ -16,15 +16,19 @@ from popsicle_ci import REPO, download
 from popsicle_transport_audit import audit as transport_audit
 
 
-def check_export_surface(original, actual, required):
+def check_export_surface(original, actual, required, extensions=()):
     missing=sorted(set(original)-actual.keys())
     changed={n:{'stock':record,'actual':actual.get(n)} for n,record in original.items()
              if n in actual and actual[n]!=record}
-    extra=sorted(set(actual)-set(original)-{required})
+    allowed={required,*extensions}
+    extra=sorted(set(actual)-set(original)-allowed)
+    missing_extensions=sorted(set(extensions)-actual.keys())
     checked=actual.get(required)
     checked_valid=bool(checked and checked.get('export_type')=='EXPORT_SYMBOL'
                        and checked.get('namespace')=='')
-    return {'match':not missing and not changed and not extra and checked_valid,
+    extension_valid=all(actual.get(n,{}).get('export_type')=='EXPORT_SYMBOL' and actual.get(n,{}).get('namespace')=='' for n in extensions)
+    return {'match':not missing and not changed and not extra and checked_valid and extension_valid,
+            'missing_extensions':missing_extensions,'extension_exports_valid':extension_valid,
             'legacy_count':len(original),'missing':missing,'changed':changed,
             'unexpected_extra':extra,'checked_export_valid':checked_valid}
 
@@ -135,7 +139,8 @@ def build(work):
         generated=symvers([platform/'Module.symvers'])
         required='cnss_wlan_unregister_driver_checked_v1'
         if required not in generated:raise ValueError('Checked CNSS2 export was not linked')
-        surface=check_export_surface(original,export_records(platform_module),required)
+        registration='cnss_wlan_register_driver_checked_v1'
+        surface=check_export_surface(original,export_records(platform_module),required,(registration,))
         report['export_surface']=surface
         report['platform_export_crc_changes']=surface['changed']
         report['type_streams_requested']=True
@@ -159,7 +164,9 @@ def build(work):
         obj=inspect(work/'wlan/qcacld-3.0/qca_cld3_peach_v2.o')
         report['checked_WLAN_unresolved']=sorted(set(obj['undefined'])-known.keys()-{'__this_module'})
         if required not in obj['undefined']:raise ValueError('WLAN object does not require checked CNSS2')
-        if 'cnss_wlan_unregister_driver' in obj['undefined']:raise ValueError('Checked WLAN still imports legacy CNSS2 unregister')
+        if registration not in obj['undefined']:raise ValueError('WLAN lacks checked registration publication receipt')
+        if {'cnss_wlan_unregister_driver','cnss_wlan_register_driver'} & set(obj['undefined']):
+            raise ValueError('Checked WLAN still imports legacy CNSS2 lifecycle')
         if report['checked_WLAN_unresolved']:raise ValueError('Missing real paired WLAN provider exports')
         trial('wlan-modules')
         wlan=work/'wlan/qcacld-3.0/qca_cld3_peach_v2.ko';produced.append(wlan)
@@ -167,6 +174,8 @@ def build(work):
         if 'cnss2' not in depends or 'opairshare_wonder_provider' not in depends:
             raise ValueError('Checked WLAN lacks required strong paired dependencies')
         report['checked_WLAN_dependencies']=depends
+        report['checked_register_import_crc']=module['versions'].get(registration)
+        if report['checked_register_import_crc']!=generated[registration]:raise ValueError('Checked registration import CRC mismatch')
         report['checked_import_crc']=module['versions'].get(required)
         if report['checked_import_crc']!=generated[required]:raise ValueError('Checked consumer import CRC mismatch')
         report['modules']['wlan']=module_report(wlan,expected,known)
