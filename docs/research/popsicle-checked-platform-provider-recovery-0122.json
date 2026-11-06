@@ -1,0 +1,69 @@
+{
+  "firmware": "OS4.0.5.0.XPBCNXM",
+  "source_archive": "17pm-airdrop-extra-20261025-162440.tar.gz",
+  "archive_sha256": "974268f5d81561377a9a5eaed29cf653560b3f834f864e525fc9d8091a9056ac",
+  "vendor_boot_sha256": "77d7941a8cf074e5fcf15dd36508405ae536ea28636dc0b321ed96e54727c630",
+  "source_stock_icnss_archive": "17pm-airdrop-baseline-20261025-153730.tar.gz",
+  "source_stock_icnss_sha256": "230263bd64744bc0dcaa7f6de2a98acdfe8a783e00941b47c8b3b4f0b852bfcc",
+  "all_six_stock_icnss_import_crcs_match_real_exports": true,
+  "symbols": {
+    "pdr_add_lookup": {
+      "provider": "pdr_interface",
+      "crc": "0x1668891b"
+    },
+    "pdr_handle_alloc": {
+      "provider": "pdr_interface",
+      "crc": "0x9f786dec"
+    },
+    "pdr_handle_release": {
+      "provider": "pdr_interface",
+      "crc": "0xe37e953d"
+    },
+    "pdr_restart_pd": {
+      "provider": "pdr_interface",
+      "crc": "0x8802535a"
+    },
+    "msm_gpio_mpm_wake_set": {
+      "provider": "pinctrl-msm",
+      "crc": "0xd7c04c7b"
+    },
+    "socinfo_get_serial_number": {
+      "provider": "socinfo",
+      "crc": "0x0f600de8"
+    }
+  },
+  "providers_added": [
+    {
+      "name": "pdr_interface",
+      "sha256": "018d978b2c553e88214472baf241364635dcfe9cb8e09423bbab6552f49614e5",
+      "source": "vendor_boot.img ramdisk ",
+      "symbols_found": [
+        "pdr_add_lookup",
+        "pdr_handle_alloc",
+        "pdr_handle_release",
+        "pdr_restart_pd"
+      ],
+      "exports": 4
+    },
+    {
+      "name": "pinctrl-msm",
+      "sha256": "f58468677124d84afac7c1c018d829bfb1841a04fe4ce99ccb24e983da77a41f",
+      "source": "vendor_boot.img ramdisk ",
+      "symbols_found": [
+        "msm_gpio_mpm_wake_set"
+      ],
+      "exports": 12
+    },
+    {
+      "name": "socinfo",
+      "sha256": "31340d1992ee81b0e270d5c457f4a1173d257b33bd331e4fc3d367846997dfa3",
+      "source": "vendor_boot.img ramdisk ",
+      "symbols_found": [
+        "socinfo_get_serial_number"
+      ],
+      "exports": 13
+    }
+  ],
+  "method": "Verified vendor_boot v4 ramdisk layout; strict LZ4 legacy block decompression; bounded CPIO parse; actual AArch64 __ksymtab/__kcrctab relocation-based exports including license and namespace. No imported CRCs substituted as providers.",
+  "limitations": "Actual stock export evidence for the recorded firmware only. Does not certify rebuilt platform private layout/configuration/KCFI, replacement loading or radio."
+}

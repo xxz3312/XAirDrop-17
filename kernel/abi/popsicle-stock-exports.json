@@ -4082,6 +4082,98 @@
       "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
     },
     {
+      "name": "pdr_interface",
+      "sha256": "018d978b2c553e88214472baf241364635dcfe9cb8e09423bbab6552f49614e5",
+      "exports": {
+        "pdr_add_lookup": {
+          "crc": "0x1668891b",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        },
+        "pdr_handle_alloc": {
+          "crc": "0x9f786dec",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        },
+        "pdr_handle_release": {
+          "crc": "0xe37e953d",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        },
+        "pdr_restart_pd": {
+          "crc": "0x8802535a",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        }
+      }
+    },
+    {
+      "name": "pinctrl-msm",
+      "sha256": "f58468677124d84afac7c1c018d829bfb1841a04fe4ce99ccb24e983da77a41f",
+      "exports": {
+        "debug_pintctrl_msm_disable": {
+          "crc": "0xd272d446",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "debug_pintctrl_msm_enable": {
+          "crc": "0xd272d446",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_gpio_get_pin_address": {
+          "crc": "0x8311c962",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_gpio_mpm_wake_set": {
+          "crc": "0xd7c04c7b",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_pinctrl_dev_pm_ops": {
+          "crc": "0x6d15cda2",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_pinctrl_probe": {
+          "crc": "0x16198ee1",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_pinctrl_remove": {
+          "crc": "0x25693910",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_qup_read": {
+          "crc": "0x0ce9f098",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_qup_write": {
+          "crc": "0xe7059f23",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "noirq_msm_pinctrl_dev_pm_ops": {
+          "crc": "0x6d15cda2",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "msm_spare_read": {
+          "crc": "0x5828058a",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        },
+        "msm_spare_write": {
+          "crc": "0x48f14932",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        }
+      }
+    },
+    {
       "exports": {
         "powerinsight_wifi_wake_data": {
           "crc": "0xd316f792",
@@ -5027,6 +5119,77 @@
       "name": "sched-walt",
       "sha256": "886f25672ff2ee5eb231690928d52539a0e606b61e2726261817d3c75e11c6db",
       "vermagic": "6.12.69-android16-6-4k SMP preempt mod_unload modversions aarch64"
+    },
+    {
+      "name": "socinfo",
+      "sha256": "31340d1992ee81b0e270d5c457f4a1173d257b33bd331e4fc3d367846997dfa3",
+      "exports": {
+        "socinfo_get_cluster_info": {
+          "crc": "0x0f600de8",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_feature_code": {
+          "crc": "0x7851be11",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_id": {
+          "crc": "0x0f600de8",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_id_string": {
+          "crc": "0xc6d171ba",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_part_count": {
+          "crc": "0x94cb45f2",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_part_info": {
+          "crc": "0xfff0ca6b",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_partinfo_chip_id": {
+          "crc": "0xb0611bb4",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_partinfo_part_name": {
+          "crc": "0x88a3e55c",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_partinfo_vulkan_id": {
+          "crc": "0xb0611bb4",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_pcode": {
+          "crc": "0x7851be11",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_serial_number": {
+          "crc": "0x0f600de8",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_subpart_info": {
+          "crc": "0x8d422d74",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL"
+        },
+        "socinfo_get_package_type": {
+          "crc": "0x0f600de8",
+          "namespace": "",
+          "export_type": "EXPORT_SYMBOL_GPL"
+        }
+      }
     },
     {
       "exports": {
