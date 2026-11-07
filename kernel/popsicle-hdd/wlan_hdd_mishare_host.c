@@ -41,6 +41,15 @@ static DEFINE_SPINLOCK(mishare_host_lock);
 static struct mishare_wonder_host *mishare_hosts;
 static u64 mishare_retirement_serial;
 
+struct mishare_managed_instance {
+    struct mishare_managed_instance *next;
+    struct device *dev;
+    struct mishare_module_lease module_lease;
+    struct mishare_bridge bridge;
+    bool busy;
+};
+static struct mishare_managed_instance *mishare_instances;
+
 /* Object references retain allocations, NOT HDD/component/firmware readiness.
  * The caller must still retain HDD and serialize native teardown throughout
  * every asynchronous poll. Never use these pins to authorize SSR or remove.
@@ -923,4 +932,209 @@ int mishare_wonder_host_reclaim_handoff_ssr_locked(struct hdd_context *hdd)
     if (ret)
         return ret;
     return mishare_wonder_host_stop_ready_locked(hdd);
+}
+
+int mishare_wonder_host_retire_receipt_locked(struct hdd_context *hdd,
+                                              struct mishare_host_retirement *receipt)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+
+    if (!hdd || !hdd->parent_dev || !receipt || !receipt->serial ||
+        !receipt->module_lease.held)
+        return -EINVAL;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    if (cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next)
+        if (host->retirement_serial == receipt->serial)
+            break;
+    if (host && (host->hdd != hdd || !host->idle_owned)) {
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        return -EUCLEAN;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    /* The caller's exact parent transition excludes native retirement of this
+     * host after the lookup. Other PSOCs cannot adopt its serial/HDD pair.
+     */
+    return host ? mishare_wonder_host_destroy_locked(&host) : 0;
+}
+
+int mishare_wonder_managed_create(struct device *dev, void **handle)
+{
+    struct mishare_managed_instance *instance;
+    unsigned long flags;
+    int ret;
+
+    if (!dev || !handle)
+        return -EINVAL;
+    if (*handle)
+        return -EBUSY;
+    instance = kzalloc(sizeof(*instance), GFP_KERNEL);
+    if (!instance)
+        return -ENOMEM;
+    ret = mishare_module_lease_get(&instance->module_lease);
+    if (ret)
+        goto free_instance;
+    instance->dev = get_device(dev);
+    if (!instance->dev) {
+        ret = -ENODEV;
+        mishare_module_lease_put(&instance->module_lease);
+        goto free_instance;
+    }
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    instance->next = mishare_instances;
+    mishare_instances = instance;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    *handle = instance;
+    return 0;
+free_instance:
+    kfree(instance);
+    return ret;
+}
+
+/* Authenticate the opaque pointer without dereferencing it first. No native
+ * function is called under the registry lock. A busy owner remains registered
+ * and cannot be freed by another callback, even if the outer caller is wrong.
+ */
+static int mishare_instance_claim(void *handle, struct mishare_managed_instance **out)
+{
+    struct mishare_managed_instance *instance;
+    unsigned long flags;
+    int ret = -ENOENT;
+
+    *out = NULL;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (instance = mishare_instances; instance; instance = instance->next) {
+        if (instance != handle)
+            continue;
+        ret = instance->busy ? -EINPROGRESS : 0;
+        if (!ret) {
+            instance->busy = true;
+            *out = instance;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret;
+}
+
+static void mishare_instance_release(struct mishare_managed_instance *instance)
+{
+    unsigned long flags;
+
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    instance->busy = false;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+}
+
+int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
+                                u8 nss_2g, u8 nss_5g)
+{
+    struct mishare_managed_instance *instance;
+    int ret = mishare_instance_claim(handle, &instance);
+
+    if (ret)
+        return ret;
+    ret = mishare_bridge_step(&instance->bridge, instance->dev, mac, freq, nss_2g, nss_5g);
+    mishare_instance_release(instance);
+    return ret;
+}
+
+int mishare_wonder_managed_retire(void **handle)
+{
+    struct mishare_managed_instance *instance;
+    int ret;
+
+    if (!handle)
+        return -EINVAL;
+    if (!*handle)
+        return 0;
+    ret = mishare_instance_claim(*handle, &instance);
+    if (ret)
+        return ret;
+    instance->bridge.closing = true;
+    ret = instance->bridge.handed_off ?
+          mishare_bridge_poll_retired(&instance->bridge) : 0;
+    mishare_instance_release(instance);
+    /* Metadata/device release belongs to the process-context entry, never a
+     * callback whose outer RTNL/provider locks are unknown here.
+     */
+    return ret ? ret : -EINPROGRESS;
+}
+
+int mishare_wonder_managed_retire_process(void **handle)
+{
+    struct mishare_managed_instance *instance, **link;
+    struct mishare_bridge_scope scope = {0};
+    struct mishare_bridge *bridge;
+    unsigned long flags;
+    int ret;
+
+    if (!handle)
+        return -EINVAL;
+    if (!*handle)
+        return 0;
+    ret = mishare_instance_claim(*handle, &instance);
+    if (ret)
+        return ret;
+    bridge = &instance->bridge;
+    bridge->closing = true;
+    if (bridge->retire_broken) {
+        ret = -EUCLEAN;
+        goto retain;
+    }
+    if (bridge->handed_off) {
+        ret = mishare_bridge_poll_retired(bridge);
+        if (!ret)
+            goto complete;
+        if (ret != -EINPROGRESS)
+            goto retain;
+    } else if (!bridge->host) {
+        /* Metadata-only factory, or a failed allocation with no native owner. */
+        bridge->retired = true;
+        goto complete;
+    }
+    ret = mishare_bridge_scope_begin(&scope, instance->dev);
+    if (ret) {
+        /* No native submission took place: admission contention is a wait. */
+        if (ret == -EAGAIN || ret == -EBUSY)
+            ret = -EINPROGRESS;
+        goto retain;
+    }
+    if (!bridge->handed_off)
+        ret = mishare_bridge_handoff_idle_locked(bridge, scope.hdd);
+    else
+        ret = -EINPROGRESS;
+    if (ret == -EINPROGRESS && bridge->handed_off)
+        ret = mishare_wonder_host_retire_receipt_locked(scope.hdd, &bridge->retirement);
+    mishare_bridge_scope_end(&scope);
+    if (!ret)
+        ret = mishare_bridge_poll_retired(bridge);
+    if (ret)
+        goto retain;
+complete:
+    if (!bridge->retired || bridge->host || bridge->retirement.serial ||
+        bridge->retirement.module_lease.held) {
+        ret = -EUCLEAN;
+        goto retain;
+    }
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (link = &mishare_instances; *link; link = &(*link)->next) {
+        if (*link == instance) {
+            *link = instance->next;
+            break;
+        }
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    put_device(instance->dev);
+    mishare_module_lease_put(&instance->module_lease);
+    kfree(instance);
+    *handle = NULL;
+    return 0;
+retain:
+    mishare_instance_release(instance);
+    return ret;
 }

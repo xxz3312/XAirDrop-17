@@ -18,6 +18,19 @@
 static void wonder_pdev_down_work_handler(struct work_struct *work)
 {
 	struct wonder_data *wonder = container_of(work, struct wonder_data, pdev_down_work);
+	bool managed;
+	int ret;
+
+	/* Notification only fences/queues. Native retirement is attempted here,
+	 * outside RTNL and provider claim locks. A pending/error managed instance
+	 * must never fall through to legacy feature teardown or reinitialization.
+	 */
+	ret = wondertap_stop_managed(&wonder->wondertap_data, &managed);
+	if (managed || ret) {
+		if (ret)
+			wonder_info("Managed stop retained ownership: %d\n", ret);
+		return;
+	}
 
 	/* Exclude both retained ownership and a binding admitted during recovery. */
 	if (!wondertap_recovery_begin(&wonder->wondertap_data))
@@ -48,7 +61,8 @@ static int wonder_netdev_event(struct notifier_block *nb, unsigned long event, v
 	    wondertap_fence_managed(&wonder->wondertap_data)) {
 		if (wonder->vdev)
 			netif_stop_queue(wonder->vdev);
-		wonder_info("Managed instance fenced; native retirement is still required\n");
+		schedule_work(&wonder->pdev_down_work);
+		wonder_info("Managed instance fenced; one retirement step queued\n");
 		return NOTIFY_OK;
 	}
 	switch (event) {

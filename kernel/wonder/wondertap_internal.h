@@ -36,6 +36,7 @@ struct wondertap_data {
 	wondertap_provider_control_fn managed_provider_control;
 	const void *managed_provider_priv;
 	bool managed_instance_pin;
+	bool managed_retire_inflight;
 	bool managed_caps_valid;
 	struct wondertap_capability managed_caps;
 	int managed_error;
@@ -72,6 +73,7 @@ static inline void wondertap_prep(struct wondertap_data *wondertap)
 	wondertap->managed_provider_control = NULL;
 	wondertap->managed_provider_priv = NULL;
 	wondertap->managed_instance_pin = false;
+	wondertap->managed_retire_inflight = false;
 	wondertap->managed_caps_valid = false;
 	wondertap->managed_error = 0;
 	mutex_init(&wondertap->lock);
@@ -105,14 +107,20 @@ void wondertap_deinit(struct wondertap_data *wondertap);
 
 /* Internal owned-lifecycle API. Caller retains the instance memory and native
  * parent lease throughout binding and every asynchronous retirement poll.
- * No provider/SSR/remove caller is installed here. The binding must be retired
- * and unbound before component/HDD/instance teardown; EBUSY is not permission
- * to free parents. Explicit polling only; no sleep, worker or blind retries.
+ * The netdev-stop worker attempts one managed stop/poll, without legacy
+ * recovery. Pending retirement needs a later explicit call/event; no timer or
+ * blind retry is installed. Retire and unbind before component/HDD/instance
+ * teardown; EBUSY is not permission to free parents.
  */
 int wondertap_bind_managed(struct wondertap_data *wondertap,
 						  const struct wondertap_managed_ops *managed);
 int wondertap_unbind_managed(struct wondertap_data *wondertap);
 int wondertap_retire(struct wondertap_data *wondertap);
+/* Outside RTNL and provider/component locks; handled stays true for every
+ * managed result, including EOPNOTSUPP/errors, so legacy recovery cannot run.
+ * This does not acquire the backend's native parent lifetime contract.
+ */
+int wondertap_stop_managed(struct wondertap_data *wondertap, bool *handled);
 int wondertap_bind_managed_staged(struct wondertap_data *wondertap,
 				 const struct wondertap_managed_ops *managed);
 int wondertap_activate_managed(struct wondertap_data *wondertap);

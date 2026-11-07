@@ -1,6 +1,10 @@
+## 最新代码阶段 0144（managed 停止入口与原生实例退出连接）
+
+0143 八项必选 CI 已全部通过。netdev-stop worker 封闭 managed 入口后推进一次停止；新增可选进程上下文 retire_process，在实例锁外调用原生退出，in-flight 状态阻止并发退役/解绑。HDD 后端停止函数认证私有实例、移交 host、按精确回执推进普通清理，等 host/回执/设备引用/实例实际释放后才清空 handle。公开 init/poll_start 仍 EOPNOTSUPP；内部实例工厂尚无公开创建调用。100 项本地 Python 回归及语法检查通过，原生 C/锁模型交由 CI。未扩大 START/UP SSR 恢复范围，无手机操作。见 [0144 实现与限制](POPSICLE-MANAGED-STOP-0144.md)。
+
 ## 最新代码阶段 0143（退出所有权移交与精确完成回执）
 
-0142 八项必选 CI 已全部通过。新增桥接→原生 host registry 的显式移交，关闭启动并丢弃旧 HDD 借用指针；独立模块文本引用和不重复序号保留退出回执。只有对应 host 完成 adapter/runtime/pins/元数据释放后才能完成回执，移交本身仍返回 EINPROGRESS。已移交会话可由现有 ordinary idle/限定 SSR 路径处理，原有恢复范围不扩展，公开 Wonder 回调仍未启用。100 项本地 Python 回归通过；Actions 42341386219 的 bridge 及实际 host/原生退出回归已通过，包括两项回执负向控制；完整目标编译仍在运行。无新手机包，不重复 apply。见 [0143 实现与限制](POPSICLE-RETIREMENT-RECEIPT-0143.md)。
+0142 八项必选 CI 已全部通过。新增桥接→原生 host registry 的显式移交，关闭启动并丢弃旧 HDD 借用指针；独立模块文本引用和不重复序号保留退出回执。只有对应 host 完成 adapter/runtime/pins/元数据释放后才能完成回执，移交本身仍返回 EINPROGRESS。已移交会话可由现有 ordinary idle/限定 SSR 路径处理，原有恢复范围不扩展，公开 Wonder 回调仍未启用。100 项本地 Python 回归通过；Actions 42341386219 的 bridge 及实际 host/原生退出回归已通过，包括两项回执负向控制；完整目标编译及其余门禁现已通过，八项必选作业全部 success。无新手机包，不重复 apply。见 [0143 实现与限制](POPSICLE-RETIREMENT-RECEIPT-0143.md)。
 
 ## 最新代码阶段 0142（接入原生单次调用保护，跨调用生命周期尚未完成）
 

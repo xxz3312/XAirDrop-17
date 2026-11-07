@@ -17,7 +17,7 @@
     "tools/kernel/mishare_bridge_scope_fixture.py": "f61c61319eae51bae9fb6315daee259603e61c8fbce046415f154026a7ec92d0"
   },
   "previous_0142_required_jobs_success": 8,
-  "full_target_build": "in_progress_at_recording",
+  "full_target_build": "success",
   "phone_actions": false,
   "limitations": [
     "Receipt transfers ordinary-idle host ownership; it does not initiate native cleanup.",
@@ -25,5 +25,9 @@
     "Existing qualified SSR limits retained; committed START/UP recovery unsupported.",
     "Module/parent/firmware/concurrency endpoints remain modeled; no phone, RX/TX or Apple validation."
   ],
-  "negative_receipt_controls_rejected": 2
+  "negative_receipt_controls_rejected": 2,
+  "full_target_job_id": 128309612221,
+  "required_jobs_success": 8,
+  "optional_icnss": "skipped",
+  "artifact_independent_reaudit": "not_performed_for_0143"
 }

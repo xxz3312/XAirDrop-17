@@ -29,6 +29,23 @@ int mishare_wonder_host_handoff_receipt_locked(struct mishare_wonder_host **owne
  * Does not initiate cleanup, prove global registry emptiness or grant SSR.
  */
 int mishare_wonder_host_retirement_poll(struct mishare_host_retirement *receipt);
+/* Ordinary process-context poll of one handed-off host under RTNL/exclusive
+ * PSOC transition. No global stop, forced reset or SSR qualification implied.
+ */
+int mishare_wonder_host_retire_receipt_locked(struct hdd_context *hdd,
+                                              struct mishare_host_retirement *receipt);
+/* Internal instance factory/progression: no public Wonder init caller yet.
+ * Factory owns a device allocation reference and text lease, not native
+ * component lifetime. Caller pins text and serializes its handle throughout
+ * calls. step is process context outside RTNL/native ops/transition; 0 means
+ * radio UP only. poll-retire never waits for native locks or frees metadata;
+ * process-retire clears *handle only after actual host/receipt/instance free.
+ */
+int mishare_wonder_managed_create(struct device *dev, void **handle);
+int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
+                                u8 nss_2g, u8 nss_5g);
+int mishare_wonder_managed_retire(void **handle);
+int mishare_wonder_managed_retire_process(void **handle);
 /* Host lifetime observation for the native idle-shutdown path. The caller must
  * hold the exclusive psoc transition after draining operations, through its
  * decision and module stop. Creation/retirement use that same transition.

@@ -205,24 +205,8 @@ static int wondertap_managed_started(struct wondertap_data *w, int ret)
 	return ret;
 }
 
-static int wondertap_retire_locked(struct wondertap_data *w)
+static int wondertap_retired_result_locked(struct wondertap_data *w, void *next, int ret)
 {
-	void *next;
-	int ret;
-	if (!w->managed_bound)
-		return -EOPNOTSUPP;
-	if (w->state == WONDERTAP_STATE_BLOCKED)
-		return w->managed_error ? w->managed_error : -EUCLEAN;
-	if (w->state == WONDERTAP_STATE_DOWN && !w->vendor_handle)
-		return 0;
-	if (!w->vendor_handle) {
-		w->state = WONDERTAP_STATE_BLOCKED;
-		w->managed_error = -EUCLEAN;
-		return -EUCLEAN;
-	}
-	w->state = WONDERTAP_STATE_DRAINING;
-	next = w->vendor_handle;
-	ret = w->managed.retire(&next);
 	if (!ret && !next) {
 		w->vendor_handle = NULL;
 		w->state = WONDERTAP_STATE_DOWN;
@@ -232,13 +216,78 @@ static int wondertap_retire_locked(struct wondertap_data *w)
 	}
 	if (ret == -EINPROGRESS && next == w->vendor_handle)
 		return ret;
+	w->state = WONDERTAP_STATE_BLOCKED;
+	w->managed_error = next != w->vendor_handle || !ret ? -EUCLEAN : ret;
+	return w->managed_error;
+}
+
+static int wondertap_retire_locked(struct wondertap_data *w)
+{
+	void *next;
+	int ret;
+	if (!w->managed_bound)
+		return -EOPNOTSUPP;
+	if (w->managed_retire_inflight)
+		return -EINPROGRESS;
+	if (w->state == WONDERTAP_STATE_BLOCKED)
+		return w->managed_error ? w->managed_error : -EUCLEAN;
+	if (w->state == WONDERTAP_STATE_DOWN && !w->vendor_handle) {
+		if (w->managed_instance_pin) {
+			w->state = WONDERTAP_STATE_BLOCKED;
+			w->managed_error = -EUCLEAN;
+			return -EUCLEAN;
+		}
+		return 0;
+	}
+	if (!w->vendor_handle) {
+		w->state = WONDERTAP_STATE_BLOCKED;
+		w->managed_error = -EUCLEAN;
+		return -EUCLEAN;
+	}
+	w->state = WONDERTAP_STATE_DRAINING;
+	next = w->vendor_handle;
+	ret = w->managed.retire(&next);
 	/* A changed pointer or false success cannot authorize another callback on
 	 * possibly freed storage. Retain the original opaque token and pins; never
 	 * dereference it on the blocked path. Parent teardown remains forbidden.
 	 */
-	w->state = WONDERTAP_STATE_BLOCKED;
-	w->managed_error = next != w->vendor_handle || !ret ? -EUCLEAN : ret;
-	return w->managed_error;
+	return wondertap_retired_result_locked(w, next, ret);
+}
+
+/* w->lock is held on entry/return. Native operation drain must not run under
+ * it: an operation being drained may itself need the Wonder instance lock.
+ * The in-flight fence retains the exact handle, binding and both module pins.
+ */
+static int wondertap_retire_process_locked(struct wondertap_data *w)
+{
+	int (*retire)(void **handle);
+	void *original, *next;
+	int ret;
+
+	if (!w->managed.retire_process || w->managed_retire_inflight ||
+	    w->state == WONDERTAP_STATE_BLOCKED || !w->vendor_handle)
+		return wondertap_retire_locked(w);
+	if (!w->managed_instance_pin) {
+		w->state = WONDERTAP_STATE_BLOCKED;
+		w->managed_error = -EUCLEAN;
+		return -EUCLEAN;
+	}
+	original = w->vendor_handle;
+	next = original;
+	retire = w->managed.retire_process;
+	w->state = WONDERTAP_STATE_DRAINING;
+	w->managed_retire_inflight = true;
+	mutex_unlock(&w->lock);
+	ret = retire(&next);
+	mutex_lock(&w->lock);
+	w->managed_retire_inflight = false;
+	if (w->vendor_handle != original || !w->managed_bound ||
+	    w->state != WONDERTAP_STATE_DRAINING) {
+		w->state = WONDERTAP_STATE_BLOCKED;
+		w->managed_error = -EUCLEAN;
+		return -EUCLEAN;
+	}
+	return wondertap_retired_result_locked(w, next, ret);
 }
 
 int wondertap_retire(struct wondertap_data *w)
@@ -248,6 +297,35 @@ int wondertap_retire(struct wondertap_data *w)
 		return -EINVAL;
 	mutex_lock(&w->lock);
 	ret = wondertap_retire_locked(w);
+	mutex_unlock(&w->lock);
+	return ret;
+}
+
+/* Process-context stop step, outside provider/component locks and RTNL.
+ * Each caller submits at most one retire/poll. Pending ownership and both
+ * module pins stay live. Never restart managed features or release the
+ * provider binding here; detach remains a separate successful preflight.
+ */
+int wondertap_stop_managed(struct wondertap_data *w, bool *handled)
+{
+	int ret = 0;
+
+	if (!handled)
+		return -EINVAL;
+	*handled = false;
+	if (!w)
+		return -EINVAL;
+	mutex_lock(&w->lock);
+	if (w->managed_bound) {
+		*handled = true;
+		w->managed_quiescing = true;
+		w->managed_activation_pending = false;
+		ret = wondertap_retire_process_locked(w);
+	} else if (w->managed_instance_pin) {
+		/* An orphan token is not a legacy-recovery admission. */
+		*handled = true;
+		ret = -EUCLEAN;
+	}
 	mutex_unlock(&w->lock);
 	return ret;
 }

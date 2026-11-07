@@ -13,6 +13,8 @@
 /* Strong private provider dependency: cannot silently bind to stock CNSS. */
 extern int opairshare_set_wonder_managed_priv_data(const void *priv_data,
 						 const struct wondertap_managed_ops *managed);
+extern int mishare_wonder_managed_retire(void **handle);
+extern int mishare_wonder_managed_retire_process(void **handle);
 static bool mishare_wonder_attach;
 module_param(mishare_wonder_attach, bool, 0444);
 MODULE_PARM_DESC(mishare_wonder_attach,
@@ -21,8 +23,9 @@ static DEFINE_MUTEX(mishare_backend_lock);
 static struct hdd_context *mishare_backend_owner;
 static bool mishare_backend_closing;
 
-/* Binding can synchronously query this table while registration holds the
- * owner mutex. Callbacks never take that mutex or dereference HDD context.
+/* Binding can synchronously query capabilities while registration holds the
+ * owner mutex. Retirement never takes that mutex. Native process retirement
+ * is dispatched separately, outside provider/instance locks and RTNL.
  */
 static int mishare_backend_init(void **handle, const struct wondertap_init_params *params)
 {
@@ -81,9 +84,10 @@ static const struct wondertap_ops mishare_backend_ops = {
 	.set_tx_rate_mask = mishare_backend_mask,
 	.get_capabilities = mishare_backend_capabilities,
 };
-/* These callbacks intentionally cannot allocate or activate a radio session.
- * They make the metadata binding use the real managed transport. Replacing
- * init requires the native parent lease and qualified SSR/remove retirement.
+/* Public init/poll still cannot allocate or activate a radio session. The
+ * stop callbacks now authenticate internal instances and preserve ownership
+ * through host handoff/receipt retirement. Replacing init still requires
+ * native parent lifetime and complete radio/data-plane qualification.
  */
 static int mishare_backend_poll_start(void *handle)
 {
@@ -93,13 +97,14 @@ static int mishare_backend_retire(void **handle)
 {
 	if (!handle)
 		return -EINVAL;
-	return *handle ? -EOPNOTSUPP : 0;
+	return mishare_wonder_managed_retire(handle);
 }
 static const struct wondertap_managed_ops mishare_backend_managed = {
 	.ops = &mishare_backend_ops,
 	.owner = THIS_MODULE,
 	.poll_start = mishare_backend_poll_start,
 	.retire = mishare_backend_retire,
+	.retire_process = mishare_wonder_managed_retire_process,
 };
 static const struct wondertap_priv mishare_backend_priv = {
 	.ver = WONDER_VERSION_1_4_1,

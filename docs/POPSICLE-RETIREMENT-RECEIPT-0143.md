@@ -21,7 +21,7 @@
 
 ## 验证和限制
 
-本地 100 项 Python 回归、Python 语法及 diff 检查通过。[Actions 42341386219](https://github.com/xxz3312/XAirDrop-17/actions/runs/42341386219) 的 bridge-controller 作业 `128309612071` 和 stop-admission 作业 `128309612128` 已成功，既有 host/runtime/执行控制器/原生生命周期模型和新增两项回执负向控制均通过，日志未见 sanitizer 报错；完整目标编译仍在运行。C 编译仍仅在 Actions 执行：实际 host fixture 新增文本引用失败、recovering 拒绝、序号上限、ordinary idle/runtime 等待、限定 SSR 等待、释放前不可完成、父级查找失效后 poll、旧/新回执隔离和最后释放的锁可见性；两个负向控制要求提前完成和提前释放 registry 锁的变异均被行为断言拒绝。bridge/scope fixture 同时覆盖移交失败保留 owner、移交后禁用启动，以及不再进入 PSOC/HDD 查找的 poll。
+本地 100 项 Python 回归、Python 语法及 diff 检查通过。[Actions 42341386219](https://github.com/xxz3312/XAirDrop-17/actions/runs/42341386219) 的 bridge-controller 作业 `128309612071` 和 stop-admission 作业 `128309612128` 已成功，既有 host/runtime/执行控制器/原生生命周期模型和新增两项回执负向控制均通过，日志未见 sanitizer 报错；完整目标编译及其余门禁现已通过：八项必选作业 success，可选 ICNSS skipped。没有另行下载本轮完整 ELF 做独立验收，不替换当前实机产物。C 编译仍仅在 Actions 执行：实际 host fixture 新增文本引用失败、recovering 拒绝、序号上限、ordinary idle/runtime 等待、限定 SSR 等待、释放前不可完成、父级查找失效后 poll、旧/新回执隔离和最后释放的锁可见性；两个负向控制要求提前完成和提前释放 registry 锁的变异均被行为断言拒绝。bridge/scope fixture 同时覆盖移交失败保留 owner、移交后禁用启动，以及不再进入 PSOC/HDD 查找的 poll。
 
 这是退出所有权和完成确认的连接，不是完整的跨调用父级组件/固件租约。它不新增清理 worker、不自动触发 idle/SSR；没有清理入口调用时回执会继续 pending。原生 post-disable、MC drain、恢复来源等既有限制仍生效，已进入 START/UP 的 SSR 恢复仍不支持。不能在恢复已经开始后用 ordinary handoff 抢走 caller-owned host。
 

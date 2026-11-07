@@ -33,6 +33,10 @@ static struct module backend_module;
 #define THIS_MODULE (&backend_module)
 '''
 HARNESS=r'''
+int mishare_wonder_managed_retire(void **h)
+{ return !h?-EINVAL:*h?-ENOENT:0; }
+int mishare_wonder_managed_retire_process(void **h)
+{ return mishare_wonder_managed_retire(h); }
 static const struct wondertap_priv *bound;
 static int provider_error,registrations,removals,queries;
 int opairshare_set_wonder_managed_priv_data(const void *p,const struct wondertap_managed_ops *managed)
@@ -43,6 +47,7 @@ int opairshare_set_wonder_managed_priv_data(const void *p,const struct wondertap
  if(priv) {
   assert(managed && managed->ops==priv->wonder_ops && managed->owner==THIS_MODULE);
   assert(managed->poll_start(NULL)==-EINVAL);
+  assert(managed->retire_process==mishare_wonder_managed_retire_process);
   void *none=NULL;assert(managed->retire(&none)==0 && !none);
   assert(!bound && priv->ver==WONDER_VERSION_1_4_1);bound=priv;registrations++;
  } else { assert(bound);removals++; }

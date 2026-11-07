@@ -91,6 +91,13 @@ static int kstrtoint(const char *text, unsigned int base, int *value)
 }
 '''
 HARNESS = r'''
+/* Native instance implementation has the production host fixture. This
+ * transport fixture checks the typed callbacks and unknown-token behavior.
+ */
+int mishare_wonder_managed_retire(void **h)
+{ return !h?-EINVAL:*h?-ENOENT:0; }
+int mishare_wonder_managed_retire_process(void **h)
+{ return mishare_wonder_managed_retire(h); }
 #include "provider/provider.c"
 #undef THIS_MODULE
 #define THIS_MODULE (&backend_module)
@@ -170,10 +177,12 @@ static int fake_start(void **h,const struct wondertap_init_params *p)
 {assert(!*h && p->channel.freq==5240);*h=&token;start_calls++;return -EINPROGRESS;}
 static int fake_poll(void *h) {assert(h==&token);poll_calls++;return 0;}
 static int fake_stop(void **h)
-{assert(*h==&token);stop_calls++;if(stop_pending)return -EINPROGRESS;*h=NULL;return 0;}
+{assert(*h==&token && !provider_lock.held && !provider_claim_lock.held);stop_calls++;if(stop_pending)return -EINPROGRESS;*h=NULL;return 0;}
+static int fake_stop_process(void **h)
+{assert(!instance.wondertap_data.lock.held && instance.wondertap_data.managed_retire_inflight);return fake_stop(h);}
 static const struct wondertap_ops fake_ops={.init=fake_start};
 static const struct wondertap_priv fake_priv={.ver=WONDER_VERSION_1_4_1,.wonder_ops=&fake_ops};
-static const struct wondertap_managed_ops fake_managed={.ops=&fake_ops,.owner=&backend_module,.poll_start=fake_poll,.retire=fake_stop};
+static const struct wondertap_managed_ops fake_managed={.ops=&fake_ops,.owner=&backend_module,.poll_start=fake_poll,.retire=fake_stop,.retire_process=fake_stop_process};
 
 int main(void)
 {
@@ -197,6 +206,7 @@ int main(void)
  assert(mishare_wonder_backend_register(&h)==0 && w->managed_bound && !w->managed_quiescing);
  assert(claim_cookie==w && claim_quiesce && backend_module.refs==1);
  assert(w->managed.ops==&mishare_backend_ops && w->managed.owner==&backend_module);
+ assert(w->managed.retire_process==mishare_wonder_managed_retire_process);
  assert(wondertap_init(w,&params)==-EOPNOTSUPP && !w->vendor_handle && !self_module.refs);
  assert(mishare_wonder_backend_register(&h)==0);
  assert(mishare_wonder_backend_register(&wrong)==-EBUSY);
@@ -218,21 +228,24 @@ int main(void)
  assert(wondertap_init(w,&params)==0 && poll_calls==1);
  struct net_device physical={.name="misharewt0"},virtual={.name="wonder0"};
  instance.pdev=&physical;instance.vdev=&virtual;
+ stop_pending=1;
  assert(wonder_netdev_event(&instance.netdev_notifier,NETDEV_DOWN,&physical)==NOTIFY_OK);
- assert(queue_stops==1 && !scheduled && w->managed_quiescing && w->vendor_handle==&token);
+ assert(queue_stops==1 && scheduled==1 && w->managed_quiescing && w->vendor_handle==&token && !stop_calls);
  wonder_pdev_down_work_handler(&instance.pdev_down_work);
- assert(!feature_exits && !feature_inits && w->managed_bound && self_module.refs==1);
+ assert(!feature_exits && !feature_inits && w->managed_bound && self_module.refs==1 && stop_calls==1);
  int dels=component_dels;
- assert(opairshare_set_wonder_priv_data(NULL)==-EBUSY && component_dels==dels && component_live);
+ assert(opairshare_set_wonder_priv_data(NULL)==-EBUSY && component_dels==dels && component_live && stop_calls==1);
  assert(active_priv==&fake_priv && claim_cookie==w && provider_closing);
  assert(wondertap_init(w,&params)==-ESHUTDOWN && start_calls==1);
  assert(opairshare_wonder_managed_control(WONDERTAP_PROVIDER_QUERY,&fake_priv,NULL,NULL,&out)==-ESHUTDOWN);
  assert(opairshare_wonder_managed_control(WONDERTAP_PROVIDER_CLAIM,&fake_priv,&wrong,wondertap_provider_quiesce,NULL)==-ESHUTDOWN);
  assert(opairshare_set_wonder_managed_priv_data(&fake_priv,&fake_managed)==-ESHUTDOWN);
  wonder_mac80211_exit();assert(g_wonder==&instance && !hw_frees && !ssr_exits);
- stop_pending=1;assert(wondertap_retire(w)==-EINPROGRESS && stop_calls==1);
+ stop_pending=1;assert(wondertap_retire(w)==-EINPROGRESS && stop_calls==2);
  assert(opairshare_set_wonder_priv_data(NULL)==-EBUSY && component_dels==dels);
- stop_pending=0;assert(wondertap_retire(w)==0 && !self_module.refs);
+ stop_pending=0;wonder_pdev_down_work_handler(&instance.pdev_down_work);
+ assert(!w->vendor_handle && w->state==WONDERTAP_STATE_DOWN && !self_module.refs && stop_calls==3);
+ assert(w->managed_bound && backend_module.refs==1 && !feature_exits && !feature_inits);
  assert(opairshare_set_wonder_priv_data(NULL)==0 && component_dels==dels+1 && !claim_cookie);
  assert(!backend_module.refs);
  wonder_mac80211_exit();assert(!g_wonder && ssr_exits==1 && feature_exits==1 && hw_frees==1);

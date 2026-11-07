@@ -14,6 +14,12 @@ struct wondertap_managed_ops {
 	struct module *owner;
 	int (*poll_start)(void *handle);
 	int (*retire)(void **handle);
+	/* Optional process-context retirement. Invoked outside RTNL, provider and
+	 * instance locks, with binding/instance pins retained. Other instance
+	 * calls cannot retire the same handle until it returns. Same ownership
+	 * result contract as retire; NULL preserves the existing callback path.
+	 */
+	int (*retire_process)(void **handle);
 };
 
 enum wondertap_provider_command {

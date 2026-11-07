@@ -71,6 +71,24 @@ static int cb_caps(void *h,struct wondertap_capability *p)
 static const struct wondertap_ops ops={.init=cb_init,.deinit=cb_legacy_stop,.set_freq=cb_freq,.get_capabilities=cb_caps};
 static const struct wondertap_ops foreign_ops={0};
 static const struct wondertap_managed_ops managed={.ops=&ops,.owner=&backend_module,.poll_start=cb_poll,.retire=cb_retire};
+static struct wondertap_data *process_owner;
+static int process_calls;
+static int cb_retire_process(void **h)
+{
+ bool handled=false;
+ struct wondertap_data *w=process_owner;
+ assert(!w->lock.held && w->managed_retire_inflight && w->vendor_handle==*h);
+ assert(w->managed_instance_pin && backend_module.refs && self_module.refs);
+ process_calls++;
+ int before=retire_calls;
+ assert(wondertap_retire(w)==-EINPROGRESS && retire_calls==before);
+ assert(wondertap_stop_managed(w,&handled)==-EINPROGRESS && handled && retire_calls==before);
+ assert(wondertap_quiesce_managed(w)==-EBUSY && w->managed_bound && w->vendor_handle==*h);
+ assert(wondertap_unbind_managed(w)==-EBUSY);
+ return cb_retire(h);
+}
+static const struct wondertap_managed_ops process_managed={.ops=&ops,.owner=&backend_module,
+ .poll_start=cb_poll,.retire=cb_retire,.retire_process=cb_retire_process};
 static struct wondertap_init_params params;
 static void prepare(struct wondertap_data *w,bool bind)
 {
@@ -94,6 +112,7 @@ static void finish(struct wondertap_data *w)
 int main(void)
 {
  struct wondertap_data w, quarantined[7];struct wondertap_capability caps;
+ struct wondertap_data stopped[8];bool handled;
  struct wondertap_set_freq_params freq={.freq=5180};
  struct wondertap_fixed_tx_rate_params rate={0};struct wondertap_tx_rate_mask_params mask={0};
  u8 bssid[6]={2,0,0,0,0,1};
@@ -165,6 +184,52 @@ int main(void)
  wondertap_deinit(&w);assert(legacy_stops==1 && w.state==WONDERTAP_STATE_DOWN && !w.vendor_handle);
  wonder_external_monitor=true;assert(wondertap_set_freq(&w,&freq)==-EOPNOTSUPP);
  assert(wondertap_get_capabilities(&w,&caps)==0 && caps.bits.frame_type_filter);
+ wonder_external_monitor=false;
+ assert(wondertap_stop_managed(NULL,&handled)==-EINVAL && !handled);
+ assert(wondertap_stop_managed(&w,NULL)==-EINVAL);
+ /* Legacy ownership must remain eligible for the original recovery path. */
+ prepare(&w,false);init_result=0;assert(!wondertap_init(&w,&params));
+ assert(!wondertap_stop_managed(&w,&handled) && !handled && w.vendor_handle==&token && !retire_calls);
+ wondertap_deinit(&w);
+ /* Managed stops always fence admission; pending results retain both pins. */
+ prepare(&w,true);assert(wondertap_init(&w,&params)==-EINPROGRESS);
+ assert(wondertap_stop_managed(&w,&handled)==-EINPROGRESS && handled && w.managed_quiescing && retire_calls==1);
+ assert(wondertap_init(&w,&params)==-ESHUTDOWN && init_calls==1);
+ assert(wondertap_unbind_managed(&w)==-EBUSY);
+ retire_mode=0;assert(!wondertap_stop_managed(&w,&handled) && handled && !w.vendor_handle && w.managed_bound);
+ int before=retire_calls;assert(!wondertap_stop_managed(&w,&handled) && handled && retire_calls==before);
+ assert(!wondertap_unbind_managed(&w));
+ /* Every permanent/invalid stop result stays handled and blocks reuse. */
+ for(int i=2;i<7;i++) {
+  prepare(&stopped[i],true);init_result=0;assert(!wondertap_init(&stopped[i],&params));retire_mode=i;
+  assert(wondertap_stop_managed(&stopped[i],&handled)!=0 && handled && stopped[i].state==WONDERTAP_STATE_BLOCKED);
+  before=retire_calls;assert(wondertap_stop_managed(&stopped[i],&handled)!=0 && handled && retire_calls==before);
+ }
+ /* DOWN/NULL with a retained instance pin is corruption, not completion. */
+ prepare(&stopped[0],true);assert(wondertap_init(&stopped[0],&params)==-EINPROGRESS);
+ stopped[0].vendor_handle=NULL;stopped[0].state=WONDERTAP_STATE_DOWN;
+ assert(wondertap_stop_managed(&stopped[0],&handled)==-EUCLEAN && handled && stopped[0].managed_instance_pin);
+ assert(stopped[0].state==WONDERTAP_STATE_BLOCKED && !retire_calls);
+ /* An orphan managed pin must not be handed to legacy recovery either. */
+ prepare(&stopped[1],false);stopped[1].managed_instance_pin=true;
+ assert(wondertap_stop_managed(&stopped[1],&handled)==-EUCLEAN && handled);
+ /* The process callback runs outside the instance lock. Reentrant retire,
+  * quiesce, unbind and stop cannot steal its token or start a second callback.
+  */
+ struct wondertap_data process_states[3];
+ for(int mode=0;mode<3;mode++) {
+  struct wondertap_data *p=&process_states[mode];
+  prepare(p,false);assert(!wondertap_bind_managed(p,&process_managed));
+  process_owner=p;process_calls=0;init_result=0;assert(!wondertap_init(p,&params));
+  assert(wondertap_stop_managed(p,&handled)==-EINPROGRESS && handled && process_calls==1 && !p->managed_retire_inflight);
+  retire_mode=mode==0?0:mode==1?3:2;
+  int expected=mode==0?0:mode==1?-EUCLEAN:-EIO;
+  assert(wondertap_stop_managed(p,&handled)==expected && handled && process_calls==2);
+  assert(!p->managed_retire_inflight);
+  if(!mode)assert(!wondertap_unbind_managed(p) && !p->vendor_handle && !p->managed_instance_pin);
+  else {assert(p->state==WONDERTAP_STATE_BLOCKED && p->vendor_handle==&token && p->managed_instance_pin);
+   assert(wondertap_stop_managed(p,&handled)==expected && process_calls==2);}
+ }
  puts("WONDER_MANAGED_LIFECYCLE_FIXTURE_PASS_ONLY");return 0;
 }
 '''

@@ -77,6 +77,11 @@ static int rtnl_attempts;
 static struct wlan_objmgr_psoc *expected_psoc;
 static int failure, validations, closed, dp_destroyed;
 static int device_pins, psoc_pins, pdev_pins, runtime_tokens;
+/* Separate allocation-reference ledger for managed metadata and each outer
+ * native scope; host pin assertions retain their original exact accounting.
+ */
+static bool managed_instance_case, managed_factory_io;
+static int managed_device_refs;
 
 /* Model the module API, not the kernel module loader or module-exit timing. */
 struct module {int id;};
@@ -135,8 +140,12 @@ bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter);
 static const u8 mac[6]={2,3,4,5,6,7};
 static void event(char c) { size_t n=strlen(trace);assert(n+1<sizeof(trace));trace[n]=c;trace[n+1]=0; }
 static void reset(int fail) { execution_close_result=execution_close_calls=0;fixture_lease_scope_reset();assert(!module_refs && "EXPECTED_MODULE_RELEASE");assert(!runtime_tokens);pins_empty();assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
-static struct device *get_device(struct device *d) { assert(d);event('G');if(failure==6)return NULL;d->refs++;device_pins++;return d; }
-static void put_device(struct device *d) { assert(d && d->refs==1 && !psoc_pins && !pdev_pins && "EXPECTED_PARENT_RELEASE_ORDER");event('g');d->refs--;device_pins--; }
+static struct device *get_device(struct device *d) { assert(d);event('G');if(failure==6)return NULL;d->refs++;
+ if(managed_instance_case && (managed_factory_io || !parent_owned))managed_device_refs++;else device_pins++;
+ return d; }
+static void put_device(struct device *d) {
+ if(managed_instance_case && !parent_owned){assert(d && managed_device_refs>0 && d->refs>0);event('g');d->refs--;managed_device_refs--;return;}
+ assert(d && d->refs==1+managed_device_refs && !psoc_pins && !pdev_pins && "EXPECTED_PARENT_RELEASE_ORDER");event('g');d->refs--;device_pins--; }
 static int wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *p,int id) { assert(p && id==9 && device_pins==1);event('Q');if(failure==7)return 1;p->refs++;psoc_pins++;return 0; }
 static void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *p,int id) { assert(p && p->refs==1 && id==9 && !pdev_pins && device_pins==1 && "EXPECTED_PARENT_RELEASE_ORDER");event('q');p->refs--;psoc_pins--; }
 static int wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *p,int id) { assert(p && id==9 && device_pins==1 && psoc_pins==1);event('B');if(failure==8)return 1;p->refs++;pdev_pins++;return 0; }
@@ -1125,6 +1134,56 @@ static void receipt_cases(struct hdd_context *h,struct wireless_dev *wdev)
  rtnl_owned=false;assert(!mishare_wonder_host_idle_prepare_locked(h));rtnl_owned=true;
  assert(!mishare_wonder_host_retirement_poll(&second) && !lease_refs);
 }
+static void managed_context(void)
+{ parent_owned=rtnl_owned=false;trace[0]=idle_trace[0]=0; }
+static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
+{
+ void *handle=NULL;
+ int unknown;
+ assert(mishare_wonder_managed_retire_process(NULL)==-EINVAL);
+ assert(!mishare_wonder_managed_retire(&handle) && !mishare_wonder_managed_retire_process(&handle));
+ handle=&unknown;assert(mishare_wonder_managed_retire(&handle)==-ENOENT && handle==&unknown);handle=NULL;
+ for(int fail=0;fail<3;fail++) {
+  reset(fail==0?1:fail==1?6:0);managed_instance_case=managed_factory_io=true;
+  lease_get_failure=fail==2;
+  int expected=fail==0?-ENOMEM:fail==1?-ENODEV:-ESHUTDOWN;
+  assert(mishare_wonder_managed_create(h->parent_dev,&handle)==expected && !handle && !managed_device_refs && !lease_refs);
+  managed_factory_io=managed_instance_case=false;
+ }
+ reset(0);managed_instance_case=managed_factory_io=true;
+ assert(!mishare_wonder_managed_create(h->parent_dev,&handle) && handle && managed_device_refs==1 && lease_refs==1);
+ managed_factory_io=false;void *saved=handle;
+ assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS && handle==saved && !active);
+ managed_context();mode_context=NULL;
+ assert(!mishare_wonder_managed_retire_process(&handle) && !handle && !managed_device_refs && !lease_refs);
+ parent_owned=rtnl_owned=true;managed_instance_case=false;
+ for(int mode=0;mode<3;mode++) {
+  reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
+  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
+  managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EINPROGRESS);
+  if(mode){active->dev->ieee80211_ptr=wdev;managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EINPROGRESS);}
+  struct mishare_managed_instance *instance=handle;saved=handle;
+  instance->busy=true;
+  assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS && handle==saved);
+  assert(mishare_wonder_managed_retire_process(&handle)==-EINPROGRESS && handle==saved);instance->busy=false;
+  assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS && handle==saved);
+  managed_context();idle_trans_failure=true;
+  assert(mishare_wonder_managed_retire_process(&handle)==-EINPROGRESS && handle==saved && instance->bridge.host && !instance->bridge.handed_off);
+  assert(managed_device_refs==1 && lease_refs==1);idle_trans_failure=false;
+  if(mode)runtime_busy=1;
+  managed_context();int result=mishare_wonder_managed_retire_process(&handle);
+  if(!mode){assert(!result && !handle);}
+  else {
+   assert(result==-EINPROGRESS && handle==saved && instance->bridge.handed_off && !instance->bridge.host && lease_refs==2 && managed_device_refs==1);
+   runtime_busy=0;
+   if(mode==2){parent_owned=rtnl_owned=true;runtime_ssr=true;trace[0]=0;assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));runtime_ssr=false;mode_context=NULL;}
+   managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle);
+  }
+  assert(!managed_device_refs && !lease_refs && !module_refs && !mishare_instances && !active && !registered);
+  parent_owned=rtnl_owned=true;managed_instance_case=false;
+ }
+ mode_context=h;
+}
 int main(void)
 {
  struct device dev={0};struct wlan_objmgr_psoc psoc={0},other_psoc={0};struct wlan_objmgr_pdev pdev={.psoc=&psoc};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&psoc,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;expected_psoc=&psoc;
@@ -1303,6 +1362,7 @@ int main(void)
  stop_lease_cases(&h,&wdev);
  module_host_cases(&h,&wdev);
  receipt_cases(&h,&wdev);
+ managed_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
