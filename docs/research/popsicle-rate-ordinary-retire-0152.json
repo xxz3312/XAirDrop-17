@@ -1,0 +1,35 @@
+{
+  "stage": "0152",
+  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "previous_stage_ci": {
+    "run_id": 42380495651,
+    "required_jobs": 8,
+    "all_success": true
+  },
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "python_regressions": 100,
+    "scalar_mutation_controls": 11,
+    "native_source_generated_only": true
+  },
+  "native_pending": {
+    "configured_combinations": 256,
+    "retention_faults": 24,
+    "admission_refusals": 5,
+    "mutation_controls": 3
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Pre-START ordinary DELETE only. Physical transport/ACK/DP/peer/lock primitives and rate receipts modeled. Mixed SSR remains held. No configured START/UP, automatic parent lease, full configuration, RF or Apple proof."
+}

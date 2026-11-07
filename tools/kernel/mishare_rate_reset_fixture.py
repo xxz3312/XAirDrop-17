@@ -42,7 +42,7 @@ int main(void) {
  for(unsigned band=0;band<2;band++)for(unsigned failure=0;failure<4;failure++)for(unsigned inline_cb=0;inline_cb<2;inline_cb++) {
   reset_pe_test();o=configured_rate(band?5240:2437,failure);
   struct mishare_runtime_rate_status before=state(o).rate;
-  assert(mishare_runtime_destroy(&o)==-EOPNOTSUPP && !pe_deletes && !dp_detaches && "EXPECTED_RATE_RESET_ORDINARY");
+  assert(mishare_runtime_rate_retire_check(o)==-EOPNOTSUPP && !pe_deletes && !dp_detaches && "EXPECTED_RATE_RESET_DIRECT_RETIRE");
   assert(mishare_runtime_ndi_start_plan(o)==-EOPNOTSUPP && mishare_runtime_ndi_start(o)==-EOPNOTSUPP);
   stop_recovery(o);early_dp=inline_cb;
   assert(mishare_runtime_reclaim_ndi(&o)==-EINPROGRESS && o && "EXPECTED_RATE_RESET_BEGIN");

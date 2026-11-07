@@ -35,12 +35,16 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     if (r->integrity_error)
         return -EUCLEAN;
-    if ((r->reset_completed && !r->reset_admitted) ||
+    if ((r->ordinary_completed && !r->ordinary_admitted) ||
+        ((r->ordinary_admitted || r->ordinary_completed) &&
+         (!r->requested || !r->posted || !r->accepted || !r->completed ||
+          !r->receipt.attempted || r->reset_admitted || r->reset_completed)) ||
+        (r->reset_completed && !r->reset_admitted) ||
         ((r->reset_admitted || r->reset_completed) &&
          (!r->requested || !r->posted || !r->accepted || !r->completed || !r->receipt.attempted)))
         return -EUCLEAN;
     if (!r->requested)
-        return r->posted || r->accepted || r->completed || r->reset_admitted ||
+        return r->posted || r->accepted || r->completed || r->ordinary_admitted || r->ordinary_completed || r->reset_admitted ||
                r->reset_completed || r->receipt.attempted ||
                r->receipt.attempted_mask || r->receipt.submitted_mask || r->request.nss ? -EUCLEAN : 0;
     if (!r->posted || !r->completed)
@@ -49,6 +53,48 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
      * Prepared SSR uses its separate eligibility and native-window checks.
      */
     return r->receipt.attempted ? -EOPNOTSUPP : 0;
+}
+
+/* Registry lock held. Only normal pre-START DELETE may consume this policy.
+ * Admission is not an ACK: existing PE/peer/VDEV/DP callbacks still gate every
+ * step. Original configuration history is never rewritten during cleanup.
+ */
+static int mishare_runtime_rate_ordinary_check(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+    int ret = mishare_runtime_rate_retire_check(entry);
+
+    if (ret != -EOPNOTSUPP)
+        return ret;
+    if (entry->state.quiesced || r->reset_admitted || r->reset_completed ||
+        entry->radio || n->radio_requested || n->start_plan_requested ||
+        entry->state.ndi_reclaim_started || entry->state.host_reclaim ||
+        entry->state.recovery_window || entry->state.recovery_window_closed)
+        return -EOPNOTSUPP;
+    if (!r->accepted || entry->state.blocked || n->blocked || n->completion_error ||
+        entry->state.work_error || entry->state.reclaim_error || entry->state.recovery_error)
+        return -EUCLEAN;
+    if (entry->state.work_pending || entry->state.work_users)
+        return -EINPROGRESS;
+    if (r->ordinary_completed) {
+        if (!r->ordinary_admitted || n->active || n->pe_ready || entry->pe_cookie ||
+            !n->pe_delete_requested || !n->pe_delete_submitted || !n->pe_delete_completed ||
+            !n->peer_delete_pending || !n->peer_delete_submitted || !n->peer_delete_replied ||
+            !n->delete_pending || !n->delete_submitted || !n->delete_replied ||
+            !n->dp_detaching || !n->dp_detach_submitted || !n->dp_freed ||
+            n->create.timer_ready || n->create.stats_owned || n->legacy_ready || n->wma_bound)
+            return -EUCLEAN;
+    } else if (!r->ordinary_admitted &&
+               (!entry->vdev || !entry->referenced || !entry->events ||
+                entry->cookie != (unsigned long)entry->vdev || !entry->pe_cookie ||
+                entry->state.draining || !n->active || !n->legacy_ready || !n->wma_bound ||
+                !n->peer_created || !n->pe_submitted || !n->pe_completed || !n->pe_ready ||
+                !n->channel_submitted || !n->channel_completed || !n->channel_prepared ||
+                !n->create.timer_ready || !n->create.dp_attached ||
+                n->pe_delete_requested || n->peer_delete_pending || n->delete_pending || n->dp_detaching))
+        return -EOPNOTSUPP;
+    return 0;
 }
 
 /* Registry lock held. This is eligibility, not the native recovery window.
@@ -62,7 +108,8 @@ static int mishare_runtime_rate_reset_check(struct mishare_runtime_owner *entry)
 
     if (ret != -EOPNOTSUPP)
         return ret;
-    if (entry->state.quiesced != MISHARE_QUIESCE_SSR ||
+    if (r->ordinary_admitted || r->ordinary_completed ||
+        entry->state.quiesced != MISHARE_QUIESCE_SSR ||
         entry->radio || n->radio_requested || n->start_plan_requested)
         return -EOPNOTSUPP;
     if (entry->state.work_error || entry->state.recovery_error ||
@@ -596,7 +643,9 @@ static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bo
     }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ret = reclaim && entry->state.rate.reset_completed ?
-          mishare_runtime_rate_reset_check(entry) : mishare_runtime_rate_retire_check(entry);
+          mishare_runtime_rate_reset_check(entry) :
+          (!reclaim && entry->state.rate.ordinary_completed ?
+           mishare_runtime_rate_ordinary_check(entry) : mishare_runtime_rate_retire_check(entry));
     if (ret) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return ret;
@@ -2077,7 +2126,7 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     int ret;
 
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    ret = mishare_runtime_rate_retire_check(entry);
+    ret = mishare_runtime_rate_ordinary_check(entry);
     if (ret) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return ret;
@@ -2122,6 +2171,8 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EINPROGRESS;
     }
+    if (entry->state.rate.receipt.attempted && !entry->state.rate.ordinary_admitted)
+        entry->state.rate.ordinary_admitted = true;
     if (ndi->pe_ready && !ndi->pe_delete_requested) {
         ndi->pe_delete_requested = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -2229,6 +2280,8 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     mlme->proto.generic.nss_5g = 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ndi->active = false;
+    if (entry->state.rate.ordinary_admitted)
+        entry->state.rate.ordinary_completed = true;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     return 0;
 context_blocked:
