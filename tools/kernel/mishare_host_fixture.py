@@ -1187,7 +1187,7 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  parent_owned=rtnl_owned=true;managed_instance_case=false;
  /* Preparing a typed request is read-only native admission, not radio start. */
  struct wondertap_init_params params={0},changed;
- params.channel.freq=5240;params.tx_rate.nss=1;params.mac_addr[0]=2;
+ params.channel.freq=5240;params.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HE;params.tx_rate.nss=1;params.mac_addr[0]=2;
  params.mgmt_retry_limit=3;params.data_retry_limit=5;memcpy(params.country_code,"CN",3);
  reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
@@ -1200,7 +1200,26 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-ESHUTDOWN && !prepared->request_prepared);runtime_ssr=false;
  managed_context();request_mode=MODE_REQUESTED;
  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EOPNOTSUPP && !prepared->request_prepared);request_mode=MODE_CURRENT;
- for(int fault=0;fault<10;fault++) {
+ for(int fault=0;fault<11;fault++) {
+  changed=params;int expected=-EOPNOTSUPP;
+  switch(fault) {
+   case 0:changed.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_LEGACY;break;
+   case 1:changed.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HT;changed.tx_rate.mcs=8;break;
+   case 2:changed.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_VHT;changed.tx_rate.mcs=10;break;
+   case 3:changed.tx_rate.mcs=12;break;
+   case 4:changed.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_EHT;changed.tx_rate.mcs=14;break;
+   case 5:changed.tx_rate.gi=WONDERTAP_RATE_GI_SHORT;break;
+   case 6:changed.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HT;changed.tx_rate.gi=WONDERTAP_RATE_GI_0_8_US;break;
+   case 7:changed.tx_rate.bw=WONDERTAP_RATE_BW_40;break;
+   case 8:changed.tx_rate.nss=3;break;
+   case 9:changed.rate_adaptation_enable=true;changed.tx_rate_mask.max_nss=1;break;
+   case 10:changed.tx_rate.gi=(enum wondertap_rate_gi)-1;expected=-EINVAL;break;
+  }
+  int before=reg_reads;managed_context();
+  assert(mishare_wonder_managed_prepare(handle,&changed,1,2)==expected && !prepared->request_prepared && "EXPECTED_RATE_PREPARE");
+  assert(reg_reads==before && !parent_owned && !rtnl_owned && !active && !runtime_tokens && "EXPECTED_RATE_PREFLIGHT_ONLY");
+ }
+ for(int fault=0;fault<9;fault++) {
   changed=params;reg_error=0;reg_state=1;reg_passive=false;memcpy(reg_country,"CN",3);
   if(fault==0)reg_error=1;
   if(fault==1)memcpy(reg_country,"JP",3);
@@ -1209,9 +1228,8 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
   if(fault==4)reg_state=3; /* invalid or unknown */
   if(fault==5)reg_passive=true;
   if(fault==6){changed.channel.freq=2412;changed.tx_rate.nss=2;}
-  if(fault==7){changed.channel.freq=2412;changed.rate_adaptation_enable=1;changed.tx_rate_mask.max_nss=2;}
-  if(fault==8)changed.channel.freq=5955;
-  if(fault==9)memcpy(changed.country_code,"00",3);
+  if(fault==7)changed.channel.freq=5955;
+  if(fault==8)memcpy(changed.country_code,"00",3);
   managed_context();int rc=mishare_wonder_managed_prepare(handle,&changed,1,2);
   assert(rc==(fault==0?-EPERM:-EOPNOTSUPP) && !prepared->request_prepared && "EXPECTED_REG_REFUSAL");
   assert(!parent_owned && !rtnl_owned && !active && !runtime_tokens && managed_device_refs==1 && "EXPECTED_REG_BALANCE");
@@ -1584,11 +1602,20 @@ def run(wlan, output):
              'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),
             ('if (memcmp(country, p->country_code, 2))', 'if (false && memcmp(country, p->country_code, 2))'),
             ('if (ret)\n        return ret;\n    /* Alpha2', 'if (false && ret)\n        return ret;\n    /* Alpha2'),
-            ('p->tx_rate.nss > nss ||', 'false ||'),
-            ('p->rate_adaptation_enable && p->tx_rate_mask.max_nss > nss', 'false && p->rate_adaptation_enable && p->tx_rate_mask.max_nss > nss'),
+            ('if (p->tx_rate.nss > nss)', 'if (false && p->tx_rate.nss > nss)'),
             ('REG_CURRENT_PWR_MODE) != CHANNEL_STATE_ENABLE', 'REG_CURRENT_PWR_MODE) == -999'),
             ('wlan_reg_is_passive_for_freq(hdd->pdev, p->channel.freq))', '(false && wlan_reg_is_passive_for_freq(hdd->pdev, p->channel.freq)))'),
         ]
+        rate_prepare_controls = [
+            ('ret = mishare_rate_check(&request.params.tx_rate);', 'ret = 0 * mishare_rate_check(&request.params.tx_rate);'),
+            ('request.params.rate_adaptation_enable)', '(false && request.params.rate_adaptation_enable))'),
+        ]
+        for needle,replacement in rate_prepare_controls:
+            assert host_source.count(needle)==1,needle
+            (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(needle,replacement,1))
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and 'EXPECTED_RATE_PREPARE' in bad.stderr,(needle,bad.returncode,bad.stderr[-1800:])
         for needle, replacement in regulatory_controls:
             assert host_source.count(needle)==1, needle
             (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(needle,replacement,1))

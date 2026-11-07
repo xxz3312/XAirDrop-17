@@ -157,6 +157,7 @@ def main():
     report.parent.mkdir(parents=True,exist_ok=True)
     report.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),
         'production_sha256':hashlib.sha256(original.encode()).hexdigest(),
+        'header_sha256':{name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in headers.items()},
         'limitations':'Production executor with modeled VDEV/MLME, native rate encoder and WMA command queue only. No firmware ACK, parent lifetime, platform rate capability, regulatory permission, radio or Apple certification. Local leak detection disabled for ptrace host; Actions enables it.'},indent=2)+'\n')
     print(result)
 

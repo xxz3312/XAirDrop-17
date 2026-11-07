@@ -1,0 +1,21 @@
+{
+  "stage": "0148",
+  "status": "LOCAL_SHARED_RATE_CONTRACT_MODEL_ONLY",
+  "local_python_tests": 100,
+  "local_rate_scenarios": 192,
+  "local_rate_mutations": 6,
+  "new_host_rejections_pending_ci": 11,
+  "new_host_mutations_pending_ci": 2,
+  "retained_regulatory_mutations_pending_ci": 6,
+  "target_build": "PENDING_CI",
+  "public_init_enabled": false,
+  "phone_action_required": false,
+  "sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate.h": "5b42e92ebc46b9c4a6624984b7d86eca3dcfd791849f747233d8f44d38a49e59",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate.c": "02e5dd45a6e6ba4b14491ed3825df4f5ecb0ac75b03ef8aa33eadf9ad10f5c49",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.c": "ed71120d47d8430013241dfab1ab96c738a8b462c269d2743b6368bc77cb403c",
+    "tools/kernel/mishare_host_fixture.py": "72e7a8ac1b757ef19afa1566ac53660372e0466f4c5070bd923de2e281aa5a2b",
+    "tools/kernel/mishare_rate_fixture.py": "3bf135d2976f9010ca4700948704b95964932910dd0151e54ccf470c71a640e4"
+  },
+  "limitations": "No host integration/target build acceptance until CI; pure support admission only, no configuration transaction completion, parent lease, firmware ACK, RF or Apple readiness."
+}

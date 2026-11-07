@@ -11,34 +11,17 @@
 static int mishare_rate_encode(const struct wondertap_fixed_tx_rate_params *p,
                                 u32 *rate, u8 *gi)
 {
-    u8 preamble, max_mcs;
+    u8 preamble;
+    int ret = mishare_rate_check(p);
 
-    if (!p || (unsigned int)p->preamble >= WONDERTAP_RATE_PREAMBLE_MAX ||
-        (unsigned int)p->bw > WONDERTAP_RATE_BW_320 ||
-        (unsigned int)p->gi > WONDERTAP_RATE_GI_3_2_US ||
-        !p->nss || p->nss > WONDERTAP_HE_NSS_MAX)
-        return -EINVAL;
-    if (p->bw != WONDERTAP_RATE_BW_20 || p->nss > 2)
-        return -EOPNOTSUPP;
+    if (ret)
+        return ret;
     switch (p->preamble) {
-    case WONDERTAP_RATE_PREAMBLE_HT:
-        preamble = WMI_RATE_PREAMBLE_HT; max_mcs = 7; break;
-    case WONDERTAP_RATE_PREAMBLE_VHT:
-        preamble = WMI_RATE_PREAMBLE_VHT; max_mcs = 9; break;
-    case WONDERTAP_RATE_PREAMBLE_HE:
-        preamble = WMI_RATE_PREAMBLE_HE; max_mcs = 11; break;
-    case WONDERTAP_RATE_PREAMBLE_EHT:
-        preamble = WMI_RATE_PREAMBLE_EHT; max_mcs = 13; break;
-    default:
-        return -EOPNOTSUPP; /* Public LEGACY does not distinguish CCK/OFDM. */
-    }
-    if (p->mcs > max_mcs)
-        return -EOPNOTSUPP;
-    if (p->preamble <= WONDERTAP_RATE_PREAMBLE_VHT) {
-        if (p->gi != WONDERTAP_RATE_GI_DEFAULT && p->gi != WONDERTAP_RATE_GI_SHORT)
-            return -EOPNOTSUPP;
-    } else if (p->gi == WONDERTAP_RATE_GI_SHORT) {
-        return -EOPNOTSUPP;
+    case WONDERTAP_RATE_PREAMBLE_HT: preamble = WMI_RATE_PREAMBLE_HT; break;
+    case WONDERTAP_RATE_PREAMBLE_VHT: preamble = WMI_RATE_PREAMBLE_VHT; break;
+    case WONDERTAP_RATE_PREAMBLE_HE: preamble = WMI_RATE_PREAMBLE_HE; break;
+    case WONDERTAP_RATE_PREAMBLE_EHT: preamble = WMI_RATE_PREAMBLE_EHT; break;
+    default: return -EOPNOTSUPP;
     }
     switch (p->gi) {
     case WONDERTAP_RATE_GI_SHORT: *gi = 1; break;

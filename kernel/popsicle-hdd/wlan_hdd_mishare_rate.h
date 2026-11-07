@@ -1,7 +1,40 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 #ifndef WLAN_HDD_MISHARE_RATE_H
 #define WLAN_HDD_MISHARE_RATE_H
+#include <linux/errno.h>
 #include "wlan_hdd_mishare_wonder_api.h"
+
+/* Pure support check shared by managed preparation and native submission.
+ * Does not authorize a frequency/NSS, read parents or submit a command.
+ */
+static inline int mishare_rate_check(const struct wondertap_fixed_tx_rate_params *p)
+{
+    u8 max_mcs;
+
+    if (!p || (unsigned int)p->preamble >= WONDERTAP_RATE_PREAMBLE_MAX ||
+        (unsigned int)p->bw > WONDERTAP_RATE_BW_320 ||
+        (unsigned int)p->gi > WONDERTAP_RATE_GI_3_2_US ||
+        !p->nss || p->nss > WONDERTAP_HE_NSS_MAX)
+        return -EINVAL;
+    if (p->bw != WONDERTAP_RATE_BW_20 || p->nss > 2)
+        return -EOPNOTSUPP;
+    switch (p->preamble) {
+    case WONDERTAP_RATE_PREAMBLE_HT: max_mcs = 7; break;
+    case WONDERTAP_RATE_PREAMBLE_VHT: max_mcs = 9; break;
+    case WONDERTAP_RATE_PREAMBLE_HE: max_mcs = 11; break;
+    case WONDERTAP_RATE_PREAMBLE_EHT: max_mcs = 13; break;
+    default: return -EOPNOTSUPP; /* No unambiguous legacy encoding. */
+    }
+    if (p->mcs > max_mcs)
+        return -EOPNOTSUPP;
+    if (p->preamble <= WONDERTAP_RATE_PREAMBLE_VHT) {
+        if (p->gi != WONDERTAP_RATE_GI_DEFAULT && p->gi != WONDERTAP_RATE_GI_SHORT)
+            return -EOPNOTSUPP;
+    } else if (p->gi == WONDERTAP_RATE_GI_SHORT) {
+        return -EOPNOTSUPP;
+    }
+    return 0;
+}
 
 struct wlan_objmgr_vdev;
 /* Fresh zeroed storage for ONE newly created firmware VDEV. Caller serializes

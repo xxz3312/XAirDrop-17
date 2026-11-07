@@ -21,6 +21,7 @@
 #include "wlan_hdd_mishare_bridge.h"
 #include "wlan_hdd_mishare_bridge_scope.h"
 #include "wlan_hdd_mishare_init.h"
+#include "wlan_hdd_mishare_rate.h"
 
 struct mishare_wonder_host {
     struct mishare_wonder_host *next;
@@ -1065,7 +1066,7 @@ static int mishare_init_regulatory_check(struct hdd_context *hdd,
         nss = nss_5g;
     else
         return -EOPNOTSUPP; /* Owned channel path has no 6 GHz contract. */
-    if (p->tx_rate.nss > nss || (p->rate_adaptation_enable && p->tx_rate_mask.max_nss > nss))
+    if (p->tx_rate.nss > nss)
         return -EOPNOTSUPP;
     /* No DFS/CAC or passive-channel transmit coordination is installed.
      * Missing CONFIG_REG_CLIENT returns INVALID and must fail closed too.
@@ -1093,11 +1094,11 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
      * narrow a wider request or confuse valid public syntax with support.
      */
     if (request.params.channel.bandwidth != WONDERTAP_RATE_BW_20 ||
-        request.params.tx_rate.bw != WONDERTAP_RATE_BW_20 || request.params.tx_rate.nss > 2 ||
-        (request.params.rate_adaptation_enable &&
-         (request.params.tx_rate_mask.max_bw != WONDERTAP_RATE_BW_20 ||
-          request.params.tx_rate_mask.max_nss > 2)))
+        request.params.rate_adaptation_enable)
         return -EOPNOTSUPP;
+    ret = mishare_rate_check(&request.params.tx_rate);
+    if (ret)
+        return ret;
     ret = mishare_instance_claim(handle, &instance);
     if (ret)
         return ret;
