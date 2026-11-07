@@ -1,11 +1,11 @@
 {
   "stage": "0157",
-  "status": "NATIVE_LATE_PEER_OBSERVATION_PASS_ONLY",
+  "status": "FULL_REQUIRED_CI_PASS_OBSERVATION_ONLY",
   "previous_stage_ci": {
     "run_id": 42408125741,
-    "required_jobs_success": 7,
+    "required_jobs_success": 8,
     "required_jobs_total": 8,
-    "full_target_build": "in_progress"
+    "full_target_build": "success"
   },
   "upstream": [
     {
@@ -40,7 +40,18 @@
     "job_id": 128517831309,
     "step_name": "Native late peer reply observation across SSR with sanitizers",
     "step_conclusion": "success",
-    "lifecycle_regressions": "in_progress",
-    "full_target_build": "in_progress"
+    "lifecycle_regressions": "success",
+    "full_target_build": "success",
+    "required_jobs_success": 8,
+    "required_jobs_total": 8,
+    "run_conclusion": "success",
+    "optional_ICNSS_reference": "skipped",
+    "diagnostic": {
+      "object_compile": "success",
+      "CNSS_interfaces": "success",
+      "strict_link_dependency_gate": "success",
+      "stock_BTF_layout": "success",
+      "recorded_module_checks": "success"
+    }
   }
 }

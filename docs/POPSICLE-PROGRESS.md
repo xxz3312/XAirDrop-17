@@ -1,10 +1,10 @@
 ## 最新代码阶段 0157（原始 SSR 后的真实 self-peer 回执观察）
 
-仅为健康且已成功提交 self-peer DELETE、PE 删除已完成、尚未提交 VDEV DELETE/DP 的配置 owner 在原始 SSR fence 记录 late_peer_armed。精确匹配的真实 native 完成记录 late_peer_reply，保留封锁与错误；hold-request/timer/wake-lock 仍由原生来源清理。本阶段只观察，不放行 VDEV DELETE、DP 或 host 释放；所有剩余资源继续隔离。本地 19 项状态变异检查、100 项 Python 回归通过；64 组 native 观察、24 组保留场景和 3 项原生变异已通过 Actions 42410649117 的独立步骤；其余回归和完整构建仍运行。0156 七项必选通过，完整编译仍运行。公开 init/START 关闭，手机无需操作。见 [0157 实现与边界](POPSICLE-RATE-LATE-PEER-0157.md)。
+仅为健康且已成功提交 self-peer DELETE、PE 删除已完成、尚未提交 VDEV DELETE/DP 的配置 owner 在原始 SSR fence 记录 late_peer_armed。精确匹配的真实 native 完成记录 late_peer_reply，保留封锁与错误；hold-request/timer/wake-lock 仍由原生来源清理。本阶段只观察，不放行 VDEV DELETE、DP 或 host 释放；所有剩余资源继续隔离。本地 19 项状态变异检查、100 项 Python 回归通过；64 组 native 观察、24 组保留场景和 3 项原生变异已通过 Actions 42410649117 的独立步骤；0157 八项必选 CI 已全部通过，含原有生命周期回归、完整 WLAN 编译、CNSS 接口、严格链接、BTF 布局及产物检查。0156 八项必选 CI 也已全部通过。公开 init/START 关闭，手机无需操作。见 [0157 实现与边界](POPSICLE-RATE-LATE-PEER-0157.md)。
 
 ## 阶段 0156（原始 SSR fence 后的真实 VDEV DELETE 回执）
 
-原始 SSR fence 前只为健康、已确认 PE/peer 删除且 VDEV DELETE 成功提交的配置 owner 记录 late_delete_armed；晚到的真实 native DELETE reply 经身份/状态检查后保存，保持 blocked/错误不变，再复用 0155 DP/上下文回收。未收到回执仍保留，关窗后的真实事实不授予回收资格；匹配异常 peer 通知新增 sticky completion_error。本地 17 项变异、100 项 Python 回归通过；256 组 native 延迟回执组合、10 类保留场景和 3 项原生变异控制已通过 Actions 42408125741 的独立步骤；七项必选 CI 已通过，含原有生命周期和父级组合；完整目标编译仍运行。0155 八项必选 CI 全通过。公开 init/START 关闭，手机无需操作。见 [0156 实现与限制](POPSICLE-RATE-LATE-DELETE-0156.md)。
+原始 SSR fence 前只为健康、已确认 PE/peer 删除且 VDEV DELETE 成功提交的配置 owner 记录 late_delete_armed；晚到的真实 native DELETE reply 经身份/状态检查后保存，保持 blocked/错误不变，再复用 0155 DP/上下文回收。未收到回执仍保留，关窗后的真实事实不授予回收资格；匹配异常 peer 通知新增 sticky completion_error。本地 17 项变异、100 项 Python 回归通过；256 组 native 延迟回执组合、10 类保留场景和 3 项原生变异控制已通过 Actions 42408125741 的独立步骤；八项必选 CI 已全部通过，含原有生命周期/父级组合、完整 WLAN 编译、严格链接、BTF 布局和产物检查。0155 八项必选 CI 全通过。公开 init/START 关闭，手机无需操作。见 [0156 实现与限制](POPSICLE-RATE-LATE-DELETE-0156.md)。
 
 ## 阶段 0155（普通 DELETE 确认后由 SSR 首次提交 DP detach）
 
