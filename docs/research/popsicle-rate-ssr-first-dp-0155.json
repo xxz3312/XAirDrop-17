@@ -1,6 +1,6 @@
 {
   "stage": "0155",
-  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "status": "NATIVE_FIRST_DP_COMPOSITE_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42400068283,
     "required_jobs": 8,
@@ -23,12 +23,21 @@
     "python_regressions": 100,
     "native_source_generated_only": true
   },
-  "native_pending": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Only after ordinary PE/peer/VDEV DELETE replies, qualified native SSR window and exact DP/peer preflight. Physical primitives/rate receipts modeled; parent lifetime retained by caller. Earlier missing replies, configured START/UP and phone/RF/Apple excluded.",
+  "native_verified": {
     "configured_combinations": 256,
     "retention_cases": 18,
     "mutation_controls": 3
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Only after ordinary PE/peer/VDEV DELETE replies, qualified native SSR window and exact DP/peer preflight. Physical primitives/rate receipts modeled; parent lifetime retained by caller. Earlier missing replies, configured START/UP and phone/RF/Apple excluded."
+  "native_ci": {
+    "run_id": 42405410946,
+    "source_commit": "ed689e3ef2378434d9b3a7f08bf06a12baf01c15",
+    "job_id": 128501925667,
+    "step_name": "Native first DP SSR continuation with sanitizers",
+    "step_conclusion": "success",
+    "lifecycle_regressions": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }

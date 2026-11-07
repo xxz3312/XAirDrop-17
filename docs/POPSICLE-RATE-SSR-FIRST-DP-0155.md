@@ -20,6 +20,6 @@
 
 本地实际 runtime scalar block/configure/MC wrapper 的 15 项变异检查、100 项 Python 回归、语法与 diff 检查通过。原生组合源码已从锁定源生成；本地不编译 native composition。
 
-新增独立 Actions 步骤，保留既有普通/native 回归，追加两个频段 × 四种速率提交结果 × 32 种回调组合，共 256 组，direct/batch 随组合交替。覆盖普通 DELETE inline/deferred、physical peer unmap、SSR 第一次 DP submit、DP inline/deferred、外部 VDEV 引用及关窗后 final-free。18 组故障保留覆盖关窗、错误/空 DP cookie、物理 peer 未释放、CDP 拒绝、缺少 DELETE reply、completion 错误、stats 证据缺失和 native reset 资格缺失。三个原生变异控制移除尝试记录、提交后返回屏障或 DP cookie 准入。native C 与完整目标构建待本轮 CI。
+新增独立 Actions 步骤，保留既有普通/native 回归，追加两个频段 × 四种速率提交结果 × 32 种回调组合，共 256 组，direct/batch 随组合交替。覆盖普通 DELETE inline/deferred、physical peer unmap、SSR 第一次 DP submit、DP inline/deferred、外部 VDEV 引用及关窗后 final-free。18 组故障保留覆盖关窗、错误/空 DP cookie、物理 peer 未释放、CDP 拒绝、缺少 DELETE reply、completion 错误、stats 证据缺失和 native reset 资格缺失。三个原生变异控制移除尝试记录、提交后返回屏障或 DP cookie 准入。新增 native C 组合和三个变异控制已通过 Actions 42405410946、stop-admission 作业 128501925667 的独立步骤 Native first DP SSR continuation with sanitizers。该作业的原有生命周期回归和完整目标构建仍在运行，不提前记为全部 CI 通过。
 
 物理 firmware/ACK/DP/peer/ref/lock 原语及速率回执由模型提供；原生函数选择体在该环境执行，不等于实机。父资源仍由 caller/fixture 保留，没有完整自动 parent lease、缺少 PE/peer/VDEV reply 时的恢复、配置后 START/UP 或 Apple 发现/握手/互传认证。无新手机安装包。
