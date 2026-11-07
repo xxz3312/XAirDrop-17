@@ -253,6 +253,21 @@ int main(void){
   if(fault==6)owner.state.rate.late_delete_reply=true;
   assert(mishare_runtime_rate_delete_inflight(&owner)==(fault==7) && "EXPECTED_LATE_DELETE_SHAPE");owner=saved;
  }
+
+ reset();inline_finish=true;assert(mishare_runtime_rate_configure(&owner,&p)==-EINPROGRESS);
+ owner.state.rate.ordinary_admitted=true;owner.pe_cookie=0;owner.state.ndi.pe_ready=false;
+ owner.state.ndi.pe_delete_requested=owner.state.ndi.pe_delete_submitted=owner.state.ndi.pe_delete_completed=true;
+ owner.state.ndi.peer_delete_pending=owner.state.ndi.peer_delete_submitted=true;
+ for(int fault=0;fault<7;fault++){
+  struct mishare_runtime_owner saved=owner;
+  if(fault==0)owner.state.ndi.peer_delete_submitted=false;
+  if(fault==1)owner.state.ndi.completion_error=-EIO;
+  if(fault==2)owner.state.ndi.delete_pending=true;
+  if(fault==3)owner.state.ndi.wma_bound=false;
+  if(fault==4)owner.state.rate.late_peer_reply=true;
+  if(fault==5)owner.referenced=false;
+  assert(mishare_runtime_rate_peer_inflight(&owner)==(fault==6) && "EXPECTED_LATE_PEER_SHAPE");owner=saved;
+ }
  reset();puts("MISHARE_RUNTIME_RATE_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -274,6 +289,8 @@ def main():
     code+='\n#include "wlan_hdd_mishare_runtime_rate.c"\n'+MAIN
     terminal=re.search(r'static bool mishare_runtime_rate_ordinary_terminal\(.*?^\}',block,re.S|re.M)[0]
     tail=re.search(r'static int mishare_runtime_rate_tail_check\(.*?^\}',block,re.S|re.M)[0]
+    delete_shape=re.search(r'static bool mishare_runtime_rate_delete_inflight\(.*?^\}',block,re.S|re.M)[0]
+    peer_shape=re.search(r'static bool mishare_runtime_rate_peer_inflight\(.*?^\}',block,re.S|re.M)[0]
     mutations=[
         ('if (entry->state.rate.requested)', 'if (false && entry->state.rate.requested)'),
         ('entry->state.rate.requested = true;', 'entry->state.rate.requested = false;'),
@@ -291,7 +308,9 @@ def main():
         (tail, tail.replace('!n->delete_replied)', 'false)', 1)),
         ('r->tail_dp_attempted || n->dp_detach_submitted || n->dp_freed ||', 'false || n->dp_detach_submitted || n->dp_freed ||'),
         ('n->delete_pending && n->delete_submitted && !n->delete_replied &&', 'n->delete_pending && true && !n->delete_replied &&'),
-        ('r->ordinary_admitted && !r->ordinary_completed && !r->tail_dp_attempted &&', 'true && !r->ordinary_completed && !r->tail_dp_attempted &&'),
+        (delete_shape, delete_shape.replace('r->ordinary_admitted && !r->ordinary_completed && !r->tail_dp_attempted &&', 'true && !r->ordinary_completed && !r->tail_dp_attempted &&', 1)),
+        (peer_shape, peer_shape.replace('n->peer_delete_pending && n->peer_delete_submitted &&', 'n->peer_delete_pending && true &&', 1)),
+        (peer_shape, peer_shape.replace('!n->delete_pending &&', 'true &&', 1)),
     ]
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
@@ -308,7 +327,7 @@ def main():
             assert block.count(needle)==1,needle
             source.write_text(code.replace(block,block.replace(needle,replacement),1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr or 'EXPECTED_RATE_ORDINARY_' in bad.stderr or 'EXPECTED_RATE_FINAL_' in bad.stderr or 'EXPECTED_RATE_TAIL_' in bad.stderr or 'EXPECTED_LATE_DELETE_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
+            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr or 'EXPECTED_RATE_ORDINARY_' in bad.stderr or 'EXPECTED_RATE_FINAL_' in bad.stderr or 'EXPECTED_RATE_TAIL_' in bad.stderr or 'EXPECTED_LATE_DELETE_' in bad.stderr or 'EXPECTED_LATE_PEER_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-runtime-rate-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),'production_block_sha256':hashlib.sha256(block.encode()).hexdigest(),'limitations':'Actual scalar runtime hooks, configure bridge and MC wrapper with modeled owner metadata/ref/runtime accounting/scheduler/executor. Complete native runtime cleanup gates run separately on Actions. No firmware ACK, full parent/configuration teardown or RF/Apple proof.'},indent=2)+'\n');print(result)
 

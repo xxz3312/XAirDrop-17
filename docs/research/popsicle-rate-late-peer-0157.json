@@ -1,0 +1,37 @@
+{
+  "stage": "0157",
+  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "previous_stage_ci": {
+    "run_id": 42408125741,
+    "required_jobs_success": 7,
+    "required_jobs_total": 8,
+    "full_target_build": "in_progress"
+  },
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "scalar_mutations": 19,
+    "python_regressions": 100,
+    "native_source_generated_only": true
+  },
+  "native_pending": {
+    "late_peer_combinations": 64,
+    "retention_cases": 24,
+    "mutation_controls": 3
+  },
+  "observation_only": true,
+  "VDEV_DELETE_admission": false,
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Native selected peer completion origin with modeled primitives; all remaining owners/native objects deliberately retained. No VDEV DELETE/DP admission, complete SSR retirement, configured START/UP or phone/RF/Apple proof."
+}

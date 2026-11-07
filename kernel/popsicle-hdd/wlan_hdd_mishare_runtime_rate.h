@@ -14,6 +14,7 @@ struct mishare_runtime_rate_result {
 struct mishare_runtime_rate_status {
     bool requested, posted, accepted, completed, integrity_error;
     bool ordinary_admitted, ordinary_completed; /* Pre-START ordinary DELETE only. */
+    bool late_peer_armed, late_peer_reply; /* Only observations; no VDEV DELETE admission. */
     bool late_delete_armed, late_delete_reply; /* Original SSR fence and native reply. */
     bool tail_dp_attempted; /* One native DP helper attempt after ordinary DELETE reply. */
     bool tail_attempted, tail_completed; /* Ordinary DP tail in qualified SSR window. */
