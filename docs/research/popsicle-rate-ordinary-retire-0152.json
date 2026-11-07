@@ -1,6 +1,6 @@
 {
   "stage": "0152",
-  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "status": "NATIVE_PRE_START_ORDINARY_COMPOSITE_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42380495651,
     "required_jobs": 8,
@@ -23,13 +23,21 @@
     "scalar_mutation_controls": 11,
     "native_source_generated_only": true
   },
-  "native_pending": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Pre-START ordinary DELETE only. Physical transport/ACK/DP/peer/lock primitives and rate receipts modeled. Mixed SSR remains held. No configured START/UP, automatic parent lease, full configuration, RF or Apple proof.",
+  "native_verified": {
     "configured_combinations": 256,
     "retention_faults": 24,
     "admission_refusals": 5,
     "mutation_controls": 3
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Pre-START ordinary DELETE only. Physical transport/ACK/DP/peer/lock primitives and rate receipts modeled. Mixed SSR remains held. No configured START/UP, automatic parent lease, full configuration, RF or Apple proof."
+  "native_ci": {
+    "run_id": 42389562888,
+    "job_id": 128454071970,
+    "job_conclusion": "success",
+    "pass_marker": "MISHARE_RATE_ORDINARY_FIXTURE_PASS_ONLY",
+    "configured_ssr_regressions_pass": true,
+    "full_target_build": "pending"
+  }
 }

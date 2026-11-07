@@ -20,6 +20,6 @@
 
 本地实际 scalar runtime block/configure/MC wrapper 的状态模型及 11 项变异检查通过；100 项 Python 回归、语法、diff 检查通过。原生组合源码从锁定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f` 生成并检查，本地未编译。
 
-新增 Actions-only 原生 C 组合：复用完整 ordinary cleanup fixture，额外执行两个频段 × 四种速率提交结果 × 32 种串行回调/引用组合，共 256 组；24 组 native 错误保留及 5 种入口拒绝；3 项配置清理变异控制。检查 native PE 析构、普通 WMA peer remove/objmgr remove、DELETE/DP wrapper 和 native SM 生命周期。保留既有普通生命周期回归。实际 C 结果与完整目标构建待本轮 CI。
+新增 Actions-only 原生 C 组合：复用完整 ordinary cleanup fixture，额外执行两个频段 × 四种速率提交结果 × 32 种串行回调/引用组合，共 256 组；24 组 native 错误保留及 5 种入口拒绝；3 项配置清理变异控制。检查 native PE 析构、普通 WMA peer remove/objmgr remove、DELETE/DP wrapper 和 native SM 生命周期。保留既有普通生命周期回归。实际 C 组合和 3 项配置清理变异控制已通过 Actions 42389562888 的 stop-admission 作业 128454071970（MISHARE_RATE_ORDINARY_FIXTURE_PASS_ONLY）。原有配置 SSR 组合亦通过（MISHARE_RATE_RESET_FIXTURE_PASS_ONLY）。完整目标构建仍在运行。
 
 速率 WMI 结果、firmware ACK 来源、物理 peer 引用/unmap/DP 完成依赖、组件析构调用方和锁仍由模型提供。父级由 fixture/caller 保留，不等于自动 native parent lease 或手机认证；尚无混合 SSR/普通清理、已配置 START/UP、完整配置接入、RF 或 Apple 发现/握手/互传证明。无手机安装包。
