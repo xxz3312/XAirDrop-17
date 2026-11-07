@@ -24,7 +24,7 @@
 
 ## 验证
 
-本地 100 项 Python 回归、Python 语法与 diff 检查通过。新增 Actions-only fixture 执行实际 scope 和 bridge 头文件，模型断言取得/释放顺序、锁冲突后无会话变化、HDD 查找时机、身份变化拒绝、上下文失效后普通退出、异步退出所有权及引用平衡。真实内核的并发、等待图、父级跨调用寿命、固件和 RF 未经这个模型验证。
+本地 100 项 Python 回归、Python 语法与 diff 检查通过。[Actions 42327650832](https://github.com/xxz3312/XAirDrop-17/actions/runs/42327650832) 的 bridge-controller 作业 `128266568634` 已成功，三个 session/bridge/scope PASS_ONLY 标志均已核对，未见 sanitizer 报错；完整目标编译仍在运行。新增 Actions-only fixture 执行实际 scope 和 bridge 头文件，模型断言取得/释放顺序、锁冲突后无会话变化、HDD 查找时机、身份变化拒绝、上下文失效后普通退出、异步退出所有权及引用平衡。真实内核的并发、等待图、父级跨调用寿命、固件和 RF 未经这个模型验证。
 
 新头文件随 setup 复制并由真实 host.c 包含；完整编译检查实际原生 API 的类型/可见性。上一轮 0141 的完整 CI 已全部通过，但这不等于手机上的 Wonder/RX/TX 或 Apple 发现已经可用。
 

@@ -1,0 +1,25 @@
+{
+  "stage": "0142",
+  "source_commit": "274bd0061d794dd9d259a7cf56b75aece46d43ca",
+  "workflow_run_id": 42327650832,
+  "bridge_job_id": 128266568634,
+  "bridge_job_conclusion": "success",
+  "pass_markers": [
+    "MISHARE_SESSION_DRIVER_FIXTURE_PASS_ONLY",
+    "MISHARE_BRIDGE_FIXTURE_PASS_ONLY",
+    "MISHARE_BRIDGE_SCOPE_FIXTURE_PASS_ONLY"
+  ],
+  "local_python_regressions": 100,
+  "production_sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_bridge_scope.h": "b26bcaf49c16fbb0760e3ebe90297756531cc21384c15fbd129c2d011c36d766",
+    "tools/kernel/mishare_bridge_scope_fixture.py": "1e06bc41184aa6be8a6225bc229d42e27ab7b11072edc9b1548629e1f65bcf22"
+  },
+  "previous_0141_required_jobs_success": 8,
+  "full_target_build": "in_progress_at_recording",
+  "phone_actions": false,
+  "limitations": [
+    "Per-call native guard only; no between-call parent lifetime lease.",
+    "Production bridge/scope execute with modeled native sync, RTNL, context lookup and host lifecycle.",
+    "No automatic caller, public Wonder callback activation, native concurrency, SSR recovery or Apple validation."
+  ]
+}
