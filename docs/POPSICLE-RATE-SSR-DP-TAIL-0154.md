@@ -20,6 +20,6 @@
 
 本地实际 runtime scalar block/configure/MC wrapper 的 13 项变异检查、100 项 Python 回归、语法和 diff 检查通过。原生组合源码已从锁定源生成，本地未编译。
 
-新增 Actions-only 原生 C 组合保留所有已有 ordinary/native 回归：两个频段 × 四种速率结果 × 32 种回调组合，共 256 组，direct/batch 随组合交替；覆盖普通 DP inline/deferred 与 peer unmap、外部 VDEV 引用、实际 native SSR context finish、关窗后 final-free。10 组故障保留覆盖关窗、WMA slot/DP cookie/物理 peer 计数漂移及 completion 错误；三个原生变异控制移除 DP 等待、尾段完成记录或 native 窗口候选。原生 C 和完整目标构建待本轮 CI。
+新增 Actions-only 原生 C 组合保留所有已有 ordinary/native 回归：两个频段 × 四种速率结果 × 32 种回调组合，共 256 组，direct/batch 随组合交替；覆盖普通 DP inline/deferred 与 peer unmap、外部 VDEV 引用、实际 native SSR context finish、关窗后 final-free。10 组故障保留覆盖关窗、WMA slot/DP cookie/物理 peer 计数漂移及 completion 错误；三个原生变异控制移除 DP 等待、尾段完成记录或 native 窗口候选。原生 C 组合及三个变异控制已通过 Actions 42400068283 的 stop-admission 作业 128485715713（MISHARE_RATE_SSR_ORDINARY_TAIL_FIXTURE_PASS_ONLY）。原有普通清理、配置 SSR 和 final-handoff 组合亦通过回归。七项必选作业已成功；diagnostic 已完成目标对象编译和 CNSS 接口检查，严格链接、布局与产物检查仍运行，不提前记为完整构建通过。
 
 物理 transport/firmware ACK/DP/peer/ref/lock 仍由模型提供，父级由 caller/fixture 持有。没有自动 parent lease 或完整 SSR coordinator，也未覆盖更早的 PE/peer/VDEV 删除中断、配置后 START/UP、手机/RF/Apple 互通认证。无手机安装包。

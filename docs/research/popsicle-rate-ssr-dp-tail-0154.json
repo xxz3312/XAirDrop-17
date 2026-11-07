@@ -1,6 +1,6 @@
 {
   "stage": "0154",
-  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "status": "NATIVE_ORDINARY_DP_TAIL_COMPOSITE_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42391133072,
     "required_jobs": 8,
@@ -23,12 +23,27 @@
     "python_regressions": 100,
     "native_source_generated_only": true
   },
-  "native_pending": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Only accepted ordinary DP-detach tail with native SSR qualification and actual DP final-free before native context finish. Physical primitives and rate receipts modeled; caller retains parents. Earlier DELETE interruption, configured START/UP, phone/RF/Apple remain outside scope.",
+  "native_verified": {
     "tail_combinations": 256,
     "retention_faults": 10,
     "mutation_controls": 3
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Only accepted ordinary DP-detach tail with native SSR qualification and actual DP final-free before native context finish. Physical primitives and rate receipts modeled; caller retains parents. Earlier DELETE interruption, configured START/UP, phone/RF/Apple remain outside scope."
+  "native_ci": {
+    "run_id": 42400068283,
+    "source_commit": "1b908cfa4948771a0139353f3e8f1594dea2ea28",
+    "job_id": 128485715713,
+    "job_conclusion": "success",
+    "pass_marker": "MISHARE_RATE_SSR_ORDINARY_TAIL_FIXTURE_PASS_ONLY",
+    "ordinary_ssr_final_regressions_pass": true,
+    "required_jobs_success": 7,
+    "required_jobs_total": 8,
+    "diagnostic": {
+      "object_compile": "success",
+      "CNSS_interfaces": "success",
+      "strict_link_layout_artifact_checks": "pending"
+    }
+  }
 }
