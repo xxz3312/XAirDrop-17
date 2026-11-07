@@ -17,6 +17,12 @@ typedef uint32_t u32;
 #define ETH_ALEN 6
 struct hdd_context { int id; };
 struct mishare_wonder_host { int id; };
+/* Native receipt/lease implementation is exercised by the host fixture. */
+struct mishare_host_retirement {
+ uint64_t serial;struct { bool held; } module_lease;
+};
+int mishare_wonder_host_handoff_receipt_locked(struct mishare_wonder_host **, struct mishare_host_retirement *);
+int mishare_wonder_host_retirement_poll(struct mishare_host_retirement *);
 int mishare_wonder_host_create_locked(struct hdd_context *, const u8 *, struct mishare_wonder_host **);
 int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *);
 int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *, u32, u8, u8);
@@ -35,6 +41,8 @@ static const u8 mac[6]={2,1,2,3,4,5};
 static unsigned creates, attaches, steps, destroys;
 static int create_ret, attach_ret, step_ret, destroy_ret, destroy_bad;
 static bool missing_host, retained_create, parent_lease;
+static int handoff_result, receipt_result;
+static unsigned handoffs, receipt_polls;
 int mishare_wonder_host_create_locked(struct hdd_context *h,const u8 *m,struct mishare_wonder_host **o)
 { assert(parent_lease && h==&parent && !memcmp(m,mac,6) && !*o);creates++;
   if(!missing_host && (!create_ret || retained_create))
@@ -49,6 +57,14 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **o)
   if((!destroy_ret && destroy_bad!=1) || destroy_bad==2)
     *o=NULL;
   return destroy_ret; }
+int mishare_wonder_host_handoff_receipt_locked(struct mishare_wonder_host **o,struct mishare_host_retirement *r)
+{ assert(parent_lease && *o==&host);handoffs++;
+  if(handoff_result)return handoff_result;
+  *o=NULL;r->serial=1;r->module_lease.held=true;return 0; }
+int mishare_wonder_host_retirement_poll(struct mishare_host_retirement *r)
+{ assert(r->serial && r->module_lease.held);receipt_polls++;
+  if(receipt_result)return receipt_result;
+  r->serial=0;r->module_lease.held=false;return 0; }
 static int step(struct mishare_bridge *b)
 { return mishare_bridge_step_locked(b,&parent,mac,5240,1,2); }
 static int retire(struct mishare_bridge *b)
@@ -56,7 +72,8 @@ static int retire(struct mishare_bridge *b)
 static void reset(struct mishare_bridge *b)
 { memset(b,0,sizeof(*b));creates=attaches=steps=destroys=0;
   create_ret=attach_ret=destroy_ret=destroy_bad=0;step_ret=-EINPROGRESS;
-  missing_host=retained_create=false;parent_lease=true; }
+  missing_host=retained_create=false;parent_lease=true;
+  handoff_result=0;receipt_result=-EINPROGRESS;handoffs=receipt_polls=0; }
 int main(void)
 {
  struct mishare_bridge b;
@@ -111,6 +128,16 @@ int main(void)
  reset(&b);b.host=&host;assert(step(&b)==-EUCLEAN && !creates);
  assert(retire(&b)==-EUCLEAN && !destroys && b.host==&host);
  reset(&b);assert(retire(&b)==0 && !destroys && step(&b)==-ESHUTDOWN);
+ reset(&b);handoff_result=-EBUSY;receipt_result=-EINPROGRESS;
+ assert(step(&b)==-EINPROGRESS);
+ assert(mishare_bridge_handoff_idle_locked(&b,&parent)==-EBUSY && b.host==&host && b.closing && !b.handed_off);
+ handoff_result=0;
+ assert(mishare_bridge_handoff_idle_locked(&b,&parent)==-EINPROGRESS && !b.host && !b.hdd && b.handed_off && !b.retired);
+ assert(step(&b)==-ESHUTDOWN && !attaches && !steps);
+ before=destroys;parent_lease=false;
+ assert(mishare_bridge_retire_locked(&b,NULL)==-EINPROGRESS && destroys==before);
+ receipt_result=0;assert(mishare_bridge_retire_locked(&b,NULL)==0 && b.retired);
+ before=receipt_polls;assert(mishare_bridge_retire_locked(&b,NULL)==0 && receipt_polls==before && handoffs==2);
  puts("MISHARE_BRIDGE_FIXTURE_PASS_ONLY");return 0;
 }
 '''

@@ -9,6 +9,26 @@ struct mishare_wonder_host;
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_pdev;
 struct device;
+/* One-shot handoff receipt, zero-initialized and never copied/reset while
+ * live. Contains no borrowed HDD/host pointer. The serial cannot be reused
+ * within this module lifetime; the independent lease pins text until poll
+ * observes actual host retirement. Caller also pins text through API return.
+ */
+struct mishare_host_retirement {
+    u64 serial;
+    struct mishare_module_lease module_lease;
+};
+/* Same qualified ordinary-idle handoff contract as handoff_idle_locked.
+ * Success transfers the host and publishes a receipt; it is NOT destruction.
+ * Failure preserves caller ownership and leaves an empty receipt.
+ */
+int mishare_wonder_host_handoff_receipt_locked(struct mishare_wonder_host **owner,
+                                               struct mishare_host_retirement *receipt);
+/* Serialized receipt-owner access, no RTNL/PSOC/HDD needed. EINPROGRESS while
+ * that exact host is registered; 0 consumes the receipt only after host free.
+ * Does not initiate cleanup, prove global registry emptiness or grant SSR.
+ */
+int mishare_wonder_host_retirement_poll(struct mishare_host_retirement *receipt);
 /* Host lifetime observation for the native idle-shutdown path. The caller must
  * hold the exclusive psoc transition after draining operations, through its
  * decision and module stop. Creation/retirement use that same transition.

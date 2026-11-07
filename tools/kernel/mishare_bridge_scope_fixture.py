@@ -24,6 +24,12 @@ struct device { int refs; };
 struct osif_psoc_sync { int unused; };
 struct hdd_context { struct device *parent_dev; void *psoc, *pdev; };
 struct mishare_wonder_host { int unused; };
+struct mishare_host_retirement { uint64_t serial;struct { bool held; } module_lease; };
+static unsigned receipt_polls;
+static int mishare_wonder_host_handoff_receipt_locked(struct mishare_wonder_host **o, struct mishare_host_retirement *r)
+{ (void)o;(void)r;return -EOPNOTSUPP; }
+static int mishare_wonder_host_retirement_poll(struct mishare_host_retirement *r)
+{ assert(r->serial && r->module_lease.held);receipt_polls++;return -EINPROGRESS; }
 static struct device device, foreign;
 static struct hdd_context hdd={&device,&device,&device}, replacement;
 static struct hdd_context *lookup;
@@ -118,6 +124,10 @@ int main(void)
  scope.dev=NULL;lookup=&hdd;assert(mishare_bridge_scope_begin(&scope,&device)==0);
  assert(scope.hdd==&hdd && scope.sync==&sync && transition && rtnl);
  mishare_bridge_scope_end(&scope);assert(!scope.dev && !scope.sync && !scope.hdd);
+ reset_events();lookup=NULL;b=(struct mishare_bridge){0};
+ b.handed_off=b.closing=true;b.retirement.serial=1;b.retirement.module_lease.held=true;
+ assert(mishare_bridge_retire(&b,NULL)==-EINPROGRESS && receipt_polls==1 && !event_count);
+ assert(mishare_bridge_handoff_idle(&b,NULL)==-EINPROGRESS && receipt_polls==2 && !event_count);
  reset_events();puts("MISHARE_BRIDGE_SCOPE_FIXTURE_PASS_ONLY");return 0;
 }
 '''

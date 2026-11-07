@@ -25,7 +25,54 @@ struct mishare_bridge {
     u8 nss_2g, nss_5g;
     bool attempted, attached, closing, retired, retire_broken;
     int start_error;
+    bool handed_off;
+    struct mishare_host_retirement retirement;
 };
+
+/* Receipt polling is independent of the old HDD/PSOC lookup. It does not
+ * trigger native cleanup; idle/qualified SSR remains the registry's caller.
+ */
+static inline int mishare_bridge_poll_retired(struct mishare_bridge *b)
+{
+    int ret;
+
+    if (!b || !b->handed_off)
+        return -EINVAL;
+    if (b->retire_broken)
+        return -EUCLEAN;
+    if (b->retired)
+        return 0;
+    ret = mishare_wonder_host_retirement_poll(&b->retirement);
+    if (!ret)
+        b->retired = true;
+    return ret;
+}
+
+static inline int
+mishare_bridge_handoff_idle_locked(struct mishare_bridge *b, struct hdd_context *hdd)
+{
+    int ret;
+
+    if (!b)
+        return -EINVAL;
+    if (b->handed_off)
+        return mishare_bridge_poll_retired(b);
+    if (!hdd || b->hdd != hdd)
+        return -EINVAL;
+    if (b->retire_broken || !b->attempted || !b->host || b->retired)
+        return -EUCLEAN;
+    b->closing = true;
+    ret = mishare_wonder_host_handoff_receipt_locked(&b->host, &b->retirement);
+    if (ret)
+        return ret;
+    b->handed_off = true;
+    b->hdd = NULL; /* No borrowed parent survives the ownership transfer. */
+    if (b->host || !b->retirement.serial || !b->retirement.module_lease.held) {
+        b->retire_broken = true;
+        return -EUCLEAN;
+    }
+    return -EINPROGRESS; /* Ownership transfer is not physical retirement. */
+}
 
 static inline int mishare_bridge_fail(struct mishare_bridge *b, int error)
 {
@@ -89,7 +136,11 @@ mishare_bridge_retire_locked(struct mishare_bridge *b, struct hdd_context *hdd)
 {
     int ret;
 
-    if (!b || !hdd)
+    if (!b)
+        return -EINVAL;
+    if (b->handed_off)
+        return mishare_bridge_poll_retired(b);
+    if (!hdd)
         return -EINVAL;
     if (b->hdd && b->hdd != hdd)
         return -EBUSY;

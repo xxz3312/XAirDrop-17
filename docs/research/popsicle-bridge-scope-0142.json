@@ -15,7 +15,7 @@
     "tools/kernel/mishare_bridge_scope_fixture.py": "1e06bc41184aa6be8a6225bc229d42e27ab7b11072edc9b1548629e1f65bcf22"
   },
   "previous_0141_required_jobs_success": 8,
-  "full_target_build": "in_progress_at_recording",
+  "full_target_build": "success",
   "phone_actions": false,
   "limitations": [
     "Per-call native guard only; no between-call parent lifetime lease.",
@@ -30,5 +30,9 @@
   },
   "validation_run_id": 42327840421,
   "host_regression_job_id": 128267185805,
-  "host_regression": "success"
+  "host_regression": "success",
+  "full_target_job_id": 128267185845,
+  "required_jobs_success": 8,
+  "optional_icnss": "skipped",
+  "artifact_independent_reaudit": "not_performed_for_0142"
 }

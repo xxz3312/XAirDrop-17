@@ -31,6 +31,7 @@ COMMON = r'''
 #undef errno
 typedef uint8_t u8;
 typedef uint32_t u32;
+typedef uint64_t u64;
 typedef u8 tSirMacAddr[6];
 #define ETH_ALEN 6
 #define GFP_KERNEL 0
@@ -144,7 +145,9 @@ static struct wlan_objmgr_psoc *wlan_pdev_get_psoc(struct wlan_objmgr_pdev *p) {
 static bool is_valid_ether_addr(const u8 *a) { u8 v=0;for(int i=0;i<6;i++)v|=a[i];return v && !(a[0]&1); }
 static void ether_addr_copy(u8 *d,const u8 *s) { memcpy(d,s,6); }
 static void *kzalloc(size_t n,int flags) { (void)flags;event('A');return failure==1?NULL:calloc(1,n); }
-static void kfree(void *p) { pins_empty();event('F');free(p); }
+static bool receipt_free_observation;
+static void receipt_free_boundary(void);
+static void kfree(void *p) { pins_empty();if(receipt_free_observation)receipt_free_boundary();event('F');free(p); }
 static bool test_bit(unsigned n,const unsigned long *p) { return !!(*p & (1UL<<n)); }
 static bool netif_running(struct net_device *d) { return d->running; }
 static void osif_psoc_sync_assert_trans_protected(struct device *d) { assert(d && parent_owned);assert(!remove_sync_unregistered && "EXPECTED_REMOVE_LOOKUP_LIFETIME");event('P'); }
@@ -1068,6 +1071,60 @@ static void reclaim_handoff_ssr_cases(struct hdd_context *h,struct wireless_dev 
  assert(retained->idle_owned && active && registered && closed==before_close);pins_live();runtime_registry_psoc=NULL;
  trace[0]=0;assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));pins_empty();runtime_ssr=false;
 }
+static void receipt_free_boundary(void)
+{
+ int ret=pthread_mutex_trylock(&mishare_host_lock);
+ if(!ret)pthread_mutex_unlock(&mishare_host_lock);
+ assert(ret==EBUSY && "EXPECTED_RECEIPT_FREE_VISIBILITY");
+}
+static void receipt_cases(struct hdd_context *h,struct wireless_dev *wdev)
+{
+ struct mishare_wonder_host *owner=NULL;
+ struct mishare_host_retirement receipt={0};
+ assert(mishare_wonder_host_retirement_poll(NULL)==-EINVAL);
+ assert(!mishare_wonder_host_retirement_poll(&receipt));
+ reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));
+ lease_get_failure=true;
+ assert(mishare_wonder_host_handoff_receipt_locked(&owner,&receipt)==-ESHUTDOWN && owner && !receipt.serial && !receipt.module_lease.held);
+ lease_get_failure=false;runtime_ssr=true;
+ assert(mishare_wonder_host_handoff_receipt_locked(&owner,&receipt)==-ESHUTDOWN && owner && !receipt.serial && !lease_refs);
+ runtime_ssr=false;
+ pid_t child=fork();assert(child>=0);
+ if(!child){mishare_retirement_serial=~(u64)0;assert(mishare_wonder_host_handoff_receipt_locked(&owner,&receipt)==-EOVERFLOW && owner && !receipt.serial && !lease_refs);_Exit(0);}
+ int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+ assert(!mishare_wonder_host_destroy_locked(&owner));
+ for(int mode=0;mode<3;mode++) {
+  reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));
+  if(mode){active->dev->ieee80211_ptr=wdev;assert(!mishare_wonder_host_vdev_create_locked(owner));}
+  assert(!mishare_wonder_host_handoff_receipt_locked(&owner,&receipt) && !owner && receipt.serial && lease_refs==1);
+  assert(!mishare_wonder_host_retirement_poll(&(struct mishare_host_retirement){0}));
+  assert(mishare_wonder_host_handoff_receipt_locked(&owner,&receipt)==-EINVAL);
+  for(int n=0;n<3;n++)assert(mishare_wonder_host_retirement_poll(&receipt)==-EINPROGRESS && lease_refs==1 && "EXPECTED_RECEIPT_PENDING");
+  if(mode==1){runtime_busy=1;rtnl_owned=false;assert(mishare_wonder_host_idle_prepare_locked(h)==-EINPROGRESS);rtnl_owned=true;assert(mishare_wonder_host_retirement_poll(&receipt)==-EINPROGRESS);runtime_busy=0;}
+  if(mode==2){runtime_ssr=true;batch_rc=-EINPROGRESS;assert(mishare_wonder_host_reclaim_handoff_ssr_locked(h)==-EINPROGRESS);assert(mishare_wonder_host_retirement_poll(&receipt)==-EINPROGRESS);batch_rc=0;}
+  receipt_free_observation=true;
+  if(mode==2)assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));
+  else {rtnl_owned=false;assert(!mishare_wonder_host_idle_prepare_locked(h));rtnl_owned=true;}
+  receipt_free_observation=false;runtime_ssr=false;
+  assert(!active && !module_refs && lease_refs==1 && "EXPECTED_RECEIPT_TEXT_PIN");pins_empty();
+  /* Parents may already be gone. Receipt polling needs no native lookup. */
+  parent_owned=rtnl_owned=false;
+  assert(!mishare_wonder_host_retirement_poll(&receipt) && !receipt.serial && !lease_refs);
+  int puts=lease_puts;assert(!mishare_wonder_host_retirement_poll(&receipt) && lease_puts==puts);
+  parent_owned=rtnl_owned=true;
+ }
+ /* An old completed receipt must not alias a newer allocation/handoff. */
+ reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));
+ assert(!mishare_wonder_host_handoff_receipt_locked(&owner,&receipt));
+ rtnl_owned=false;assert(!mishare_wonder_host_idle_prepare_locked(h));rtnl_owned=true;
+ struct mishare_host_retirement second={0};
+ assert(!mishare_wonder_host_create_locked(h,mac,&owner));
+ assert(!mishare_wonder_host_handoff_receipt_locked(&owner,&second) && second.serial!=receipt.serial && lease_refs==2);
+ assert(!mishare_wonder_host_retirement_poll(&receipt) && lease_refs==1);
+ assert(mishare_wonder_host_retirement_poll(&second)==-EINPROGRESS);
+ rtnl_owned=false;assert(!mishare_wonder_host_idle_prepare_locked(h));rtnl_owned=true;
+ assert(!mishare_wonder_host_retirement_poll(&second) && !lease_refs);
+}
 int main(void)
 {
  struct device dev={0};struct wlan_objmgr_psoc psoc={0},other_psoc={0};struct wlan_objmgr_pdev pdev={.psoc=&psoc};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&psoc,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;expected_psoc=&psoc;
@@ -1245,6 +1302,7 @@ int main(void)
  execution_unload_cases(&h);
  stop_lease_cases(&h,&wdev);
  module_host_cases(&h,&wdev);
+ receipt_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
@@ -1362,6 +1420,21 @@ def run(wlan, output):
         stdout=subprocess.check_output([exe],text=True,env=env,timeout=10)
         # Mutation controls must reach behavior assertions, not fail compilation.
         host_source=(production/'wlan_hdd_mishare_host.c').read_text()
+        receipt_poll=extract(host_source,r'^int mishare_wonder_host_retirement_poll\([^;{]+?\)\s*\{.*?^\}')
+        receipt_free=extract(host_source,r'^static void mishare_host_free_tracked\([^;{]+?\)\s*\{.*?^\}')
+        receipt_controls=[
+            (receipt_poll, 'return -EINPROGRESS;', 'return 0;', 'EXPECTED_RECEIPT_PENDING'),
+            (receipt_free, 'kfree(host);',
+             'spin_unlock_irqrestore(&mishare_host_lock, flags); kfree(host); spin_lock_irqsave(&mishare_host_lock, flags);',
+             'EXPECTED_RECEIPT_FREE_VISIBILITY'),
+        ]
+        for body,needle,replacement,marker in receipt_controls:
+            assert body.count(needle)==1
+            (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(body,body.replace(needle,replacement,1),1))
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode==-6 and marker in bad.stderr,(marker,bad.returncode,bad.stderr[-2000:])
+        (d/'wlan_hdd_mishare_host.c').unlink()
         stop_helper=extract(host_source, r'^int mishare_wonder_host_stop_ready_locked\([^;{]+?\)\s*\{.*?^\}')
         for needle,marker in [('mishare_runtime_psoc_busy(hdd->psoc)','EXPECTED_RUNTIME_STOP_GUARD'),('mishare_wonder_host_psoc_busy(hdd->psoc)','EXPECTED_HOST_STOP_GUARD')]:
             assert stop_helper.count(needle)==1

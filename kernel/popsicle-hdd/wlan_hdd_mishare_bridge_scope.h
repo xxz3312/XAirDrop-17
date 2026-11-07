@@ -105,6 +105,8 @@ mishare_bridge_retire(struct mishare_bridge *b, struct device *dev)
 
     if (!b)
         return -EINVAL;
+    if (b->handed_off)
+        return mishare_bridge_poll_retired(b);
     ret = mishare_bridge_scope_begin(&scope, dev);
     if (ret)
         return ret;
@@ -113,6 +115,24 @@ mishare_bridge_retire(struct mishare_bridge *b, struct device *dev)
      * This does not establish the qualified SSR reset window.
      */
     ret = mishare_bridge_retire_locked(b, scope.hdd);
+    mishare_bridge_scope_end(&scope);
+    return ret;
+}
+
+static inline int
+mishare_bridge_handoff_idle(struct mishare_bridge *b, struct device *dev)
+{
+    struct mishare_bridge_scope scope = {0};
+    int ret;
+
+    if (!b)
+        return -EINVAL;
+    if (b->handed_off)
+        return mishare_bridge_poll_retired(b);
+    ret = mishare_bridge_scope_begin(&scope, dev);
+    if (ret)
+        return ret;
+    ret = mishare_bridge_handoff_idle_locked(b, scope.hdd);
     mishare_bridge_scope_end(&scope);
     return ret;
 }

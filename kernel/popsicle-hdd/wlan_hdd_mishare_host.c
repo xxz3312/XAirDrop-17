@@ -30,6 +30,7 @@ struct mishare_wonder_host {
     struct mishare_runtime_owner *runtime;
     struct mishare_session session;
     bool idle_owned;
+    u64 retirement_serial;
 };
 
 /* The psoc transition serializes allocation/retirement against idle shutdown.
@@ -38,6 +39,7 @@ struct mishare_wonder_host {
  */
 static DEFINE_SPINLOCK(mishare_host_lock);
 static struct mishare_wonder_host *mishare_hosts;
+static u64 mishare_retirement_serial;
 
 /* Object references retain allocations, NOT HDD/component/firmware readiness.
  * The caller must still retain HDD and serialize native teardown throughout
@@ -200,6 +202,78 @@ int mishare_wonder_host_handoff_idle_locked(struct mishare_wonder_host **owner)
     host->idle_owned = true;
     *owner = NULL;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return 0;
+}
+
+int mishare_wonder_host_handoff_receipt_locked(struct mishare_wonder_host **owner,
+                                               struct mishare_host_retirement *receipt)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+    u64 serial;
+    int ret;
+
+    if (!owner || !*owner || !receipt)
+        return -EINVAL;
+    if (receipt->serial || receipt->module_lease.held)
+        return -EBUSY;
+    host = *owner;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (host->retirement_serial)
+        return -EBUSY;
+    ret = mishare_module_lease_get(&receipt->module_lease);
+    if (ret)
+        return ret;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    if (mishare_retirement_serial == ~(u64)0) {
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        mishare_module_lease_put(&receipt->module_lease);
+        return -EOVERFLOW;
+    }
+    /* Reserve before dropping the global lock. Failed handoffs burn a serial;
+     * never reuse it or wrap, including concurrent handoffs on other PSOCs.
+     */
+    serial = ++mishare_retirement_serial;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    ret = mishare_wonder_host_handoff_idle_locked(owner);
+    if (ret) {
+        mishare_module_lease_put(&receipt->module_lease);
+        return ret;
+    }
+    /* Exclusive PSOC transition + RTNL still exclude native retirement here.
+     * Publish the receipt only after the sole owner was transferred.
+     */
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    host->retirement_serial = serial;
+    receipt->serial = serial;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return 0;
+}
+
+int mishare_wonder_host_retirement_poll(struct mishare_host_retirement *receipt)
+{
+    struct mishare_wonder_host *host;
+    unsigned long flags;
+
+    if (!receipt)
+        return -EINVAL;
+    if (!receipt->serial)
+        return receipt->module_lease.held ? -EUCLEAN : 0;
+    if (!receipt->module_lease.held)
+        return -EUCLEAN;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->retirement_serial == receipt->serial) {
+            spin_unlock_irqrestore(&mishare_host_lock, flags);
+            return -EINPROGRESS;
+        }
+    }
+    receipt->serial = 0;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    mishare_module_lease_put(&receipt->module_lease);
     return 0;
 }
 
@@ -573,7 +647,7 @@ static void mishare_host_track(struct mishare_wonder_host *host,
     spin_unlock_irqrestore(&mishare_host_lock, flags);
 }
 
-static void mishare_host_untrack(struct mishare_wonder_host *host)
+static void mishare_host_free_tracked(struct mishare_wonder_host *host)
 {
     struct mishare_wonder_host **link;
     unsigned long flags;
@@ -582,6 +656,11 @@ static void mishare_host_untrack(struct mishare_wonder_host *host)
     for (link = &mishare_hosts; *link; link = &(*link)->next) {
         if (*link == host) {
             *link = host->next;
+            /* Receipt polling takes this same lock. Absence must become
+             * visible only after the final host metadata allocation is freed.
+             * kfree does not sleep; native teardown has already finished.
+             */
+            kfree(host);
             break;
         }
     }
@@ -650,8 +729,7 @@ destroy_sync:
     osif_vdev_sync_destroy(host->sync);
 free_host:
     mishare_host_unpin_parents(host);
-    mishare_host_untrack(host);
-    kfree(host);
+    mishare_host_free_tracked(host);
     module_put(THIS_MODULE);
     return ret;
 }
@@ -762,8 +840,7 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
     hdd_close_adapter(host->hdd, adapter, true);
     osif_vdev_sync_destroy(sync);
     mishare_host_unpin_parents(host);
-    mishare_host_untrack(host);
-    kfree(host);
+    mishare_host_free_tracked(host);
     *owner = NULL;
     module_put(THIS_MODULE);
     return 0;

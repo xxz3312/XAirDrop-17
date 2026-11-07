@@ -1,6 +1,10 @@
+## 最新代码阶段 0143（退出所有权移交与精确完成回执）
+
+0142 八项必选 CI 已全部通过。新增桥接→原生 host registry 的显式移交，关闭启动并丢弃旧 HDD 借用指针；独立模块文本引用和不重复序号保留退出回执。只有对应 host 完成 adapter/runtime/pins/元数据释放后才能完成回执，移交本身仍返回 EINPROGRESS。已移交会话可由现有 ordinary idle/限定 SSR 路径处理，原有恢复范围不扩展，公开 Wonder 回调仍未启用。100 项本地 Python 回归通过；新增实际 host/bridge/scope 模型和负向控制，C 检查交由 Actions。无新手机包，不重复 apply。见 [0143 实现与限制](POPSICLE-RETIREMENT-RECEIPT-0143.md)。
+
 ## 最新代码阶段 0142（接入原生单次调用保护，跨调用生命周期尚未完成）
 
-上一轮 42291190028 的八项必选 CI 已通过。新增 bridge scope：取得设备引用和原生 PSOC transition、排空操作、trylock RTNL 后再解析 HDD；任何进入失败不推进会话，成功/失败均按逆序释放。普通退出沿用 host 自身检查，不因全局健康检查拒绝资源回收。100 项本地 Python 回归通过；Actions 42327840421 的 session/bridge/scope C 模型及 ASan/UBSan 作业已通过；已修复首轮旧 host 夹具的声明顺序问题，host/退出回归也已通过，完整目标编译仍在运行。该保护仅覆盖一次调用，不是异步阶段间的完整父级租约，也不能从已持 RTNL/原生 operation 的公开回调直接调用；Wonder 仍未启用。手机无需操作。见 [0142 实现与限制](POPSICLE-BRIDGE-SCOPE-0142.md)。
+上一轮 42291190028 的八项必选 CI 已通过。新增 bridge scope：取得设备引用和原生 PSOC transition、排空操作、trylock RTNL 后再解析 HDD；任何进入失败不推进会话，成功/失败均按逆序释放。普通退出沿用 host 自身检查，不因全局健康检查拒绝资源回收。100 项本地 Python 回归通过；Actions 42327840421 的 session/bridge/scope C 模型及 ASan/UBSan 作业已通过；已修复首轮旧 host 夹具的声明顺序问题，host/退出回归及完整目标编译也已通过，八项必选作业全部 success。该保护仅覆盖一次调用，不是异步阶段间的完整父级租约，也不能从已持 RTNL/原生 operation 的公开回调直接调用；Wonder 仍未启用。手机无需操作。见 [0142 实现与限制](POPSICLE-BRIDGE-SCOPE-0142.md)。
 
 ## 最新代码阶段 0141（桥接 host 会话控制器已实现，公开回调尚未启用）
 
