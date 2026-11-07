@@ -319,6 +319,7 @@ def main():
              'kernel/wonder/include/wonder/wondertap.h',
              'kernel/popsicle-hdd/wlan_hdd_mishare_backend.c',
              'kernel/popsicle-hdd/wlan_hdd_mishare_backend.h']
+    names.append('kernel/popsicle-hdd/wlan_hdd_mishare_init.h')
     with tempfile.TemporaryDirectory() as tmp:
         d = Path(tmp)
         for name in names:

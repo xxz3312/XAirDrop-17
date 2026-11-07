@@ -18,6 +18,7 @@
 #include "wlan_hdd_mishare_session.h"
 #include "wlan_hdd_mishare_bridge.h"
 #include "wlan_hdd_mishare_bridge_scope.h"
+#include "wlan_hdd_mishare_init.h"
 
 struct mishare_wonder_host {
     struct mishare_wonder_host *next;
@@ -47,6 +48,9 @@ struct mishare_managed_instance {
     struct mishare_module_lease module_lease;
     struct mishare_bridge bridge;
     bool busy;
+    bool request_prepared;
+    struct mishare_init_request request;
+    u8 request_nss_2g, request_nss_5g;
 };
 static struct mishare_managed_instance *mishare_instances;
 
@@ -1032,6 +1036,60 @@ static void mishare_instance_release(struct mishare_managed_instance *instance)
     spin_unlock_irqrestore(&mishare_host_lock, flags);
 }
 
+int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_params *params,
+                                   u8 nss_2g, u8 nss_5g)
+{
+    struct mishare_init_request request;
+    struct mishare_managed_instance *instance;
+    struct mishare_bridge_scope scope = {0};
+    int ret = mishare_init_parse(params, &request);
+
+    if (ret)
+        return ret;
+    if (!nss_2g || nss_2g > 2 || !nss_5g || nss_5g > 2)
+        return -EINVAL;
+    /* Current owned channel controller encodes HT20 only. Do not silently
+     * narrow a wider request or confuse valid public syntax with support.
+     */
+    if (request.params.channel.bandwidth != WONDERTAP_RATE_BW_20 ||
+        request.params.tx_rate.bw != WONDERTAP_RATE_BW_20 || request.params.tx_rate.nss > 2 ||
+        (request.params.rate_adaptation_enable &&
+         (request.params.tx_rate_mask.max_bw != WONDERTAP_RATE_BW_20 ||
+          request.params.tx_rate_mask.max_nss > 2)))
+        return -EOPNOTSUPP;
+    ret = mishare_instance_claim(handle, &instance);
+    if (ret)
+        return ret;
+    if (instance->bridge.closing) {
+        ret = -ESHUTDOWN;
+        goto release;
+    }
+    if (instance->bridge.attempted || (instance->request_prepared &&
+        (!mishare_init_equal(&instance->request, &request) ||
+         instance->request_nss_2g != nss_2g || instance->request_nss_5g != nss_5g))) {
+        ret = -EBUSY;
+        goto release;
+    }
+    ret = mishare_bridge_scope_begin(&scope, instance->dev);
+    if (ret)
+        goto release;
+    ret = wlan_hdd_validate_context(scope.hdd);
+    if (!ret && cds_is_driver_recovering())
+        ret = -ESHUTDOWN;
+    if (!ret && hdd_get_conparam() != QDF_GLOBAL_MISSION_MODE)
+        ret = -EOPNOTSUPP;
+    if (!ret) {
+        instance->request = request;
+        instance->request_nss_2g = nss_2g;
+        instance->request_nss_5g = nss_5g;
+        instance->request_prepared = true;
+    }
+    mishare_bridge_scope_end(&scope);
+release:
+    mishare_instance_release(instance);
+    return ret;
+}
+
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
                                 u8 nss_2g, u8 nss_5g)
 {
@@ -1040,7 +1098,12 @@ int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
 
     if (ret)
         return ret;
-    ret = mishare_bridge_step(&instance->bridge, instance->dev, mac, freq, nss_2g, nss_5g);
+    if (instance->bridge.closing)
+        ret = -ESHUTDOWN;
+    else if (instance->request_prepared)
+        ret = -EOPNOTSUPP; /* Full request application/lease is not installed. */
+    else
+        ret = mishare_bridge_step(&instance->bridge, instance->dev, mac, freq, nss_2g, nss_5g);
     mishare_instance_release(instance);
     return ret;
 }

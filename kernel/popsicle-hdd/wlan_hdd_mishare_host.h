@@ -9,6 +9,7 @@ struct mishare_wonder_host;
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_pdev;
 struct device;
+struct wondertap_init_params;
 /* One-shot handoff receipt, zero-initialized and never copied/reset while
  * live. Contains no borrowed HDD/host pointer. The serial cannot be reused
  * within this module lifetime; the independent lease pins text until poll
@@ -42,6 +43,13 @@ int mishare_wonder_host_retire_receipt_locked(struct hdd_context *hdd,
  * process-retire clears *handle only after actual host/receipt/instance free.
  */
 int mishare_wonder_managed_create(struct device *dev, void **handle);
+/* Immutable metadata preparation under a fresh native scope. NSS arguments
+ * must be platform-validated by the caller; this checks their numeric domain
+ * only. Success is NOT country/regulatory/rate/RX/TX or native parent lifetime
+ * authorization. Prepared requests cannot enter the raw step shortcut.
+ */
+int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_params *params,
+                                   u8 nss_2g, u8 nss_5g);
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
                                 u8 nss_2g, u8 nss_5g);
 int mishare_wonder_managed_retire(void **handle);

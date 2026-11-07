@@ -30,10 +30,12 @@ COMMON = r'''
 /* Kernel sources use errno as a local variable, unlike libc. */
 #undef errno
 typedef uint8_t u8;
+typedef uint16_t u16;
 typedef uint32_t u32;
 typedef uint64_t u64;
 typedef u8 tSirMacAddr[6];
 #define ETH_ALEN 6
+#define BIT(n) (1U << (n))
 #define GFP_KERNEL 0
 #define QDF_PASSTHRU_MODE 17
 #define NET_NAME_UNKNOWN 0
@@ -67,6 +69,10 @@ static void *cds_get_context(int id);
 static int osif_psoc_sync_trans_start(struct device *, struct osif_psoc_sync **);
 static void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *);
 static void osif_psoc_sync_trans_stop(struct osif_psoc_sync *);
+enum QDF_GLOBAL_MODE {MODE_CURRENT,MODE_REQUESTED};
+#define QDF_GLOBAL_MISSION_MODE MODE_CURRENT
+static enum QDF_GLOBAL_MODE request_mode=MODE_CURRENT;
+static enum QDF_GLOBAL_MODE hdd_get_conparam(void);
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; unsigned long pause_map; };
 struct hdd_adapter_create_param { int num_sessions; };
@@ -211,10 +217,9 @@ static bool idle_trans_failure, idle_open;
 static int idle_stop_result;
 static struct hdd_context *mode_context;
 static bool is_mode_change_psoc_idle_shutdown, mode_ftm;
-enum QDF_GLOBAL_MODE {MODE_CURRENT,MODE_REQUESTED};
 struct bbm_params {int token;};
 static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode) {return mode==MODE_CURRENT || mode==MODE_REQUESTED;}
-static enum QDF_GLOBAL_MODE hdd_get_conparam(void) {return MODE_CURRENT;}
+static enum QDF_GLOBAL_MODE hdd_get_conparam(void) {return request_mode;}
 static void *cds_get_context(int id) {assert(id==QDF_MODULE_ID_HDD);return mode_context;}
 #define QCA_WLAN_IDLE_SHUTDOWN_STARTED 1
 #define QCA_WLAN_IDLE_SHUTDOWN_COMPLETED 2
@@ -1164,10 +1169,44 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  managed_context();mode_context=NULL;
  assert(!mishare_wonder_managed_retire_process(&handle) && !handle && !managed_device_refs && !lease_refs);
  parent_owned=rtnl_owned=true;managed_instance_case=false;
+ /* Preparing a typed request is read-only native admission, not radio start. */
+ struct wondertap_init_params params={0},changed;
+ params.channel.freq=5240;params.tx_rate.nss=1;params.mac_addr[0]=2;
+ params.mgmt_retry_limit=3;params.data_retry_limit=5;memcpy(params.country_code,"CN",3);
+ reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
+ assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
+ struct mishare_managed_instance *prepared=handle;
+ managed_context();idle_trans_failure=true;
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EBUSY && !prepared->request_prepared);idle_trans_failure=false;
+ managed_context();failure=4;
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-ENODEV && !prepared->request_prepared);failure=0;
+ managed_context();runtime_ssr=true;
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-ESHUTDOWN && !prepared->request_prepared);runtime_ssr=false;
+ managed_context();request_mode=MODE_REQUESTED;
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EOPNOTSUPP && !prepared->request_prepared);request_mode=MODE_CURRENT;
+ managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2) && prepared->request_prepared);
+ assert(!active && !device_pins && !runtime_tokens && !module_refs && managed_device_refs==1);
+ assert(prepared->request.params.mgmt_retry_limit==3 && prepared->request.params.data_retry_limit==5);
+ managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));
+ changed=params;changed.channel.freq=5745;
+ assert(mishare_wonder_managed_prepare(handle,&changed,1,2)==-EBUSY && prepared->request.params.channel.freq==5240);
+ changed=params;changed.data_retry_limit++;
+ assert(mishare_wonder_managed_prepare(handle,&changed,1,2)==-EBUSY);
+ assert(mishare_wonder_managed_prepare(handle,&params,2,2)==-EBUSY);
+ assert(mishare_wonder_managed_prepare(handle,&params,0,2)==-EINVAL);
+ changed=params;changed.channel.bandwidth=WONDERTAP_RATE_BW_80;
+ assert(mishare_wonder_managed_prepare(handle,&changed,1,2)==-EOPNOTSUPP);
+ managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EOPNOTSUPP && !active && !runtime_tokens);
+ assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS);
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-ESHUTDOWN);
+ mode_context=NULL;managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle);
+ assert(!managed_device_refs && !lease_refs && !mishare_instances);
+ parent_owned=rtnl_owned=true;managed_instance_case=false;
  for(int mode=0;mode<3;mode++) {
   reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
   assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
   managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EINPROGRESS);
+  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EBUSY);
   if(mode){active->dev->ieee80211_ptr=wdev;managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EINPROGRESS);}
   struct mishare_managed_instance *instance=handle;saved=handle;
   instance->busy=true;
@@ -1476,7 +1515,8 @@ def run(wlan, output):
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp)
         (d/'fixture.h').write_text(COMMON)
-        for name in ['linux/device.h','wlan_objmgr_psoc_obj.h','wlan_objmgr_pdev_obj.h','linux/types.h','linux/etherdevice.h','linux/rtnetlink.h','linux/module.h','linux/slab.h','linux/spinlock.h','cds_api.h','wlan_hdd_main.h','osif_psoc_sync.h','osif_vdev_sync.h']:
+        (d/'wlan_hdd_mishare_wonder_api.h').write_bytes((ROOT/'kernel/provider/wondertap.h').read_bytes())
+        for name in ['linux/device.h','wlan_objmgr_psoc_obj.h','wlan_objmgr_pdev_obj.h','linux/types.h','linux/if_ether.h','linux/etherdevice.h','linux/rtnetlink.h','linux/module.h','linux/slab.h','linux/spinlock.h','cds_api.h','wlan_hdd_main.h','osif_psoc_sync.h','osif_vdev_sync.h']:
             p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('/* declarations supplied by fixture.h */\n')
         source=d/'test.c';source.write_text(code)
         exe=d/'test'

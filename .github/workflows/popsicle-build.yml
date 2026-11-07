@@ -107,6 +107,7 @@ on:
       - tools/kernel/mishare_ssr_stop_origins.py
       - tools/kernel/mishare_session_driver_fixture.py
       - tools/kernel/mishare_bridge_scope_fixture.py
+      - tools/kernel/mishare_init_fixture.py
       - tools/kernel/wonder_managed_fixture.py
       - tools/kernel/wonder_provider_fixture.py
       - tools/kernel/mishare_backend_fixture.py
@@ -142,6 +143,7 @@ jobs:
           python3 tools/kernel/mishare_session_driver_fixture.py
           python3 tools/kernel/mishare_bridge_fixture.py
           python3 tools/kernel/mishare_bridge_scope_fixture.py
+          python3 tools/kernel/mishare_init_fixture.py
           python3 tools/kernel/wonder_managed_fixture.py
           python3 tools/kernel/wonder_provider_fixture.py
       - uses: actions/upload-artifact@v4
@@ -149,6 +151,7 @@ jobs:
           name: popsicle-bridge-report-${{ github.run_id }}
           path: |
             .popsicle-ci/artifacts/reports/mishare-bridge*.json
+            .popsicle-ci/artifacts/reports/mishare-init*.json
             .popsicle-ci/artifacts/reports/wonder-*.json
           if-no-files-found: error
           retention-days: 7

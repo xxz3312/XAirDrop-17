@@ -1,6 +1,10 @@
+## 最新代码阶段 0145（初始化请求快照与只读上下文准备）
+
+0144 八项必选 CI 已全部通过。新增实际公开参数的形状检查和语义快照，记录全部有效速率/国家码/MAC/BSSID/重试/聚合参数，忽略保留字节及未启用的自适应掩码。内部 prepare 在新 PSOC/RTNL scope 下检查当前 HDD、recovery、mission mode，成功只保存不可变元数据；准备后的请求禁止进入未应用参数的 raw step。公开 init 对畸形请求返回 EINVAL，对有效请求仍返回 EOPNOTSUPP，不分配实例、不发固件命令。100 项本地 Python 回归通过，C 模型交由 Actions。未实现监管许可、实际国家码/速率应用和跨调用完整父级租约。见 [0145 实现与限制](POPSICLE-INIT-REQUEST-0145.md)。
+
 ## 最新代码阶段 0144（managed 停止入口与原生实例退出连接）
 
-0143 八项必选 CI 已全部通过。netdev-stop worker 封闭 managed 入口后推进一次停止；新增可选进程上下文 retire_process，在实例锁外调用原生退出，in-flight 状态阻止并发退役/解绑。HDD 后端停止函数认证私有实例、移交 host、按精确回执推进普通清理，等 host/回执/设备引用/实例实际释放后才清空 handle。公开 init/poll_start 仍 EOPNOTSUPP；内部实例工厂尚无公开创建调用。100 项本地 Python 回归及语法检查通过，Actions 42345877772 的 managed/provider/legacy 等快速 C 模型已通过，host/原生退出回归也已通过，完整编译仍在运行。未扩大 START/UP SSR 恢复范围，无手机操作。见 [0144 实现与限制](POPSICLE-MANAGED-STOP-0144.md)。
+0143 八项必选 CI 已全部通过。netdev-stop worker 封闭 managed 入口后推进一次停止；新增可选进程上下文 retire_process，在实例锁外调用原生退出，in-flight 状态阻止并发退役/解绑。HDD 后端停止函数认证私有实例、移交 host、按精确回执推进普通清理，等 host/回执/设备引用/实例实际释放后才清空 handle。公开 init/poll_start 仍 EOPNOTSUPP；内部实例工厂尚无公开创建调用。100 项本地 Python 回归及语法检查通过，Actions 42345877772 的 managed/provider/legacy 等快速 C 模型已通过，host/原生退出回归及完整编译也已通过，八项必选全部 success。未扩大 START/UP SSR 恢复范围，无手机操作。见 [0144 实现与限制](POPSICLE-MANAGED-STOP-0144.md)。
 
 ## 最新代码阶段 0143（退出所有权移交与精确完成回执）
 

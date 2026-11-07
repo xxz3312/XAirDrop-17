@@ -31,6 +31,8 @@ struct hdd_context { int identity; };
 struct module { int dummy; };
 static struct module backend_module;
 #define THIS_MODULE (&backend_module)
+static inline bool is_valid_ether_addr(const u8 *m)
+{ return !(m[0]&1) && (m[0]|m[1]|m[2]|m[3]|m[4]|m[5]); }
 '''
 HARNESS=r'''
 int mishare_wonder_managed_retire(void **h)
@@ -55,6 +57,9 @@ int opairshare_set_wonder_managed_priv_data(const void *p,const struct wondertap
  struct wondertap_capability caps;memset(&caps,0xa5,sizeof(caps));
  assert(bound->wonder_ops->get_capabilities(NULL,&caps)==0 && !caps.version && !caps.raw_bits);queries++;
  struct wondertap_init_params params={0};void *handle=(void*)1;
+ assert(bound->wonder_ops->init(&handle,&params)==-EINVAL && !handle);
+ params.channel.freq=5240;params.tx_rate.nss=1;params.mac_addr[0]=2;
+ memcpy(params.country_code,"CN",3);
  assert(bound->wonder_ops->init(&handle,&params)==-EOPNOTSUPP && !handle);
  if(!priv)bound=NULL;
  return 0;
@@ -102,7 +107,7 @@ def run(output):
     api=ROOT/'kernel/provider/wondertap.h'
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'fixture.h').write_text(COMMON)
-        for name in ['linux/module.h','linux/mutex.h','linux/string.h','linux/if_ether.h','wlan_hdd_main.h','wlan_hdd_trace.h']:
+        for name in ['linux/module.h','linux/mutex.h','linux/string.h','linux/if_ether.h','linux/etherdevice.h','wlan_hdd_main.h','wlan_hdd_trace.h']:
             p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('/* fixture declarations */\n')
         (d/'wlan_hdd_mishare_wonder_api.h').write_bytes(api.read_bytes())
         (d/'wlan_hdd_mishare_managed.h').write_bytes((ROOT/'kernel/wonder/wondertap_managed.h').read_bytes())

@@ -22,7 +22,7 @@
 
 ## 验证和未完成项
 
-本地 100 项 Python 回归、Python 语法和 diff 检查通过。[Actions 42345877772](https://github.com/xxz3312/XAirDrop-17/actions/runs/42345877772) 的 bridge-controller 作业 `128323386512` 已通过，含 session/bridge/scope、managed、provider 和 legacy 六项 PASS_ONLY 标志；host/原生退出回归作业 `128323386501` 也已成功，包含实际 host、私有实例、runtime、执行控制器与原生生命周期模型；完整目标编译仍在运行。Actions 执行实际生产 C：Wonder 核心的锁外回调、回调内重入 retire/stop/quiesce/unbind、错误/假成功保留；真实 provider/master/worker 提取体；HDD 实例工厂失败、未知 token、busy、锁冲突、正常退出、runtime pending、移交后限定 SSR 和父级上下文消失后的完成。device/scope 引用与 host 父级引用使用独立模型账本。
+本地 100 项 Python 回归、Python 语法和 diff 检查通过。[Actions 42345877772](https://github.com/xxz3312/XAirDrop-17/actions/runs/42345877772) 的 bridge-controller 作业 `128323386512` 已通过，含 session/bridge/scope、managed、provider 和 legacy 六项 PASS_ONLY 标志；host/原生退出回归作业 `128323386501` 也已成功，包含实际 host、私有实例、runtime、执行控制器与原生生命周期模型；完整目标编译和其余门禁现已通过：八项必选 success，可选 ICNSS skipped。未另行下载独立验收本轮完整 ELF，不替换当前实机产物。Actions 执行实际生产 C：Wonder 核心的锁外回调、回调内重入 retire/stop/quiesce/unbind、错误/假成功保留；真实 provider/master/worker 提取体；HDD 实例工厂失败、未知 token、busy、锁冲突、正常退出、runtime pending、移交后限定 SSR 和父级上下文消失后的完成。device/scope 引用与 host 父级引用使用独立模型账本。
 
 实例工厂和 step 只有内部调用接口；公开 backend init 与 poll_start 仍返回 EOPNOTSUPP，没有用户可触发的创建入口。本轮没有安装包、自动重试计时器或射频启动。native primitive、父级、模块 API、固件事件和并发仍是模型，不能计为手机或硬件验证。
 

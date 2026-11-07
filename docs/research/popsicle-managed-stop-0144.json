@@ -9,7 +9,7 @@
   "host_job_conclusion": "success",
   "local_python_regressions": 100,
   "previous_0143_required_jobs_success": 8,
-  "full_target_build": "in_progress_at_recording",
+  "full_target_build": "success",
   "production_and_fixture_sha256": {
     "kernel/wonder/ssr.c": "4310d892c7c31b38ea0cd10086dfaa54e8826f46dc8844bea7d2b54018a50100",
     "kernel/wonder/wondertap.c": "0ec9dc6f5c9d08da6af3cc43b8f77e1719e48d769b5c0716ff604e46b6f45f1d",
@@ -30,5 +30,9 @@
     "Core/provider and HDD host/instance fixtures execute separately with modeled endpoints.",
     "No full between-call parent component/firmware lease or committed START/UP SSR recovery.",
     "No native concurrency, physical unload, RX/TX, RF, phone or Apple proof."
-  ]
+  ],
+  "full_target_job_id": 128323386552,
+  "required_jobs_success": 8,
+  "optional_icnss": "skipped",
+  "artifact_independent_reaudit": "not_performed_for_0144"
 }

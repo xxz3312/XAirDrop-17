@@ -9,6 +9,7 @@
 #include "wlan_hdd_mishare_wonder_api.h"
 #include "wlan_hdd_mishare_backend.h"
 #include "wlan_hdd_mishare_managed.h"
+#include "wlan_hdd_mishare_init.h"
 
 /* Strong private provider dependency: cannot silently bind to stock CNSS. */
 extern int opairshare_set_wonder_managed_priv_data(const void *priv_data,
@@ -29,11 +30,16 @@ static bool mishare_backend_closing;
  */
 static int mishare_backend_init(void **handle, const struct wondertap_init_params *params)
 {
+	struct mishare_init_request request;
+	int ret;
+
 	if (!handle)
 		return -EINVAL;
 	*handle = NULL;
-	if (!params)
-		return -EINVAL;
+	ret = mishare_init_parse(params, &request);
+	if (ret)
+		return ret;
+	/* A canonical request is not native parent/radio/data-plane admission. */
 	return -EOPNOTSUPP;
 }
 static void mishare_backend_deinit(void *handle, const struct wondertap_deinit_params *params)

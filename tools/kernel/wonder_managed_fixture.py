@@ -37,6 +37,8 @@ static bool try_module_get(struct module *m) { if(m->deny)return false;m->refs++
 static void module_put(struct module *m) { assert(m->refs>0);m->refs--; }
 static int mac_generation;
 static void eth_random_addr(u8 *m) { memset(m,0,6);m[0]=2;m[5]=(u8)++mac_generation; }
+static inline bool is_valid_ether_addr(const u8 *m)
+{ return !(m[0]&1) && (m[0]|m[1]|m[2]|m[3]|m[4]|m[5]); }
 #define wonder_info(...) do { if(0)printf(__VA_ARGS__); } while(0)
 #define wonder_warn(...) wonder_info(__VA_ARGS__)
 #define wonder_error(...) wonder_info(__VA_ARGS__)
