@@ -13,12 +13,16 @@
     "kernel/popsicle-hdd/wlan_hdd_mishare_bridge.h": "2d978136a97070876566dbd167175d53c0f0f73118e90185e3232eb44df9d6e0",
     "tools/kernel/mishare_bridge_fixture.py": "f415e00822b8b64b17a18e8a22d7e3891139faf41e90dc0e93b245b42893e93d"
   },
-  "full_target_build": "in_progress_at_recording",
+  "full_target_build": "success",
   "phone_actions": false,
   "backend_init": "EOPNOTSUPP_unchanged",
   "limitations": [
     "Native host, locks, parent lifetime and completions are fixture models.",
     "No installed bridge caller or automatic parent lease.",
     "No Wonder RX/TX, firmware or Apple interoperability validation."
-  ]
+  ],
+  "full_target_job_id": 128144728070,
+  "required_jobs_success": 8,
+  "optional_icnss": "skipped",
+  "artifact_independent_reaudit": "not_performed_for_0141"
 }

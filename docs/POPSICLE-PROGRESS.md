@@ -1,6 +1,10 @@
+## 最新代码阶段 0142（接入原生单次调用保护，跨调用生命周期尚未完成）
+
+上一轮 42291190028 的八项必选 CI 已通过。新增 bridge scope：取得设备引用和原生 PSOC transition、排空操作、trylock RTNL 后再解析 HDD；任何进入失败不推进会话，成功/失败均按逆序释放。普通退出沿用 host 自身检查，不因全局健康检查拒绝资源回收。100 项本地 Python 回归通过，C/ASan/UBSan 与完整目标编译交由 Actions 验证。该保护仅覆盖一次调用，不是异步阶段间的完整父级租约，也不能从已持 RTNL/原生 operation 的公开回调直接调用；Wonder 仍未启用。手机无需操作。见 [0142 实现与限制](POPSICLE-BRIDGE-SCOPE-0142.md)。
+
 ## 最新代码阶段 0141（桥接 host 会话控制器已实现，公开回调尚未启用）
 
-按两个上游实现内部 host 分配→runtime 附着→异步 session→退出控制器，固定会话身份，启动失败不重放，退出等待/失败保留权威 host。radio UP 不作为 Wonder 初始化成功；不获取父级生命周期租约，不自动启动。100 项本地 Python 回归通过，Actions 42291190028 的独立 session/bridge ASan/UBSan 模型作业已通过；完整目标编译仍在运行。手机继续保持当前状态，无新安装包，不重复 apply。见 [0141 实现和边界](POPSICLE-WONDER-BRIDGE-0141.md)。
+按两个上游实现内部 host 分配→runtime 附着→异步 session→退出控制器，固定会话身份，启动失败不重放，退出等待/失败保留权威 host。radio UP 不作为 Wonder 初始化成功；不获取父级生命周期租约，不自动启动。100 项本地 Python 回归通过，Actions 42291190028 的独立 session/bridge ASan/UBSan 模型作业已通过；完整目标编译及全部八项必选 CI 作业现已通过。手机继续保持当前状态，无新安装包，不重复 apply。见 [0141 实现和边界](POPSICLE-WONDER-BRIDGE-0141.md)。
 
 ## 最新实机阶段 0140（普通 Wi-Fi 收发与系统连通性短时通过，Wonder 会话仍待接入）
 
