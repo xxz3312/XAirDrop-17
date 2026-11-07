@@ -2,7 +2,7 @@
   "stage": "0142",
   "source_commit": "274bd0061d794dd9d259a7cf56b75aece46d43ca",
   "workflow_run_id": 42327650832,
-  "bridge_job_id": 128266568634,
+  "bridge_job_id": 128267185829,
   "bridge_job_conclusion": "success",
   "pass_markers": [
     "MISHARE_SESSION_DRIVER_FIXTURE_PASS_ONLY",
@@ -21,5 +21,14 @@
     "Per-call native guard only; no between-call parent lifetime lease.",
     "Production bridge/scope execute with modeled native sync, RTNL, context lookup and host lifecycle.",
     "No automatic caller, public Wonder callback activation, native concurrency, SSR recovery or Apple validation."
-  ]
+  ],
+  "fixture_declaration_fix_commit": "0b4a1d39deb19359315ebf0970e9591528d11706",
+  "first_run_host_fixture_failure": {
+    "run_id": 42327650832,
+    "job_id": 128266568660,
+    "reason": "PSOC/context model declarations followed the newly included production header; implicit declarations under Werror."
+  },
+  "validation_run_id": 42327840421,
+  "host_regression_job_id": 128267185805,
+  "host_regression": "success"
 }
