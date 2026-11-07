@@ -66,7 +66,7 @@ def fixture(root):
         'assert(mishare_runtime_destroy(o)==-EINPROGRESS && !dp_detaches && !delete_calls);\n  if(late_mode){late_delete_handoff(o);return;}\n  reply();')
     source=first.ordinary.cleanup.owner.replace_once(source,body,changed)
     body=function(source,'first_dp_handoff')
-    changed=first.ordinary.cleanup.owner.replace_once(body,'mark_closed(*o);','if(!late_mode)mark_closed(*o);')
+    changed=first.ordinary.cleanup.owner.replace_once(body,'mark_closed(*o);','if(!late_mode){mark_closed(*o); }\n ')
     source=first.ordinary.cleanup.owner.replace_once(source,body,changed)
     main=function(source,'main');source=first.ordinary.cleanup.owner.replace_once(source,main,HARNESS+'\n'+main.replace('engine_contract();','late_cases();engine_contract();',1))
     return source,exits,stubbed
