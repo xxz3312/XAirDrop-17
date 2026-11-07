@@ -56,6 +56,16 @@ struct link_info { unsigned long link_flags[1]; };
 struct qdf_mac_addr { u8 bytes[6]; };
 struct wlan_objmgr_pdev { int refs; struct wlan_objmgr_psoc *psoc; };
 struct hdd_context { struct device *parent_dev; struct wlan_objmgr_psoc *psoc; struct wlan_objmgr_pdev *pdev; bool is_scheduler_suspended,is_wiphy_suspended,hdd_wlan_suspended; int driver_status; };
+/* The production host now includes the per-call bridge scope. Native headers
+ * supply these declarations before that include; modeled definitions below
+ * still belong to the idle harness and must not be moved into production.
+ */
+struct osif_psoc_sync;
+#define QDF_MODULE_ID_HDD 11
+static void *cds_get_context(int id);
+static int osif_psoc_sync_trans_start(struct device *, struct osif_psoc_sync **);
+static void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *);
+static void osif_psoc_sync_trans_stop(struct osif_psoc_sync *);
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 struct hdd_adapter { struct net_device *dev; struct link_info *deflink; unsigned long event_flags; int device_mode; struct qdf_mac_addr mac_addr; unsigned long pause_map; };
 struct hdd_adapter_create_param { int num_sessions; };
@@ -193,7 +203,6 @@ enum QDF_GLOBAL_MODE {MODE_CURRENT,MODE_REQUESTED};
 struct bbm_params {int token;};
 static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode) {return mode==MODE_CURRENT || mode==MODE_REQUESTED;}
 static enum QDF_GLOBAL_MODE hdd_get_conparam(void) {return MODE_CURRENT;}
-#define QDF_MODULE_ID_HDD 11
 static void *cds_get_context(int id) {assert(id==QDF_MODULE_ID_HDD);return mode_context;}
 #define QCA_WLAN_IDLE_SHUTDOWN_STARTED 1
 #define QCA_WLAN_IDLE_SHUTDOWN_COMPLETED 2
