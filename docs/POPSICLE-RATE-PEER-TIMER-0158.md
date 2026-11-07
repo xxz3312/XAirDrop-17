@@ -1,6 +1,6 @@
 # 0158：peer 回执之后的 VDEV 计时器原生合同验收
 
-本阶段新增测试，不改生产 runtime 准入。0156/0157 各八项必选 CI 已全部通过；本阶段 native 验收待 Actions。公开 init/START 保持关闭，手机无需操作。
+本阶段新增测试，不改生产 runtime 准入。0156/0157 各八项必选 CI 已全部通过；本阶段 native timer 独立步骤已通过 Actions 42416119586；原有完整回归和 WLAN 构建仍在运行。公开 init/START 保持关闭，手机无需操作。
 
 ## 上游与复用
 
@@ -21,3 +21,7 @@ MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f` 加现有补丁中的 `mi
 下一步需要把这段 timer drain 接入受限 peer-completed SSR 事务：独立准入和一次性尝试记录、合格原生 recovery window、真实 DP final-free 回调，再完成 WMA/legacy 与 host/final-free。完整自动 parent lease、配置后 START/UP 和 Apple 互通仍未完成。
 
 本地仅生成和检查组合源码，未编译大 native fixture；编译、ASan/UBSan 和变异执行只在 Actions。transport/ACK/ref/lock/physical primitives 仍由模型提供，不是手机/RF/Apple 认证。
+
+## 已观察到的 CI 结果
+
+源码提交 `7c57368371d5fdd3df56977aab784b3a67b04e22`，Actions 42416119586、stop-admission 作业 128534490028 的 `Native peer-completed VDEV timer contract with sanitizers` 步骤 success，覆盖上述 64/20/3 矩阵。本地 100 项 Python 回归、语法和 diff 检查通过。此时整个 stop-admission 作业及完整目标构建尚未结束，不记作全门禁通过。

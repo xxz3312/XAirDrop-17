@@ -1,12 +1,7 @@
 {
   "stage": "0158",
-  "status": "NATIVE_CI_PENDING_HELPER_CONTRACT_ONLY",
+  "status": "NATIVE_TIMER_STEP_PASS_FULL_CI_PENDING_HELPER_ONLY",
   "production_runtime_changed": false,
-  "native_cases_planned": {
-    "combinations": 64,
-    "rejections": 20,
-    "mutations": 3
-  },
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -21,6 +16,24 @@
   ],
   "public_start_enabled": false,
   "phone_action_required": false,
-  "native_source_generated_only": true,
-  "limitations": "Isolated native timer helper contract only. No recovery window, runtime DP admission or host retirement. Parents/transport/ACK/ref/locks modeled; no phone/RF/Apple proof."
+  "native_source_generated_only": false,
+  "limitations": "Isolated native timer helper contract only. No recovery window, runtime DP admission or host retirement. Parents/transport/ACK/ref/locks modeled; no phone/RF/Apple proof.",
+  "local": {
+    "python_regressions": 100,
+    "native_compilation_local": false
+  },
+  "native_ci": {
+    "run_id": 42416119586,
+    "source_commit": "7c57368371d5fdd3df56977aab784b3a67b04e22",
+    "job_id": 128534490028,
+    "step_name": "Native peer-completed VDEV timer contract with sanitizers",
+    "step_conclusion": "success",
+    "lifecycle_regressions": "in_progress",
+    "full_target_build": "in_progress"
+  },
+  "native_verified": {
+    "combinations": 64,
+    "rejections": 20,
+    "mutations": 3
+  }
 }
