@@ -46,8 +46,11 @@ static void configured_final_handoff(struct mishare_runtime_owner **o,struct wla
   if(final_rate_fault==9)(*o)->events=(void*)1;
   if(final_rate_fault==10)(*o)->state.work_error=-EIO;
   if(final_rate_fault==11)(*o)->state.ndi.create.timer_ready=true;
-  int expected=final_rate_fault==2||final_rate_fault==8?-EOPNOTSUPP:-EUCLEAN;
-  assert(final_rate_poll(o)==expected && *o && module_refs==1 && "EXPECTED_RATE_FINAL_FAULT_RETAIN");
+  int expected=final_rate_fault==2||final_rate_fault==8||
+   (final_rate_fault==1 && final_rate_batch)?-EOPNOTSUPP:-EUCLEAN;
+  int actual=final_rate_poll(o);
+  if(actual!=expected)fprintf(stderr,"final fault=%u batch=%d got=%d expected=%d\n",final_rate_fault,final_rate_batch,actual,expected);
+  assert(actual==expected && *o && module_refs==1 && "EXPECTED_RATE_FINAL_FAULT_RETAIN");
   assert(final_rate_poll(o)==expected && *o && module_refs==1 && "EXPECTED_RATE_FINAL_FAULT_RETAIN");
   assert(delete_calls==(int)deletes && dp_detaches==(int)dp && wire_deletes==(int)wires && pe_deletes==pe);
   _Exit(0); /* Fault cases intentionally retain owner/module, no success claim. */
