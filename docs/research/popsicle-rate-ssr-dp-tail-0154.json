@@ -1,6 +1,6 @@
 {
   "stage": "0154",
-  "status": "NATIVE_ORDINARY_DP_TAIL_COMPOSITE_PASS_ONLY",
+  "status": "FULL_REQUIRED_CI_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42391133072,
     "required_jobs": 8,
@@ -38,12 +38,14 @@
     "job_conclusion": "success",
     "pass_marker": "MISHARE_RATE_SSR_ORDINARY_TAIL_FIXTURE_PASS_ONLY",
     "ordinary_ssr_final_regressions_pass": true,
-    "required_jobs_success": 7,
+    "required_jobs_success": 8,
     "required_jobs_total": 8,
     "diagnostic": {
       "object_compile": "success",
       "CNSS_interfaces": "success",
-      "strict_link_layout_artifact_checks": "pending"
-    }
+      "strict_link_layout_artifact_checks": "success"
+    },
+    "run_conclusion": "success",
+    "optional_ICNSS_reference": "skipped"
   }
 }
