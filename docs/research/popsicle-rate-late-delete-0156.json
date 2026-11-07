@@ -1,0 +1,34 @@
+{
+  "stage": "0156",
+  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "previous_stage_ci": {
+    "run_id": 42405410946,
+    "required_jobs": 8,
+    "all_success": true
+  },
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "scalar_mutations": 17,
+    "python_regressions": 100,
+    "native_source_generated_only": true
+  },
+  "native_pending": {
+    "late_reply_combinations": 256,
+    "retention_cases": 10,
+    "mutation_controls": 3
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Real modeled native DELETE reply origin after healthy original SSR fence; no ACK synthesis or reopening. Physical primitives modeled; caller retains parents. Missing earlier replies, configured START/UP, phone/RF/Apple excluded."
+}

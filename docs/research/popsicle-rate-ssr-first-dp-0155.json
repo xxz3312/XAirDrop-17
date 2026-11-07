@@ -1,6 +1,6 @@
 {
   "stage": "0155",
-  "status": "NATIVE_FIRST_DP_COMPOSITE_PASS_ONLY",
+  "status": "FULL_REQUIRED_CI_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42400068283,
     "required_jobs": 8,
@@ -37,7 +37,9 @@
     "job_id": 128501925667,
     "step_name": "Native first DP SSR continuation with sanitizers",
     "step_conclusion": "success",
-    "lifecycle_regressions": "in_progress",
-    "full_target_build": "in_progress"
+    "lifecycle_regressions": "success",
+    "full_target_build": "success",
+    "required_jobs_success": 8,
+    "required_jobs_total": 8
   }
 }

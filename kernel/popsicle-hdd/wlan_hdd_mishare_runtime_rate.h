@@ -14,6 +14,7 @@ struct mishare_runtime_rate_result {
 struct mishare_runtime_rate_status {
     bool requested, posted, accepted, completed, integrity_error;
     bool ordinary_admitted, ordinary_completed; /* Pre-START ordinary DELETE only. */
+    bool late_delete_armed, late_delete_reply; /* Original SSR fence and native reply. */
     bool tail_dp_attempted; /* One native DP helper attempt after ordinary DELETE reply. */
     bool tail_attempted, tail_completed; /* Ordinary DP tail in qualified SSR window. */
     bool reset_admitted, reset_completed; /* Qualified native SSR progress only. */
@@ -26,7 +27,8 @@ struct mishare_runtime_rate_status {
  * No automatic managed caller, firmware ACK or complete configuration claim.
  * Attempted submissions prohibit START and direct metadata retirement.
  * Pre-START ordinary DELETE and qualified SSR use separate progress checks;
- * mixed cleanup origins remain held. Public configuration is still disabled.
+ * only qualified ordinary-tail SSR continuations are admitted. Other mixed
+ * origins remain held. Public configuration is still disabled.
  */
 int mishare_runtime_rate_configure(struct mishare_runtime_owner *owner,
                                    const struct wondertap_fixed_tx_rate_params *params);

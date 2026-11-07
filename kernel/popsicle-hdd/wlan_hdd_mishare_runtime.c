@@ -36,7 +36,9 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     if (r->integrity_error)
         return -EUCLEAN;
-    if ((r->tail_dp_attempted && !r->ordinary_admitted) ||
+    if ((r->late_delete_reply && !r->late_delete_armed) ||
+        ((r->late_delete_armed || r->late_delete_reply) && !r->ordinary_admitted) ||
+        (r->tail_dp_attempted && !r->ordinary_admitted) ||
         (r->tail_completed && (!r->tail_attempted || !r->ordinary_completed)) ||
         ((r->tail_attempted || r->tail_completed) && !r->ordinary_admitted) ||
         (r->ordinary_completed && !r->ordinary_admitted) ||
@@ -233,6 +235,30 @@ static int mishare_runtime_rate_tail_check(struct mishare_runtime_owner *entry)
         !entry->state.allocated || entry->state.freed)
         return -EUCLEAN;
     return 0;
+}
+
+/* Pure snapshot shape, used before the first SSR fence and on the actual
+ * native reply origin. No ACK, window or cleanup is manufactured here.
+ */
+static bool mishare_runtime_rate_delete_inflight(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+
+    return mishare_runtime_rate_retire_check(entry) == -EOPNOTSUPP &&
+           r->ordinary_admitted && !r->ordinary_completed && !r->tail_dp_attempted &&
+           !r->tail_attempted && !r->tail_completed && !r->reset_admitted && !r->reset_completed &&
+           !entry->radio && !n->radio_requested && !n->start_plan_requested &&
+           !entry->state.work_error && !entry->state.recovery_error && !entry->state.reclaim_error &&
+           !n->completion_error && !entry->state.host_reclaim && !entry->state.ndi_reclaim_started &&
+           entry->state.allocated && !entry->state.freed && !entry->state.draining &&
+           entry->vdev && entry->referenced && entry->events &&
+           entry->cookie == (unsigned long)entry->vdev && !entry->pe_cookie &&
+           n->active && n->legacy_ready && n->wma_bound && !n->pe_ready &&
+           n->pe_delete_requested && n->pe_delete_submitted && n->pe_delete_completed &&
+           n->peer_delete_pending && n->peer_delete_submitted && n->peer_delete_replied &&
+           n->delete_pending && n->delete_submitted && !n->delete_replied &&
+           !n->dp_detaching && !n->dp_detach_submitted && !n->dp_freed;
 }
 
 int mishare_runtime_rate_begin(struct mishare_runtime_owner *owner,
@@ -469,8 +495,12 @@ unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
         if (entry->psoc != psoc)
             continue;
         count++;
-        if (!entry->state.quiesced)
+        if (!entry->state.quiesced) {
+            if (reason == MISHARE_QUIESCE_SSR && !entry->state.blocked &&
+                !entry->state.ndi.blocked && mishare_runtime_rate_delete_inflight(entry))
+                entry->state.rate.late_delete_armed = true;
             entry->state.quiesced = reason;
+        }
         entry->state.blocked = true;
         entry->state.ndi.blocked = true;
     }
@@ -1839,6 +1869,15 @@ void mishare_runtime_ndi_delete_event(struct wlan_objmgr_psoc *psoc, u8 id,
                 ndi->completion_error = -EUCLEAN;
         } else if (!ndi->blocked)
             ndi->delete_replied = true;
+        else if (entry->state.rate.late_delete_armed &&
+                 entry->state.quiesced == MISHARE_QUIESCE_SSR &&
+                 mishare_runtime_rate_delete_inflight(entry)) {
+            /* Native handler already completed timer/PM cleanup. Preserve
+             * the fence and errors; only record this exact physical origin.
+             */
+            ndi->delete_replied = true;
+            entry->state.rate.late_delete_reply = true;
+        }
         break;
     }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -1920,9 +1959,11 @@ void mishare_runtime_ndi_peer_event(struct wlan_objmgr_psoc *psoc, u8 id,
             continue;
         ndi = &entry->state.ndi;
         if (!ndi->active || !ndi->wma_bound || !ndi->peer_created ||
-            !ndi->peer_delete_pending || !firmware || ndi->peer_delete_replied)
+            !ndi->peer_delete_pending || !firmware || ndi->peer_delete_replied) {
             ndi->blocked = true;
-        else if (!ndi->blocked)
+            if (!ndi->completion_error)
+                ndi->completion_error = -EUCLEAN;
+        } else if (!ndi->blocked)
             ndi->peer_delete_replied = true;
         break;
     }
