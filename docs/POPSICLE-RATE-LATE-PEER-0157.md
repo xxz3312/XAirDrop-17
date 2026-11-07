@@ -20,6 +20,6 @@
 
 本地实际 scalar rate/形状检查、19 项变异检查和 100 项 Python 回归通过；语法/diff 检查通过。native 组合源码已从锁定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f` 生成，本地未编译。
 
-新增独立 Actions-only 观察组合：两个频段 × 四种速率结果 × 四种普通 peer unmap/flush-service 组合 × MC stop 前后两种时序，共 64 组；12 类故障各测两种时序，共 24 组保留场景。实际选择体执行原生 ordinary peer 删除及 native hold-request/timer/wake-lock 完成来源；核对 native request 已清理，再验证无 VDEV DELETE、无 DP detach、无 host delete、模块及剩余 native 资源保留。故障包含 fence 前异常、REMOVE、send 证据缺失、timeout、重复通知、错误 token/MAC/ID、回执缺失、完整性错误、异常 VDEV 通知以及关窗。三个原生变异控制移除 armed、延迟回执分支或 fence 前健康检查。native 组合与完整构建待本轮 CI。
+新增独立 Actions-only 观察组合：两个频段 × 四种速率结果 × 四种普通 peer unmap/flush-service 组合 × MC stop 前后两种时序，共 64 组；12 类故障各测两种时序，共 24 组保留场景。实际选择体执行原生 ordinary peer 删除及 native hold-request/timer/wake-lock 完成来源；核对 native request 已清理，再验证无 VDEV DELETE、无 DP detach、无 host delete、模块及剩余 native 资源保留。故障包含 fence 前异常、REMOVE、send 证据缺失、timeout、重复通知、错误 token/MAC/ID、回执缺失、完整性错误、异常 VDEV 通知以及关窗。三个原生变异控制移除 armed、延迟回执分支或 fence 前健康检查。新增 native 观察组合及三个变异控制已通过 Actions 42410649117、stop-admission 作业 128517831309 的独立步骤 Native late peer reply observation across SSR with sanitizers。其余回归和完整目标构建仍在运行，不提前记为全部 CI 通过。
 
 所有观察案例都刻意保留未完成对象，结束故障子进程不等于回收；物理 transport/ACK/DP/peer/ref/lock 原语仍由模型提供。父级由 caller/fixture 持有，没有完整自动 parent lease、该阶段后续无固件回收、配置后 START/UP 或手机/RF/Apple 互通认证。无手机安装包。

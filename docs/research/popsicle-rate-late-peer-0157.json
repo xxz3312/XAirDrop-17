@@ -1,6 +1,6 @@
 {
   "stage": "0157",
-  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "status": "NATIVE_LATE_PEER_OBSERVATION_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42408125741,
     "required_jobs_success": 7,
@@ -24,14 +24,23 @@
     "python_regressions": 100,
     "native_source_generated_only": true
   },
-  "native_pending": {
-    "late_peer_combinations": 64,
-    "retention_cases": 24,
-    "mutation_controls": 3
-  },
   "observation_only": true,
   "VDEV_DELETE_admission": false,
   "public_start_enabled": false,
   "phone_action_required": false,
-  "limitations": "Native selected peer completion origin with modeled primitives; all remaining owners/native objects deliberately retained. No VDEV DELETE/DP admission, complete SSR retirement, configured START/UP or phone/RF/Apple proof."
+  "limitations": "Native selected peer completion origin with modeled primitives; all remaining owners/native objects deliberately retained. No VDEV DELETE/DP admission, complete SSR retirement, configured START/UP or phone/RF/Apple proof.",
+  "native_verified": {
+    "late_peer_combinations": 64,
+    "retention_cases": 24,
+    "mutation_controls": 3
+  },
+  "native_ci": {
+    "run_id": 42410649117,
+    "source_commit": "c06ad2d007ffe93ee190efd79c45c8cc1adbfedf",
+    "job_id": 128517831309,
+    "step_name": "Native late peer reply observation across SSR with sanitizers",
+    "step_conclusion": "success",
+    "lifecycle_regressions": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }
