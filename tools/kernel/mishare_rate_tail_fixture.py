@@ -18,7 +18,7 @@ static int tail_poll(struct mishare_runtime_owner **o) {
 static void tail_handoff(struct mishare_runtime_owner **o) {
  struct mishare_runtime_rate_status before=state(*o).rate;
  struct wlan_objmgr_vdev *held=last_vdev;assert(!wlan_objmgr_vdev_try_get_ref(held,WLAN_HDD_ID_OBJ_MGR));
- unsigned peers=clean_peer_sends,pe=pe_deletes,wires=wire_deletes,dp=dp_detaches;
+ unsigned peers=clean_peer_sends,pe=pe_deletes;int wires=wire_deletes,dp=dp_detaches;
  mark_closed(*o);assert(tail_poll(o)==-EINPROGRESS && "EXPECTED_RATE_TAIL_MC_WAIT");
  health_recovering=true;recovery_subject=*o;
  assert(!cds_post_disable() && state(*o).recovery_window && "EXPECTED_RATE_TAIL_WINDOW");recovery_subject=NULL;
