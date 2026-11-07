@@ -1,6 +1,10 @@
+## 最新代码阶段 0150（runtime 固定速率状态与清理准入）
+
+0149 全部八项必选 CI 已通过。实际 runtime registry 新增 one-shot rate 请求、post 返回和完成回执状态；configure 连接 owned MC post，处理 inline 完成、预发布失败、重复/畸形回执，原始错误和部分提交证据保留。普通/SSR/final/batch 清理统一拒绝 pending、integrity 错误和任何已尝试配置的 owner；零尝试只进入原有清理检查，raw START-plan/START 继续封闭。新生产状态桥接/MC C 模型、六项变异检查及 100 项 Python 回归本地通过，完整 runtime 清理断言和目标编译待 CI。尚未实现配置后 qualified teardown 或连接公开 init，手机无需操作。见 [0150 实现与限制](POPSICLE-RUNTIME-RATE-0150.md)。
+
 ## 最新代码阶段 0149（owned MC 速率批次和 WMA 直接提交）
 
-0147/0148 全部八项必选 CI 已通过。新增固定速率 post：复制有效参数、取得 VDEV ref/runtime work reservation 后排 MC，执行/flush/封锁结果发布时仍保留所有权，最后归还工作和引用。MC 分支使用精确 WMA/PSOC/VDEV 身份校验及受限参数直接提交，不再嵌套普通 CLI 消息；首次错误、部分提交和 one-shot receipt 保留。384 组速率场景、15 项变异检查、工作所有权 C 模型及 100 项 Python 回归本地通过，目标编译待 CI。尚未连接 runtime 配置状态机/公开 init，未完成全局配置或完整父级租约；手机无需操作。见 [0149 实现与限制](POPSICLE-OWNED-RATE-WORK-0149.md)。
+0147/0148 全部八项必选 CI 已通过。新增固定速率 post：复制有效参数、取得 VDEV ref/runtime work reservation 后排 MC，执行/flush/封锁结果发布时仍保留所有权，最后归还工作和引用。MC 分支使用精确 WMA/PSOC/VDEV 身份校验及受限参数直接提交，不再嵌套普通 CLI 消息；首次错误、部分提交和 one-shot receipt 保留。384 组速率场景、15 项变异检查、工作所有权 C 模型及 100 项 Python 回归本地通过，Actions 42375590428 全部八项必选作业已通过。尚未连接 runtime 配置状态机/公开 init，未完成全局配置或完整父级租约；手机无需操作。见 [0149 实现与限制](POPSICLE-OWNED-RATE-WORK-0149.md)。
 
 ## 最新代码阶段 0148（初始化准备与速率执行共用支持合同）
 

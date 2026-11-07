@@ -91,6 +91,7 @@ on:
       - tools/kernel/mishare_commands_fixture.py
       - tools/kernel/mishare_rate_fixture.py
       - tools/kernel/mishare_rate_work_fixture.py
+      - tools/kernel/mishare_runtime_rate_fixture.py
       - tools/kernel/mishare_events_fixture.py
       - tools/kernel/mishare_response_fixture.py
       - tools/kernel/mishare_txn_fixture.py
@@ -148,6 +149,7 @@ jobs:
           python3 tools/kernel/mishare_init_fixture.py
           python3 tools/kernel/mishare_rate_fixture.py
           python3 tools/kernel/mishare_rate_work_fixture.py
+          python3 tools/kernel/mishare_runtime_rate_fixture.py
           python3 tools/kernel/wonder_managed_fixture.py
           python3 tools/kernel/wonder_provider_fixture.py
       - uses: actions/upload-artifact@v4
@@ -157,6 +159,7 @@ jobs:
             .popsicle-ci/artifacts/reports/mishare-bridge*.json
             .popsicle-ci/artifacts/reports/mishare-init*.json
             .popsicle-ci/artifacts/reports/mishare-rate*.json
+            .popsicle-ci/artifacts/reports/mishare-runtime-rate*.json
             .popsicle-ci/artifacts/reports/wonder-*.json
           if-no-files-found: error
           retention-days: 7

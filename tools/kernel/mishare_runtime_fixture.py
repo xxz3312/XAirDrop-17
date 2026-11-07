@@ -190,6 +190,7 @@ static void reset(void) {
 }
 static int create(struct mishare_runtime_owner **o) { return mishare_runtime_create(&pdev,mac,&pdev,&wdev,o); }
 static struct mishare_runtime_status state(struct mishare_runtime_owner *o) { struct mishare_runtime_status s;assert(!mishare_runtime_snapshot(o,&s));return s; }
+
 int main(void) {
  struct mishare_runtime_owner *o=NULL,*other=NULL;
  struct wlan_objmgr_psoc foreign_psoc={0};
@@ -263,6 +264,35 @@ int main(void) {
  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && WEXITSTATUS(status)==0);
  reset();assert(final_free_calls>0);
  assert(!module_refs && module_get_calls==module_put_calls+1 && "EXPECTED_MODULE_RELEASE");
+ { /* Rate retirement guards; inherited fixtures keep their original prefix. */
+ struct mishare_runtime_owner *o=NULL;
+ reset();assert(!create(&o));
+ o->state.rate.requested=true;
+ assert(mishare_runtime_destroy(&o)==-EINPROGRESS && o && !delete_calls && "EXPECTED_RUNTIME_RATE_PENDING_RETAIN");
+ o->state.rate.posted=o->state.rate.accepted=o->state.rate.completed=true;
+ o->state.rate.receipt.attempted=true;o->state.rate.receipt.attempted_mask=1;
+ o->state.rate.receipt.result=o->state.rate.receipt.first_error=-EIO;
+ assert(mishare_runtime_destroy(&o)==-EOPNOTSUPP && o && !delete_calls && "EXPECTED_RUNTIME_RATE_ATTEMPT_RETAIN");
+ assert(mishare_runtime_ndi_start_plan(o)==-EOPNOTSUPP && mishare_runtime_ndi_start(o)==-EOPNOTSUPP && "EXPECTED_RUNTIME_RATE_START_BLOCK");
+ /* Model only the upper SSR selector, without asserting native quiescence. */
+ o->state.quiesced=MISHARE_QUIESCE_SSR;
+ assert(mishare_runtime_reclaim_host(&o)==-EOPNOTSUPP && o && !delete_calls && "EXPECTED_RUNTIME_RATE_HOST_RETAIN");
+ assert(mishare_runtime_reclaim_ndi(&o)==-EOPNOTSUPP && o && !delete_calls && "EXPECTED_RUNTIME_RATE_NDI_RETAIN");
+ assert(mishare_runtime_reclaim_final(&o)==-EOPNOTSUPP && o && !delete_calls && "EXPECTED_RUNTIME_RATE_FINAL_RETAIN");
+ struct mishare_runtime_reclaim_item item={.owner=o,.result=123};
+ assert(mishare_runtime_reclaim_batch(&psoc,&item,1)==-EOPNOTSUPP && item.owner==o && item.result==123 && !delete_calls && "EXPECTED_RUNTIME_RATE_BATCH_RETAIN");
+ o->state.rate.integrity_error=true;
+ assert(mishare_runtime_destroy(&o)==-EUCLEAN && o && !delete_calls && "EXPECTED_RUNTIME_RATE_INTEGRITY_RETAIN");
+ /* Test-model reset only: production deliberately has no receipt-reset API. */
+ o->state.rate=(struct mishare_runtime_rate_status){0};o->state.quiesced=MISHARE_QUIESCE_NONE;
+ assert(!mishare_runtime_destroy(&o) && !o);
+ reset();assert(!create(&o));
+ o->state.rate=(struct mishare_runtime_rate_status){.requested=true,.posted=true,.completed=true};
+ o->state.rate.receipt.result=-ECANCELED;
+ assert(!mishare_runtime_destroy(&o) && !o && delete_calls==1 && "EXPECTED_RUNTIME_RATE_NO_ATTEMPT_RELEASE");
+ reset();
+
+ }
  puts("MISHARE_RUNTIME_HOST_OWNER_FIXTURE_PASS_ONLY");return 0;
 }
 '''

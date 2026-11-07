@@ -29,6 +29,130 @@ static DEFINE_SPINLOCK(mishare_runtime_lock);
 static struct mishare_runtime_owner *mishare_runtime_owners;
 static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
 
+/* MISHARE_RUNTIME_RATE_BEGIN */
+static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    if (r->integrity_error)
+        return -EUCLEAN;
+    if (!r->requested)
+        return r->posted || r->accepted || r->completed || r->receipt.attempted ||
+               r->receipt.attempted_mask || r->receipt.submitted_mask || r->request.nss ? -EUCLEAN : 0;
+    if (!r->posted || !r->completed)
+        return -EINPROGRESS;
+    /* Neither ordinary pre-configuration cleanup nor SSR reset policy has
+     * qualified a VDEV with possibly applied rate settings yet. Retain it.
+     */
+    return r->receipt.attempted ? -EOPNOTSUPP : 0;
+}
+
+int mishare_runtime_rate_begin(struct mishare_runtime_owner *owner,
+                               const struct mishare_runtime_rate_request *request,
+                               struct wlan_objmgr_vdev **vdev)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *n;
+    unsigned long flags;
+    int ret = -ENOENT;
+    if (!vdev)
+        return -EINVAL;
+    *vdev = NULL;
+    if (!owner || !request || !request->nss || request->nss > 2)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner)
+            continue;
+        n = &entry->state.ndi;
+        if (entry->state.rate.integrity_error)
+            ret = -EUCLEAN;
+        else if (entry->state.rate.requested)
+            ret = -EALREADY;
+        else if (mishare_runtime_rate_retire_check(entry) ||
+                 entry->state.blocked || n->blocked || n->completion_error)
+            ret = -EUCLEAN;
+        else if (entry->state.quiesced || entry->state.draining)
+            ret = -ESHUTDOWN;
+        else if (!entry->vdev || !entry->referenced || !entry->events || entry->radio ||
+                 !entry->state.allocated || entry->state.freed || entry->state.work_pending ||
+                 entry->state.work_users || !n->active || !n->legacy_ready || !n->wma_bound ||
+                 !n->peer_created || !n->pe_ready || !n->pe_submitted || !n->pe_completed ||
+                 !n->channel_submitted || !n->channel_completed || !n->channel_prepared ||
+                 n->start_plan_requested || n->radio_requested || n->pe_delete_requested ||
+                 n->peer_delete_pending || n->delete_pending)
+            ret = -EBUSY;
+        else {
+            entry->state.rate.request = *request;
+            entry->state.rate.requested = true;
+            *vdev = entry->vdev;
+            ret = 0;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
+void mishare_runtime_rate_posted(struct mishare_runtime_owner *owner, int result)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_runtime_rate_status *r;
+    unsigned long flags;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner)
+            continue;
+        r = &entry->state.rate;
+        if (!r->requested || r->posted || result > 0 || (result && r->completed)) {
+            r->integrity_error = true;
+        } else {
+            r->posted = true;
+            r->accepted = !result;
+            if (result) {
+                r->completed = true;
+                r->receipt.result = result;
+            }
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+void mishare_runtime_rate_complete(struct mishare_runtime_owner *owner,
+                                    const struct mishare_runtime_rate_result *result)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_runtime_rate_status *r;
+    unsigned long flags;
+    if (!result)
+        return;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner)
+            continue;
+        r = &entry->state.rate;
+        if (!r->requested || r->completed || (r->posted && !r->accepted) ||
+            !entry->state.work_pending || entry->state.work_users || result->busy ||
+            result->result > 0 || result->attempted != (result->attempted_mask != 0) ||
+            (result->attempted_mask != 0 && result->attempted_mask != 1 &&
+             result->attempted_mask != 3 && result->attempted_mask != 7) ||
+            (result->submitted_mask & ~result->attempted_mask) ||
+            (result->attempted && result->first_error != result->result) ||
+            (!result->attempted && (result->first_error || !result->result)) ||
+            (result->result ? (result->complete ||
+                result->submitted_mask != (result->attempted_mask >> 1)) :
+                (!result->complete || result->attempted_mask != 7 || result->submitted_mask != 7))) {
+            r->integrity_error = true;
+        } else {
+            r->receipt = *result;
+            r->completed = true;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+/* MISHARE_RUNTIME_RATE_END */
+
 enum mishare_radio_cancel_origin { MISHARE_CANCEL_FLUSH, MISHARE_CANCEL_REFUSAL, MISHARE_CANCEL_BODY_ABORT, MISHARE_CANCEL_PREPARED_ABORT, MISHARE_CANCEL_SM_ENTRY_ABORT, MISHARE_CANCEL_INIT_REJECT };
 
 static void mishare_runtime_radio_cancel_origin(struct wlan_objmgr_psoc *psoc,
@@ -422,6 +546,12 @@ static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bo
             return ret;
     }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+
     if (entry->state.ndi.completion_error || (entry->state.blocked && !reclaim)) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
@@ -507,6 +637,12 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner)
     if (!entry)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+
     ndi = &entry->state.ndi;
     if (!entry->state.quiesced || entry->state.work_error || entry->state.reclaim_error ||
         entry->state.recovery_error ||
@@ -558,6 +694,8 @@ static bool mishare_runtime_ndi_completed_candidate(struct mishare_runtime_owner
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
+    if (mishare_runtime_rate_retire_check(entry))
+        return false;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
@@ -658,6 +796,8 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
                         !entry->state.radio.start_attempted && !entry->state.radio.host_up &&
                         !entry->state.radio.stop_attempted && !entry->state.radio.down_attempted &&
                         !entry->state.radio.down_accepted));
+    if (mishare_runtime_rate_retire_check(entry))
+        return false;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
            !entry->state.work_error && !entry->state.reclaim_error && !entry->state.recovery_error &&
@@ -776,6 +916,12 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     if (!entry)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+
     if (entry->state.work_error || entry->state.recovery_error || entry->state.reclaim_error ||
         entry->state.ndi.completion_error ||
         entry->state.quiesced != MISHARE_QUIESCE_SSR || entry->state.host_reclaim)
@@ -1023,6 +1169,8 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
+    if (mishare_runtime_rate_retire_check(entry))
+        return false;
     return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
              !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
            !entry->state.recovery_radio_sm_entry_aborted && !entry->state.recovery_radio_init_rejected &&
@@ -1078,6 +1226,9 @@ int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner)
         ret = -ENOENT;
         goto final_unlock;
     }
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret)
+        goto final_unlock;
     n = &entry->state.ndi;
     if (entry->state.quiesced != MISHARE_QUIESCE_SSR ||
         entry->state.work_error || entry->state.reclaim_error ||
@@ -1156,6 +1307,15 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
     for (entry = mishare_runtime_owners; entry; entry = entry->next) {
         if (entry->psoc != psoc)
             continue;
+        {
+            int rate_ret = mishare_runtime_rate_retire_check(entry);
+            if (rate_ret && rate_ret != -EINPROGRESS) {
+                ret = rate_ret;
+                goto unlock;
+            }
+            if (rate_ret)
+                ret = rate_ret;
+        }
         if (entry->state.quiesced != MISHARE_QUIESCE_SSR) {
             ret = -ESHUTDOWN;
             goto unlock;
@@ -1728,6 +1888,11 @@ int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *entry)
         return -EINVAL;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ndi = &entry->state.ndi;
+    if (entry->state.rate.requested) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EOPNOTSUPP;
+    }
+
     if (entry->state.blocked || ndi->blocked) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
@@ -1769,6 +1934,11 @@ int mishare_runtime_ndi_start(struct mishare_runtime_owner *entry)
         return -EINVAL;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ndi = &entry->state.ndi;
+    if (entry->state.rate.requested) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EOPNOTSUPP;
+    }
+
     if (entry->state.blocked || ndi->blocked) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
@@ -1837,6 +2007,12 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     int ret;
 
     spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return ret;
+    }
+
     ret = entry->state.blocked || ndi->blocked || ndi->completion_error;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     if (ret)

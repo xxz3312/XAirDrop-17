@@ -1,0 +1,25 @@
+{
+  "stage": "0150",
+  "status": "LOCAL_RUNTIME_RATE_BRIDGE_MODEL_ONLY",
+  "previous_ci": {
+    "run": 42375590428,
+    "required_passed": 8
+  },
+  "python_tests": 100,
+  "runtime_rate_mutations": 6,
+  "full_runtime_retirement_assertions": "PENDING_CI",
+  "target_build": "PENDING_CI",
+  "native_patch_apply_check": true,
+  "public_init_enabled": false,
+  "phone_action_required": false,
+  "sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "084d206b7dc89ccddb0893ba8a86485b28d911bfe97060d24f75ced63674dd81",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "94555d9a866740395fa96d8118428e3a5295e1a1a7f826311603344903acdad8",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime_rate.c": "042fc66641df4a864eadaf217df10c67f7fce71287fd89e0cda6363dfac2295c",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime_rate.h": "44f7dd4c44b4bcfa2abcba10ec6a4bae4325ab82593b2b8f66204fba6a9c5ca9",
+    "kernel/patches/popsicle/0067-compile-runtime-rate-state-bridge.patch": "d9df33bad331692ca6e998c8d0fff5402a1257aa7ddbf2f855cda994fc371aa3",
+    "tools/kernel/mishare_runtime_rate_fixture.py": "4ac85f9604329148c45d5a66068c630dbafb6248ccb6904dc28d1cf44f3fc7ea",
+    "tools/kernel/mishare_runtime_fixture.py": "0ae200507e2ea069c1a4b1be7018aa4a922f93e6b2c289b32faada056e83060f"
+  },
+  "limitations": "New registry scalar hooks/configure/MC wrapper execute with modeled owner/ref/work/scheduler/executor. Attempted rate config remains retained; no qualified post-config teardown, complete parent lease, firmware ACK/RF/Apple certification."
+}
