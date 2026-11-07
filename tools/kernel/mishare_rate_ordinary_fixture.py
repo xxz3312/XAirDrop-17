@@ -76,6 +76,7 @@ def negative_controls(directory, c_file, command, env, source, root):
     subprocess.run([directory/'engine'], check=True, timeout=60, env=env)
     runtime = (ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c').read_text()
     override = directory/'wlan_hdd_mishare_runtime.c'
+    drain = function(runtime, 'mishare_runtime_ndi_drain')
     controls = [
         ('entry->state.rate.ordinary_admitted = true;', 'entry->state.rate.ordinary_admitted = false;'),
         ('entry->state.rate.ordinary_completed = true;', 'entry->state.rate.ordinary_completed = false;'),
@@ -83,7 +84,8 @@ def negative_controls(directory, c_file, command, env, source, root):
     ]
     try:
         for needle, replacement in controls:
-            override.write_text(cleanup.owner.replace_once(runtime, needle, replacement))
+            changed = cleanup.owner.replace_once(drain, needle, replacement)
+            override.write_text(cleanup.owner.replace_once(runtime, drain, changed))
             subprocess.run(command, check=True)
             bad = subprocess.run([directory/'engine'], capture_output=True, text=True, timeout=60, env=env)
             assert bad.returncode == -6 and ('EXPECTED_RATE_ORDINARY_' in bad.stderr or 'EXPECTED_PEER_ACK_BEFORE_VDEV_DELETE' in bad.stderr), (bad.returncode, bad.stderr[-2000:])
