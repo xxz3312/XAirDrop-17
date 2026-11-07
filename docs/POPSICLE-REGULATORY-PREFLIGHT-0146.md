@@ -23,3 +23,7 @@
 100 项本地 Python 回归、Python 语法和 diff 检查通过。另对从生产文件原样提取的监管 helper 运行本地独立 C 行为检查，ASan/UBSan 通过；native API 使用模型，仅覆盖 helper，不是完整 host 集成。宿主 ptrace 环境不支持 LeakSanitizer，本地该项关闭；无堆分配。Actions-only 实际 host fixture 新增国家查询失败、国家不符、00 非通配、DISABLE/DFS/INVALID、passive、两个 NSS 上限、6 GHz 拒绝；覆盖 2412/5240/5745 及原生 world domain 成功、国家环境后缀、重复查询及国家/信道漂移后拒绝，并检查 scope/设备引用平衡。七项变异控制要求禁用监管检查、国家匹配、错误传播、两个 NSS 检查、信道状态或 passive 门禁后触发行为断言；待 CI 验证。
 
 监管数据库、QDF、设备/同步和固件仍为 fixture 模型。完整目标编译、原生 C 回归及变异控制结果应以本次 Actions 为准；不计为射频或 Apple 互通验收。下一步是实际配置事务及跨调用父级生命周期保障，再连接公开 init/poll。
+
+## CI 集成修复
+
+首轮 Actions 42362175431 的六项必选作业通过；stop-admission 和 diagnostic 均在 host fixture 编译阶段失败：模型状态转换函数定义位于生产 host include 之后，缺少提前声明，触发 implicit declaration/static 冲突。尚未进入新增监管行为检查或目标模块编译，不能记为监管行为失败或完整 WLAN 编译通过。补齐 fixture COMMON 中的静态原型，不改生产逻辑、错误映射或断言。上游依据和设备端边界同上；这是本项目测试组合的声明顺序修复，无对应设备端动作。

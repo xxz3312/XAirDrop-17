@@ -66,6 +66,7 @@ struct hdd_context { struct device *parent_dev; struct wlan_objmgr_psoc *psoc; s
 struct osif_psoc_sync;
 #define QDF_MODULE_ID_HDD 11
 static void *cds_get_context(int id);
+static int qdf_status_to_os_return(int status);
 static int osif_psoc_sync_trans_start(struct device *, struct osif_psoc_sync **);
 static void osif_psoc_sync_wait_for_ops(struct osif_psoc_sync *);
 static void osif_psoc_sync_trans_stop(struct osif_psoc_sync *);
