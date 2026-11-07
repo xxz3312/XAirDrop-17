@@ -1,0 +1,34 @@
+{
+  "stage": "0144",
+  "source_commit": "bf8ed7ade7a39b0fe5f6b0bf27e3bc4dd9fe5a5d",
+  "base_implementation_commit": "6996d42556a4677d250f8d684b39f9575e762294",
+  "workflow_run_id": 42345877772,
+  "bridge_job_id": 128323386512,
+  "bridge_job_conclusion": "success",
+  "host_job_id": 128323386501,
+  "host_job_conclusion": "success",
+  "local_python_regressions": 100,
+  "previous_0143_required_jobs_success": 8,
+  "full_target_build": "in_progress_at_recording",
+  "production_and_fixture_sha256": {
+    "kernel/wonder/ssr.c": "4310d892c7c31b38ea0cd10086dfaa54e8826f46dc8844bea7d2b54018a50100",
+    "kernel/wonder/wondertap.c": "0ec9dc6f5c9d08da6af3cc43b8f77e1719e48d769b5c0716ff604e46b6f45f1d",
+    "kernel/wonder/wondertap_internal.h": "391161dab2cc29f33dfa53da080b1bbdffd2e4897666e55886f513423971679f",
+    "kernel/wonder/wondertap_managed.h": "bbfb1a3665e415a66ec131dbd33bf484c7aab38be5a58cb86c2dba07857f6269",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.c": "57c31ebe37548906ddacc6a61f7d808ffa7a1a7dd933df8b46bbad49d3f9d50f",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "18bfffb128bd4b7b97d8ce3c8d7809c75a32afc1858b098a131f892fe27fd981",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c": "432a038a187991462603b3be9d51a5f7a562f1d575a922c7a5617f4e9aa209cf",
+    "tools/kernel/wonder_managed_fixture.py": "ef243d4b8bf50e113fa5bfe20e94a309b9c3e94d72336aa2375347fbe77c0730",
+    "tools/kernel/wonder_provider_fixture.py": "8070e774745b25afaaaa51d6eaddbae225ae194424bb8d47f6112ee6edee3365",
+    "tools/kernel/mishare_host_fixture.py": "a05ca358879e14350f8633234acce06e16cff863e4bf795440c81c4ead786654",
+    "tools/kernel/mishare_backend_fixture.py": "7bd04b20825ac4255f66891738533da085c8490deb306f681f2068fe36e27090"
+  },
+  "phone_actions": false,
+  "public_init": "EOPNOTSUPP_unchanged",
+  "limitations": [
+    "Public backend cannot create instances; native factory/step remain internal.",
+    "Core/provider and HDD host/instance fixtures execute separately with modeled endpoints.",
+    "No full between-call parent component/firmware lease or committed START/UP SSR recovery.",
+    "No native concurrency, physical unload, RX/TX, RF, phone or Apple proof."
+  ]
+}
