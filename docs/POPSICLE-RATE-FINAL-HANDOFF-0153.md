@@ -20,6 +20,6 @@
 
 本地实际 runtime scalar block/configure/MC wrapper 的状态模型、12 项变异检查及 100 项 Python 回归通过；语法与 diff 检查通过。原生组合源码从锁定 MiCode WLAN `36df473046706a5259942e1bf7222108dbbb860f` 生成，本地未编译。
 
-新增 Actions-only 组合，保留完整既有普通清理回归，追加两个频段 × 四种速率结果 × 16 种含外部引用的回调组合 × direct/batch，共 256 组 SSR final 衔接；22 组终态保留故障，以及实际 PE DELETE 消息被 SSR 打断后的拒绝。检查 fence 前拒绝、MC 观察前等待、final-free 前保留模块引用、真实 SM/组件 final-free 后才退休、关窗后不重放 native 操作、未知已退休 token 拒绝。三个原生变异控制分别移除 final 路线、final-free 门禁、DP 完成证据。本轮 native C 和完整构建待 CI。
+新增 Actions-only 组合，保留完整既有普通清理回归，追加两个频段 × 四种速率结果 × 16 种含外部引用的回调组合 × direct/batch，共 256 组 SSR final 衔接；22 组终态保留故障，以及实际 PE DELETE 消息被 SSR 打断后的拒绝。检查 fence 前拒绝、MC 观察前等待、final-free 前保留模块引用、真实 SM/组件 final-free 后才退休、关窗后不重放 native 操作、未知已退休 token 拒绝。三个原生变异控制分别移除 final 路线、final-free 门禁、DP 完成证据。本轮 native C 组合与三个变异控制已通过 Actions 42391133072 的 stop-admission 作业 128458751119，记录 MISHARE_RATE_FINAL_HANDOFF_FIXTURE_PASS_ONLY；原有普通配置清理与配置 SSR 组合也通过回归。本轮完整构建仍在运行。
 
-速率 WMI 结果、firmware ACK/DP/peer 物理原语、锁和外部引用仍由模型提供；native 普通清理/PE 析构/WMA peer/SM/final-free 选择体运行于该模型。父级由 caller/fixture 保留，无自动 parent lease、完整混合 SSR coordinator、已配置 START/UP、手机/RF 或 Apple 互传认证。0152 六项必选 CI 已通过，完整编译与父级组合在本阶段开始时仍运行。
+速率 WMI 结果、firmware ACK/DP/peer 物理原语、锁和外部引用仍由模型提供；native 普通清理/PE 析构/WMA peer/SM/final-free 选择体运行于该模型。父级由 caller/fixture 保留，无自动 parent lease、完整混合 SSR coordinator、已配置 START/UP、手机/RF 或 Apple 互传认证。0152 八项必选 CI 已全部通过（Actions 42389562888），包括完整编译、严格链接、布局及父级组合。

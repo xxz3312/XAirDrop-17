@@ -1,6 +1,6 @@
 {
   "stage": "0153",
-  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "status": "NATIVE_SSR_FINAL_HANDOFF_COMPOSITE_PASS_ONLY",
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -18,14 +18,27 @@
     "python_regressions": 100,
     "native_source_generated_only": true
   },
-  "native_pending": {
+  "scope": "SSR metadata only after ordinary resource cleanup and accepted host deletion; partial ordinary cleanup remains held",
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Physical primitives and rate receipts modeled; caller retains parents. No mixed partial native recovery, configured START/UP, phone/RF/Apple certification.",
+  "native_verified": {
     "handoff_combinations": 256,
     "retention_faults": 22,
     "PE_delete_interruption_rejected": true,
     "mutation_controls": 3
   },
-  "scope": "SSR metadata only after ordinary resource cleanup and accepted host deletion; partial ordinary cleanup remains held",
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Physical primitives and rate receipts modeled; caller retains parents. No mixed partial native recovery, configured START/UP, phone/RF/Apple certification."
+  "native_ci": {
+    "run_id": 42391133072,
+    "job_id": 128458751119,
+    "job_conclusion": "success",
+    "pass_marker": "MISHARE_RATE_FINAL_HANDOFF_FIXTURE_PASS_ONLY",
+    "ordinary_and_ssr_regressions_pass": true,
+    "full_target_build": "pending"
+  },
+  "previous_stage_ci": {
+    "run_id": 42389562888,
+    "required_jobs": 8,
+    "all_success": true
+  }
 }
