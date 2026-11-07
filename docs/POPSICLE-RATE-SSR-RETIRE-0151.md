@@ -24,6 +24,6 @@
 
 本地实际 runtime rate block、configure bridge 和 MC wrapper 的状态模型检查通过，加入 SSR fence、MC drain、radio/plan、closed window 和终态释放事实的拒绝检查。九项变异控制（原六项加三个 reset 条件）在编译后命中行为断言；100 项 Python 回归、语法和 diff 检查通过。
 
-新增 Actions-only native composition：复用并保留既有 pre-radio 回归，实际 runtime rate begin/posted/complete 在真实工作 reservation 内记录模型 WMI 提交结果，随后执行原 CDS/HIF/WMI/PE/timer/DP/object 回收函数。覆盖两个频段、四种配置提交结果和 inline/deferred DP，共 16 组；包含 batch、外部 VDEV final-free 等待及窗口关闭后的 final retirement。另测六种 native 窗口资格缺失、七种资源保留故障、部分 peer 清理失败和原错误不变，并加入三个回收记录/候选资格变异控制。组合源码在本地通过生成/原生来源检查，没有在本地编译，实际 C 行为和目标构建待本次 CI。
+新增 Actions-only native composition：复用并保留既有 pre-radio 回归，实际 runtime rate begin/posted/complete 在真实工作 reservation 内记录模型 WMI 提交结果，随后执行原 CDS/HIF/WMI/PE/timer/DP/object 回收函数。覆盖两个频段、四种配置提交结果和 inline/deferred DP，共 16 组；包含 batch、外部 VDEV final-free 等待及窗口关闭后的 final retirement。另测六种 native 窗口资格缺失、七种资源保留故障、部分 peer 清理失败和原错误不变，并加入三个回收记录/候选资格变异控制。组合源码在本地通过生成/原生来源检查，没有在本地编译，实际 C 行为及三个 native 变异控制已通过 Actions 42380495651 的 stop-admission 作业 128426897815，日志记录 MISHARE_RATE_RESET_FIXTURE_PASS_ONLY；完整目标编译链仍在运行。
 
 native 函数的 IRQ/transport/firmware/DP 物理实现及引用/锁等仍为 fixture 模型，rate WMI 结果由模型提供，不能写成实机 SSR 或固件互通认证。没有普通配置后 teardown、START/UP 回收、完整 remove/父级租约、BSSID/重试/聚合/过滤/收发接入或公开启动。无手机安装包。

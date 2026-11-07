@@ -1,6 +1,6 @@
 ## 最新代码阶段 0151（配置后、未 START 的合格 SSR 回收接入）
 
-只对 owned rate 批次已结束且未请求 START-plan/radio 的 owner，复用既有 native HTC/HIF/WMI reset 窗口和 prepared INIT 清理。新增 reset_admitted/reset_completed 记录，逐项核对 timer/PE/self-peer/DP/WMA/legacy 的实际释放事实，保留原始速率回执；batch、延迟 VDEV final-free 和关窗后 metadata retirement 纳入该路线。普通运行态配置后清理仍关闭。本地状态 C 模型、九项变异检查、100 项 Python 回归通过；16 组配置后 native SSR 组合及三个 native 变异控制待 CI。0150 六项必选 CI 已通过，完整构建/父级组合仍在运行。公开 init/START 关闭，手机无需操作。见 [0151 实现、验证与限制](POPSICLE-RATE-SSR-RETIRE-0151.md)。
+只对 owned rate 批次已结束且未请求 START-plan/radio 的 owner，复用既有 native HTC/HIF/WMI reset 窗口和 prepared INIT 清理。新增 reset_admitted/reset_completed 记录，逐项核对 timer/PE/self-peer/DP/WMA/legacy 的实际释放事实，保留原始速率回执；batch、延迟 VDEV final-free 和关窗后 metadata retirement 纳入该路线。普通运行态配置后清理仍关闭。本地状态 C 模型、九项变异检查、100 项 Python 回归通过；16 组配置后 native SSR 组合、六种窗口资格缺失、七种保留故障及三个 native 变异控制已通过 Actions 42380495651 的 stop-admission；完整目标构建仍运行。0150 七项必选 CI 已通过，严格链接/布局链仍在运行。公开 init/START 关闭，手机无需操作。见 [0151 实现、验证与限制](POPSICLE-RATE-SSR-RETIRE-0151.md)。
 
 ## 最新代码阶段 0150（runtime 固定速率状态与清理准入）
 

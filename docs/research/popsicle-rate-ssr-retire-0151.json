@@ -1,12 +1,8 @@
 {
   "stage": "0151",
-  "status": "LOCAL_RATE_RESET_ELIGIBILITY_MODEL_ONLY",
+  "status": "NATIVE_CONFIGURED_SSR_COMPOSITE_PASS_ONLY",
   "local_python_tests": 100,
   "local_state_mutations": 9,
-  "native_configured_combinations_pending_ci": 16,
-  "native_window_failures_pending_ci": 6,
-  "native_retention_faults_pending_ci": 7,
-  "native_mutations_pending_ci": 3,
   "native_composition_generation_checked": true,
   "target_build": "PENDING_CI",
   "public_init_enabled": false,
@@ -17,6 +13,16 @@
     "tools/kernel/mishare_runtime_rate_fixture.py": "37a0f878eaf6649b9c3bbbf8ce90f1be9e3724678a82151373220980431d35ff",
     "tools/kernel/mishare_rate_reset_fixture.py": "537c30448842121bc1e46fd4471a14eaa861e63a7cdbda62676df6b284eb4997"
   },
-  "limitations": "SSR-only pre-START route, using existing native window and prepared reset checks. No ordinary post-config retirement, firmware ACK, real parent/remove/RF/Apple certification; native composite awaits CI.",
-  "native_zero_attempt_edge_pending_ci": true
+  "limitations": "SSR-only pre-START route, using existing native window and prepared reset checks; selected native C executes with modeled physical primitives/rate transport. No ordinary post-config retirement, firmware ACK, real parent/remove/RF/Apple certification; full target build still pending.",
+  "native_configured_combinations": 16,
+  "native_window_failures": 6,
+  "native_retention_faults": 7,
+  "native_mutations": 3,
+  "native_zero_attempt_edge": true,
+  "native_ci": {
+    "run_id": 42380495651,
+    "job_id": 128426897815,
+    "job_conclusion": "success",
+    "pass_marker": "MISHARE_RATE_RESET_FIXTURE_PASS_ONLY"
+  }
 }
