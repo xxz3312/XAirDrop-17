@@ -951,7 +951,9 @@ int mishare_wonder_host_retire_receipt_locked(struct hdd_context *hdd,
     for (host = mishare_hosts; host; host = host->next)
         if (host->retirement_serial == receipt->serial)
             break;
-    if (host && (host->hdd != hdd || !host->idle_owned)) {
+    if (host && (host->hdd != hdd || !host->idle_owned ||
+        host->parent_dev != hdd->parent_dev || host->psoc != hdd->psoc ||
+        host->pdev != hdd->pdev)) {
         spin_unlock_irqrestore(&mishare_host_lock, flags);
         return -EUCLEAN;
     }

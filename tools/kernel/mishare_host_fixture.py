@@ -1106,6 +1106,13 @@ static void receipt_cases(struct hdd_context *h,struct wireless_dev *wdev)
   reset(0);assert(!mishare_wonder_host_create_locked(h,mac,&owner));
   if(mode){active->dev->ieee80211_ptr=wdev;assert(!mishare_wonder_host_vdev_create_locked(owner));}
   assert(!mishare_wonder_host_handoff_receipt_locked(&owner,&receipt) && !owner && receipt.serial && lease_refs==1);
+  struct device changed_dev={0};struct wlan_objmgr_psoc changed_psoc={0};
+  struct wlan_objmgr_pdev changed_pdev={.psoc=h->psoc};
+  struct device *old_dev=h->parent_dev;struct wlan_objmgr_psoc *old_psoc=h->psoc;
+  struct wlan_objmgr_pdev *old_pdev=h->pdev;
+  h->parent_dev=&changed_dev;assert(mishare_wonder_host_retire_receipt_locked(h,&receipt)==-EUCLEAN);h->parent_dev=old_dev;
+  h->psoc=&changed_psoc;assert(mishare_wonder_host_retire_receipt_locked(h,&receipt)==-EUCLEAN);h->psoc=old_psoc;
+  h->pdev=&changed_pdev;assert(mishare_wonder_host_retire_receipt_locked(h,&receipt)==-EUCLEAN);h->pdev=old_pdev;
   assert(!mishare_wonder_host_retirement_poll(&(struct mishare_host_retirement){0}));
   assert(mishare_wonder_host_handoff_receipt_locked(&owner,&receipt)==-EINVAL);
   for(int n=0;n<3;n++)assert(mishare_wonder_host_retirement_poll(&receipt)==-EINPROGRESS && lease_refs==1 && "EXPECTED_RECEIPT_PENDING");
