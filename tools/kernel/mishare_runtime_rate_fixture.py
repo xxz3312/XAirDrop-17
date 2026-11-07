@@ -19,7 +19,7 @@ struct mishare_ndi_status {
  int completion_error;
 };
 struct runtime_model_state {
- bool blocked,draining,allocated,freed,host_reclaim;int quiesced;
+ bool blocked,draining,allocated,freed,host_reclaim,host_delete_accepted;int quiesced;
  bool mc_drained,recovery_window,recovery_window_closed,ndi_reclaim_started,ndi_reclaim_ready;
  bool recovery_timer_attempted,recovery_timer_released,recovery_pe_attempted,recovery_pe_released;
  bool recovery_context_attempted,recovery_context_finish_attempted,recovery_context_released;
@@ -174,8 +174,28 @@ int main(void){
  owner.state.ndi.delete_pending=owner.state.ndi.delete_submitted=owner.state.ndi.delete_replied=true;
  owner.state.ndi.dp_detaching=owner.state.ndi.dp_detach_submitted=owner.state.ndi.dp_freed=true;
  assert(!mishare_runtime_rate_ordinary_check(&owner) && "EXPECTED_RATE_ORDINARY_TERMINAL");
+
+ owner.state.quiesced=1;owner.state.host_delete_accepted=owner.state.draining=true;
+ owner.vdev=NULL;owner.referenced=false;owner.events=NULL;
+ owner.state.recovery_window_closed=true;
+ assert(!mishare_runtime_rate_final_check(&owner) && "EXPECTED_RATE_FINAL_METADATA");
+ assert(mishare_runtime_rate_ordinary_check(&owner)==-EOPNOTSUPP);
+ for(int fault=0;fault<8;fault++){
+  struct runtime_model_state saved=owner.state;
+  if(fault==0)owner.state.host_delete_accepted=false;
+  if(fault==1)owner.state.ndi.peer_delete_replied=false;
+  if(fault==2)owner.state.ndi.dp_freed=false;
+  if(fault==3)owner.state.work_error=-EIO;
+  if(fault==4)owner.state.ndi.create.timer_ready=true;
+  if(fault==5)owner.state.quiesced=2;
+  if(fault==6)owner.state.rate.ordinary_completed=false;
+  if(fault==7)owner.state.rate.reset_admitted=true;
+  int expected=fault==5||fault==6?-EOPNOTSUPP:-EUCLEAN;
+  assert(mishare_runtime_rate_final_check(&owner)==expected && "EXPECTED_RATE_FINAL_RETAIN");
+  owner.state=saved;
+ }
  owner.state.ndi.peer_delete_replied=false;
- assert(mishare_runtime_rate_ordinary_check(&owner)==-EUCLEAN && "EXPECTED_RATE_ORDINARY_TERMINAL");
+ assert(mishare_runtime_rate_final_check(&owner)==-EUCLEAN && "EXPECTED_RATE_FINAL_TERMINAL");
  reset();puts("MISHARE_RUNTIME_RATE_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -202,11 +222,12 @@ def main():
         ('return r->receipt.attempted ? -EOPNOTSUPP : 0;', 'return r->receipt.attempted ? 0 : 0;'),
         ('!entry->state.work_pending || entry->state.work_users || result->busy', 'false || entry->state.work_users || result->busy'),
         ('!n->channel_prepared ||\n                 n->start_plan_requested', '(false && !n->channel_prepared) ||\n                 n->start_plan_requested'),
-        ('entry->state.quiesced != MISHARE_QUIESCE_SSR ||', 'false ||'),
+        ('r->ordinary_completed ||\n        entry->state.quiesced != MISHARE_QUIESCE_SSR ||', 'r->ordinary_completed ||\n        false ||'),
         ('!n->peer_delete_submitted || !n->peer_delete_replied ||', '!n->peer_delete_submitted || false ||'),
         ('!n->create.timer_ready || !n->create.dp_attached ||', 'false || !n->create.dp_attached ||'),
         ('!entry->state.recovery_dp_freed || n->active', 'false || n->active'),
         ('if (!entry->state.recovery_window)', 'if (false && !entry->state.recovery_window)'),
+        ('!entry->state.host_delete_accepted || !entry->state.draining ||', 'false || !entry->state.draining ||'),
     ]
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
@@ -223,7 +244,7 @@ def main():
             assert block.count(needle)==1,needle
             source.write_text(code.replace(block,block.replace(needle,replacement),1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr or 'EXPECTED_RATE_ORDINARY_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
+            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr or 'EXPECTED_RATE_ORDINARY_' in bad.stderr or 'EXPECTED_RATE_FINAL_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-runtime-rate-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),'production_block_sha256':hashlib.sha256(block.encode()).hexdigest(),'limitations':'Actual scalar runtime hooks, configure bridge and MC wrapper with modeled owner metadata/ref/runtime accounting/scheduler/executor. Complete native runtime cleanup gates run separately on Actions. No firmware ACK, full parent/configuration teardown or RF/Apple proof.'},indent=2)+'\n');print(result)
 

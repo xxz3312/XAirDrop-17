@@ -55,6 +55,21 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     return r->receipt.attempted ? -EOPNOTSUPP : 0;
 }
 
+/* Pure completion evidence shared by ordinary and SSR-final bookkeeping.
+ * No pointer below is dereferenced; all native release origins were observed.
+ */
+static bool mishare_runtime_rate_ordinary_terminal(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+    return !(!r->ordinary_admitted || n->active || n->pe_ready || entry->pe_cookie ||
+            !n->pe_delete_requested || !n->pe_delete_submitted || !n->pe_delete_completed ||
+            !n->peer_delete_pending || !n->peer_delete_submitted || !n->peer_delete_replied ||
+            !n->delete_pending || !n->delete_submitted || !n->delete_replied ||
+            !n->dp_detaching || !n->dp_detach_submitted || !n->dp_freed ||
+            n->create.timer_ready || n->create.stats_owned || n->legacy_ready || n->wma_bound);
+}
+
 /* Registry lock held. Only normal pre-START DELETE may consume this policy.
  * Admission is not an ACK: existing PE/peer/VDEV/DP callbacks still gate every
  * step. Original configuration history is never rewritten during cleanup.
@@ -78,12 +93,7 @@ static int mishare_runtime_rate_ordinary_check(struct mishare_runtime_owner *ent
     if (entry->state.work_pending || entry->state.work_users)
         return -EINPROGRESS;
     if (r->ordinary_completed) {
-        if (!r->ordinary_admitted || n->active || n->pe_ready || entry->pe_cookie ||
-            !n->pe_delete_requested || !n->pe_delete_submitted || !n->pe_delete_completed ||
-            !n->peer_delete_pending || !n->peer_delete_submitted || !n->peer_delete_replied ||
-            !n->delete_pending || !n->delete_submitted || !n->delete_replied ||
-            !n->dp_detaching || !n->dp_detach_submitted || !n->dp_freed ||
-            n->create.timer_ready || n->create.stats_owned || n->legacy_ready || n->wma_bound)
+        if (!mishare_runtime_rate_ordinary_terminal(entry))
             return -EUCLEAN;
     } else if (!r->ordinary_admitted &&
                (!entry->vdev || !entry->referenced || !entry->events ||
@@ -139,6 +149,33 @@ static int mishare_runtime_rate_reset_check(struct mishare_runtime_owner *entry)
     }
     if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
         return -EINPROGRESS;
+    return 0;
+}
+
+/* SSR handoff only AFTER normal native cleanup and accepted host deletion.
+ * This never resumes PE/peer/VDEV/DP operations. The final API and batch still
+ * require the original MC drain and actual final-free before freeing metadata.
+ */
+static int mishare_runtime_rate_final_check(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    int ret;
+
+    if (r->reset_completed)
+        return mishare_runtime_rate_reset_check(entry);
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret != -EOPNOTSUPP || !r->ordinary_completed)
+        return ret;
+    if (entry->state.quiesced != MISHARE_QUIESCE_SSR ||
+        entry->radio || entry->state.ndi.radio_requested || entry->state.ndi.start_plan_requested)
+        return -EOPNOTSUPP;
+    if (!mishare_runtime_rate_ordinary_terminal(entry) ||
+        !entry->state.host_delete_accepted || !entry->state.draining ||
+        !entry->state.allocated || entry->vdev || entry->referenced || entry->events ||
+        entry->state.work_error || entry->state.reclaim_error || entry->state.recovery_error ||
+        entry->state.ndi.completion_error || entry->state.ndi_reclaim_started ||
+        entry->state.host_reclaim)
+        return -EUCLEAN;
     return 0;
 }
 
@@ -1286,8 +1323,7 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
-    if (entry->state.rate.reset_completed ? mishare_runtime_rate_reset_check(entry) :
-        mishare_runtime_rate_retire_check(entry))
+    if (mishare_runtime_rate_final_check(entry))
         return false;
     return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
              !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
@@ -1344,8 +1380,7 @@ int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner)
         ret = -ENOENT;
         goto final_unlock;
     }
-    ret = entry->state.rate.reset_completed ? mishare_runtime_rate_reset_check(entry) :
-          mishare_runtime_rate_retire_check(entry);
+    ret = mishare_runtime_rate_final_check(entry);
     if (ret)
         goto final_unlock;
     n = &entry->state.ndi;
@@ -1427,7 +1462,9 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
         if (entry->psoc != psoc)
             continue;
         {
-            int rate_ret = mishare_runtime_rate_reset_check(entry);
+            int rate_ret = entry->state.host_delete_accepted ?
+                           mishare_runtime_rate_final_check(entry) :
+                           mishare_runtime_rate_reset_check(entry);
             if (rate_ret && rate_ret != -EINPROGRESS) {
                 ret = rate_ret;
                 goto unlock;

@@ -92,6 +92,7 @@ on:
       - tools/kernel/mishare_rate_fixture.py
       - tools/kernel/mishare_rate_work_fixture.py
       - tools/kernel/mishare_runtime_rate_fixture.py
+      - tools/kernel/mishare_rate_final_fixture.py
       - tools/kernel/mishare_rate_ordinary_fixture.py
       - tools/kernel/mishare_rate_reset_fixture.py
       - tools/kernel/mishare_events_fixture.py
@@ -196,6 +197,7 @@ jobs:
         run: |
           python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
           python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
+          python3 tools/kernel/mishare_rate_final_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-final.json
           python3 tools/kernel/mishare_rate_ordinary_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-ordinary.json
           python3 tools/kernel/mishare_rate_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-reset.json
           python3 tools/kernel/mishare_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-execution.json
@@ -207,6 +209,7 @@ jobs:
           path: |
             stop-host.json
             stop-runtime.json
+            stop-rate-final.json
             stop-rate-ordinary.json
             stop-rate-reset.json
             stop-execution.json

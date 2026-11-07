@@ -146,6 +146,11 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
  * completed; this never performs prepared/STARTed recovery. Serialize owner
  * calls and teardown throughout. Unknown opaque tokens return ENOENT.
  */
+/* A configured pre-START ordinary owner may also finish through this metadata
+ * API after all ordinary DELETE/DP/context evidence and host-delete acceptance.
+ * SSR fence + MC drain and actual VDEV final-free remain mandatory. It cannot
+ * resume partial ordinary cleanup or reopen the native recovery window.
+ */
 int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner);
 /* Bounded caller-owned handle table, not the native psoc vdev limit. */
 #define MISHARE_RUNTIME_RECLAIM_BATCH_MAX 64U

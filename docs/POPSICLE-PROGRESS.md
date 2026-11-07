@@ -1,4 +1,8 @@
-## 最新代码阶段 0152（配置后、未 START 的普通异步清理）
+## 最新代码阶段 0153（普通清理完成后的 SSR 元数据衔接）
+
+仅对普通 PE/peer/VDEV/DP/context 清理已完成、host 删除已接受、正等待外部 VDEV final-free 的配置 owner，接入既有 SSR final/batch 元数据退休。保留原始回执，继续等待 MC 排空和真实 final-free；不续跑 native 清理，不重发 DELETE/DP detach。部分普通清理遇到 SSR 仍保留。本地 12 项状态变异检查、100 项 Python 回归通过；256 组 native 衔接、22 组保留故障、PE 删除中断拒绝及 3 项原生变异控制待 CI。0152 六项必选 CI 通过，完整编译/父级组合仍运行。公开 init/START 关闭，手机无需操作。见 [0153 实现与限制](POPSICLE-RATE-FINAL-HANDOFF-0153.md)。
+
+## 阶段 0152（配置后、未 START 的普通异步清理）
 
 接入既有普通 PE/peer/VDEV/DP/context/host 清理链。新增 ordinary admission/completion 记录，保留速率原始回执，逐项核对普通 DELETE 及 DP final-free，禁止混合 SSR 路径和公开 START。本地 11 项状态模型变异检查、100 项 Python 回归通过；256 组 native 配置清理组合、24 组失败保留、5 种入口拒绝及 3 项原生变异控制已通过 Actions 42389562888 的 stop-admission，原有配置 SSR 组合也通过；完整目标构建仍在运行。0151 八项必选 CI 全通过。公开 init/START 关闭，手机无需操作。见 [0152 实现与限制](POPSICLE-RATE-ORDINARY-RETIRE-0152.md)。
 

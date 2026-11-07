@@ -1,0 +1,31 @@
+{
+  "stage": "0153",
+  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "scalar_mutations": 12,
+    "python_regressions": 100,
+    "native_source_generated_only": true
+  },
+  "native_pending": {
+    "handoff_combinations": 256,
+    "retention_faults": 22,
+    "PE_delete_interruption_rejected": true,
+    "mutation_controls": 3
+  },
+  "scope": "SSR metadata only after ordinary resource cleanup and accepted host deletion; partial ordinary cleanup remains held",
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Physical primitives and rate receipts modeled; caller retains parents. No mixed partial native recovery, configured START/UP, phone/RF/Apple certification."
+}
