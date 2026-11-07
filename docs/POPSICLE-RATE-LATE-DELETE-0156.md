@@ -20,6 +20,6 @@
 
 本地实际 scalar rate/准入代码、17 项变异检查及 100 项 Python 回归通过，语法和 diff 检查通过。native composition 从锁定源生成，本地不编译。
 
-新增独立 Actions-only 原生组合：两个频段 × 四种速率结果 × 16 种回调组合 × direct/batch，共 256 组。实际选择体的 DELETE reply/timer/PM origin 在原始 SSR fence 后执行，再衔接原生首次 DP submit、DP final-free、WMA/legacy finish 和 host final-free。10 类保留场景覆盖 fence 前异常、首因 REMOVE、send 证据缺失、timeout、重复 VDEV/peer、关窗、回执缺失、外来 PSOC 以及 receipt 完整性错误。三个原生变异控制分别移除 armed 记录、延迟回执分支或封锁前健康检查。新增组合和完整构建待本轮 CI。
+新增独立 Actions-only 原生组合：两个频段 × 四种速率结果 × 16 种回调组合 × direct/batch，共 256 组。实际选择体的 DELETE reply/timer/PM origin 在原始 SSR fence 后执行，再衔接原生首次 DP submit、DP final-free、WMA/legacy finish 和 host final-free。10 类保留场景覆盖 fence 前异常、首因 REMOVE、send 证据缺失、timeout、重复 VDEV/peer、关窗、回执缺失、外来 PSOC 以及 receipt 完整性错误。三个原生变异控制分别移除 armed 记录、延迟回执分支或封锁前健康检查。新增 native 组合及三个变异控制已通过 Actions 42408125741、stop-admission 作业 128510161200 的独立步骤 Native late DELETE reply across SSR with sanitizers。其余生命周期回归和完整目标构建仍在运行，不提前计为全部 CI 通过。
 
 firmware 回执到达、物理 transport/DP/peer/ref/lock 原语仍是模型；caller/fixture 持有原生父级。没有收到真实 DELETE reply 的对象仍不恢复，未覆盖更早 PE/peer 回执中断、配置后 START/UP、自动完整 parent lease 或手机/RF/Apple 互通。无手机安装包。

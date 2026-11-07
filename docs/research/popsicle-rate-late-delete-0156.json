@@ -1,6 +1,6 @@
 {
   "stage": "0156",
-  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "status": "NATIVE_LATE_DELETE_COMPOSITE_PASS_ONLY",
   "previous_stage_ci": {
     "run_id": 42405410946,
     "required_jobs": 8,
@@ -23,12 +23,21 @@
     "python_regressions": 100,
     "native_source_generated_only": true
   },
-  "native_pending": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Real modeled native DELETE reply origin after healthy original SSR fence; no ACK synthesis or reopening. Physical primitives modeled; caller retains parents. Missing earlier replies, configured START/UP, phone/RF/Apple excluded.",
+  "native_verified": {
     "late_reply_combinations": 256,
     "retention_cases": 10,
     "mutation_controls": 3
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Real modeled native DELETE reply origin after healthy original SSR fence; no ACK synthesis or reopening. Physical primitives modeled; caller retains parents. Missing earlier replies, configured START/UP, phone/RF/Apple excluded."
+  "native_ci": {
+    "run_id": 42408125741,
+    "source_commit": "f350d16caedd44f5eb090afee5afee2bed40a2dd",
+    "job_id": 128510161200,
+    "step_name": "Native late DELETE reply across SSR with sanitizers",
+    "step_conclusion": "success",
+    "lifecycle_regressions": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }
