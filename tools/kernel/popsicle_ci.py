@@ -107,6 +107,7 @@ def setup(work):
         ('wlan_hdd_mishare_bridge_scope.h', 'inc'),
         ('wlan_hdd_mishare_init.h', 'inc'),
         ('wlan_hdd_mishare_rate.c', 'src'), ('wlan_hdd_mishare_rate.h', 'inc'),
+        ('wlan_hdd_mishare_rate_work.c', 'src'),
         ('wlan_hdd_mishare_mgmt_rx.c', 'src'), ('wlan_hdd_mishare_mgmt_rx.h', 'inc'),
         ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc'),
         ('mishare_raw_protocol.h', 'inc'),
@@ -123,6 +124,8 @@ def setup(work):
 
     shutil.copy2(REPO / 'kernel/provider/wondertap.h',
                  work / 'wlan/qcacld-3.0/core/hdd/inc/wlan_hdd_mishare_wonder_api.h')
+    shutil.copy2(REPO / 'kernel/popsicle-hdd/wma_mishare_rate.h',
+                 work / 'wlan/qcacld-3.0/core/wma/src/wma_mishare_rate.h')
 
     shutil.copy2(REPO / 'kernel/wonder/wondertap_managed.h',
                  work / 'wlan/qcacld-3.0/core/hdd/inc/wlan_hdd_mishare_managed.h')
@@ -211,6 +214,8 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_events_submitted', 'mishare_events_snapshot', 'mishare_events_notify',
              'mishare_events_begin_vdev', 'mishare_command_submit_start',
              'mishare_command_submit_stop', 'passthru_mlme_ops',
+             'mishare_rate_submit', 'mishare_rate_submit_mc',
+             'mishare_rate_post', 'mishare_ndi_rate_command',
              'mishare_wonder_host_vdev_create_locked', 'mishare_wonder_host_vdev_destroy_locked',
              'mishare_runtime_create', 'mishare_runtime_destroy', 'mishare_runtime_snapshot',
              'mishare_runtime_allocated', 'mishare_runtime_prepare_free', 'mishare_runtime_freed',

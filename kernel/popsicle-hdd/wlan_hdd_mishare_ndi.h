@@ -7,6 +7,8 @@
 #include <linux/types.h>
 struct wlan_objmgr_vdev;
 struct wlan_objmgr_psoc;
+/* MC-only exact-WMA binding, restricted to fixed-rate/GI/HT20 parameters. */
+int mishare_ndi_rate_command(struct wlan_objmgr_vdev *vdev, u32 param, u32 value);
 bool mishare_runtime_work_allowed(struct wlan_objmgr_vdev *vdev, void *owner);
 /* Each owned MC message gets one reservation before posting. Enter/exit spans
  * native execution; put follows its completion publication. Caller holds a

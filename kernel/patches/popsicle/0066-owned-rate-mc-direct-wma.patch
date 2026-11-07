@@ -1,0 +1,12 @@
+--- a/qcacld-3.0/core/wma/src/wma_main.c
++++ b/qcacld-3.0/core/wma/src/wma_main.c
+@@ -1085,1 +1085,3 @@
++#include "wma_mishare_rate.h"
++
+ QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -268,2 +268,3 @@
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_rate.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_rate_work.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_commands.o \

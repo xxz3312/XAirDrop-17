@@ -45,7 +45,7 @@ struct wlan_objmgr_vdev;
 struct mishare_rate_submission {
     bool busy;
     bool attempted;
-    bool complete; /* All three commands queued; NOT firmware acknowledgement. */
+    bool complete; /* All three submissions accepted; NOT firmware ACK. */
     u8 vdev_id;
     u8 attempted_mask; /* bit 0 fixed rate, bit 1 GI, bit 2 bandwidth */
     u8 submitted_mask;
@@ -64,4 +64,25 @@ struct mishare_rate_submission {
 int mishare_rate_submit(struct wlan_objmgr_vdev *vdev,
                          const struct wondertap_fixed_tx_rate_params *params,
                          struct mishare_rate_submission *receipt);
+/* Same one-shot receipt, but MC-thread-only direct native WMI submission,
+ * without nested CLI queueing. Caller supplies work/lifetime admission.
+ */
+int mishare_rate_submit_mc(struct wlan_objmgr_vdev *vdev,
+                            const struct wondertap_fixed_tx_rate_params *params,
+                            struct mishare_rate_submission *receipt);
+typedef void (*mishare_rate_complete_fn)(void *owner,
+                                        const struct mishare_rate_submission *receipt,
+                                        int result);
+/* Caller serializes one-shot posting for an existing runtime owner. Captures
+ * scalar params, acquires a VDEV ref and runtime work reservation before MC
+ * queue publication. Completion runs once while both are held; copy receipt
+ * during that callback. Initialize caller state before posting: completion
+ * can be inline. Never wait for work drain/retirement inside completion.
+ * Pre-publication failure has no callback. Completion
+ * does not prove firmware ACK. Owner/parents/firmware must stay retained until
+ * owned work drains, then follow qualified native teardown. No public caller.
+ */
+int mishare_rate_post(struct wlan_objmgr_vdev *vdev, void *owner,
+                       const struct wondertap_fixed_tx_rate_params *params,
+                       mishare_rate_complete_fn complete);
 #endif

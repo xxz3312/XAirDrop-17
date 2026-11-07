@@ -90,6 +90,7 @@ on:
       - tools/kernel/mishare_ops_fixture.py
       - tools/kernel/mishare_commands_fixture.py
       - tools/kernel/mishare_rate_fixture.py
+      - tools/kernel/mishare_rate_work_fixture.py
       - tools/kernel/mishare_events_fixture.py
       - tools/kernel/mishare_response_fixture.py
       - tools/kernel/mishare_txn_fixture.py
@@ -146,6 +147,7 @@ jobs:
           python3 tools/kernel/mishare_bridge_scope_fixture.py
           python3 tools/kernel/mishare_init_fixture.py
           python3 tools/kernel/mishare_rate_fixture.py
+          python3 tools/kernel/mishare_rate_work_fixture.py
           python3 tools/kernel/wonder_managed_fixture.py
           python3 tools/kernel/wonder_provider_fixture.py
       - uses: actions/upload-artifact@v4

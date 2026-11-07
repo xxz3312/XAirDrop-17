@@ -1,6 +1,10 @@
+## 最新代码阶段 0149（owned MC 速率批次和 WMA 直接提交）
+
+0147/0148 全部八项必选 CI 已通过。新增固定速率 post：复制有效参数、取得 VDEV ref/runtime work reservation 后排 MC，执行/flush/封锁结果发布时仍保留所有权，最后归还工作和引用。MC 分支使用精确 WMA/PSOC/VDEV 身份校验及受限参数直接提交，不再嵌套普通 CLI 消息；首次错误、部分提交和 one-shot receipt 保留。384 组速率场景、15 项变异检查、工作所有权 C 模型及 100 项 Python 回归本地通过，目标编译待 CI。尚未连接 runtime 配置状态机/公开 init，未完成全局配置或完整父级租约；手机无需操作。见 [0149 实现与限制](POPSICLE-OWNED-RATE-WORK-0149.md)。
+
 ## 最新代码阶段 0148（初始化准备与速率执行共用支持合同）
 
-实际 managed prepare 接入与 0147 执行器相同的纯参数检查，在 native scope、监管查询和元数据保存前拒绝当前不支持的 MCS/GI/legacy/带宽/NSS，明确拒绝 rate adaptation。有效请求仍须每次重新经过原生国家/信道/NSS 检查；未应用参数的 raw step 仍关闭。192 组速率执行器 C 模型、六项执行器变异检查、100 项本地 Python 回归通过；新增 11 项 host 拒绝检查和两个支持合同变异控制待 CI。0147 六项必选 CI 已成功，完整构建和父级组合回归仍待结果。配置事务和跨调用父级生命周期尚未完成，公开 init/poll 关闭，手机无需操作。见 [0148 支持合同和限制](POPSICLE-RATE-ADMISSION-0148.md)。
+实际 managed prepare 接入与 0147 执行器相同的纯参数检查，在 native scope、监管查询和元数据保存前拒绝当前不支持的 MCS/GI/legacy/带宽/NSS，明确拒绝 rate adaptation。有效请求仍须每次重新经过原生国家/信道/NSS 检查；未应用参数的 raw step 仍关闭。192 组速率执行器 C 模型、六项执行器变异检查、100 项本地 Python 回归通过；新增 11 项 host 拒绝检查和两个支持合同变异控制待 CI。0147 和本阶段 Actions 42370003141 的全部八项必选 CI 已成功。配置事务和跨调用父级生命周期尚未完成，公开 init/poll 关闭，手机无需操作。见 [0148 支持合同和限制](POPSICLE-RATE-ADMISSION-0148.md)。
 
 ## 最新代码阶段 0147（固定速率原生命令执行器）
 

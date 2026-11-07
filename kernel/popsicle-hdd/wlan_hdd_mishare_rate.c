@@ -7,6 +7,7 @@
 #include "wlan_hdd_main.h"
 #include "wma_api.h"
 #include "wlan_hdd_mishare_rate.h"
+#include "wlan_hdd_mishare_ndi.h"
 
 static int mishare_rate_encode(const struct wondertap_fixed_tx_rate_params *p,
                                 u32 *rate, u8 *gi)
@@ -33,9 +34,15 @@ static int mishare_rate_encode(const struct wondertap_fixed_tx_rate_params *p,
     return 0;
 }
 
-int mishare_rate_submit(struct wlan_objmgr_vdev *vdev,
+static int mishare_rate_queued_command(struct wlan_objmgr_vdev *vdev, u32 param, u32 value)
+{
+    return wma_cli_set_command(wlan_vdev_get_id(vdev), param, value, VDEV_CMD);
+}
+
+static int mishare_rate_execute(struct wlan_objmgr_vdev *vdev,
                          const struct wondertap_fixed_tx_rate_params *params,
-                         struct mishare_rate_submission *receipt)
+                         struct mishare_rate_submission *receipt,
+                         int (*send)(struct wlan_objmgr_vdev *, u32, u32))
 {
     struct vdev_mlme_obj *mlme;
     u32 rate;
@@ -63,18 +70,17 @@ int mishare_rate_submit(struct wlan_objmgr_vdev *vdev,
     receipt->attempted = true;
     receipt->vdev_id = wlan_vdev_get_id(vdev);
     receipt->attempted_mask = BIT(0);
-    ret = wma_cli_set_command(receipt->vdev_id, wmi_vdev_param_fixed_rate, rate, VDEV_CMD);
+    ret = send(vdev, wmi_vdev_param_fixed_rate, rate);
     if (ret)
         goto finish;
     receipt->submitted_mask = BIT(0);
     receipt->attempted_mask |= BIT(1);
-    ret = wma_cli_set_command(receipt->vdev_id, wmi_vdev_param_sgi, gi, VDEV_CMD);
+    ret = send(vdev, wmi_vdev_param_sgi, gi);
     if (ret)
         goto finish;
     receipt->submitted_mask |= BIT(1);
     receipt->attempted_mask |= BIT(2);
-    ret = wma_cli_set_command(receipt->vdev_id, wmi_vdev_param_chwidth,
-                              WONDERTAP_RATE_BW_20, VDEV_CMD);
+    ret = send(vdev, wmi_vdev_param_chwidth, WONDERTAP_RATE_BW_20);
     if (ret)
         goto finish;
     receipt->submitted_mask |= BIT(2);
@@ -83,4 +89,18 @@ finish:
     receipt->first_error = ret;
     receipt->busy = false;
     return ret;
+}
+
+int mishare_rate_submit(struct wlan_objmgr_vdev *vdev,
+                         const struct wondertap_fixed_tx_rate_params *params,
+                         struct mishare_rate_submission *receipt)
+{
+    return mishare_rate_execute(vdev, params, receipt, mishare_rate_queued_command);
+}
+
+int mishare_rate_submit_mc(struct wlan_objmgr_vdev *vdev,
+                            const struct wondertap_fixed_tx_rate_params *params,
+                            struct mishare_rate_submission *receipt)
+{
+    return mishare_rate_execute(vdev, params, receipt, mishare_ndi_rate_command);
 }

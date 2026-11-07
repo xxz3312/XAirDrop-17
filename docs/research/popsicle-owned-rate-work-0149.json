@@ -1,0 +1,34 @@
+{
+  "stage": "0149",
+  "status": "LOCAL_OWNED_RATE_MC_MODEL_ONLY",
+  "previous_stage_ci": {
+    "0147": {
+      "run": 42368694662,
+      "required_passed": 8
+    },
+    "0148": {
+      "run": 42370003141,
+      "required_passed": 8
+    }
+  },
+  "rate_scenarios": 384,
+  "rate_mutations": 6,
+  "native_wma_mutations": 4,
+  "work_mutations": 5,
+  "python_tests": 100,
+  "native_patch_apply_check": true,
+  "target_build": "PENDING_CI",
+  "public_init_enabled": false,
+  "phone_action_required": false,
+  "sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate.c": "2ceb9089394f813527e2308b8c2aa163389eca9050f1259e612b7b2343d3a213",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate.h": "4f2bd0d2b7f24f10c9adee7be5bfc5481bf1761603790b3caf9518e8ec58b0a4",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate_work.c": "8bfb3e8df7005b14730ab4ad098aa685a2868670ab9f7857440246ce7ff53a0a",
+    "kernel/popsicle-hdd/wma_mishare_rate.h": "123a5e9a5fc188cdb23c207fd5c8a08e6bff6dc9fc401f43cbf972d5d383aa4d",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_ndi.h": "acab441f93997788f26f0a72541a3a37916c6fd19f071982c1b4eff93cb9402c",
+    "kernel/patches/popsicle/0066-owned-rate-mc-direct-wma.patch": "1c9f8e0fea58b289b998cacf5fc468b4686b028ec8fbb8b5e19a71bb3f193cfc",
+    "tools/kernel/mishare_rate_fixture.py": "b5a025a42de6a095fc9553a1413564047dedd0286f5a20a758ac567827eb703c",
+    "tools/kernel/mishare_rate_work_fixture.py": "6ff79d71a8dceff4aca6cbac97d6bd3ed2cd34e05f734eb70f76dbde542335a6"
+  },
+  "limitations": "Native type/compile/link pending CI. Work reservation, ref and transport primitives modeled; no full runtime/configuration/parent teardown or firmware ACK/RF/Apple certification."
+}

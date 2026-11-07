@@ -32,19 +32,30 @@ typedef uint32_t u32;
 #define wmi_vdev_param_chwidth 107
 #include "wlan_hdd_mishare_rate.h"
 struct vdev_mlme_obj;
-struct wlan_objmgr_vdev {int refs,mode;u8 id;struct vdev_mlme_obj *mlme;};
+struct wlan_objmgr_vdev {int refs,mode;u8 id;struct vdev_mlme_obj *mlme;void *psoc;};
 struct vdev_mlme_obj {struct wlan_objmgr_vdev *vdev;void *ext_vdev_ptr;struct {struct {u8 type,subtype;} generic;} mgmt;};
 static struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *v){assert(v->refs);return v->mlme;}
 static int wlan_vdev_mlme_get_opmode(struct wlan_objmgr_vdev *v){assert(v->refs);return v->mode;}
 static u8 wlan_vdev_get_id(struct wlan_objmgr_vdev *v){assert(v->refs);return v->id;}
 static int hdd_assemble_rate_code(u8 pre,u8 nss,u8 mcs){return (pre<<16)|(nss<<8)|mcs;}
+#define QDF_MODULE_ID_WMA 61
+struct iface_model {struct wlan_objmgr_vdev *vdev;};
+static struct iface_model interfaces[64];
+struct wma_model {void *psoc,*wmi_handle;struct iface_model *interfaces;u8 max_bssid;};
+typedef struct wma_model *tp_wma_handle;
+static struct wma_model wma;
+static bool use_mc,wma_present=true,wma_valid=true;
+static void *cds_get_context(int id){assert(id==61);return wma_present?&wma:NULL;}
+static void *wlan_vdev_get_psoc(struct wlan_objmgr_vdev *v){return v->psoc;}
+static bool wma_is_vdev_valid(u8 id){assert(id<64);return wma_valid;}
+static int qdf_status_to_os_return(int s){return s;}
 static unsigned calls,fail_at;
 static int fail_error;
 static u32 want_rate,want_gi;
 static struct wlan_objmgr_vdev *target;
 static const struct wondertap_fixed_tx_rate_params *params;
 static struct mishare_rate_submission *receipt;
-static int wma_cli_set_command(int id,int cmd,u32 value,int kind){
+static int modeled_send(int id,int cmd,u32 value,int kind){
  const int commands[]={101,103,107};const u32 values[]={want_rate,want_gi,0};
  assert(calls<3 && id==target->id && kind==97 && cmd==commands[calls] && value==values[calls] && "EXPECTED_RATE_ORDER");
  assert(receipt->busy && receipt->attempted && !receipt->complete && receipt->vdev_id==id && "EXPECTED_RATE_RECEIPT");
@@ -54,20 +65,24 @@ static int wma_cli_set_command(int id,int cmd,u32 value,int kind){
  calls++;
  return calls==fail_at?fail_error:0;
 }
+static int wma_cli_set_command(int id,int cmd,u32 value,int kind){assert(!use_mc && "EXPECTED_RATE_NO_NESTED_QUEUE");return modeled_send(id,cmd,value,kind);}
+static int wma_vdev_set_param(void *handle,u32 id,u32 cmd,u32 value){assert(use_mc && handle==wma.wmi_handle && "EXPECTED_RATE_DIRECT_WMI");return modeled_send(id,cmd,value,97);}
+#include "wma_mishare_rate.h"
 #include "wlan_hdd_mishare_rate.c"
-static void run_case(struct wlan_objmgr_vdev *v,struct wondertap_fixed_tx_rate_params *p,unsigned fail){
+static void run_case(struct wlan_objmgr_vdev *v,struct wondertap_fixed_tx_rate_params *p,unsigned fail,bool mc){
  struct mishare_rate_submission r={0};struct wondertap_fixed_tx_rate_params saved=*p;
- target=v;params=p;receipt=&r;calls=0;fail_at=fail;fail_error=fail==1?-EIO:fail==2?-ENOSPC:-ESHUTDOWN;
- int ret=mishare_rate_submit(v,p,&r);
+ use_mc=mc;target=v;params=p;receipt=&r;calls=0;fail_at=fail;fail_error=fail==1?-EIO:fail==2?-ENOSPC:-ESHUTDOWN;
+ int (*submit)(struct wlan_objmgr_vdev *,const struct wondertap_fixed_tx_rate_params *,struct mishare_rate_submission *)=mc?mishare_rate_submit_mc:mishare_rate_submit;
+ int ret=submit(v,p,&r);
  assert(ret==(fail?fail_error:0) && r.first_error==ret && !r.busy && r.complete==!fail && "EXPECTED_RATE_ERROR");
  assert(calls==(fail?fail:3) && r.attempted_mask==((1U<<calls)-1) && r.submitted_mask==((1U<<(calls-(fail!=0)))-1) && "EXPECTED_RATE_ERROR");
  unsigned before=calls;
- assert(mishare_rate_submit(v,p,&r)==(fail?fail_error:-EALREADY) && calls==before && "EXPECTED_RATE_REPLAY");
- assert(mishare_rate_submit(NULL,NULL,&r)==(fail?fail_error:-EALREADY) && calls==before && "EXPECTED_RATE_REPLAY");
+ assert(submit(v,p,&r)==(fail?fail_error:-EALREADY) && calls==before && "EXPECTED_RATE_REPLAY");
+ assert(submit(NULL,NULL,&r)==(fail?fail_error:-EALREADY) && calls==before && "EXPECTED_RATE_REPLAY");
  assert(!memcmp(p,&saved,sizeof(saved)));
 }
 int main(void){
- struct wlan_objmgr_vdev v={.refs=1,.mode=17,.id=42};
+ struct wlan_objmgr_vdev v={.refs=1,.mode=17,.id=42};v.psoc=&v;wma.interfaces=interfaces;wma.psoc=&v;wma.wmi_handle=&wma;wma.max_bssid=64;wma.interfaces[42].vdev=&v;
  struct vdev_mlme_obj m={.vdev=&v,.ext_vdev_ptr=&v,.mgmt.generic.type=58};v.mlme=&m;
  struct wondertap_fixed_tx_rate_params p={.preamble=WONDERTAP_RATE_PREAMBLE_HE,.nss=1},bad;
  struct mishare_rate_submission r={0},zero=r;
@@ -79,7 +94,7 @@ int main(void){
   if((pre<=2 && gi>1)||(pre>=3 && gi==1))continue;
   p.preamble=pre;p.nss=nss;p.gi=gi;p.mcs=edge?limits[pre]:0;
   want_rate=(native[pre]<<16)|((nss-1)<<8)|p.mcs;want_gi=gi==1?1:gi==3?2:gi==4?3:0;
-  for(unsigned fail=0;fail<=3;fail++)run_case(&v,&p,fail);
+  for(unsigned fail=0;fail<=3;fail++)for(unsigned mc=0;mc<2;mc++)run_case(&v,&p,fail,mc);
  }
  for(unsigned fault=0;fault<14;fault++){
   p=(struct wondertap_fixed_tx_rate_params){.preamble=WONDERTAP_RATE_PREAMBLE_HE,.nss=1};bad=p;
@@ -116,6 +131,19 @@ int main(void){
   assert(mishare_rate_submit(&v,&p,&r)==-EOPNOTSUPP && !calls && !memcmp(&r,&zero,sizeof(r)) && "EXPECTED_RATE_PARENT");
   m=foreign;v.mode=17;v.mlme=&m;
  }
+ calls=0;
+ for(unsigned fault=0;fault<8;fault++){
+  if(fault==0)wma_present=false;
+  if(fault==1)wma.psoc=NULL;
+  if(fault==2)wma.interfaces[42].vdev=NULL;
+  if(fault==3)wma.max_bssid=42;
+  if(fault==4)wma_valid=false;
+  if(fault==5)wma.wmi_handle=NULL;
+  u32 cmd=fault==6?999:103,value=fault==7?4:0;
+  assert(mishare_ndi_rate_command(&v,cmd,value)<0 && !calls && "EXPECTED_NATIVE_RATE_PARENT");
+  wma_present=wma_valid=true;wma.psoc=&v;wma.interfaces[42].vdev=&v;wma.max_bssid=64;wma.wmi_handle=&wma;
+ }
+ assert(mishare_ndi_rate_command(&v,107,1)==-EOPNOTSUPP && !calls);
  assert(v.refs==1);
  puts("MISHARE_FIXED_RATE_FIXTURE_PASS_ONLY");return 0;
 }
@@ -125,20 +153,28 @@ int main(void){
 def main():
     production=ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_rate.c'
     original=production.read_text()
-    headers={'wlan_hdd_mishare_rate.h':ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_rate.h',
+    headers={'wma_mishare_rate.h':ROOT/'kernel/popsicle-hdd/wma_mishare_rate.h',
+             'wlan_hdd_mishare_rate.h':ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_rate.h',
              'wlan_hdd_mishare_wonder_api.h':ROOT/'kernel/provider/wondertap.h'}
     mutations=[
         ('if (receipt->attempted)', 'if (false && receipt->attempted)'),
         ('if (ret)\n        goto finish;', 'if (false && ret)\n        goto finish;'),
         ('case WONDERTAP_RATE_GI_1_6_US: *gi = 2;', 'case WONDERTAP_RATE_GI_1_6_US: *gi = 3;'),
         ('preamble, p->nss - 1, p->mcs', 'preamble, p->nss, p->mcs'),
-        ('WONDERTAP_RATE_BW_20, VDEV_CMD);', 'WONDERTAP_RATE_BW_40, VDEV_CMD);'),
+        ('WONDERTAP_RATE_BW_20);', 'WONDERTAP_RATE_BW_40);'),
         ('receipt->attempted_mask |= BIT(2);', 'receipt->submitted_mask |= BIT(2); receipt->attempted_mask |= BIT(2);'),
+    ]
+    native_mutations=[
+        ('wma->psoc != wlan_vdev_get_psoc(vdev)', '(false && wma->psoc != wlan_vdev_get_psoc(vdev))'),
+        ('wma->interfaces[id].vdev != vdev', '(false && wma->interfaces[id].vdev != vdev)'),
+        ('!wma_is_vdev_valid(id)', '(false && !wma_is_vdev_valid(id))'),
+        ('return qdf_status_to_os_return(wma_vdev_set_param(', 'return 0 * qdf_status_to_os_return(wma_vdev_set_param('),
     ]
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
         for name in ['wlan_objmgr_vdev_obj.h','wlan_vdev_mlme_api.h','wlan_vdev_mlme.h','wlan_hdd_main.h','wma_api.h','linux/if_ether.h']:
             (d/name).write_text('/* Native primitives modeled in harness. */\n')
+        (d/'wlan_hdd_mishare_ndi.h').write_text('int mishare_ndi_rate_command(struct wlan_objmgr_vdev *,u32,u32);\n')
         (d/'linux/errno.h').write_text('#include_next <linux/errno.h>\n')
         for name,path in headers.items():(d/name).write_bytes(path.read_bytes())
         source=d/'test.c';source.write_text(HARNESS);body=d/production.name;body.write_text(original)
@@ -153,12 +189,20 @@ def main():
             subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             assert bad.returncode == -6 and 'EXPECTED_RATE_' in bad.stderr,(needle,bad.returncode,bad.stderr[-1200:])
+        body.write_text(original)
+        native_original=headers['wma_mishare_rate.h'].read_text()
+        for needle,replacement in native_mutations:
+            assert native_original.count(needle)==1,needle
+            (d/'wma_mishare_rate.h').write_text(native_original.replace(needle,replacement))
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and ('EXPECTED_RATE_' in bad.stderr or 'EXPECTED_NATIVE_RATE_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1400:])
     report=ROOT/'.popsicle-ci/artifacts/reports/mishare-rate-fixture.json'
     report.parent.mkdir(parents=True,exist_ok=True)
-    report.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),
+    report.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),'native_wma_mutation_controls':len(native_mutations),'rate_scenarios':384,
         'production_sha256':hashlib.sha256(original.encode()).hexdigest(),
         'header_sha256':{name:hashlib.sha256(path.read_bytes()).hexdigest() for name,path in headers.items()},
-        'limitations':'Production executor with modeled VDEV/MLME, native rate encoder and WMA command queue only. No firmware ACK, parent lifetime, platform rate capability, regulatory permission, radio or Apple certification. Local leak detection disabled for ptrace host; Actions enables it.'},indent=2)+'\n')
+        'limitations':'Production executor and private native WMA helper with modeled VDEV/MLME, WMA binding, native rate encoder and WMI/CLI submissions. No firmware ACK, parent lifetime, platform rate capability, regulatory permission, radio or Apple certification. Local leak detection disabled for ptrace host; Actions enables it.'},indent=2)+'\n')
     print(result)
 
 
