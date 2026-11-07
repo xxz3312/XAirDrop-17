@@ -1,0 +1,29 @@
+{
+  "stage": "0143",
+  "source_commit": "7de10d81a4b9871b91c45ae1664cb2e884453fee",
+  "workflow_run_id": 42341386219,
+  "bridge_job_id": 128309612071,
+  "bridge_job_conclusion": "success",
+  "host_job_id": 128309612128,
+  "host_job_conclusion": "success",
+  "local_python_regressions": 100,
+  "production_and_fixture_sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.c": "fa77cc9b737ec47fb5b9d58aad982a7c4bbb05e60e20bc648c111c9aae35f940",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "f1da8525fd51816542bd7d3094548ef158634ffd8ff38dd4ed595b66d8be6f7b",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_bridge.h": "d989bdccb558a708f1f49b038e774b8dc5c2e53f22188f7193c1e38bfe8757fe",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_bridge_scope.h": "f722d903f146a24aeeb05b7f2a1454fe92d25d27b9c9494ce18893b7b7afb873",
+    "tools/kernel/mishare_host_fixture.py": "d14b773cf2f1ef05c3821bd54ef80f86b11c2dd648096eef6d17f0b4bbbdd14e",
+    "tools/kernel/mishare_bridge_fixture.py": "fd839e47d3dbcc12113cf20f420c18a446bba650f7b645f8c69297c83b154803",
+    "tools/kernel/mishare_bridge_scope_fixture.py": "f61c61319eae51bae9fb6315daee259603e61c8fbce046415f154026a7ec92d0"
+  },
+  "previous_0142_required_jobs_success": 8,
+  "full_target_build": "in_progress_at_recording",
+  "phone_actions": false,
+  "limitations": [
+    "Receipt transfers ordinary-idle host ownership; it does not initiate native cleanup.",
+    "No automatic managed owner callback or complete between-call native parent lease.",
+    "Existing qualified SSR limits retained; committed START/UP recovery unsupported.",
+    "Module/parent/firmware/concurrency endpoints remain modeled; no phone, RX/TX or Apple validation."
+  ],
+  "negative_receipt_controls_rejected": 2
+}
