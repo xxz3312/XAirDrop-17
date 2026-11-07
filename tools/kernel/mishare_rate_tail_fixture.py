@@ -94,11 +94,12 @@ def negative_controls(directory,c_file,command,env,source,root):
     ]
     override=directory/'wlan_hdd_mishare_runtime.c'
     try:
-        for modified in controls:
+        for index,modified in enumerate(controls):
             assert modified!=runtime
             override.write_text(modified);subprocess.run(command,check=True)
             bad=subprocess.run([directory/'engine'],capture_output=True,text=True,env=env,timeout=60)
-            assert bad.returncode==-6 and 'EXPECTED_RATE_TAIL_' in bad.stderr,(bad.returncode,bad.stderr[-2000:])
+            marker='!dp_objects && !pending_dp_cb' if index==0 else 'EXPECTED_RATE_TAIL_'
+            assert bad.returncode==-6 and marker in bad.stderr,(bad.returncode,bad.stderr[-2000:])
     finally:
         override.unlink(missing_ok=True)
 
