@@ -13,6 +13,7 @@ struct mishare_runtime_rate_result {
 };
 struct mishare_runtime_rate_status {
     bool requested, posted, accepted, completed, integrity_error;
+    bool reset_admitted, reset_completed; /* Qualified native SSR progress only. */
     struct mishare_runtime_rate_request request;
     struct mishare_runtime_rate_result receipt;
 };
@@ -20,8 +21,9 @@ struct mishare_runtime_rate_status {
  * before START-plan/radio. Caller retains native parents across all polls.
  * EINPROGRESS means posted only; use runtime_snapshot for actual completion.
  * No automatic managed caller, firmware ACK or complete configuration claim.
- * Attempted submissions currently prohibit START and retirement: the safe
- * post-configuration teardown coordinator must be installed before enabling.
+ * Attempted submissions prohibit START and ordinary retirement. Only the
+ * qualified pre-START SSR reset path can release their configured resources.
+ * Ordinary post-configuration teardown is still required before enabling.
  */
 int mishare_runtime_rate_configure(struct mishare_runtime_owner *owner,
                                    const struct wondertap_fixed_tx_rate_params *params);

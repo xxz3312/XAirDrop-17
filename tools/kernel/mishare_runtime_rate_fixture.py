@@ -12,6 +12,7 @@ from mishare_rate_work_fixture import HARNESS as WORK_HARNESS, ROOT
 MODEL=r'''
 #include "wlan_hdd_mishare_runtime_rate.h"
 struct mishare_ndi_status {
+ struct {bool timer_ready,dp_attached;} create;
  bool blocked,active,legacy_ready,wma_bound,peer_created,pe_ready,pe_submitted,pe_completed;
  bool channel_submitted,channel_completed,channel_prepared,start_plan_requested,radio_requested;
  bool pe_delete_requested,peer_delete_pending,delete_pending;
@@ -19,6 +20,11 @@ struct mishare_ndi_status {
 };
 struct runtime_model_state {
  bool blocked,draining,allocated,freed;int quiesced;
+ bool mc_drained,recovery_window,recovery_window_closed,ndi_reclaim_started,ndi_reclaim_ready;
+ bool recovery_timer_attempted,recovery_timer_released,recovery_pe_attempted,recovery_pe_released;
+ bool recovery_context_attempted,recovery_context_finish_attempted,recovery_context_released;
+ bool recovery_peer_released,recovery_dp_attempted,recovery_dp_freed;
+ int work_error,recovery_error,reclaim_error;
  unsigned work_pending,work_users;
  struct mishare_ndi_status ndi;
  struct mishare_runtime_rate_status rate;
@@ -31,6 +37,7 @@ static struct mishare_runtime_owner owner,*mishare_runtime_owners=&owner;
 static int mishare_runtime_lock,lock_depth;
 #define spin_lock_irqsave(l,f) do{(void)(l);(f)=0;assert(!lock_depth);lock_depth++;}while(0)
 #define spin_unlock_irqrestore(l,f) do{(void)(l);(void)(f);assert(lock_depth==1);lock_depth--;}while(0)
+#define MISHARE_QUIESCE_SSR 1
 RUNTIME_BLOCK
 '''
 RESET=r'''
@@ -109,6 +116,36 @@ int main(void){
  assert(owner.state.rate.completed && !owner.state.rate.integrity_error);
  mishare_runtime_rate_posted(&owner,-EIO);
  assert(owner.state.rate.integrity_error && owner.state.rate.receipt.result==-ECANCELED && "EXPECTED_RATE_RUNTIME_INLINE_CONTRADICTION");
+ for(int fault=0;fault<8;fault++){
+  reset();inline_finish=true;assert(mishare_runtime_rate_configure(&owner,&p)==-EINPROGRESS);
+  owner.state.quiesced=1;owner.state.mc_drained=true;
+  if(fault==0)owner.state.quiesced=0;
+  if(fault==1)owner.state.mc_drained=false;
+  if(fault==2)owner.state.work_pending=1;
+  if(fault==3)owner.state.ndi.radio_requested=true;
+  if(fault==4)owner.state.ndi.start_plan_requested=true;
+  if(fault==5)owner.state.recovery_window_closed=true;
+  if(fault==6)owner.state.recovery_error=-EIO;
+  int expected=fault==0||fault==3||fault==4?-EOPNOTSUPP:fault==1||fault==2?-EINPROGRESS:fault==5?-ESHUTDOWN:fault==6?-EUCLEAN:0;
+  assert(mishare_runtime_rate_reset_check(&owner)==expected && "EXPECTED_RATE_RESET_ELIGIBILITY");
+  assert(mishare_runtime_rate_retire_check(&owner)==-EOPNOTSUPP && "EXPECTED_RATE_RESET_ORDINARY_BLOCKED");
+ }
+ reset();inline_finish=true;assert(mishare_runtime_rate_configure(&owner,&p)==-EINPROGRESS);
+ owner.state.quiesced=1;owner.state.mc_drained=true;owner.state.rate.reset_admitted=true;
+ assert(mishare_runtime_rate_reset_check(&owner)==-EUCLEAN && "EXPECTED_RATE_RESET_WINDOW");
+ owner.state.recovery_window=true;assert(!mishare_runtime_rate_reset_check(&owner));
+ owner.state.rate.reset_completed=true;
+ assert(mishare_runtime_rate_reset_check(&owner)==-EUCLEAN && "EXPECTED_RATE_RESET_TERMINAL_FACTS");
+ owner.state.ndi_reclaim_started=owner.state.ndi_reclaim_ready=true;
+ owner.state.recovery_timer_attempted=owner.state.recovery_timer_released=true;
+ owner.state.recovery_pe_attempted=owner.state.recovery_pe_released=true;
+ owner.state.recovery_context_attempted=owner.state.recovery_context_finish_attempted=owner.state.recovery_context_released=true;
+ owner.state.recovery_peer_released=owner.state.recovery_dp_attempted=owner.state.recovery_dp_freed=true;
+ owner.state.ndi.active=owner.state.ndi.legacy_ready=owner.state.ndi.wma_bound=owner.state.ndi.peer_created=owner.state.ndi.pe_ready=false;
+ owner.state.recovery_window=false;owner.state.recovery_window_closed=true;
+ assert(!mishare_runtime_rate_reset_check(&owner) && "EXPECTED_RATE_RESET_METADATA_AFTER_CLOSE");
+ owner.state.recovery_dp_freed=false;
+ assert(mishare_runtime_rate_reset_check(&owner)==-EUCLEAN && "EXPECTED_RATE_RESET_TERMINAL_FACTS");
  reset();puts("MISHARE_RUNTIME_RATE_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -135,6 +172,9 @@ def main():
         ('return r->receipt.attempted ? -EOPNOTSUPP : 0;', 'return r->receipt.attempted ? 0 : 0;'),
         ('!entry->state.work_pending || entry->state.work_users || result->busy', 'false || entry->state.work_users || result->busy'),
         ('!n->channel_prepared ||', '(false && !n->channel_prepared) ||'),
+        ('entry->state.quiesced != MISHARE_QUIESCE_SSR ||', 'false ||'),
+        ('!entry->state.recovery_dp_freed || n->active', 'false || n->active'),
+        ('if (!entry->state.recovery_window)', 'if (false && !entry->state.recovery_window)'),
     ]
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
@@ -151,7 +191,7 @@ def main():
             assert block.count(needle)==1,needle
             source.write_text(code.replace(block,block.replace(needle,replacement),1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode==-6 and 'EXPECTED_RATE_RUNTIME_' in bad.stderr,(needle,bad.returncode,bad.stderr[-1600:])
+            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-runtime-rate-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),'production_block_sha256':hashlib.sha256(block.encode()).hexdigest(),'limitations':'Actual scalar runtime hooks, configure bridge and MC wrapper with modeled owner metadata/ref/runtime accounting/scheduler/executor. Complete native runtime cleanup gates run separately on Actions. No firmware ACK, full parent/configuration teardown or RF/Apple proof.'},indent=2)+'\n');print(result)
 

@@ -1,0 +1,22 @@
+{
+  "stage": "0151",
+  "status": "LOCAL_RATE_RESET_ELIGIBILITY_MODEL_ONLY",
+  "local_python_tests": 100,
+  "local_state_mutations": 9,
+  "native_configured_combinations_pending_ci": 16,
+  "native_window_failures_pending_ci": 6,
+  "native_retention_faults_pending_ci": 7,
+  "native_mutations_pending_ci": 3,
+  "native_composition_generation_checked": true,
+  "target_build": "PENDING_CI",
+  "public_init_enabled": false,
+  "phone_action_required": false,
+  "sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "e04ad7524fde1ae6e2f3ba23ca821cd9d03cba74c761a14c54fb20e52050ab39",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime_rate.h": "347ef2883b569fc5c104b0f36f5c0aa67e3cc95ffbba20bc705beb48209f67d7",
+    "tools/kernel/mishare_runtime_rate_fixture.py": "37a0f878eaf6649b9c3bbbf8ce90f1be9e3724678a82151373220980431d35ff",
+    "tools/kernel/mishare_rate_reset_fixture.py": "537c30448842121bc1e46fd4471a14eaa861e63a7cdbda62676df6b284eb4997"
+  },
+  "limitations": "SSR-only pre-START route, using existing native window and prepared reset checks. No ordinary post-config retirement, firmware ACK, real parent/remove/RF/Apple certification; native composite awaits CI.",
+  "native_zero_attempt_edge_pending_ci": true
+}

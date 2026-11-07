@@ -35,15 +35,64 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     if (r->integrity_error)
         return -EUCLEAN;
+    if ((r->reset_completed && !r->reset_admitted) ||
+        ((r->reset_admitted || r->reset_completed) &&
+         (!r->requested || !r->posted || !r->accepted || !r->completed || !r->receipt.attempted)))
+        return -EUCLEAN;
     if (!r->requested)
-        return r->posted || r->accepted || r->completed || r->receipt.attempted ||
+        return r->posted || r->accepted || r->completed || r->reset_admitted ||
+               r->reset_completed || r->receipt.attempted ||
                r->receipt.attempted_mask || r->receipt.submitted_mask || r->request.nss ? -EUCLEAN : 0;
     if (!r->posted || !r->completed)
         return -EINPROGRESS;
-    /* Neither ordinary pre-configuration cleanup nor SSR reset policy has
-     * qualified a VDEV with possibly applied rate settings yet. Retain it.
+    /* Ordinary pre-configuration cleanup cannot qualify applied settings.
+     * Prepared SSR uses its separate eligibility and native-window checks.
      */
     return r->receipt.attempted ? -EOPNOTSUPP : 0;
+}
+
+/* Registry lock held. This is eligibility, not the native recovery window.
+ * Only cds_post_disable's HTC/HIF/WMI qualification may open that window.
+ */
+static int mishare_runtime_rate_reset_check(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+    int ret = mishare_runtime_rate_retire_check(entry);
+
+    if (ret != -EOPNOTSUPP)
+        return ret;
+    if (entry->state.quiesced != MISHARE_QUIESCE_SSR ||
+        entry->radio || n->radio_requested || n->start_plan_requested)
+        return -EOPNOTSUPP;
+    if (entry->state.work_error || entry->state.recovery_error ||
+        entry->state.reclaim_error || n->completion_error)
+        return -EUCLEAN;
+    if (r->reset_completed) {
+        if (!r->reset_admitted || !entry->state.ndi_reclaim_started ||
+            !entry->state.ndi_reclaim_ready || !entry->state.recovery_timer_attempted ||
+            !entry->state.recovery_timer_released || !entry->state.recovery_pe_attempted ||
+            !entry->state.recovery_pe_released || !entry->state.recovery_context_attempted ||
+            !entry->state.recovery_context_finish_attempted || !entry->state.recovery_context_released ||
+            !entry->state.recovery_peer_released || !entry->state.recovery_dp_attempted ||
+            !entry->state.recovery_dp_freed || n->active || n->legacy_ready || n->wma_bound ||
+            n->peer_created || n->pe_ready || n->create.timer_ready || n->create.dp_attached)
+            return -EUCLEAN;
+    } else {
+        if (entry->state.recovery_window_closed)
+            return -ESHUTDOWN;
+        if (r->reset_admitted) {
+            if (!entry->state.recovery_window)
+                return -EUCLEAN;
+        } else if (!entry->vdev || !entry->referenced || !entry->events ||
+                   !n->active || !n->legacy_ready || !n->wma_bound || !n->peer_created ||
+                   !n->pe_submitted || !n->pe_completed || !n->pe_ready ||
+                   !n->channel_submitted || !n->channel_completed || !n->channel_prepared)
+            return -EOPNOTSUPP;
+    }
+    if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
+        return -EINPROGRESS;
+    return 0;
 }
 
 int mishare_runtime_rate_begin(struct mishare_runtime_owner *owner,
@@ -546,7 +595,8 @@ static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bo
             return ret;
     }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    ret = mishare_runtime_rate_retire_check(entry);
+    ret = reclaim && entry->state.rate.reset_completed ?
+          mishare_runtime_rate_reset_check(entry) : mishare_runtime_rate_retire_check(entry);
     if (ret) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return ret;
@@ -796,7 +846,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
                         !entry->state.radio.start_attempted && !entry->state.radio.host_up &&
                         !entry->state.radio.stop_attempted && !entry->state.radio.down_attempted &&
                         !entry->state.radio.down_accepted));
-    if (mishare_runtime_rate_retire_check(entry))
+    if (mishare_runtime_rate_reset_check(entry))
         return false;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
            entry->state.mc_drained && !entry->state.work_pending && !entry->state.work_users &&
@@ -916,7 +966,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     if (!entry)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    ret = mishare_runtime_rate_retire_check(entry);
+    ret = mishare_runtime_rate_reset_check(entry);
     if (ret) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return ret;
@@ -984,6 +1034,14 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
                 return mishare_runtime_recovery_error(entry, ret);
         }
         spin_lock_irqsave(&mishare_runtime_lock, flags);
+        if (entry->state.rate.receipt.attempted) {
+            if (!entry->state.recovery_window || entry->state.recovery_window_closed ||
+                mishare_runtime_rate_reset_check(entry)) {
+                spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+                return mishare_runtime_recovery_error(entry, -EUCLEAN);
+            }
+            entry->state.rate.reset_admitted = true;
+        }
         entry->state.recovery_timer_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         ret = mishare_ndi_reset_prepared_timer_deinit(entry->vdev);
@@ -1160,7 +1218,17 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     entry->state.ndi.create.dp_attached = false;
     entry->state.ndi.active = false;
     entry->state.ndi_reclaim_ready = true;
+    if (entry->state.rate.receipt.attempted) {
+        if (!entry->state.rate.reset_admitted || !entry->state.recovery_timer_released ||
+            !entry->state.recovery_pe_released || !entry->state.recovery_context_released ||
+            !entry->state.recovery_dp_freed)
+            ret = -EUCLEAN;
+        else
+            entry->state.rate.reset_completed = true;
+    }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret)
+        return mishare_runtime_recovery_error(entry, ret);
     return mishare_runtime_host_destroy(owner, true);
 }
 
@@ -1169,7 +1237,8 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
 
-    if (mishare_runtime_rate_retire_check(entry))
+    if (entry->state.rate.reset_completed ? mishare_runtime_rate_reset_check(entry) :
+        mishare_runtime_rate_retire_check(entry))
         return false;
     return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
              !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
@@ -1226,7 +1295,8 @@ int mishare_runtime_reclaim_final(struct mishare_runtime_owner **owner)
         ret = -ENOENT;
         goto final_unlock;
     }
-    ret = mishare_runtime_rate_retire_check(entry);
+    ret = entry->state.rate.reset_completed ? mishare_runtime_rate_reset_check(entry) :
+          mishare_runtime_rate_retire_check(entry);
     if (ret)
         goto final_unlock;
     n = &entry->state.ndi;
@@ -1308,7 +1378,7 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
         if (entry->psoc != psoc)
             continue;
         {
-            int rate_ret = mishare_runtime_rate_retire_check(entry);
+            int rate_ret = mishare_runtime_rate_reset_check(entry);
             if (rate_ret && rate_ret != -EINPROGRESS) {
                 ret = rate_ret;
                 goto unlock;

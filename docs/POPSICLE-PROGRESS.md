@@ -1,3 +1,7 @@
+## 最新代码阶段 0151（配置后、未 START 的合格 SSR 回收接入）
+
+只对 owned rate 批次已结束且未请求 START-plan/radio 的 owner，复用既有 native HTC/HIF/WMI reset 窗口和 prepared INIT 清理。新增 reset_admitted/reset_completed 记录，逐项核对 timer/PE/self-peer/DP/WMA/legacy 的实际释放事实，保留原始速率回执；batch、延迟 VDEV final-free 和关窗后 metadata retirement 纳入该路线。普通运行态配置后清理仍关闭。本地状态 C 模型、九项变异检查、100 项 Python 回归通过；16 组配置后 native SSR 组合及三个 native 变异控制待 CI。0150 六项必选 CI 已通过，完整构建/父级组合仍在运行。公开 init/START 关闭，手机无需操作。见 [0151 实现、验证与限制](POPSICLE-RATE-SSR-RETIRE-0151.md)。
+
 ## 最新代码阶段 0150（runtime 固定速率状态与清理准入）
 
 0149 全部八项必选 CI 已通过。实际 runtime registry 新增 one-shot rate 请求、post 返回和完成回执状态；configure 连接 owned MC post，处理 inline 完成、预发布失败、重复/畸形回执，原始错误和部分提交证据保留。普通/SSR/final/batch 清理统一拒绝 pending、integrity 错误和任何已尝试配置的 owner；零尝试只进入原有清理检查，raw START-plan/START 继续封闭。新生产状态桥接/MC C 模型、六项变异检查及 100 项 Python 回归本地通过，完整 runtime 清理断言和目标编译待 CI。尚未实现配置后 qualified teardown 或连接公开 init，手机无需操作。见 [0150 实现与限制](POPSICLE-RUNTIME-RATE-0150.md)。
