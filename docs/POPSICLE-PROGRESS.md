@@ -1,6 +1,10 @@
+## 最新代码阶段 0147（固定速率原生命令执行器）
+
+0146 全部八项必选 CI 已通过。新增内部固定速率执行器，按上游编码和 fixed-rate→GI→带宽顺序提交原生 WMA 命令。逐次记录 attempted/submitted，首个错误立即结束，部分提交不回滚、不重发；全部入队仍不代表固件确认。接入真实目标 Kbuild，暂无 managed/public 调用。限 HT20、最多两流及明确的 HT/VHT/HE/EHT MCS/GI 子集；legacy、宽信道、自适应掩码仍未支持。192 组生产 C 模型、六项变异检查及本地 100 项 Python 回归通过，目标编译待新 CI。公开初始化继续关闭，手机无需操作。见 [0147 实现与限制](POPSICLE-FIXED-RATE-0147.md)。
+
 ## 最新代码阶段 0146（当前国家域与 HT20 监管预检）
 
-0145 全部八项必选 CI 已通过。managed prepare 在新 PSOC transition/RTNL scope 内读取原生当前国家码，只允许请求 alpha2 与当前域一致；00 为字面 world domain，不作通配。查询失败、非 2.4/5 GHz、固定/自适应 NSS 超过 caller 提供的对应频段上限、非 ENABLE 的 HT20 信道及 passive 信道均拒绝。重复 prepare 重新查询；失败不覆盖已有请求，不创建接口或下发固件命令。100 项本地 Python 回归及生产监管 helper 独立 ASan/UBSan 模型检查通过；首轮 CI 的六项必选作业通过；其余两项均被 host fixture 的状态转换函数声明顺序错误阻断，已补静态原型，完整 host C 行为/变异回归及目标编译待新 CI 验证。仍未下发国家码、速率或过滤配置，未建立跨调用父级/固件租约，公开 init/poll 关闭，手机无需操作。见 [0146 实现与边界](POPSICLE-REGULATORY-PREFLIGHT-0146.md)。
+0145 全部八项必选 CI 已通过。managed prepare 在新 PSOC transition/RTNL scope 内读取原生当前国家码，只允许请求 alpha2 与当前域一致；00 为字面 world domain，不作通配。查询失败、非 2.4/5 GHz、固定/自适应 NSS 超过 caller 提供的对应频段上限、非 ENABLE 的 HT20 信道及 passive 信道均拒绝。重复 prepare 重新查询；失败不覆盖已有请求，不创建接口或下发固件命令。100 项本地 Python 回归及生产监管 helper 独立 ASan/UBSan 模型检查通过；首轮夹具声明顺序问题已修复；Actions 42365788018 的全部八项必选作业通过，含实际 host 监管行为/变异回归、完整目标编译、严格链接和布局检查。仍未下发国家码、速率或过滤配置，未建立跨调用父级/固件租约，公开 init/poll 关闭，手机无需操作。见 [0146 实现与边界](POPSICLE-REGULATORY-PREFLIGHT-0146.md)。
 
 ## 最新代码阶段 0145（初始化请求快照与只读上下文准备）
 

@@ -106,6 +106,7 @@ def setup(work):
         ('wlan_hdd_mishare_bridge.h', 'inc'),
         ('wlan_hdd_mishare_bridge_scope.h', 'inc'),
         ('wlan_hdd_mishare_init.h', 'inc'),
+        ('wlan_hdd_mishare_rate.c', 'src'), ('wlan_hdd_mishare_rate.h', 'inc'),
         ('wlan_hdd_mishare_mgmt_rx.c', 'src'), ('wlan_hdd_mishare_mgmt_rx.h', 'inc'),
         ('wlan_hdd_mishare_backend.c', 'src'), ('wlan_hdd_mishare_backend.h', 'inc'),
         ('mishare_raw_protocol.h', 'inc'),

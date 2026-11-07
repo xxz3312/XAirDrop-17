@@ -1,0 +1,23 @@
+{
+  "status": "LOCAL_FIXED_RATE_SUBMISSION_MODEL_ONLY",
+  "mutation_controls": 6,
+  "production_sha256": "ca8743945a82ccb0da61c9211311ea96a18826670629e01a778151b643bd3e3d",
+  "limitations": "Production executor with modeled VDEV/MLME, native rate encoder and WMA command queue only. No firmware ACK, parent lifetime, platform rate capability, regulatory permission, radio or Apple certification. Local leak detection disabled for ptrace host; Actions enables it.",
+  "stage": "0147",
+  "previous_stage_ci": {
+    "run_id": 42365788018,
+    "required_jobs_passed": 8
+  },
+  "scenarios": 192,
+  "python_tests": 100,
+  "patch_apply_check": true,
+  "target_build": "PENDING_CI",
+  "public_init_enabled": false,
+  "phone_action_required": false,
+  "sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate.c": "ca8743945a82ccb0da61c9211311ea96a18826670629e01a778151b643bd3e3d",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_rate.h": "e55ccf896602599fff62cd871fef3c8f8a7724e4416bdaf90a142e1e4de4f44a",
+    "tools/kernel/mishare_rate_fixture.py": "bd3189e2a96d25737fea75a31bb05b42775879c5839af981d02a7bb4f0ac8bf6",
+    "kernel/patches/popsicle/0065-compile-dormant-fixed-rate-executor.patch": "6ae11f43664261fe50071e8a86fa3c693f7e5bd0ebffe776cae6dca911e52b0c"
+  }
+}
