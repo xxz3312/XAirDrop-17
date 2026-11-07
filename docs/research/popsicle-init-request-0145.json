@@ -1,0 +1,32 @@
+{
+  "stage": "0145",
+  "source_commit": "27ca596d769d84851e98226fa9d30475f4510709",
+  "workflow_run_id": 42349938676,
+  "bridge_job_id": 128335715584,
+  "bridge_job_conclusion": "success",
+  "host_job_id": 128335715605,
+  "host_job_conclusion": "success",
+  "local_python_regressions": 100,
+  "parser_semantic_field_changes": 21,
+  "parser_invalid_requests": 17,
+  "previous_0144_required_jobs_success": 8,
+  "full_target_build": "in_progress_at_recording",
+  "production_and_fixture_sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_init.h": "1077692e8a47d349f15c39ec7ffdb7b807c90be6b0951ded2a4a0d77389de0c9",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_backend.c": "a7129b62d704b4e03640dacd6f6ae274c134ff41d06e5ddcbabca98234b4d2ce",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.c": "7e46539f494e0e2e1fabb13997ea87be6a77f724b02e22b875ba84d86d66e1ca",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "505ad48cce3a4230fe94046921308d31c7a322ecc3d52a56ab780353a45c829e",
+    "kernel/provider/wondertap.h": "42832fe1e103e98818d4b234fd023a83bbaa15d2590e7bdc30dbddc4b2860546",
+    "tools/kernel/mishare_init_fixture.py": "765d0845c6b739a39c8c5ca3d0f4a4df832b926475376b83c5ba851fb6e189f7",
+    "tools/kernel/mishare_host_fixture.py": "0dd9057e65388e0285268b5e9b24efb55c14da0e793e3442f1fa3d249993780e"
+  },
+  "public_valid_init": "EOPNOTSUPP_no_handle",
+  "public_malformed_init": "EINVAL_no_handle",
+  "phone_actions": false,
+  "limitations": [
+    "Prepare stores immutable request metadata only; raw step is fenced for prepared instances.",
+    "NSS arguments are caller-supplied, not a hardware capability measurement.",
+    "No regulatory/MCS/actual country or rate application and no full between-call parent lease.",
+    "Native context/sync/parent endpoints are models; no RX/TX, RF, phone or Apple proof."
+  ]
+}

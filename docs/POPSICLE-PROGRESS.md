@@ -1,6 +1,6 @@
 ## 最新代码阶段 0145（初始化请求快照与只读上下文准备）
 
-0144 八项必选 CI 已全部通过。新增实际公开参数的形状检查和语义快照，记录全部有效速率/国家码/MAC/BSSID/重试/聚合参数，忽略保留字节及未启用的自适应掩码。内部 prepare 在新 PSOC/RTNL scope 下检查当前 HDD、recovery、mission mode，成功只保存不可变元数据；准备后的请求禁止进入未应用参数的 raw step。公开 init 对畸形请求返回 EINVAL，对有效请求仍返回 EOPNOTSUPP，不分配实例、不发固件命令。100 项本地 Python 回归通过，C 模型交由 Actions。未实现监管许可、实际国家码/速率应用和跨调用完整父级租约。见 [0145 实现与限制](POPSICLE-INIT-REQUEST-0145.md)。
+0144 八项必选 CI 已全部通过。新增实际公开参数的形状检查和语义快照，记录全部有效速率/国家码/MAC/BSSID/重试/聚合参数，忽略保留字节及未启用的自适应掩码。内部 prepare 在新 PSOC/RTNL scope 下检查当前 HDD、recovery、mission mode，成功只保存不可变元数据；准备后的请求禁止进入未应用参数的 raw step。公开 init 对畸形请求返回 EINVAL，对有效请求仍返回 EOPNOTSUPP，不分配实例、不发固件命令。100 项本地 Python 回归通过，Actions 42349938676 的 request/bridge/managed/provider/legacy 快速模型已通过，实际 host/prepare 回归也已通过，完整编译仍在运行。未实现监管许可、实际国家码/速率应用和跨调用完整父级租约。见 [0145 实现与限制](POPSICLE-INIT-REQUEST-0145.md)。
 
 ## 最新代码阶段 0144（managed 停止入口与原生实例退出连接）
 
