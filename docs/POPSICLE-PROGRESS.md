@@ -1,3 +1,7 @@
+## 最新验证阶段 0158（peer 回执后的原生 VDEV timer 合同）
+
+新增隔离 native 组合，核对真实 self-peer ACK 不等于 VDEV timer 释放，并验证现有 prepared timer helper 在 peer 删除后的复用条件、同步 cancel 后重检和二次释放拒绝。计划 64 组组合、20 组拒绝、三个 native 变异；Actions 待执行。生产 runtime 未改、peer-only SSR 仍保留剩余资源，尚未接入 timer/DP/上下文回收事务。公开 init/START 关闭，手机无需操作。见 [0158 验收与边界](POPSICLE-RATE-PEER-TIMER-0158.md)。
+
 ## 最新代码阶段 0157（原始 SSR 后的真实 self-peer 回执观察）
 
 仅为健康且已成功提交 self-peer DELETE、PE 删除已完成、尚未提交 VDEV DELETE/DP 的配置 owner 在原始 SSR fence 记录 late_peer_armed。精确匹配的真实 native 完成记录 late_peer_reply，保留封锁与错误；hold-request/timer/wake-lock 仍由原生来源清理。本阶段只观察，不放行 VDEV DELETE、DP 或 host 释放；所有剩余资源继续隔离。本地 19 项状态变异检查、100 项 Python 回归通过；64 组 native 观察、24 组保留场景和 3 项原生变异已通过 Actions 42410649117 的独立步骤；0157 八项必选 CI 已全部通过，含原有生命周期回归、完整 WLAN 编译、CNSS 接口、严格链接、BTF 布局及产物检查。0156 八项必选 CI 也已全部通过。公开 init/START 关闭，手机无需操作。见 [0157 实现与边界](POPSICLE-RATE-LATE-PEER-0157.md)。

@@ -1,0 +1,26 @@
+{
+  "stage": "0158",
+  "status": "NATIVE_CI_PENDING_HELPER_CONTRACT_ONLY",
+  "production_runtime_changed": false,
+  "native_cases_planned": {
+    "combinations": 64,
+    "rejections": 20,
+    "mutations": 3
+  },
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "native_source_generated_only": true,
+  "limitations": "Isolated native timer helper contract only. No recovery window, runtime DP admission or host retirement. Parents/transport/ACK/ref/locks modeled; no phone/RF/Apple proof."
+}

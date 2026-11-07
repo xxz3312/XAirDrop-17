@@ -92,6 +92,7 @@ on:
       - tools/kernel/mishare_rate_fixture.py
       - tools/kernel/mishare_rate_work_fixture.py
       - tools/kernel/mishare_runtime_rate_fixture.py
+      - tools/kernel/mishare_rate_peer_timer_fixture.py
       - tools/kernel/mishare_rate_late_peer_fixture.py
       - tools/kernel/mishare_rate_late_delete_fixture.py
       - tools/kernel/mishare_rate_first_dp_fixture.py
@@ -197,6 +198,8 @@ jobs:
         run: python3 tools/kernel/mishare_cnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss.json
       - name: Restored native CNSS2 interfaces with sanitizers
         run: python3 tools/kernel/mishare_cnss_interfaces_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss-interfaces.json
+      - name: Native peer-completed VDEV timer contract with sanitizers
+        run: python3 tools/kernel/mishare_rate_peer_timer_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-peer-timer.json
       - name: Native late peer reply observation across SSR with sanitizers
         run: python3 tools/kernel/mishare_rate_late_peer_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-late-peer.json
       - name: Native late DELETE reply across SSR with sanitizers
@@ -220,6 +223,7 @@ jobs:
           path: |
             stop-host.json
             stop-runtime.json
+            stop-rate-peer-timer.json
             stop-rate-late-peer.json
             stop-rate-late-delete.json
             stop-rate-first-dp.json
