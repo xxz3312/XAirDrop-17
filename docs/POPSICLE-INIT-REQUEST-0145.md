@@ -21,6 +21,6 @@
 
 ## 验证与边界
 
-100 项本地 Python 回归、Python 语法与 diff 检查通过。[Actions 42349938676](https://github.com/xxz3312/XAirDrop-17/actions/runs/42349938676) 的 bridge-controller 作业 `128335715584` 已成功，含新增 request 和既有 bridge/managed/provider/legacy PASS_ONLY 标志；实际 host/prepare 及原生退出回归作业 `128335715605` 也已通过；完整目标编译仍在运行。Actions-only C fixture 使用真实公开 API 和生产解析器，检查 21 项有效字段变更、17 项畸形输入、失败输出保留、保留字节归一化、inactive mask、输入/输出别名及语义比较。实际 host fixture 继续检查 scope 竞争、失效 context、recovery/非 mission 拒绝、不可变请求和 NSS、raw step 禁止、关闭后拒绝、无 native owner 的元数据退出；原生同步/设备/父级是模型。
+100 项本地 Python 回归、Python 语法与 diff 检查通过。[Actions 42349938676](https://github.com/xxz3312/XAirDrop-17/actions/runs/42349938676) 的 bridge-controller 作业 `128335715584` 已成功，含新增 request 和既有 bridge/managed/provider/legacy PASS_ONLY 标志；实际 host/prepare 及原生退出回归作业 `128335715605` 也已通过；完整目标编译、严格链接、布局检查及全部八项必选作业现已通过。Actions-only C fixture 使用真实公开 API 和生产解析器，检查 21 项有效字段变更、17 项畸形输入、失败输出保留、保留字节归一化、inactive mask、输入/输出别名及语义比较。实际 host fixture 继续检查 scope 竞争、失效 context、recovery/非 mission 拒绝、不可变请求和 NSS、raw step 禁止、关闭后拒绝、无 native owner 的元数据退出；原生同步/设备/父级是模型。
 
 下一步仍需验证和应用实际国家码/监管信道/速率/过滤等配置，解决跨调用父级组件/固件生命周期，再连接公开 init/poll。单次只读上下文检查不构成异步阶段间的租约，也不证明 RX/TX、射频或 Apple 互通。本轮无新安装包，手机无需操作，不重复 apply。

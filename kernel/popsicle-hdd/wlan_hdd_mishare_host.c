@@ -13,6 +13,8 @@
 #include "osif_vdev_sync.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
+#include "wlan_reg_ucfg_api.h"
+#include "wlan_reg_services_api.h"
 #include "wlan_hdd_mishare_host.h"
 #include "wlan_hdd_mishare_runtime.h"
 #include "wlan_hdd_mishare_session.h"
@@ -1036,6 +1038,45 @@ static void mishare_instance_release(struct mishare_managed_instance *instance)
     spin_unlock_irqrestore(&mishare_host_lock, flags);
 }
 
+/* Read current native policy inside ONE scope. This is deliberately not a
+ * country setter: a global country transaction needs restoration/parent
+ * lifetime coordination before it can be exposed to a managed caller.
+ */
+static int mishare_init_regulatory_check(struct hdd_context *hdd,
+                                        const struct mishare_init_request *request,
+                                        u8 nss_2g, u8 nss_5g)
+{
+    const struct wondertap_init_params *p = &request->params;
+    u8 country[3] = {0};
+    u8 nss;
+    int ret;
+
+    ret = qdf_status_to_os_return(ucfg_reg_get_current_country(hdd->psoc, country));
+    if (ret)
+        return ret;
+    /* Alpha2 only: the native third byte may contain an environment suffix.
+     * A requested 00 is a literal world domain, never a wildcard.
+     */
+    if (memcmp(country, p->country_code, 2))
+        return -EOPNOTSUPP;
+    if (wlan_reg_is_24ghz_ch_freq(p->channel.freq))
+        nss = nss_2g;
+    else if (wlan_reg_is_5ghz_ch_freq(p->channel.freq))
+        nss = nss_5g;
+    else
+        return -EOPNOTSUPP; /* Owned channel path has no 6 GHz contract. */
+    if (p->tx_rate.nss > nss || (p->rate_adaptation_enable && p->tx_rate_mask.max_nss > nss))
+        return -EOPNOTSUPP;
+    /* No DFS/CAC or passive-channel transmit coordination is installed.
+     * Missing CONFIG_REG_CLIENT returns INVALID and must fail closed too.
+     */
+    if (wlan_reg_get_bonded_channel_state_for_pwrmode(hdd->pdev, p->channel.freq,
+            CH_WIDTH_20MHZ, 0, REG_CURRENT_PWR_MODE) != CHANNEL_STATE_ENABLE ||
+        wlan_reg_is_passive_for_freq(hdd->pdev, p->channel.freq))
+        return -EOPNOTSUPP;
+    return 0;
+}
+
 int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_params *params,
                                    u8 nss_2g, u8 nss_5g)
 {
@@ -1078,6 +1119,8 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
         ret = -ESHUTDOWN;
     if (!ret && hdd_get_conparam() != QDF_GLOBAL_MISSION_MODE)
         ret = -EOPNOTSUPP;
+    if (!ret)
+        ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);
     if (!ret) {
         instance->request = request;
         instance->request_nss_2g = nss_2g;

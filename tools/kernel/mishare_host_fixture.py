@@ -88,6 +88,21 @@ static int device_pins, psoc_pins, pdev_pins, runtime_tokens;
  */
 static bool managed_instance_case, managed_factory_io;
 static int managed_device_refs;
+/* Regulatory primitives are models; production admission executes unchanged. */
+#define CH_WIDTH_20MHZ 20
+#define REG_CURRENT_PWR_MODE 99
+#define CHANNEL_STATE_ENABLE 1
+static u8 reg_country[3]={'C','N',0};
+static int reg_error,reg_state=CHANNEL_STATE_ENABLE,reg_reads,reg_channels;
+static bool reg_passive;
+static int ucfg_reg_get_current_country(struct wlan_objmgr_psoc *p,u8 *out)
+{ assert(p && parent_owned && rtnl_owned && "EXPECTED_REG_SCOPE");reg_reads++;memcpy(out,reg_country,3);return reg_error; }
+static bool wlan_reg_is_24ghz_ch_freq(u32 f) {return f>=2412 && f<=2484;}
+static bool wlan_reg_is_5ghz_ch_freq(u32 f) {return f>=5000 && f<=5895;}
+static int wlan_reg_get_bonded_channel_state_for_pwrmode(struct wlan_objmgr_pdev *p,u32 f,int bw,u32 sec,int power)
+{ assert(p && f && parent_owned && rtnl_owned && bw==20 && !sec && power==99 && "EXPECTED_REG_SCOPE");reg_channels++;return reg_state; }
+static bool wlan_reg_is_passive_for_freq(struct wlan_objmgr_pdev *p,u32 f)
+{ assert(p && f && parent_owned && rtnl_owned && "EXPECTED_REG_SCOPE");return reg_passive; }
 
 /* Model the module API, not the kernel module loader or module-exit timing. */
 struct module {int id;};
@@ -1184,10 +1199,35 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-ESHUTDOWN && !prepared->request_prepared);runtime_ssr=false;
  managed_context();request_mode=MODE_REQUESTED;
  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EOPNOTSUPP && !prepared->request_prepared);request_mode=MODE_CURRENT;
+ for(int fault=0;fault<10;fault++) {
+  changed=params;reg_error=0;reg_state=1;reg_passive=false;memcpy(reg_country,"CN",3);
+  if(fault==0)reg_error=1;
+  if(fault==1)memcpy(reg_country,"JP",3);
+  if(fault==2)reg_state=0; /* disabled */
+  if(fault==3)reg_state=2; /* DFS */
+  if(fault==4)reg_state=3; /* invalid or unknown */
+  if(fault==5)reg_passive=true;
+  if(fault==6){changed.channel.freq=2412;changed.tx_rate.nss=2;}
+  if(fault==7){changed.channel.freq=2412;changed.rate_adaptation_enable=1;changed.tx_rate_mask.max_nss=2;}
+  if(fault==8)changed.channel.freq=5955;
+  if(fault==9)memcpy(changed.country_code,"00",3);
+  managed_context();int rc=mishare_wonder_managed_prepare(handle,&changed,1,2);
+  assert(rc==(fault==0?-EPERM:-EOPNOTSUPP) && !prepared->request_prepared && "EXPECTED_REG_REFUSAL");
+  assert(!parent_owned && !rtnl_owned && !active && !runtime_tokens && managed_device_refs==1 && "EXPECTED_REG_BALANCE");
+ }
+ reg_error=0;reg_state=1;reg_passive=false;memcpy(reg_country,"CN",3);
  managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2) && prepared->request_prepared);
  assert(!active && !device_pins && !runtime_tokens && !module_refs && managed_device_refs==1);
  assert(prepared->request.params.mgmt_retry_limit==3 && prepared->request.params.data_retry_limit==5);
+ int reads=reg_reads,channels=reg_channels;
  managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));
+ assert(reg_reads==reads+1 && reg_channels==channels+1 && "EXPECTED_REG_RECHECK");
+ reg_state=0;managed_context();
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EOPNOTSUPP && prepared->request_prepared && "EXPECTED_REG_RECHECK");
+ assert(prepared->request.params.channel.freq==5240 && !parent_owned && !rtnl_owned && "EXPECTED_REG_BALANCE");reg_state=1;
+ memcpy(reg_country,"JP",3);managed_context();
+ assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EOPNOTSUPP && prepared->request_prepared && "EXPECTED_REG_RECHECK");
+ memcpy(reg_country,"CNX",3);managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));reg_country[2]=0;
  changed=params;changed.channel.freq=5745;
  assert(mishare_wonder_managed_prepare(handle,&changed,1,2)==-EBUSY && prepared->request.params.channel.freq==5240);
  changed=params;changed.data_retry_limit++;
@@ -1202,6 +1242,17 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  mode_context=NULL;managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle);
  assert(!managed_device_refs && !lease_refs && !mishare_instances);
  parent_owned=rtnl_owned=true;managed_instance_case=false;
+ for(int band=0;band<3;band++) {
+  reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
+  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
+  changed=params;changed.channel.freq=band==0?2412:band==1?5240:5745;
+  changed.tx_rate.nss=band==0?1:2;
+  if(band==2){memcpy(changed.country_code,"00",3);memcpy(reg_country,"00",3);}
+  managed_context();assert(!mishare_wonder_managed_prepare(handle,&changed,1,2) && "EXPECTED_REG_VALID");
+  assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS);
+  mode_context=NULL;managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle);
+  memcpy(reg_country,"CN",3);parent_owned=rtnl_owned=true;managed_instance_case=false;
+ }
  for(int mode=0;mode<3;mode++) {
   reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
   assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
@@ -1516,7 +1567,7 @@ def run(wlan, output):
         d=Path(tmp)
         (d/'fixture.h').write_text(COMMON)
         (d/'wlan_hdd_mishare_wonder_api.h').write_bytes((ROOT/'kernel/provider/wondertap.h').read_bytes())
-        for name in ['linux/device.h','wlan_objmgr_psoc_obj.h','wlan_objmgr_pdev_obj.h','linux/types.h','linux/if_ether.h','linux/etherdevice.h','linux/rtnetlink.h','linux/module.h','linux/slab.h','linux/spinlock.h','cds_api.h','wlan_hdd_main.h','osif_psoc_sync.h','osif_vdev_sync.h']:
+        for name in ['wlan_reg_ucfg_api.h','wlan_reg_services_api.h','linux/device.h','wlan_objmgr_psoc_obj.h','wlan_objmgr_pdev_obj.h','linux/types.h','linux/if_ether.h','linux/etherdevice.h','linux/rtnetlink.h','linux/module.h','linux/slab.h','linux/spinlock.h','cds_api.h','wlan_hdd_main.h','osif_psoc_sync.h','osif_vdev_sync.h']:
             p=d/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text('/* declarations supplied by fixture.h */\n')
         source=d/'test.c';source.write_text(code)
         exe=d/'test'
@@ -1527,6 +1578,23 @@ def run(wlan, output):
         stdout=subprocess.check_output([exe],text=True,env=env,timeout=10)
         # Mutation controls must reach behavior assertions, not fail compilation.
         host_source=(production/'wlan_hdd_mishare_host.c').read_text()
+        regulatory_controls = [
+            ('ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);',
+             'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),
+            ('if (memcmp(country, p->country_code, 2))', 'if (false && memcmp(country, p->country_code, 2))'),
+            ('if (ret)\n        return ret;\n    /* Alpha2', 'if (false && ret)\n        return ret;\n    /* Alpha2'),
+            ('p->tx_rate.nss > nss ||', 'false ||'),
+            ('p->rate_adaptation_enable && p->tx_rate_mask.max_nss > nss', 'false && p->rate_adaptation_enable && p->tx_rate_mask.max_nss > nss'),
+            ('REG_CURRENT_PWR_MODE) != CHANNEL_STATE_ENABLE', 'REG_CURRENT_PWR_MODE) == -999'),
+            ('wlan_reg_is_passive_for_freq(hdd->pdev, p->channel.freq))', '(false && wlan_reg_is_passive_for_freq(hdd->pdev, p->channel.freq)))'),
+        ]
+        for needle, replacement in regulatory_controls:
+            assert host_source.count(needle)==1, needle
+            (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(needle,replacement,1))
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and 'EXPECTED_REG_REFUSAL' in bad.stderr,(needle,bad.returncode,bad.stderr[-1800:])
+        (d/'wlan_hdd_mishare_host.c').unlink()
         receipt_poll=extract(host_source,r'^int mishare_wonder_host_retirement_poll\([^;{]+?\)\s*\{.*?^\}')
         receipt_free=extract(host_source,r'^static void mishare_host_free_tracked\([^;{]+?\)\s*\{.*?^\}')
         receipt_controls=[

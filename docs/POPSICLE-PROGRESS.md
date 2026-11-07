@@ -1,6 +1,10 @@
+## 最新代码阶段 0146（当前国家域与 HT20 监管预检）
+
+0145 全部八项必选 CI 已通过。managed prepare 在新 PSOC transition/RTNL scope 内读取原生当前国家码，只允许请求 alpha2 与当前域一致；00 为字面 world domain，不作通配。查询失败、非 2.4/5 GHz、固定/自适应 NSS 超过 caller 提供的对应频段上限、非 ENABLE 的 HT20 信道及 passive 信道均拒绝。重复 prepare 重新查询；失败不覆盖已有请求，不创建接口或下发固件命令。100 项本地 Python 回归及生产监管 helper 独立 ASan/UBSan 模型检查通过；完整 host C 行为及变异回归待 Actions 验证。仍未下发国家码、速率或过滤配置，未建立跨调用父级/固件租约，公开 init/poll 关闭，手机无需操作。见 [0146 实现与边界](POPSICLE-REGULATORY-PREFLIGHT-0146.md)。
+
 ## 最新代码阶段 0145（初始化请求快照与只读上下文准备）
 
-0144 八项必选 CI 已全部通过。新增实际公开参数的形状检查和语义快照，记录全部有效速率/国家码/MAC/BSSID/重试/聚合参数，忽略保留字节及未启用的自适应掩码。内部 prepare 在新 PSOC/RTNL scope 下检查当前 HDD、recovery、mission mode，成功只保存不可变元数据；准备后的请求禁止进入未应用参数的 raw step。公开 init 对畸形请求返回 EINVAL，对有效请求仍返回 EOPNOTSUPP，不分配实例、不发固件命令。100 项本地 Python 回归通过，Actions 42349938676 的 request/bridge/managed/provider/legacy 快速模型已通过，实际 host/prepare 回归也已通过，完整编译仍在运行。未实现监管许可、实际国家码/速率应用和跨调用完整父级租约。见 [0145 实现与限制](POPSICLE-INIT-REQUEST-0145.md)。
+0144 八项必选 CI 已全部通过。新增实际公开参数的形状检查和语义快照，记录全部有效速率/国家码/MAC/BSSID/重试/聚合参数，忽略保留字节及未启用的自适应掩码。内部 prepare 在新 PSOC/RTNL scope 下检查当前 HDD、recovery、mission mode，成功只保存不可变元数据；准备后的请求禁止进入未应用参数的 raw step。公开 init 对畸形请求返回 EINVAL，对有效请求仍返回 EOPNOTSUPP，不分配实例、不发固件命令。100 项本地 Python 回归通过，Actions 42349938676 的 request/bridge/managed/provider/legacy 快速模型已通过，实际 host/prepare 回归也已通过，完整编译、严格链接、布局检查及全部八项必选 CI 均已成功。未实现监管许可、实际国家码/速率应用和跨调用完整父级租约。见 [0145 实现与限制](POPSICLE-INIT-REQUEST-0145.md)。
 
 ## 最新代码阶段 0144（managed 停止入口与原生实例退出连接）
 
