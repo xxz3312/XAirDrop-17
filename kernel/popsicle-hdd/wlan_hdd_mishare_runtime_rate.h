@@ -14,6 +14,7 @@ struct mishare_runtime_rate_result {
 struct mishare_runtime_rate_status {
     bool requested, posted, accepted, completed, integrity_error;
     bool ordinary_admitted, ordinary_completed; /* Pre-START ordinary DELETE only. */
+    bool tail_attempted, tail_completed; /* Ordinary DP tail in qualified SSR window. */
     bool reset_admitted, reset_completed; /* Qualified native SSR progress only. */
     struct mishare_runtime_rate_request request;
     struct mishare_runtime_rate_result receipt;

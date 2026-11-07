@@ -92,6 +92,7 @@ on:
       - tools/kernel/mishare_rate_fixture.py
       - tools/kernel/mishare_rate_work_fixture.py
       - tools/kernel/mishare_runtime_rate_fixture.py
+      - tools/kernel/mishare_rate_tail_fixture.py
       - tools/kernel/mishare_rate_final_fixture.py
       - tools/kernel/mishare_rate_ordinary_fixture.py
       - tools/kernel/mishare_rate_reset_fixture.py
@@ -195,6 +196,7 @@ jobs:
         run: python3 tools/kernel/mishare_cnss_interfaces_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss-interfaces.json
       - name: Production host and runtime stop admission with sanitizers
         run: |
+          python3 tools/kernel/mishare_rate_tail_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-tail.json
           python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
           python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
           python3 tools/kernel/mishare_rate_final_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-final.json
@@ -209,6 +211,7 @@ jobs:
           path: |
             stop-host.json
             stop-runtime.json
+            stop-rate-tail.json
             stop-rate-final.json
             stop-rate-ordinary.json
             stop-rate-reset.json

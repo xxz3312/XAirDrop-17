@@ -196,6 +196,29 @@ int main(void){
  }
  owner.state.ndi.peer_delete_replied=false;
  assert(mishare_runtime_rate_final_check(&owner)==-EUCLEAN && "EXPECTED_RATE_FINAL_TERMINAL");
+
+ reset();inline_finish=true;assert(mishare_runtime_rate_configure(&owner,&p)==-EINPROGRESS);
+ owner.state.rate.ordinary_admitted=true;owner.state.quiesced=1;owner.state.mc_drained=true;
+ owner.state.ndi.pe_ready=false;owner.pe_cookie=0;
+ owner.state.ndi.pe_delete_requested=owner.state.ndi.pe_delete_submitted=owner.state.ndi.pe_delete_completed=true;
+ owner.state.ndi.peer_delete_pending=owner.state.ndi.peer_delete_submitted=owner.state.ndi.peer_delete_replied=true;
+ owner.state.ndi.delete_pending=owner.state.ndi.delete_submitted=owner.state.ndi.delete_replied=true;
+ owner.state.ndi.dp_detaching=owner.state.ndi.dp_detach_submitted=true;owner.state.ndi.create.timer_ready=false;
+ for(int fault=0;fault<7;fault++){
+  struct runtime_model_state saved=owner.state;
+  if(fault==0)owner.state.ndi.peer_delete_replied=false;
+  if(fault==1)owner.state.ndi.dp_detach_submitted=false;
+  if(fault==2)owner.state.mc_drained=false;
+  if(fault==3)owner.state.rate.tail_attempted=true;
+  if(fault==4)owner.state.recovery_window_closed=true;
+  if(fault==5)owner.state.ndi.completion_error=-EIO;
+  int expected=fault==0||fault==1?-EOPNOTSUPP:fault==2?-EINPROGRESS:fault==3||fault==5?-EUCLEAN:fault==4?-ESHUTDOWN:0;
+  assert(mishare_runtime_rate_tail_check(&owner)==expected && "EXPECTED_RATE_TAIL_ELIGIBILITY");owner.state=saved;
+ }
+ owner.state.rate.tail_attempted=owner.state.rate.tail_completed=owner.state.rate.ordinary_completed=true;
+ owner.state.ndi.active=owner.state.ndi.legacy_ready=owner.state.ndi.wma_bound=false;
+ owner.state.ndi.dp_freed=true;
+ assert(!mishare_runtime_rate_tail_check(&owner) && "EXPECTED_RATE_TAIL_COMPLETED");
  reset();puts("MISHARE_RUNTIME_RATE_FIXTURE_PASS_ONLY");return 0;
 }
 '''
@@ -215,6 +238,7 @@ def main():
     code=re.sub(r'static void completed\(.*?^\}\n','',code,flags=re.S|re.M)
     code=re.sub(r'static void reset\(void\)\{.*?^\}\n',RESET,code,flags=re.S|re.M)
     code+='\n#include "wlan_hdd_mishare_runtime_rate.c"\n'+MAIN
+    terminal=re.search(r'static bool mishare_runtime_rate_ordinary_terminal\(.*?^\}',block,re.S|re.M)[0]
     mutations=[
         ('if (entry->state.rate.requested)', 'if (false && entry->state.rate.requested)'),
         ('entry->state.rate.requested = true;', 'entry->state.rate.requested = false;'),
@@ -223,11 +247,12 @@ def main():
         ('!entry->state.work_pending || entry->state.work_users || result->busy', 'false || entry->state.work_users || result->busy'),
         ('!n->channel_prepared ||\n                 n->start_plan_requested', '(false && !n->channel_prepared) ||\n                 n->start_plan_requested'),
         ('r->ordinary_completed ||\n        entry->state.quiesced != MISHARE_QUIESCE_SSR ||', 'r->ordinary_completed ||\n        false ||'),
-        ('!n->peer_delete_submitted || !n->peer_delete_replied ||', '!n->peer_delete_submitted || false ||'),
+        (terminal, terminal.replace('!n->peer_delete_submitted || !n->peer_delete_replied ||', '!n->peer_delete_submitted || false ||', 1)),
         ('!n->create.timer_ready || !n->create.dp_attached ||', 'false || !n->create.dp_attached ||'),
         ('!entry->state.recovery_dp_freed || n->active', 'false || n->active'),
         ('if (!entry->state.recovery_window)', 'if (false && !entry->state.recovery_window)'),
         ('!entry->state.host_delete_accepted || !entry->state.draining ||', 'false || !entry->state.draining ||'),
+        ('if (r->tail_attempted)\n            return -EUCLEAN;', 'if (false && r->tail_attempted)\n            return -EUCLEAN;'),
     ]
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()
@@ -244,7 +269,7 @@ def main():
             assert block.count(needle)==1,needle
             source.write_text(code.replace(block,block.replace(needle,replacement),1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr or 'EXPECTED_RATE_ORDINARY_' in bad.stderr or 'EXPECTED_RATE_FINAL_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
+            assert bad.returncode==-6 and ('EXPECTED_RATE_RUNTIME_' in bad.stderr or 'EXPECTED_RATE_RESET_' in bad.stderr or 'EXPECTED_RATE_ORDINARY_' in bad.stderr or 'EXPECTED_RATE_FINAL_' in bad.stderr or 'EXPECTED_RATE_TAIL_' in bad.stderr),(needle,bad.returncode,bad.stderr[-1600:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-runtime-rate-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
     out.write_text(json.dumps({'status':result,'mutation_controls':len(mutations),'production_block_sha256':hashlib.sha256(block.encode()).hexdigest(),'limitations':'Actual scalar runtime hooks, configure bridge and MC wrapper with modeled owner metadata/ref/runtime accounting/scheduler/executor. Complete native runtime cleanup gates run separately on Actions. No firmware ACK, full parent/configuration teardown or RF/Apple proof.'},indent=2)+'\n');print(result)
 

@@ -1,0 +1,34 @@
+{
+  "stage": "0154",
+  "status": "IMPLEMENTED_NATIVE_CI_PENDING",
+  "previous_stage_ci": {
+    "run_id": 42391133072,
+    "required_jobs": 8,
+    "all_success": true
+  },
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "scalar_mutations": 13,
+    "python_regressions": 100,
+    "native_source_generated_only": true
+  },
+  "native_pending": {
+    "tail_combinations": 256,
+    "retention_faults": 10,
+    "mutation_controls": 3
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Only accepted ordinary DP-detach tail with native SSR qualification and actual DP final-free before native context finish. Physical primitives and rate receipts modeled; caller retains parents. Earlier DELETE interruption, configured START/UP, phone/RF/Apple remain outside scope."
+}
