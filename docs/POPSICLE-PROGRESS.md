@@ -1,4 +1,8 @@
-## 最新代码阶段 0154（普通 DP 删除尾段衔接 SSR）
+## 最新代码阶段 0155（普通 DELETE 确认后由 SSR 首次提交 DP detach）
+
+仅对普通 PE/peer/VDEV DELETE 已确认、DP detach 尚未尝试的配置 owner，复用合格 native SSR 窗口和原生 prepared-DP helper 提交一次 DP detach。区分 helper 尝试、成功返回和真实 DP final-free；失败不重试，后续复用 0154 上下文释放/0153 final 记账。缺少删除 reply 的更早阶段仍保留。本地 15 项状态变异检查、100 项 Python 回归通过；256 组 native 组合、18 组故障保留和 3 项原生变异控制待 CI。0154 八项必选 CI 全通过。公开 init/START 关闭，手机无需操作。见 [0155 实现与限制](POPSICLE-RATE-SSR-FIRST-DP-0155.md)。
+
+## 阶段 0154（普通 DP 删除尾段衔接 SSR）
 
 只对普通 PE/peer/VDEV 删除均已确认、DP detach 已成功提交的配置 owner，复用原生 SSR 窗口等待原 DP final-free，再一次性释放 WMA/legacy 上下文。记录 tail_attempted/tail_completed，保留普通回执与部分释放事实；无重复 DELETE、DP detach、timer/peer force release。更早的删除中断仍保留。本地 13 项状态变异检查、100 项 Python 回归通过；256 组 native 尾段组合、10 组保留故障及 3 项原生变异控制已通过 Actions 42400068283，原有 ordinary/SSR/final-handoff 回归也通过。八项必选作业全部成功，完整目标编译、严格链接、BTF 布局和产物检查通过。0153 八项必选 CI 全通过。公开 init/START 关闭，手机无需操作。见 [0154 实现与限制](POPSICLE-RATE-SSR-DP-TAIL-0154.md)。
 

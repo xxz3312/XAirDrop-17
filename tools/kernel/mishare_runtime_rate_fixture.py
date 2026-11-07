@@ -12,7 +12,7 @@ from mishare_rate_work_fixture import HARNESS as WORK_HARNESS, ROOT
 MODEL=r'''
 #include "wlan_hdd_mishare_runtime_rate.h"
 struct mishare_ndi_status {
- struct {bool timer_ready,dp_attached,stats_owned;} create;
+ struct {bool timer_ready,dp_attached,stats_owned,dp_attempted;unsigned long dp_cookie;} create;
  bool blocked,active,legacy_ready,wma_bound,peer_created,pe_ready,pe_submitted,pe_completed;
  bool channel_submitted,channel_completed,channel_prepared,start_plan_requested,radio_requested;
  bool pe_delete_requested,pe_delete_submitted,pe_delete_completed,peer_delete_pending,peer_delete_submitted,peer_delete_replied,delete_pending,delete_submitted,delete_replied,dp_detaching,dp_detach_submitted,dp_freed;
@@ -215,6 +215,23 @@ int main(void){
   int expected=fault==0||fault==1?-EOPNOTSUPP:fault==2?-EINPROGRESS:fault==3||fault==5?-EUCLEAN:fault==4?-ESHUTDOWN:0;
   assert(mishare_runtime_rate_tail_check(&owner)==expected && "EXPECTED_RATE_TAIL_ELIGIBILITY");owner.state=saved;
  }
+
+ {
+  struct runtime_model_state saved=owner.state;
+  owner.state.ndi.dp_detaching=owner.state.ndi.dp_detach_submitted=false;
+  owner.state.ndi.create.stats_owned=owner.state.ndi.create.timer_ready=true;
+  owner.state.ndi.create.dp_attempted=true;owner.state.ndi.create.dp_cookie=1;
+  for(int fault=0;fault<5;fault++){
+   struct runtime_model_state initial=owner.state;
+   if(fault==0)owner.state.ndi.delete_replied=false;
+   if(fault==1)owner.state.rate.tail_dp_attempted=true;
+   if(fault==2)owner.state.ndi.create.stats_owned=false;
+   if(fault==3)owner.state.ndi.create.dp_cookie=0;
+   assert(mishare_runtime_rate_tail_check(&owner)==(fault==4?0:-EOPNOTSUPP) && "EXPECTED_RATE_TAIL_FIRST_DP");
+   owner.state=initial;
+  }
+  owner.state=saved;
+ }
  owner.state.rate.tail_attempted=owner.state.rate.tail_completed=owner.state.rate.ordinary_completed=true;
  owner.state.ndi.active=owner.state.ndi.legacy_ready=owner.state.ndi.wma_bound=false;
  owner.state.ndi.dp_freed=true;
@@ -239,6 +256,7 @@ def main():
     code=re.sub(r'static void reset\(void\)\{.*?^\}\n',RESET,code,flags=re.S|re.M)
     code+='\n#include "wlan_hdd_mishare_runtime_rate.c"\n'+MAIN
     terminal=re.search(r'static bool mishare_runtime_rate_ordinary_terminal\(.*?^\}',block,re.S|re.M)[0]
+    tail=re.search(r'static int mishare_runtime_rate_tail_check\(.*?^\}',block,re.S|re.M)[0]
     mutations=[
         ('if (entry->state.rate.requested)', 'if (false && entry->state.rate.requested)'),
         ('entry->state.rate.requested = true;', 'entry->state.rate.requested = false;'),
@@ -253,6 +271,8 @@ def main():
         ('if (!entry->state.recovery_window)', 'if (false && !entry->state.recovery_window)'),
         ('!entry->state.host_delete_accepted || !entry->state.draining ||', 'false || !entry->state.draining ||'),
         ('if (r->tail_attempted)\n            return -EUCLEAN;', 'if (false && r->tail_attempted)\n            return -EUCLEAN;'),
+        (tail, tail.replace('!n->delete_replied)', 'false)', 1)),
+        ('r->tail_dp_attempted || n->dp_detach_submitted || n->dp_freed ||', 'false || n->dp_detach_submitted || n->dp_freed ||'),
     ]
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir()

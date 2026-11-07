@@ -28,6 +28,7 @@ struct mishare_runtime_owner {
 static DEFINE_SPINLOCK(mishare_runtime_lock);
 static struct mishare_runtime_owner *mishare_runtime_owners;
 static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
+static void mishare_runtime_ndi_dp_freed(void *context);
 
 /* MISHARE_RUNTIME_RATE_BEGIN */
 static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry)
@@ -35,7 +36,8 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     if (r->integrity_error)
         return -EUCLEAN;
-    if ((r->tail_completed && (!r->tail_attempted || !r->ordinary_completed)) ||
+    if ((r->tail_dp_attempted && !r->ordinary_admitted) ||
+        (r->tail_completed && (!r->tail_attempted || !r->ordinary_completed)) ||
         ((r->tail_attempted || r->tail_completed) && !r->ordinary_admitted) ||
         (r->ordinary_completed && !r->ordinary_admitted) ||
         ((r->ordinary_admitted || r->ordinary_completed) &&
@@ -216,8 +218,14 @@ static int mishare_runtime_rate_tail_check(struct mishare_runtime_owner *entry)
         if (!n->active || !n->legacy_ready || !n->wma_bound || n->pe_ready || entry->pe_cookie ||
             !n->pe_delete_requested || !n->pe_delete_submitted || !n->pe_delete_completed ||
             !n->peer_delete_pending || !n->peer_delete_submitted || !n->peer_delete_replied ||
-            !n->delete_pending || !n->delete_submitted || !n->delete_replied ||
-            !n->dp_detaching || !n->dp_detach_submitted || n->create.timer_ready || n->create.stats_owned)
+            !n->delete_pending || !n->delete_submitted || !n->delete_replied)
+            return -EOPNOTSUPP;
+        if (n->dp_detaching) {
+            if (!n->dp_detach_submitted || n->create.timer_ready || n->create.stats_owned)
+                return -EOPNOTSUPP;
+        } else if (r->tail_dp_attempted || n->dp_detach_submitted || n->dp_freed ||
+                   !n->create.dp_attempted || !n->create.dp_attached ||
+                   !n->create.dp_cookie || !n->create.stats_owned)
             return -EOPNOTSUPP;
     }
     if (!entry->vdev || !entry->referenced || !entry->events ||
@@ -1097,7 +1105,8 @@ static int mishare_runtime_recovery_error(struct mishare_runtime_owner *entry, i
     return -EUCLEAN;
 }
 /* Caller serializes all polls and retains the original native parents. No
- * DELETE, timer deinit or DP detach is submitted on this continuation.
+ * DELETE or timer deinit is submitted here. A first DP detach is allowed only
+ * after the ordinary DELETE reply; its submit and completion remain distinct.
  */
 static int mishare_runtime_reclaim_ordinary_tail(struct mishare_runtime_owner **owner)
 {
@@ -1107,10 +1116,13 @@ static int mishare_runtime_reclaim_ordinary_tail(struct mishare_runtime_owner **
     struct vdev_mlme_obj *m;
     unsigned long flags;
     int ret;
+    bool submit_dp;
 
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     ret = mishare_runtime_rate_tail_check(entry);
-    if (!ret && !entry->state.rate.tail_completed &&
+    submit_dp = !ret && !entry->state.rate.tail_completed &&
+                entry->state.recovery_window && !entry->state.ndi.dp_detaching;
+    if (!ret && !submit_dp && !entry->state.rate.tail_completed &&
         (!entry->state.recovery_window || !entry->state.ndi.dp_freed))
         ret = -EINPROGRESS;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -1129,11 +1141,31 @@ static int mishare_runtime_reclaim_ordinary_tail(struct mishare_runtime_owner **
     ret = mishare_runtime_rate_tail_check(entry);
     if (!ret && (!entry->state.recovery_window || entry->state.recovery_window_closed))
         ret = -ESHUTDOWN;
-    if (!ret)
+    if (!ret && submit_dp) {
+        if (entry->state.ndi.dp_detaching || entry->state.rate.tail_dp_attempted)
+            ret = -EUCLEAN;
+        else {
+            entry->state.rate.tail_dp_attempted = true;
+            entry->state.ndi.dp_detaching = true;
+            /* The ordinary native DELETE reply already completed deinit. */
+            entry->state.ndi.create.timer_ready = false;
+        }
+    } else if (!ret)
         entry->state.rate.tail_attempted = true;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     if (ret)
         return ret;
+    if (submit_dp) {
+        ret = mishare_ndi_reset_prepared_dp_detach(entry->vdev,
+                    entry->state.ndi.create.dp_cookie, mishare_runtime_ndi_dp_freed, entry);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.ndi.dp_detach_submitted = true;
+        entry->state.ndi.create.stats_owned = false;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS; /* A real submit return precedes context release. */
+    }
     ret = mishare_ndi_reset_context_finish(entry->vdev, entry->state.ndi.create.dp_cookie, &result);
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     if (result.wma_unbound)
@@ -1168,7 +1200,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     if (!entry)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    if (entry->state.rate.ordinary_admitted && entry->state.ndi.dp_detach_submitted &&
+    if (entry->state.rate.ordinary_admitted && entry->state.ndi.delete_replied &&
         !entry->state.rate.ordinary_completed) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return mishare_runtime_reclaim_ordinary_tail(owner);
@@ -1589,7 +1621,7 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
         {
             int rate_ret = entry->state.host_delete_accepted ?
                            mishare_runtime_rate_final_check(entry) :
-                           entry->state.rate.ordinary_admitted && entry->state.ndi.dp_detach_submitted ?
+                           entry->state.rate.ordinary_admitted && entry->state.ndi.delete_replied ?
                            mishare_runtime_rate_tail_check(entry) :
                            mishare_runtime_rate_reset_check(entry);
             if (rate_ret && rate_ret != -EINPROGRESS) {

@@ -135,9 +135,10 @@ void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
  * failed preparation, entered native SM/START/UP, partial attach and incomplete DELETE
  * stay held.
  */
-/* Configured ordinary DELETE may continue only its accepted DP-detach tail:
- * PE/peer/VDEV completion, native SSR window and actual DP final-free precede
- * one-shot native WMA/legacy finish. Earlier DELETE stages remain held.
+/* Configured ordinary DELETE may submit one first native DP detach or wait
+ * its accepted tail: PE/peer/VDEV replies and the native SSR window qualify
+ * submission; actual DP final-free precedes one-shot WMA/legacy finish.
+ * Earlier missing DELETE replies remain held.
  * Original ordinary completion flags survive; no reset ACKs or DP resubmit.
  */
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner);
