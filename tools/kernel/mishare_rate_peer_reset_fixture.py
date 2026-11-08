@@ -36,9 +36,11 @@ static void peer_reset_handoff(struct mishare_runtime_owner **o) {
  if(peer_reset_fault==12)dp_detach_status=QDF_STATUS_E_FAILURE;
  if(!clean_peer_gone && peer_reset_fault!=2)clean_peer_unmap();
  /* Neither an ACK nor a scalar candidate alone grants a native window. */
- int wait=peer_reset_fault==7||peer_reset_fault==10||peer_reset_fault==17||peer_reset_fault==18?-EOPNOTSUPP:
+ int wait=peer_reset_fault==7||peer_reset_fault==17||peer_reset_fault==18?-EOPNOTSUPP:
   peer_reset_fault==8||peer_reset_fault==11?-EUCLEAN:-EINPROGRESS;
- assert(peer_reset_poll(o)==wait && !recovery_timer_frees && !dp_detaches && "EXPECTED_PEER_RESET_PRE_WINDOW");
+ int pre=peer_reset_poll(o);
+ if(pre!=wait)fprintf(stderr,"peer-reset pre fault=%u batch=%d ack-first=%d got=%d expected=%d\n",peer_reset_fault,peer_reset_batch,peer_reset_ack_first,pre,wait);
+ assert(pre==wait && !recovery_timer_frees && !dp_detaches && "EXPECTED_PEER_RESET_PRE_WINDOW");
  health_recovering=true;assert(!cds_post_disable());
  bool eligible=peer_reset_fault!=7 && peer_reset_fault!=8 && peer_reset_fault!=9 &&
   peer_reset_fault!=10 && peer_reset_fault!=11 && peer_reset_fault!=17 && peer_reset_fault!=18;

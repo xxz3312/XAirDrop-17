@@ -79,6 +79,7 @@ static void engine_cycle(unsigned freq,bool early,unsigned initial_substate) {
 static void engine_init_rejection(void) {
  reset_pe_test();radio_native_substate=0;struct mishare_runtime_owner *o=queued_start_owner(5240);struct wlan_sm *s=attach_engine(o);engine_fence_before_validate=true;radio_run(false);
  assert(s->cur_state==WLAN_VDEV_S_INIT && radio_native_substate==0 && !radio_starts && !state(o).recovery_radio_init_rejected && !sm_depth);
+ assert(!mishare_runtime_recovery_candidates(&psoc) && "EXPECTED_UNCONFIGURED_PEER_RESET_NOT_CANDIDATE");
  health_recovering=true;assert(!cds_post_disable() && !state(o).recovery_window);assert(mishare_runtime_reclaim_ndi(&o)==-EUCLEAN && o->radio && pe_heap_live && !pe_deletes && !dp_detaches);
  wlan_sm_delete(s);assert(!engine_allocations);
 }

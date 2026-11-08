@@ -1178,7 +1178,8 @@ unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next)
-        if (entry->psoc == psoc && (!mishare_runtime_rate_peer_reset_check(entry) ||
+        if (entry->psoc == psoc && ((entry->state.rate.ordinary_admitted &&
+                                    !mishare_runtime_rate_peer_reset_check(entry)) ||
                                    mishare_runtime_ndi_recovery_candidate(entry) ||
                                    mishare_runtime_ndi_completed_candidate(entry) ||
                                    (entry->state.rate.ordinary_admitted &&
@@ -1197,7 +1198,8 @@ void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc)
         return;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next)
-        if (entry->psoc == psoc && (!mishare_runtime_rate_peer_reset_check(entry) ||
+        if (entry->psoc == psoc && ((entry->state.rate.ordinary_admitted &&
+                                    !mishare_runtime_rate_peer_reset_check(entry)) ||
                                    mishare_runtime_ndi_recovery_candidate(entry) ||
                                    mishare_runtime_ndi_completed_candidate(entry) ||
                                    (entry->state.rate.ordinary_admitted &&
