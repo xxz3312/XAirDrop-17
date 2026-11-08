@@ -18,6 +18,8 @@ struct mishare_runtime_rate_status {
     bool late_delete_armed, late_delete_reply; /* Original SSR fence and native reply. */
     bool tail_dp_attempted; /* One native DP helper attempt after ordinary DELETE reply. */
     bool tail_attempted, tail_completed; /* Ordinary DP tail in qualified SSR window. */
+    bool peer_reset_armed, peer_reset_admitted, peer_reset_completed;
+    bool peer_timer_attempted, peer_timer_released, peer_dp_attempted, peer_finish_attempted;
     bool reset_admitted, reset_completed; /* Qualified native SSR progress only. */
     struct mishare_runtime_rate_request request;
     struct mishare_runtime_rate_result receipt;
@@ -28,7 +30,7 @@ struct mishare_runtime_rate_status {
  * No automatic managed caller, firmware ACK or complete configuration claim.
  * Attempted submissions prohibit START and direct metadata retirement.
  * Pre-START ordinary DELETE and qualified SSR use separate progress checks;
- * only qualified ordinary-tail SSR continuations are admitted. Other mixed
+ * qualified ordinary-tail and peer-completed SSR continuations are admitted. Other mixed
  * origins remain held. Public configuration is still disabled.
  */
 int mishare_runtime_rate_configure(struct mishare_runtime_owner *owner,

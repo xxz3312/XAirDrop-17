@@ -36,6 +36,19 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     if (r->integrity_error)
         return -EUCLEAN;
+    if ((r->peer_reset_armed && (!r->ordinary_admitted || r->late_peer_armed)) ||
+        (r->peer_reset_admitted && (!r->ordinary_admitted ||
+         (!r->peer_reset_armed && !r->late_peer_reply))) ||
+        (r->peer_timer_attempted && !r->peer_reset_admitted) ||
+        (r->peer_timer_released && !r->peer_timer_attempted) ||
+        (r->peer_dp_attempted && !r->peer_timer_released) ||
+        (r->peer_finish_attempted && !r->peer_dp_attempted) ||
+        (r->peer_reset_completed && !r->peer_finish_attempted) ||
+        ((r->peer_reset_armed || r->peer_reset_admitted) &&
+         (r->ordinary_completed || r->late_delete_armed || r->late_delete_reply ||
+          r->tail_dp_attempted || r->tail_attempted ||
+          r->tail_completed || r->reset_admitted || r->reset_completed)))
+        return -EUCLEAN;
     if ((r->late_peer_reply && !r->late_peer_armed) ||
         ((r->late_peer_armed || r->late_peer_reply) && !r->ordinary_admitted) ||
         (r->late_peer_armed && r->late_delete_armed) ||
@@ -161,6 +174,83 @@ static int mishare_runtime_rate_reset_check(struct mishare_runtime_owner *entry)
     return 0;
 }
 
+/* Snapshot before the original SSR fence, for a real peer reply which has
+ * already arrived. The late-peer path uses its own original-fence receipt. */
+static bool mishare_runtime_rate_peer_ready(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+    return mishare_runtime_rate_retire_check(entry) == -EOPNOTSUPP &&
+           r->ordinary_admitted && !r->ordinary_completed && !r->tail_dp_attempted &&
+           !r->tail_attempted && !r->tail_completed && !r->reset_admitted && !r->reset_completed &&
+           !entry->radio && !n->radio_requested && !n->start_plan_requested &&
+           !entry->state.work_error && !entry->state.recovery_error && !entry->state.reclaim_error &&
+           !n->completion_error && !entry->state.host_reclaim && !entry->state.ndi_reclaim_started &&
+           entry->state.allocated && !entry->state.freed && !entry->state.draining &&
+           entry->vdev && entry->referenced && entry->events &&
+           entry->cookie == (unsigned long)entry->vdev && !entry->pe_cookie &&
+           n->active && n->legacy_ready && n->wma_bound && n->peer_created && !n->pe_ready &&
+           n->pe_delete_requested && n->pe_delete_submitted && n->pe_delete_completed &&
+           n->peer_delete_pending && n->peer_delete_submitted && n->peer_delete_replied &&
+           !n->delete_pending && !n->delete_submitted && !n->delete_replied &&
+           !n->dp_detaching && !n->dp_detach_submitted && !n->dp_freed &&
+           n->create.timer_ready && n->create.dp_attempted && n->create.dp_attached &&
+           n->create.dp_cookie && n->create.stats_owned;
+}
+
+/* No synthetic VDEV DELETE evidence. This route has its own completion
+ * record, and can retire metadata after the native window is closed. */
+static int mishare_runtime_rate_peer_reset_check(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+    int ret = mishare_runtime_rate_retire_check(entry);
+    if (ret != -EOPNOTSUPP)
+        return ret;
+    if ((!r->peer_reset_armed && !r->late_peer_reply) || !r->ordinary_admitted ||
+        r->ordinary_completed || r->tail_dp_attempted || r->tail_attempted || r->tail_completed ||
+        r->reset_admitted || r->reset_completed || entry->state.quiesced != MISHARE_QUIESCE_SSR ||
+        entry->radio || n->radio_requested || n->start_plan_requested)
+        return -EOPNOTSUPP;
+    if (entry->state.work_error || entry->state.recovery_error || entry->state.reclaim_error ||
+        n->completion_error || entry->state.ndi_reclaim_started || entry->state.host_reclaim)
+        return -EUCLEAN;
+    if (!n->pe_delete_requested || !n->pe_delete_submitted || !n->pe_delete_completed ||
+        n->pe_ready || entry->pe_cookie || !n->peer_delete_pending ||
+        !n->peer_delete_submitted || !n->peer_delete_replied ||
+        n->delete_pending || n->delete_submitted || n->delete_replied)
+        return -EOPNOTSUPP;
+    if (!entry->state.mc_drained || entry->state.work_pending || entry->state.work_users)
+        return -EINPROGRESS;
+    if (r->peer_reset_completed) {
+        if (!r->peer_reset_admitted || !r->peer_timer_released || !r->peer_dp_attempted ||
+            !r->peer_finish_attempted || n->active || n->peer_created ||
+            n->legacy_ready || n->wma_bound || n->create.timer_ready || n->create.stats_owned ||
+            !n->dp_detaching || !n->dp_detach_submitted || !n->dp_freed)
+            return -EUCLEAN;
+        if (entry->state.host_delete_accepted)
+            return entry->state.allocated && entry->state.draining && !entry->vdev &&
+                   !entry->referenced && !entry->events ? 0 : -EUCLEAN;
+    } else {
+        if (entry->state.recovery_window_closed)
+            return -ESHUTDOWN;
+        if (r->peer_finish_attempted || (r->peer_timer_attempted && !r->peer_timer_released))
+            return -EUCLEAN;
+        if (!n->active || !n->legacy_ready || !n->wma_bound || !n->peer_created ||
+            !n->create.dp_attempted || !n->create.dp_attached || !n->create.dp_cookie ||
+            n->create.timer_ready == r->peer_timer_released)
+            return -EOPNOTSUPP;
+        if (r->peer_dp_attempted) {
+            if (!n->dp_detaching || !n->dp_detach_submitted || n->create.stats_owned)
+                return -EUCLEAN;
+        } else if (n->dp_detaching || n->dp_detach_submitted || n->dp_freed || !n->create.stats_owned)
+            return -EOPNOTSUPP;
+    }
+    return entry->vdev && entry->referenced && entry->events &&
+           entry->cookie == (unsigned long)entry->vdev && entry->state.allocated &&
+           !entry->state.draining && !entry->state.freed ? 0 : -EUCLEAN;
+}
+
 /* SSR handoff only AFTER normal native cleanup and accepted host deletion.
  * This never resumes PE/peer/VDEV/DP operations. The final API and batch still
  * require the original MC drain and actual final-free before freeing metadata.
@@ -170,6 +260,8 @@ static int mishare_runtime_rate_final_check(struct mishare_runtime_owner *entry)
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     int ret;
 
+    if (r->peer_reset_completed)
+        return mishare_runtime_rate_peer_reset_check(entry);
     if (r->reset_completed)
         return mishare_runtime_rate_reset_check(entry);
     ret = mishare_runtime_rate_retire_check(entry);
@@ -529,6 +621,9 @@ unsigned int mishare_runtime_quiesce_psoc(struct wlan_objmgr_psoc *psoc,
             if (reason == MISHARE_QUIESCE_SSR && !entry->state.blocked &&
                 !entry->state.ndi.blocked && mishare_runtime_rate_peer_inflight(entry))
                 entry->state.rate.late_peer_armed = true;
+            if (reason == MISHARE_QUIESCE_SSR && !entry->state.blocked &&
+                !entry->state.ndi.blocked && mishare_runtime_rate_peer_ready(entry))
+                entry->state.rate.peer_reset_armed = true;
             entry->state.quiesced = reason;
         }
         entry->state.blocked = true;
@@ -795,7 +890,9 @@ static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bo
             return ret;
     }
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    ret = reclaim && entry->state.rate.tail_completed ?
+    ret = reclaim && entry->state.rate.peer_reset_completed ?
+          mishare_runtime_rate_peer_reset_check(entry) :
+          reclaim && entry->state.rate.tail_completed ?
           mishare_runtime_rate_tail_check(entry) :
           reclaim && entry->state.rate.reset_completed ?
           mishare_runtime_rate_reset_check(entry) :
@@ -1081,7 +1178,8 @@ unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next)
-        if (entry->psoc == psoc && (mishare_runtime_ndi_recovery_candidate(entry) ||
+        if (entry->psoc == psoc && (!mishare_runtime_rate_peer_reset_check(entry) ||
+                                   mishare_runtime_ndi_recovery_candidate(entry) ||
                                    mishare_runtime_ndi_completed_candidate(entry) ||
                                    (entry->state.rate.ordinary_admitted &&
                                     !entry->state.rate.tail_attempted &&
@@ -1099,7 +1197,8 @@ void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc)
         return;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
     for (entry = mishare_runtime_owners; entry; entry = entry->next)
-        if (entry->psoc == psoc && (mishare_runtime_ndi_recovery_candidate(entry) ||
+        if (entry->psoc == psoc && (!mishare_runtime_rate_peer_reset_check(entry) ||
+                                   mishare_runtime_ndi_recovery_candidate(entry) ||
                                    mishare_runtime_ndi_completed_candidate(entry) ||
                                    (entry->state.rate.ordinary_admitted &&
                                     !entry->state.rate.tail_attempted &&
@@ -1246,6 +1345,124 @@ static int mishare_runtime_reclaim_ordinary_tail(struct mishare_runtime_owner **
     return mishare_runtime_host_destroy(owner, true);
 }
 
+/* Separate physical DP receipt for the peer-only SSR route. An inline
+ * callback may precede submit return, but cannot bypass that return barrier. */
+static void mishare_runtime_peer_reset_dp_freed(void *context)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *n;
+    unsigned long flags;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != context)
+            continue;
+        n = &entry->state.ndi;
+        if (!entry->state.rate.peer_reset_admitted ||
+            !entry->state.rate.peer_timer_released || !entry->state.rate.peer_dp_attempted ||
+            entry->state.quiesced != MISHARE_QUIESCE_SSR ||
+            !n->active || !n->dp_detaching || n->dp_freed ||
+            !n->peer_delete_submitted || !n->peer_delete_replied ||
+            n->delete_pending || n->delete_submitted || n->delete_replied) {
+            n->blocked = true;
+            if (!n->completion_error)
+                n->completion_error = -EUCLEAN;
+        } else if (!n->completion_error)
+            n->dp_freed = true;
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+/* Native parents remain held by the serialized caller. No PE/peer/VDEV
+ * firmware command is sent: ordinary PE/peer ACKs and physical peer absence
+ * precede native DP detach, then physical DP free precedes context finish. */
+static int mishare_runtime_reclaim_peer_reset(struct mishare_runtime_owner **owner)
+{
+    struct mishare_runtime_owner *entry = *owner;
+    struct mishare_ndi_reset_context_result result = {0};
+    struct mishare_vdev_txn txn;
+    struct vdev_mlme_obj *m;
+    unsigned long flags;
+    bool timer, dp;
+    int ret;
+
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = mishare_runtime_rate_peer_reset_check(entry);
+    timer = !entry->state.rate.peer_timer_released;
+    dp = !entry->state.rate.peer_dp_attempted;
+    if (!ret && !entry->state.rate.peer_reset_completed &&
+        (!entry->state.recovery_window || (!timer && !dp && !entry->state.ndi.dp_freed)))
+        ret = -EINPROGRESS;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret)
+        return ret;
+    if (entry->state.rate.peer_reset_completed)
+        return mishare_runtime_host_destroy(owner, true);
+    if (mishare_events_snapshot(entry->events, &txn) ||
+        txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
+        txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+        return mishare_runtime_recovery_error(entry, -EUCLEAN);
+    m = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+    if (!m || m->vdev != entry->vdev)
+        return mishare_runtime_recovery_error(entry, -EUCLEAN);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    ret = mishare_runtime_rate_peer_reset_check(entry);
+    if (!ret && (!entry->state.recovery_window || entry->state.recovery_window_closed))
+        ret = -ESHUTDOWN;
+    if (!ret) {
+        entry->state.rate.peer_reset_admitted = true;
+        if (timer)
+            entry->state.rate.peer_timer_attempted = true;
+        else if (dp) {
+            entry->state.rate.peer_dp_attempted = true;
+            entry->state.ndi.dp_detaching = true;
+        } else
+            entry->state.rate.peer_finish_attempted = true;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret)
+        return ret;
+    if (timer) {
+        ret = mishare_ndi_reset_prepared_timer_deinit(entry->vdev);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.rate.peer_timer_released = true;
+        entry->state.ndi.create.timer_ready = false;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS; /* The native timer helper returned successfully. */
+    }
+    if (dp) {
+        ret = mishare_ndi_reset_prepared_dp_detach(entry->vdev,
+                    entry->state.ndi.create.dp_cookie, mishare_runtime_peer_reset_dp_freed, entry);
+        if (ret)
+            return mishare_runtime_recovery_error(entry, ret);
+        spin_lock_irqsave(&mishare_runtime_lock, flags);
+        entry->state.ndi.dp_detach_submitted = true;
+        entry->state.ndi.create.stats_owned = false;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS; /* Peer-reset DP submit must return before finish. */
+    }
+    ret = mishare_ndi_reset_context_finish(entry->vdev, entry->state.ndi.create.dp_cookie, &result);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (result.wma_unbound)
+        entry->state.ndi.wma_bound = false;
+    if (result.legacy_released)
+        entry->state.ndi.legacy_ready = false;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret || !result.wma_unbound || !result.legacy_released)
+        return mishare_runtime_recovery_error(entry, ret);
+    m->mgmt.generic.type = WLAN_VDEV_MLME_TYPE_PASSTHRU;
+    m->proto.generic.nss_2g = 0;
+    m->proto.generic.nss_5g = 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    entry->state.ndi.active = false;
+    entry->state.ndi.peer_created = false;
+    entry->state.rate.peer_reset_completed = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return mishare_runtime_host_destroy(owner, true);
+}
+
 int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
 {
     struct mishare_runtime_owner *entry;
@@ -1260,6 +1477,10 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     if (!entry)
         return 0;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (entry->state.rate.peer_reset_armed || entry->state.rate.late_peer_reply) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return mishare_runtime_reclaim_peer_reset(owner);
+    }
     if (entry->state.rate.ordinary_admitted && entry->state.ndi.delete_replied &&
         !entry->state.rate.ordinary_completed) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
@@ -1681,6 +1902,8 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,
         {
             int rate_ret = entry->state.host_delete_accepted ?
                            mishare_runtime_rate_final_check(entry) :
+                           (entry->state.rate.peer_reset_armed || entry->state.rate.late_peer_reply) ?
+                           mishare_runtime_rate_peer_reset_check(entry) :
                            entry->state.rate.ordinary_admitted && entry->state.ndi.delete_replied ?
                            mishare_runtime_rate_tail_check(entry) :
                            mishare_runtime_rate_reset_check(entry);

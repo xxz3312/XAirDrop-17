@@ -1,6 +1,6 @@
 {
   "stage": "0158",
-  "status": "NATIVE_TIMER_STEP_PASS_FULL_CI_PENDING_HELPER_ONLY",
+  "status": "FULL_REQUIRED_CI_PASS_HELPER_CONTRACT_ONLY",
   "production_runtime_changed": false,
   "upstream": [
     {
@@ -28,8 +28,11 @@
     "job_id": 128534490028,
     "step_name": "Native peer-completed VDEV timer contract with sanitizers",
     "step_conclusion": "success",
-    "lifecycle_regressions": "in_progress",
-    "full_target_build": "in_progress"
+    "lifecycle_regressions": "success",
+    "full_target_build": "success",
+    "required_jobs_success": 8,
+    "required_jobs_total": 8,
+    "optional_ICNSS_reference": "skipped"
   },
   "native_verified": {
     "combinations": 64,

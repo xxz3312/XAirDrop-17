@@ -1,0 +1,30 @@
+{
+  "stage": "0159",
+  "status": "LOCAL_PASS_NATIVE_CI_PENDING",
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "scalar_mutations": 23,
+    "python_regressions": 100,
+    "native_source_generated_only": true
+  },
+  "native_cases_planned": {
+    "combinations": 256,
+    "retention": 36,
+    "mutations": 4
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "synthetic_VDEV_DELETE_ACK": false,
+  "limitations": "Pre-START qualified native peer-reset route only; caller retains parents, modeled physical primitives. No automatic parent lease, configured START/UP or phone/RF/Apple proof."
+}

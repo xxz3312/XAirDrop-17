@@ -39,11 +39,12 @@ static void late_peer_observe(struct mishare_runtime_owner **o) {
  assert(ctx_requests==(pending?1:0) && !!ctx_pending==pending &&
   !!wma_context.wmi_cmd_rsp_wake_lock==pending && "EXPECTED_LATE_PEER_NATIVE_REQUEST_CLEANUP");
  if(late_peer_fault==4 || late_peer_fault==5 || late_peer_fault==11)assert(state(*o).ndi.completion_error);
- int expected=late_peer_fault==9?-EUCLEAN:-EOPNOTSUPP;
- assert(mishare_runtime_destroy(o)==expected && mishare_runtime_reclaim_ndi(o)==expected && "EXPECTED_LATE_PEER_NO_VDEV_DELETE");
+ int destroy_expected=late_peer_fault==9?-EUCLEAN:-EOPNOTSUPP;
+ int expected=late_peer_fault==0?-EINPROGRESS:late_peer_fault==12?-ESHUTDOWN:late_peer_fault==5||late_peer_fault==9?-EUCLEAN:-EOPNOTSUPP;
+ assert(mishare_runtime_destroy(o)==destroy_expected && mishare_runtime_reclaim_ndi(o)==expected && "EXPECTED_LATE_PEER_NO_VDEV_DELETE");
  struct mishare_runtime_reclaim_item item={*o,77};
  assert(mishare_runtime_reclaim_batch(&psoc,&item,1)==expected && item.owner==*o && "EXPECTED_LATE_PEER_BATCH_RETAIN");
- assert(!mishare_runtime_recovery_candidates(&psoc) && !state(*o).recovery_window && "EXPECTED_LATE_PEER_NO_WINDOW");
+ assert(mishare_runtime_recovery_candidates(&psoc)==(late_peer_fault==0?1u:0u) && !state(*o).recovery_window && "EXPECTED_LATE_PEER_NO_WINDOW");
  assert(mishare_runtime_work_get(last_vdev,*o)==-ESHUTDOWN && "EXPECTED_LATE_PEER_NO_WORK_ADMISSION");
  assert(*o && (*o)->vdev==last_vdev && (*o)->referenced && (*o)->events && state(*o).ndi.active &&
   state(*o).ndi.legacy_ready && state(*o).ndi.wma_bound && module_refs==1 && objects_live && dp_objects && stats_live &&

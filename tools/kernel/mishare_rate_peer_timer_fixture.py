@@ -19,8 +19,8 @@ static void late_peer_observe(struct mishare_runtime_owner **o) {
  assert(!stop_mc());
  assert(state(*o).ndi.peer_delete_replied && !ctx_pending && !ctx_requests &&
   !wma_context.wmi_cmd_rsp_wake_lock && timers_live && "EXPECTED_PEER_TIMER_ACK_IS_NOT_TIMER_FREE");
- assert(!mishare_runtime_recovery_candidates(&psoc) && !state(*o).recovery_window);
- assert(mishare_runtime_reclaim_ndi(o)==-EOPNOTSUPP && "EXPECTED_PEER_TIMER_RUNTIME_STAYS_CLOSED");
+ assert(mishare_runtime_recovery_candidates(&psoc)==1 && !state(*o).recovery_window);
+ assert(mishare_runtime_reclaim_ndi(o)==-EINPROGRESS && "EXPECTED_PEER_TIMER_RUNTIME_WAITS_FOR_WINDOW");
  /* The prepared DP helper independently refuses a still physical peer.
   * Do not call it in the peer-already-gone case: no DP admission is tested. */
  if(!clean_peer_gone) {
