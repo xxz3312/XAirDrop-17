@@ -1,6 +1,6 @@
 {
   "stage": "0159",
-  "status": "LOCAL_PASS_NATIVE_CI_PENDING",
+  "status": "NATIVE_PEER_RESET_STEP_PASS_FULL_CI_PENDING",
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -16,15 +16,26 @@
   "local": {
     "scalar_mutations": 23,
     "python_regressions": 100,
-    "native_source_generated_only": true
-  },
-  "native_cases_planned": {
-    "combinations": 256,
-    "retention": 36,
-    "mutations": 4
+    "native_source_generated_only": false,
+    "native_compilation_local": false
   },
   "public_start_enabled": false,
   "phone_action_required": false,
   "synthetic_VDEV_DELETE_ACK": false,
-  "limitations": "Pre-START qualified native peer-reset route only; caller retains parents, modeled physical primitives. No automatic parent lease, configured START/UP or phone/RF/Apple proof."
+  "limitations": "Pre-START qualified native peer-reset route only; caller retains parents, modeled physical primitives. No automatic parent lease, configured START/UP or phone/RF/Apple proof.",
+  "native_verified": {
+    "combinations": 256,
+    "retention": 36,
+    "mutations": 4
+  },
+  "native_ci": {
+    "run_id": 42448119773,
+    "source_commit": "e6f19b11e1b3a0123ffd5cbe456a74ecc3f29e0d",
+    "job_id": 128631291717,
+    "step_name": "Native peer-completed SSR retirement with sanitizers",
+    "step_conclusion": "success",
+    "lifecycle_regressions": "in_progress",
+    "full_target_build": "in_progress",
+    "closed_window_reopen_forbidden": true
+  }
 }
