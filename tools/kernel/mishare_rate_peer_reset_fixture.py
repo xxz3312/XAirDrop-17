@@ -96,7 +96,11 @@ static void peer_reset_handoff(struct mishare_runtime_owner **o) {
  rate_history(*o,before);
  assert(!state(*o).ndi.delete_pending && !state(*o).ndi.delete_submitted && !state(*o).ndi.delete_replied &&
   !state(*o).rate.ordinary_completed && !state(*o).rate.reset_completed && "EXPECTED_PEER_RESET_NO_FAKE_ACK");
- native_recovery_close();wlan_objmgr_vdev_release_ref(held,WLAN_HDD_ID_OBJ_MGR);
+ native_recovery_close();
+ assert(!mishare_runtime_recovery_candidates(&psoc) && "EXPECTED_PEER_RESET_COMPLETED_NOT_CANDIDATE");
+ mishare_runtime_recovery_open(&psoc);
+ assert(!state(*o).recovery_window && state(*o).recovery_window_closed && "EXPECTED_PEER_RESET_NO_REOPEN");
+ wlan_objmgr_vdev_release_ref(held,WLAN_HDD_ID_OBJ_MGR);
  assert(state(*o).freed && clean_sm_destroys==1 && !peer_reset_poll(o) && !*o &&
   !module_refs && !allocations && !objects_live && "EXPECTED_PEER_RESET_FINAL");
  assert(pe_deletes==pe && clean_peer_sends==peers && !wire_deletes && dp_detaches==1 &&

@@ -26,3 +26,5 @@
 0157 观察及 0158 timer-only 测试随新准入更新：在没有 native window 时依旧不能清理，健康 peer ACK 可以成为候选；原有故障场景继续保留。选定 native timer/DP/context/SM 函数体实际执行，但 transport/ACK/peer unmap/DP/ref/locks 原语仍是模型。没有自动跨调用 parent lease、配置后 START/UP、手机/RF 或 Apple 发现/握手/双向互传认证。
 
 首轮 CI 42447741287 发现候选枚举误将未配置速率 owner 的通用零返回值作为新路径资格，已补上 ordinary_admitted 前提，并在原 native INIT 拒绝回归中增加未配置 owner 非候选断言。同时修正 stats 缺失场景在 MC 尚未排空时应先返回 EINPROGRESS 的夹具预期；MC 排空后仍拒绝。修正后重跑验收。
+
+独立 native 步骤在修正后的 679c049 运行中已通过；追加终态候选枚举检查，明确排除已完成或已尝试 context finish 的 peer-reset owner，保证 metadata-only retirement 不会重新开窗。每个成功组合在关窗后验证候选为零、recovery_open 不重新开窗，再释放最后一个外部引用。完整修订继续执行 CI。
