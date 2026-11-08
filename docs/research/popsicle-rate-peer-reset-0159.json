@@ -1,6 +1,6 @@
 {
   "stage": "0159",
-  "status": "NATIVE_PEER_RESET_STEP_PASS_FULL_CI_PENDING",
+  "status": "FULL_REQUIRED_CI_PASS_PRESTART_SSR_ONLY",
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -34,8 +34,11 @@
     "job_id": 128631291717,
     "step_name": "Native peer-completed SSR retirement with sanitizers",
     "step_conclusion": "success",
-    "lifecycle_regressions": "in_progress",
-    "full_target_build": "in_progress",
-    "closed_window_reopen_forbidden": true
+    "lifecycle_regressions": "success",
+    "full_target_build": "success",
+    "closed_window_reopen_forbidden": true,
+    "required_jobs_success": 8,
+    "required_jobs_total": 8,
+    "optional_ICNSS_reference": "skipped"
   }
 }

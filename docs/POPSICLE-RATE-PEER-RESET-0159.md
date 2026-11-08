@@ -34,3 +34,5 @@
 最终代码提交 `e6f19b11e1b3a0123ffd5cbe456a74ecc3f29e0d`，Actions 42448119773、stop-admission 作业 128631291717 的 `Native peer-completed SSR retirement with sanitizers` 步骤 success，包含 256 组组合、36 组保留场景和四项 native 变异；所有成功组合还验证了完成后的 metadata-only owner 不会重新成为回收候选或重新开窗。完整作业与目标编译尚未结束，不记作全门禁通过。
 
 前一代码运行 42447974844 已通过新增回收、原有 timer 和 late-peer 三个独立步骤；最终代码重跑中。故障夹具已保留主动注入的 integrity_error，同时逐字节检查原始请求与回执不变；没有通过清除错误来满足历史断言。
+
+最终复核：Actions 42448119773 全部八项必选作业 success，含完整回归与目标编译；可选 ICNSS reference skipped。本阶段仍是受限 pre-START SSR 实现，不代表公开初始化或手机互传已完成。

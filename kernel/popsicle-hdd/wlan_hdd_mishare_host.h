@@ -242,6 +242,13 @@ int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host);
  * APIs while retaining parents. Destroy permanently closes this host session.
  * No automatic Wonder/backend caller is installed by this API.
  */
+/* Internal pre-START preparation only; caller holds RTNL/exclusive native
+ * transition and retains the same parents across polls. Zero is fixed-rate
+ * submission completion, not radio UP or full Wonder initialization. */
+struct wondertap_fixed_tx_rate_params;
+int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
+                                             u32 freq, u8 nss_2g, u8 nss_5g,
+                                             const struct wondertap_fixed_tx_rate_params *params);
 int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
                                             u32 freq, u8 nss_2g, u8 nss_5g);
 #ifdef CONFIG_MISHARE_CHECKED_CNSS2_UNREGISTER

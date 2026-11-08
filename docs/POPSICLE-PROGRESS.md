@@ -1,6 +1,10 @@
+## 最新代码阶段 0160（内部会话接入固定速率准备）
+
+新增内部 prestart controller 和受保护 host 入口，复用已有 CREATE/context/PE/channel 会话阶段，在信道完成后只提交一次 owned rate configure；冻结频率/NSS/速率、验证回执及工作引用归还，成功停在 PLAN，不请求 START-plan/radio，也不开放 managed/public 初始化。raw host session 入口拒绝已选择配置模式的实例。100 项本地 Python 回归和源码/语法检查通过；16 组成功模型、15 组回执保留、五项变异与完整目标编译待 Actions。0159 八项必选 CI 已全部通过。手机无需操作。见 [0160 实现与边界](POPSICLE-PRESTART-CONFIG-0160.md)。
+
 ## 最新代码阶段 0159（peer 已确认、未发送 VDEV DELETE 的 SSR 回收）
 
-新增独立 peer-reset 事务：原始健康 SSR fence 或已验证的 late-peer 来源、MC 排空和原生停机窗口共同约束准入；实际 timer drain 后单独提交 native DP detach，真实 DP final-free 后才释放 WMA/legacy 与 host，最终物理 VDEV free 后退役元数据。VDEV DELETE 标志和普通完成记录不伪造；一次性尝试及错误保留，不重发固件命令。23 项本地变异和 100 项 Python 回归通过；256 组 native 组合、36 组保留场景、四项 native 变异已通过 Actions 42448119773 的独立步骤，含终态不可重新开窗；完整生命周期回归及目标编译仍在运行。0158 八项必选 CI 已全部通过。公开 init/START 关闭，手机无需操作。见 [0159 实现与边界](POPSICLE-RATE-PEER-RESET-0159.md)。
+新增独立 peer-reset 事务：原始健康 SSR fence 或已验证的 late-peer 来源、MC 排空和原生停机窗口共同约束准入；实际 timer drain 后单独提交 native DP detach，真实 DP final-free 后才释放 WMA/legacy 与 host，最终物理 VDEV free 后退役元数据。VDEV DELETE 标志和普通完成记录不伪造；一次性尝试及错误保留，不重发固件命令。23 项本地变异和 100 项 Python 回归通过；256 组 native 组合、36 组保留场景、四项 native 变异已通过 Actions 42448119773 的独立步骤，含终态不可重新开窗；八项必选 CI 已全部成功，含完整生命周期回归、目标编译、严格链接和布局检查。0158 八项必选 CI 已全部通过。公开 init/START 关闭，手机无需操作。见 [0159 实现与边界](POPSICLE-RATE-PEER-RESET-0159.md)。
 
 ## 最新验证阶段 0158（peer 回执后的原生 VDEV timer 合同）
 

@@ -18,6 +18,7 @@
 #include "wlan_hdd_mishare_host.h"
 #include "wlan_hdd_mishare_runtime.h"
 #include "wlan_hdd_mishare_session.h"
+#include "wlan_hdd_mishare_prestart.h"
 #include "wlan_hdd_mishare_bridge.h"
 #include "wlan_hdd_mishare_bridge_scope.h"
 #include "wlan_hdd_mishare_init.h"
@@ -33,6 +34,7 @@ struct mishare_wonder_host {
     struct osif_vdev_sync *sync;
     struct mishare_runtime_owner *runtime;
     struct mishare_session session;
+    struct mishare_prestart prestart;
     bool idle_owned;
     u64 retirement_serial;
 };
@@ -814,8 +816,35 @@ int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
         test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
         test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
         return -EBUSY;
+    if (host->prestart.selected)
+        return -EBUSY; /* Configured preparation cannot use the raw START shortcut. */
     return mishare_session_step(&host->session, host->runtime,
                                  freq, nss_2g, nss_5g);
+}
+
+int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
+                                            u32 freq, u8 nss_2g, u8 nss_5g,
+                                              const struct wondertap_fixed_tx_rate_params *params)
+{
+    int ret;
+
+    if (!host)
+        return -EINVAL;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (host->session.closing)
+        return -ESHUTDOWN;
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    return mishare_prestart_step(&host->prestart, &host->session, host->runtime,
+                                  freq, nss_2g, nss_5g, params);
 }
 
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
