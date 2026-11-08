@@ -1,6 +1,6 @@
 ## 最新代码阶段 0160（内部会话接入固定速率准备）
 
-新增内部 prestart controller 和受保护 host 入口，复用已有 CREATE/context/PE/channel 会话阶段，在信道完成后只提交一次 owned rate configure；冻结频率/NSS/速率、验证回执及工作引用归还，成功停在 PLAN，不请求 START-plan/radio，也不开放 managed/public 初始化。raw host session 入口拒绝已选择配置模式的实例。100 项本地 Python 回归和源码/语法检查通过；16 组成功模型、15 组回执保留、六项变异与完整目标编译待 Actions。0159 八项必选 CI 已全部通过。手机无需操作。见 [0160 实现与边界](POPSICLE-PRESTART-CONFIG-0160.md)。
+新增内部 prestart controller 和受保护 host 入口，复用已有 CREATE/context/PE/channel 会话阶段，在信道完成后只提交一次 owned rate configure；冻结频率/NSS/速率、验证回执及工作引用归还，成功停在 PLAN，不请求 START-plan/radio，也不开放 managed/public 初始化。raw host session 入口拒绝已选择配置模式的实例。100 项本地 Python 回归和源码/语法检查通过；16 组成功模型、15 组回执保留及六项变异已通过 Actions 42515932856 的 bridge-controller 作业；完整 host 回归和目标编译仍在运行。0159 八项必选 CI 已全部通过。手机无需操作。见 [0160 实现与边界](POPSICLE-PRESTART-CONFIG-0160.md)。
 
 ## 最新代码阶段 0159（peer 已确认、未发送 VDEV DELETE 的 SSR 回收）
 

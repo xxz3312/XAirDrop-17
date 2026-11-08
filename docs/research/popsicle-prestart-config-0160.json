@@ -1,6 +1,6 @@
 {
   "stage": "0160",
-  "status": "LOCAL_PASS_CONTROLLER_CI_PENDING",
+  "status": "CONTROLLER_CI_PASS_FULL_HOST_AND_BUILD_PENDING",
   "previous_stage_ci": {
     "run_id": 42448119773,
     "required_jobs_success": 8,
@@ -22,12 +22,20 @@
     "python_regressions": 100,
     "native_compilation_local": false
   },
-  "controller_cases_planned": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Internal pre-START controller only. Native calls and rate receipts modeled in new fixture; complete host tests and target build pending. No managed full config transaction, parent lease, configured START/UP or phone/RF/Apple proof.",
+  "controller_verified": {
     "success_combinations": 16,
     "receipt_retention_faults": 15,
     "mutations": 6
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Internal pre-START controller only. Native calls and rate receipts modeled in new fixture; target build/host tests pending. No managed full config transaction, parent lease, configured START/UP or phone/RF/Apple proof."
+  "ci": {
+    "run_id": 42515932856,
+    "source_commit": "5c933713a3a4d3053fda5e0020e8045c20e4dfef",
+    "controller_job_id": 128838832694,
+    "controller_conclusion": "success",
+    "host_lifecycle": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }

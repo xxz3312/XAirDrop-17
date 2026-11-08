@@ -22,10 +22,16 @@
 
 100 项本地 Python 回归、语法/diff 检查通过。本地没有编译 native/host 组合。
 
-新增 Actions-only controller 夹具实际包含生产 prestart/session headers，native 创建/PE/channel、rate post/receipt 由模型提供：16 组 inline/异步、NSS、HT/HE、工作引用等待组合；15 类回执/状态错误；post 失败不重试、不支持参数、外来 session/rate 拒绝；六项变异控制针对模式选择、post 标记、channel wait、work drain 和提交掩码。原 session controller 回归同时执行。host 原生夹具增加旧入口拒绝及新入口 snapshot 错误保留检查。新 header 纳入目标源复制，实际 host API 会在完整 WLAN 编译中验证。上述 Actions 尚待执行。
+新增 Actions-only controller 夹具实际包含生产 prestart/session headers，native 创建/PE/channel、rate post/receipt 由模型提供：16 组 inline/异步、NSS、HT/HE、工作引用等待组合；15 类回执/状态错误；post 失败不重试、不支持参数、外来 session/rate 拒绝；六项变异控制针对模式选择、post 标记、channel wait、work drain 和提交掩码。原 session controller 回归同时执行。host 原生夹具增加旧入口拒绝及新入口 snapshot 错误保留检查。新 header 纳入目标源复制，实际 host API 会在完整 WLAN 编译中验证。controller 与桥接回归已通过 Actions 42515932856；完整 host 和目标编译仍在运行。
 
 ## 剩余边界
 
 尚未连接 managed immutable init 请求与该内部 controller，没有完整跨调用 parent lease/全局配置事务，也没有配置后 START/UP/RX/TX。当前 API 仅支持既有 HT20/受限 fixed-rate 合同；国家码/完整监管许可仍需调用方在 native scope 中验证。模型回归不等同于原生全链运行，更不等同于手机、空口或 Apple 互通。
 
 异步顺序复核：channel completion 发布后，只有其 work_pending/work_users 都归零才标记并提交 rate post；相应等待组合及第六项变异控制已加入。避免正常 channel callback 返回前的短暂占用触发 rate_begin 的 EBUSY 并被记成永久失败。
+
+## 已验证结果
+
+源码提交 `5c933713a3a4d3053fda5e0020e8045c20e4dfef`，Actions 42515932856 的 bridge-controller 作业 128838832694 已 success，包含新 controller 的 16 组成功模型、15 组回执错误保留与六项变异，以及原有 session/bridge/scope/rate/runtime/managed/provider 回归。首轮夹具缺少 kernel BIT 宏已补齐；不更改生产支持合同。
+
+完整 host native 生命周期回归和目标 WLAN 编译仍在运行，不将 controller 模型结果记成原生全链或实机成功。
