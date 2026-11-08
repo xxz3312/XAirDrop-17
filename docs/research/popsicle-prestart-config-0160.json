@@ -25,7 +25,7 @@
   "controller_cases_planned": {
     "success_combinations": 16,
     "receipt_retention_faults": 15,
-    "mutations": 5
+    "mutations": 6
   },
   "public_start_enabled": false,
   "phone_action_required": false,

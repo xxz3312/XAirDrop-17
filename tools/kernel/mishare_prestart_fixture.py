@@ -37,6 +37,11 @@ static void reach_channel(struct mishare_prestart *c,struct mishare_session *s) 
   completed(i);
  }
  assert(s->stage==MISHARE_SESSION_PLAN && !calls[4] && !calls[5]);
+ state.work_pending=state.work_users=1;
+ assert(prepare(c,s)==-EINPROGRESS && !rate_calls && !c->posted && "EXPECTED_PRESTART_CHANNEL_WORK_DRAIN");
+ state.work_pending=0;
+ assert(prepare(c,s)==-EINPROGRESS && !rate_calls && !c->posted && "EXPECTED_PRESTART_CHANNEL_WORK_DRAIN");
+ state.work_users=0;
 }
 static void config_tests(void) {
  struct mishare_prestart c;struct mishare_session s;
@@ -102,6 +107,7 @@ def main():
     prod=ROOT/'kernel/popsicle-hdd'
     header=(prod/'wlan_hdd_mishare_prestart.h').read_text()
     controls=[
+        ('if (s.work_users || s.work_pending)', 'if (false && (s.work_users || s.work_pending))'),
         ('c->selected = true;', 'c->selected = false;'),
         ('c->posted = true;', 'c->posted = false;'),
         ('if (!s.ndi.channel_completed)', 'if (false && !s.ndi.channel_completed)'),

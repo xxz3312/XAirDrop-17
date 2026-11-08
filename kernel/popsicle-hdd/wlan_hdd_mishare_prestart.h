@@ -90,6 +90,8 @@ mishare_prestart_step(struct mishare_prestart *c, struct mishare_session *sessio
     if (!c->posted) {
         if (r->requested)
             return mishare_session_fail(session, -EBUSY);
+        if (s.work_users || s.work_pending)
+            return -EINPROGRESS; /* Channel completion precedes work_put. */
         c->posted = true; /* Completion may run inline in configure(). */
         ret = mishare_runtime_rate_configure(owner, params);
         if (ret != -EINPROGRESS)
