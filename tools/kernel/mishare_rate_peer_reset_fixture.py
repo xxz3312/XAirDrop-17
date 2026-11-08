@@ -54,7 +54,12 @@ static void peer_reset_handoff(struct mishare_runtime_owner **o) {
    "EXPECTED_PEER_RESET_EARLY_RETAIN");
   unsigned cancels=recovery_timer_cancels;
   assert(peer_reset_poll(o)==expected && recovery_timer_cancels==cancels && "EXPECTED_PEER_RESET_NO_TIMER_RETRY");
-  rate_history(*o,before);_Exit(0);
+  if(peer_reset_fault==11) {
+   struct mishare_runtime_rate_status now=state(*o).rate;
+   assert(now.integrity_error && !memcmp(&now.receipt,&before.receipt,sizeof(now.receipt)) &&
+    !memcmp(&now.request,&before.request,sizeof(now.request)) && "EXPECTED_PEER_RESET_CORRUPT_HISTORY_RETAIN");
+  } else rate_history(*o,before);
+  _Exit(0);
  }
  assert(ret==-EINPROGRESS && state(*o).rate.peer_timer_attempted && state(*o).rate.peer_timer_released &&
   !timers_live && recovery_timer_frees==1 && recovery_rt_frees==1 && !dp_detaches &&
