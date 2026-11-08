@@ -97,7 +97,7 @@ int main(void) {config_tests();assert(!legacy_session_main());puts("MISHARE_PRES
 
 def fixture():
     s=legacy.HARNESS.replace('#include "wlan_hdd_mishare_session.h"',
-        'typedef uint16_t u16;typedef uint64_t u64;\n#include "wlan_hdd_mishare_prestart.h"')
+        'typedef uint16_t u16;typedef uint64_t u64;\n#define BIT(n) (1U << (n))\n#include "wlan_hdd_mishare_prestart.h"')
     return s.replace('int main(void)','static int legacy_session_main(void)',1)+'\n'+MODEL
 
 
