@@ -1,6 +1,6 @@
 ## 最新代码阶段 0163（完整请求绑定到内部准备桥接）
 
-新增 request-bound 内部桥接，先规范化并冻结完整请求，再按同一份 MAC/频率/NSS/速率推进 host 分配、VDEV attach 和 prestart；每次 native 进展前重查当前国家域、HT20 监管及 NSS。请求有效字段或父级/NSS 变化拒绝；raw START 模式互斥，partial host 和退出回执沿用原有权威槽。BSSID/重试/聚合仍只保存，未声称已应用；managed/public 初始化保持关闭。100 项本地 Python 回归和语法/diff 检查通过；8 组成功模式、15 类请求变更、13 项原生策略模型及 8 项变异待 CI。0162 七项必选已成功，diagnostic 仍在运行。手机无需操作。见 [0163 实现与边界](POPSICLE-REQUEST-BRIDGE-0163.md)。
+新增 request-bound 内部桥接，先规范化并冻结完整请求，再按同一份 MAC/频率/NSS/速率推进 host 分配、VDEV attach 和 prestart；每次 native 进展前重查当前国家域、HT20 监管及 NSS。请求有效字段或父级/NSS 变化拒绝；raw START 模式互斥，partial host 和退出回执沿用原有权威槽。BSSID/重试/聚合仍只保存，未声称已应用；managed/public 初始化保持关闭。100 项本地 Python 回归和语法/diff 检查通过；8 组成功模式、15 类请求变更、13 项原生策略模型及 8 项变异已通过 Actions 42626922090 的 bridge-controller；完整 host 回归和目标编译仍在运行。0162 七项必选已成功，diagnostic 仍在运行。手机无需操作。见 [0163 实现与边界](POPSICLE-REQUEST-BRIDGE-0163.md)。
 
 ## 最新代码阶段 0162（先取消 radio，再等待 MC 排空）
 

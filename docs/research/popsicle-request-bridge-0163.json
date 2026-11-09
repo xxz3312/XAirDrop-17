@@ -1,6 +1,6 @@
 {
   "stage": "0163",
-  "status": "LOCAL_PASS_REQUEST_BRIDGE_CI_PENDING",
+  "status": "REQUEST_BRIDGE_AND_POLICY_CI_PASS_FULL_BUILD_PENDING",
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -17,13 +17,6 @@
     "python_regressions": 100,
     "native_compilation_local": false
   },
-  "checks_planned": {
-    "success_modes": 8,
-    "immutable_fields": 15,
-    "native_policy_cases": 13,
-    "bridge_mutations": 5,
-    "policy_mutations": 3
-  },
   "previous_stage_ci": {
     "run_id": 42621983916,
     "required_success": 7,
@@ -38,5 +31,20 @@
     "retry",
     "aggregation"
   ],
-  "limitations": "Internal canonical request bridge and native-policy adapter only; host/lifetime/regulatory primitives modeled in new fixtures. No automatic parent lease, managed full init, configured START/UP or phone/RF/Apple proof."
+  "limitations": "Internal canonical request bridge and native-policy adapter only; host/lifetime/regulatory primitives modeled in new fixtures. No automatic parent lease, managed full init, configured START/UP or phone/RF/Apple proof.",
+  "verified": {
+    "success_modes": 8,
+    "immutable_fields": 15,
+    "native_policy_cases": 13,
+    "bridge_mutations": 5,
+    "policy_mutations": 3
+  },
+  "ci": {
+    "run_id": 42626922090,
+    "source_commit": "e08a5ed5fabe258e48d67ee4d6c6a8690f11772c",
+    "bridge_controller_job_id": 129192952378,
+    "bridge_controller_conclusion": "success",
+    "host_lifecycle": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }

@@ -28,4 +28,12 @@ host 分配、runtime attach 分别一次尝试。实际 prestart 只读取内�
 
 另一个独立 C 模型从生产 host.c 提取原 regulatory helper 和新的 preflight 全函数体，提供 country/channel/context/recovery/scope 原语：13 组策略案例及国家域动态复查；三项变异绕过监管调用、country 比较或 recovery 拒绝。不是实际监管数据库或驱动并发认证。新 header 纳入真正 WLAN source copy，完整目标构建验证 native API 类型与链接。
 
-上述新检查及完整构建待 CI。0162 七项必选已 success，diagnostic 尚在运行，无新失败；不记作全门禁完成。公开 init/START 仍关闭，无新手机包或操作。
+上述新检查已通过 bridge-controller，完整 host 回归及目标构建仍在运行。0162 七项必选已 success，diagnostic 尚在运行，无新失败；不记作全门禁完成。公开 init/START 仍关闭，无新手机包或操作。
+
+## 已验证结果
+
+最终测试源码提交 `e08a5ed5fabe258e48d67ee4d6c6a8690f11772c`，Actions 42626922090 的 bridge-controller 作业 129192952378 success。新 request bridge 的八组成功模式、15 类有效字段变化、13 组 native-policy 模型与五项桥接/三项策略变异全部通过；旧 bridge/session/scope/rate/runtime/managed/provider 回归同样通过。
+
+首轮桥接模型已通过，policy 源码占位符替换误匹配输出字符串导致编译失败；已限定替换首次占位符，修正后真实执行 policy 模型与变异。没有使用编译失败冒充变异成功。
+
+完整 host 生命周期、其余原生组合与 WLAN 编译仍未结束，不记作全门禁或实机通过。BSSID/retry/aggregation 依旧只有快照，没有 native 应用成功记录。
