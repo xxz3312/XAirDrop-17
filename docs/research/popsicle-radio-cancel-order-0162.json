@@ -1,6 +1,6 @@
 {
   "stage": "0162",
-  "status": "LOCAL_PASS_NATIVE_CI_PENDING",
+  "status": "RADIO_AND_PRESTART_STEPS_PASS_FULL_CI_PENDING",
   "fix": "radio cancellation/drain precedes MC wait; MC wait precedes PE/peer/VDEV deletion",
   "previous_failure": {
     "run_id": 42618977716,
@@ -11,17 +11,27 @@
   },
   "local": {
     "python_regressions": 100,
-    "native_source_generated_only": true,
+    "native_source_generated_only": false,
     "native_compilation_local": false
   },
-  "planned_checks": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Internal lifecycle fix with selected native bodies and modeled transport/physical primitives. No new managed init binding, parent lease, START enablement or phone/RF/Apple proof.",
+  "native_verified": {
     "radio_full_lifecycle": true,
     "radio_order_mutations": 1,
     "prestart_combinations": 512,
     "prestart_publication_and_retention": 12,
     "prestart_mutations": 4
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Internal lifecycle fix with selected native bodies and modeled transport/physical primitives. No new managed init binding, parent lease, START enablement or phone/RF/Apple proof."
+  "ci": {
+    "run_id": 42621983916,
+    "source_commit": "862bab76f51549ea11642e35328320c222ac7c91",
+    "job_id": 129176182962,
+    "radio_order_step": "success",
+    "prestart_step": "success",
+    "bridge_controller": "success",
+    "full_lifecycle": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }

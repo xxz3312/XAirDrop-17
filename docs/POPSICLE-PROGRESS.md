@@ -1,6 +1,6 @@
 ## 最新代码阶段 0162（先取消 radio，再等待 MC 排空）
 
-修复 0161 完整 CI 暴露的退出顺序回归：工作引用门禁移到 radio_drain 之后、PE/peer/VDEV 清理之前。排队中的 START 仍须先看到 closing/cancel；零发送尝试的 rate flush 回执发布期间仍不能删除 PE。增强旧 radio 回归及门禁前移变异，提早加入独立 Actions 步骤；保留 0161 的 512/12/4 组合同时复验。100 项本地 Python 回归、语法和源码生成通过；原生执行与完整构建待 CI。未接入新的请求/START 入口，手机无需操作。见 [0162 修复与证据](POPSICLE-RADIO-CANCEL-ORDER-0162.md)。
+修复 0161 完整 CI 暴露的退出顺序回归：工作引用门禁移到 radio_drain 之后、PE/peer/VDEV 清理之前。排队中的 START 仍须先看到 closing/cancel；零发送尝试的 rate flush 回执发布期间仍不能删除 PE。增强旧 radio 回归及门禁前移变异，提早加入独立 Actions 步骤；保留 0161 的 512/12/4 组合同时复验。100 项本地 Python 回归、语法和源码生成通过；Actions 42621983916 的独立 radio 及 prestart 步骤已成功，含取消顺序变异与 512/12/4 组合；完整生命周期回归和目标构建仍在运行。未接入新的请求/START 入口，手机无需操作。见 [0162 修复与证据](POPSICLE-RADIO-CANCEL-ORDER-0162.md)。
 
 ## 最新代码阶段 0161（准备控制器与原生退出组合验收）
 

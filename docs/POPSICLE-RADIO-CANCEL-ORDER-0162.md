@@ -29,6 +29,15 @@
 
 ## 当前结果与范围
 
-本地 100 项 Python 回归、语法/diff 和两种组合源码生成通过；大 native fixture 本地未编译。radio 及 prestart 原生执行、ASan/UBSan、变异和完整 WLAN 编译待新 CI。
+本地 100 项 Python 回归、语法/diff 和两种组合源码生成通过；大 native fixture 本地未编译。radio 及 prestart 原生执行、ASan/UBSan 和变异已通过独立步骤；完整 WLAN 编译仍在运行。
 
 本轮优先修复已发现的完整生命周期回归，尚未继续接入 managed 请求绑定。公开 init/START 关闭；无新手机包或操作。物理 transport、固件、scheduler/ref/锁/DP 等仍有模型边界，不代表手机/RF/Apple 互通。
+
+## 已验证结果
+
+源码提交 `862bab76f51549ea11642e35328320c222ac7c91`，Actions 42621983916、stop-admission 作业 129176182962 的以下步骤均 success：
+
+- Native radio cancel before work-drain ordering with sanitizers：包含完整原有 radio 生命周期、queued START closing/cancel 明确断言，以及门禁前移的行为变异。
+- Native prestart configuration and ordinary retirement with sanitizers：原 512 组组合、12 组异常及四项变异完整复验，零尝试 flush 完成发布处仍禁止提前删除 PE。
+
+bridge-controller 已 success。完整 stop-admission、其余生命周期组合及目标构建仍在运行，不记作全门禁通过。0161 的历史失败保留，并以本轮源码的独立复验证据标记已修复；没有重写旧测试期望或清除错误来绕过。

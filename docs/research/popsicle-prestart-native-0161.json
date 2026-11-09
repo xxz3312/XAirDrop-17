@@ -44,5 +44,13 @@
     "diagnostic_job_id": 129165900893,
     "diagnostic_conclusion": "failure",
     "diagnostic_failure": "mishare_radio_fixture queued START was not cancelled before work-drain wait"
+  },
+  "regression_fix_followup": {
+    "stage": "0162",
+    "run_id": 42621983916,
+    "source_commit": "862bab76f51549ea11642e35328320c222ac7c91",
+    "radio_order_step": "success",
+    "prestart_step": "success",
+    "full_ci": "in_progress"
   }
 }
