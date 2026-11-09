@@ -226,8 +226,14 @@ int main(void) {
  /* Closing/flush before initial work performs no START or STOP. */
  for(int flush=0;flush<2;flush++) {
   reset_radio();o=with_plan();assert(mishare_runtime_ndi_start(o)==-EINPROGRESS);
-  if(!flush)assert(mishare_runtime_destroy(&o)==-EINPROGRESS);
-  radio_run(flush);assert(state(o).radio.phase==MISHARE_RADIO_CANCELLED && !radio_starts && !radio_stops && !radio_downs);
+  if(!flush) {
+   assert(state(o).work_pending==1 && !state(o).work_users);
+   assert(mishare_runtime_destroy(&o)==-EINPROGRESS && state(o).radio.closing &&
+    !state(o).ndi.pe_delete_requested && !ctx_delete_calls && !wire_deletes && !dp_detaches &&
+    "EXPECTED_RADIO_CLOSE_BEFORE_WORK_WAIT");
+  }
+  radio_run(flush);assert(state(o).radio.phase==MISHARE_RADIO_CANCELLED && !radio_starts && !radio_stops && !radio_downs &&
+   "EXPECTED_RADIO_QUEUED_START_CANCELLED");
   assert(mishare_runtime_destroy(&o)==-EINPROGRESS);after_radio(&o);
  }
  /* Proven pre-post allocation/ref/queue rejection permits only normal unstarted cleanup. */
@@ -323,11 +329,32 @@ def audit(root):
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint32_t u32;typedef uint64_t u64;\n')
         for n in ['linux/etherdevice.h','linux/module.h','linux/slab.h','linux/spinlock.h','linux/bug.h','wlan_objmgr_pdev_obj.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme.h','wlan_vdev_mlme_api.h','wlan_vdev_mgr_tgt_if_rx_defs.h','wlan_osif_priv.h','qdf_status.h','scheduler_api.h','wmi_unified_param.h','core/src/vdev_mgr_ops.h']:(d/n).write_text('/* platform model declarations */\n')
         (d/'radio.c').write_text(source);exe=d/'radio'
-        subprocess.run(['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unused-function','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),'-I'+str(d/'dispatcher/inc'),str(d/'radio.c'),'-o',str(exe)],check=True)
-        out=subprocess.check_output([exe],text=True,timeout=45,env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'})
+        command=['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-Wno-unused-function','-g','-fsanitize=address,undefined','-pthread','-I'+str(d),'-I'+str(production),'-I'+str(d/'dispatcher/inc'),str(d/'radio.c'),'-o',str(exe)]
+        env={**os.environ,'ASAN_OPTIONS':'detect_leaks=1:abort_on_error=1','UBSAN_OPTIONS':'halt_on_error=1'}
+        subprocess.run(command,check=True)
+        out=subprocess.check_output([exe],text=True,timeout=45,env=env)
+        # The same complete baseline must reject moving the work gate above
+        # radio_drain, while keeping registry lock accounting valid.
+        runtime=(production/'wlan_hdd_mishare_runtime.c').read_text()
+        drain=function(runtime,'mishare_runtime_ndi_drain')
+        gate='''    if (entry->state.work_pending || entry->state.work_users) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
+    }
+'''
+        assert drain.count(gate)==1
+        modified=drain.replace(gate,'',1)
+        anchor='    ret = entry->state.blocked || ndi->blocked || ndi->completion_error ? -EUCLEAN : 0;'
+        assert modified.count(anchor)==1
+        modified=modified.replace(anchor,anchor+'\n'+gate.replace('if (entry->state.work_pending || entry->state.work_users)',
+                                            'if (!ret && (entry->state.work_pending || entry->state.work_users))'),1)
+        (d/'wlan_hdd_mishare_runtime.c').write_text(runtime.replace(drain,modified,1))
+        subprocess.run(command,check=True)
+        bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=45)
+        assert bad.returncode==-6 and 'EXPECTED_RADIO_' in bad.stderr,(bad.returncode,bad.stderr[-2000:])
     if out.strip()!='MISHARE_OWNED_RADIO_LIFECYCLE_FIXTURE_PASS_ONLY':raise ValueError('Unexpected fixture output')
     names=['wlan_hdd_mishare_runtime.c','wlan_hdd_mishare_runtime.h','wlan_hdd_mishare_ndi.h','wlan_hdd_mishare_radio.c','wlan_hdd_mishare_radio.h','wlan_hdd_mishare_radio_mlme.h','wlan_hdd_mishare_events.c','wlan_hdd_mishare_txn.c']
-    return {'status':out.strip(),'source_commit':plan.channel.pe.PIN,'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'native_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in [TX,RX,MLME,plan.WMA,plan.API,UTIL]},'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in names},'native_sm_source_sha256':hashlib.sha256((root/SM).read_bytes()).hexdigest(),'checks':['runtime START requires completed owned plan and binds an extra VDEV reference','complete native target-if START/STOP/DOWN TX and START/STOP response handlers execute','real registry handles early replies before submission returns','native NDI host-only UP validates exact context and releases START PM without WMI UP','STOP response alone never permits PE/peer/VDEV/DP deletion','accepted DOWN and native PM release precede final INIT and teardown','MC request flush/cancel/queue/allocation/reference failures','START/STOP timeout and generic native send error quarantine','DOWN send failure publishes no DOWN_COMPLETE','response copy/queue/worker references prevent early parent release','native nested callbacks use the non-locking SM API only while model SM lock is held','unbound dedicated callbacks remain unsupported'],'limitations':'Production runtime/radio/registry/transaction, complete native target-if TX/RX functions, owned WMA wrappers, native monitor NDI UP helper and native PM helper execute under ASan/UBSan. Native vdev core send wrappers, scheduler/SM/IRQ primitives, full WMA START postprocessing, TLV extraction, policy/regulatory, object manager and DP are models. The full native SM is compiled in WLAN, not executed here. Real radio, concurrency reservation, firmware acceptance, data queues, SSR/remove recovery and phone loading are unverified. No default HDD/Wonder runtime caller is enabled.'}
+    return {'status':out.strip(),'negative_queued_start_cancel_order_rejected':True,'source_commit':plan.channel.pe.PIN,'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'native_sha256':{p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in [TX,RX,MLME,plan.WMA,plan.API,UTIL]},'production_sha256':{n:hashlib.sha256((production/n).read_bytes()).hexdigest() for n in names},'native_sm_source_sha256':hashlib.sha256((root/SM).read_bytes()).hexdigest(),'checks':['runtime START requires completed owned plan and binds an extra VDEV reference','complete native target-if START/STOP/DOWN TX and START/STOP response handlers execute','real registry handles early replies before submission returns','native NDI host-only UP validates exact context and releases START PM without WMI UP','STOP response alone never permits PE/peer/VDEV/DP deletion','accepted DOWN and native PM release precede final INIT and teardown','MC request flush/cancel/queue/allocation/reference failures','START/STOP timeout and generic native send error quarantine','DOWN send failure publishes no DOWN_COMPLETE','response copy/queue/worker references prevent early parent release','native nested callbacks use the non-locking SM API only while model SM lock is held','unbound dedicated callbacks remain unsupported'],'limitations':'Production runtime/radio/registry/transaction, complete native target-if TX/RX functions, owned WMA wrappers, native monitor NDI UP helper and native PM helper execute under ASan/UBSan. Native vdev core send wrappers, scheduler/SM/IRQ primitives, full WMA START postprocessing, TLV extraction, policy/regulatory, object manager and DP are models. The full native SM is compiled in WLAN, not executed here. Real radio, concurrency reservation, firmware acceptance, data queues, SSR/remove recovery and phone loading are unverified. No default HDD/Wonder runtime caller is enabled.'}
 
 
 if __name__=='__main__':

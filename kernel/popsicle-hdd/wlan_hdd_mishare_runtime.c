@@ -2638,10 +2638,6 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     }
 
     ret = entry->state.blocked || ndi->blocked || ndi->completion_error ? -EUCLEAN : 0;
-    /* A zero-attempt rate completion still owns its MC reservation while
-     * publishing the receipt. No native cleanup before reservation release. */
-    if (!ret && (entry->state.work_pending || entry->state.work_users))
-        ret = -EINPROGRESS;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     if (ret)
         return ret;
@@ -2665,6 +2661,13 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
     if (entry->state.blocked || ndi->blocked) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
+    }
+    /* Close/drain radio first so queued START sees cancellation. A rate
+     * receipt (including zero-attempt flush) still owns its MC reservation:
+     * do not advance PE/peer/VDEV cleanup until that reservation is released. */
+    if (entry->state.work_pending || entry->state.work_users) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EINPROGRESS;
     }
     /* A pending MC request owns the VDEV and may publish a PE session. Never
      * advance peer/VDEV/DP cleanup until that request has completed. */

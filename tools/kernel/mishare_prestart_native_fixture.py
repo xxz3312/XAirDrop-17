@@ -184,8 +184,8 @@ def negative_controls(directory,c_file,command,env,source,root):
         ('wlan_hdd_mishare_prestart.h',once(header,'!mishare_prestart_rate_equal(&c->rate, &rate)','false'),0),
         ('wlan_hdd_mishare_rate_work.c',once(work,'    mishare_runtime_work_put(vdev, owner);\n    wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);',
                     '    /* negative: leave the owned MC reservation live */\n    wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);'),0),
-        ('wlan_hdd_mishare_runtime.c',once(runtime,drain,once(drain,'if (!ret && (entry->state.work_pending || entry->state.work_users))',
-                   'if (false && !ret && (entry->state.work_pending || entry->state.work_users))')),4),
+        ('wlan_hdd_mishare_runtime.c',once(runtime,drain,once(drain,'if (entry->state.work_pending || entry->state.work_users) {',
+                   'if (false && (entry->state.work_pending || entry->state.work_users)) {')),4),
     ]
     for name,modified,fault in controls:
         target=once(source,function(source,'main'),f'int main(void) {{prestart_native_cycle(5240,0,0,false,{fault});return 0;}}')

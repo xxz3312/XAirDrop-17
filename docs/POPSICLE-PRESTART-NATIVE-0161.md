@@ -35,3 +35,5 @@ rate configure 调用实际 rate_work，scheduler 模型保持独立队列；完
 源码提交 `8ee246a580674f188d7167548aefae02aa79c645`，Actions 42618977716、stop-admission 作业 129165901204 的 `Native prestart configuration and ordinary retirement with sanitizers` 步骤 success，覆盖 512 组组合、12 组异常场景和四项变异；其中移除普通退出 work 门禁会在实际零尝试 flush 完成发布处失败，验证本轮修复。紧随其后的 peer-completed SSR 独立步骤也 success。
 
 bridge-controller 作业已通过。完整 stop-admission 作业、其余生命周期回归与目标构建仍在运行，不记作全门禁通过。上述边界仍是离线组合，未认证手机或空口行为。
+
+后续完整 CI 结果：diagnostic 作业 129165900893 在 `Compile diagnostic objects` 阶段运行原有 mishare_radio_fixture 时失败，排队 START 未按原合同取消；不能记作完整构建通过。原因是本轮 work gate 放在 radio_drain 之前。0162 将 gate 后移到 radio_drain 之后、PE 清理之前，并复验此阶段所有组合；上述独立 prestart 结果仍真实，但不足以单独认证完整生命周期。

@@ -1,6 +1,6 @@
 {
   "stage": "0161",
-  "status": "NATIVE_PRESTART_STEP_PASS_FULL_CI_PENDING",
+  "status": "NATIVE_PRESTART_PASS_FULL_DIAGNOSTIC_RADIO_REGRESSION",
   "previous_stage_ci": {
     "run_id": 42515932856,
     "required_jobs_success": 8,
@@ -40,6 +40,9 @@
     "peer_reset_step_conclusion": "success",
     "bridge_controller": "success",
     "lifecycle_regressions": "in_progress",
-    "full_target_build": "in_progress"
+    "full_target_build": "blocked_by_radio_fixture",
+    "diagnostic_job_id": 129165900893,
+    "diagnostic_conclusion": "failure",
+    "diagnostic_failure": "mishare_radio_fixture queued START was not cancelled before work-drain wait"
   }
 }

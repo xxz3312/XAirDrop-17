@@ -1,0 +1,27 @@
+{
+  "stage": "0162",
+  "status": "LOCAL_PASS_NATIVE_CI_PENDING",
+  "fix": "radio cancellation/drain precedes MC wait; MC wait precedes PE/peer/VDEV deletion",
+  "previous_failure": {
+    "run_id": 42618977716,
+    "job_id": 129165900893,
+    "step": "Compile diagnostic objects",
+    "fixture": "mishare_radio_fixture",
+    "cause": "work gate before radio_drain prevented closing queued START"
+  },
+  "local": {
+    "python_regressions": 100,
+    "native_source_generated_only": true,
+    "native_compilation_local": false
+  },
+  "planned_checks": {
+    "radio_full_lifecycle": true,
+    "radio_order_mutations": 1,
+    "prestart_combinations": 512,
+    "prestart_publication_and_retention": 12,
+    "prestart_mutations": 4
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Internal lifecycle fix with selected native bodies and modeled transport/physical primitives. No new managed init binding, parent lease, START enablement or phone/RF/Apple proof."
+}

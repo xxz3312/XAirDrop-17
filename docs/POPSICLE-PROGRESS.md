@@ -1,6 +1,10 @@
+## 最新代码阶段 0162（先取消 radio，再等待 MC 排空）
+
+修复 0161 完整 CI 暴露的退出顺序回归：工作引用门禁移到 radio_drain 之后、PE/peer/VDEV 清理之前。排队中的 START 仍须先看到 closing/cancel；零发送尝试的 rate flush 回执发布期间仍不能删除 PE。增强旧 radio 回归及门禁前移变异，提早加入独立 Actions 步骤；保留 0161 的 512/12/4 组合同时复验。100 项本地 Python 回归、语法和源码生成通过；原生执行与完整构建待 CI。未接入新的请求/START 入口，手机无需操作。见 [0162 修复与证据](POPSICLE-RADIO-CANCEL-ORDER-0162.md)。
+
 ## 最新代码阶段 0161（准备控制器与原生退出组合验收）
 
-新增 production prestart/session/runtime/rate bridge/owned MC 与 selected native CREATE/context/PE/channel/普通清理/SM 最终释放的单体组合，速率执行与物理原语仍为模型。补齐零发送尝试的 MC 完成发布期间退出门禁：仍有 work_pending/users 时不能提前提交 PE 删除，错误优先保留。100 项本地 Python 回归和组合源码生成通过；512 组组合、12 组发布失败/flush/隔离场景和四项变异已通过 Actions 42618977716 的独立步骤；完整生命周期回归和目标编译仍在运行。0160 八项必选 CI 已全部通过。公开 init/START 关闭，手机无需操作。见 [0161 验证与修复](POPSICLE-PRESTART-NATIVE-0161.md)。
+新增 production prestart/session/runtime/rate bridge/owned MC 与 selected native CREATE/context/PE/channel/普通清理/SM 最终释放的单体组合，速率执行与物理原语仍为模型。补齐零发送尝试的 MC 完成发布期间退出门禁：仍有 work_pending/users 时不能提前提交 PE 删除，错误优先保留。100 项本地 Python 回归和组合源码生成通过；512 组组合、12 组发布失败/flush/隔离场景和四项变异已通过 Actions 42618977716 的独立步骤；后续 diagnostic 的原有 radio 退出取消回归失败，完整目标构建未通过；0162 正在修复顺序并复验。0160 八项必选 CI 已全部通过。公开 init/START 关闭，手机无需操作。见 [0161 验证与修复](POPSICLE-PRESTART-NATIVE-0161.md)。
 
 ## 最新代码阶段 0160（内部会话接入固定速率准备）
 
