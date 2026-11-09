@@ -1,6 +1,6 @@
 {
   "stage": "0167",
-  "status": "PRIMARY_RETRY_MATRIX_PASS_NEGATIVE_ENTRY_FIXED_REVERIFY_PENDING",
+  "status": "RETRY_NATIVE_MATRIX_AND_MUTATIONS_PASS_FULL_CI_PENDING",
   "changes": [
     "SSR retry fence precedes pending wait",
     "aggregation-enable refused at three admission boundaries",
@@ -20,13 +20,22 @@
   "public_start_enabled": false,
   "phone_action_required": false,
   "ci": {
-    "run_id": 42673135994,
-    "source_commit": "21a23187954c93cb08850f4b51e8398ce0fd1ecb",
+    "run_id": 42673697311,
+    "source_commit": "a5c62c23e09797c35c1d0a56d9b5c8009c4423f0",
     "bridge_controller": "success",
-    "retry_work": "success",
+    "retry_work_step": "success",
+    "retry_composite_step": "success",
+    "retry_native_group_and_receipt_step": "success",
     "retry_combinations": 704,
     "publication_retention_cases": 7,
-    "negative_controls": "failed: drift-only main inherited from engine audit; explicit per-case baseline added, reverify pending",
-    "full_build": "in_progress"
+    "native_mutations": 3,
+    "full_build": "pending",
+    "remaining_lifecycle_jobs": "in_progress"
+  },
+  "historical_first_reverify": {
+    "run_id": 42673135994,
+    "source_commit": "21a23187954c93cb08850f4b51e8398ce0fd1ecb",
+    "primary_retry_matrix": "success",
+    "negative_controls": "failed: drift-only main inherited; corrected with per-case baselines in a5c62c2"
   }
 }

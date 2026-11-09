@@ -25,3 +25,14 @@ Actions [42657490299](https://github.com/xxz3312/XAirDrop-17/actions/runs/426574
 ## 首轮复验与测试入口修正
 
 Actions [42673135994](https://github.com/xxz3312/XAirDrop-17/actions/runs/42673135994) 的 request bridge 与 retry work 通过，retry composite 初始主程序完整返回成功（704 组合和七项特殊场景），随后第一项 negative control 未被杀死而失败。原因是 engine.audit 调用 extra_audit 前留下 drift-only main，新 fixture 未显式切换到 retry 入口；变异代码没有执行。现为三个控制分别指定普通、重复完成、SSR retry 基线，先验证未变异基线成功，再验证变异以 SIGABRT 和 EXPECTED_RETRY_NATIVE 标记被拒绝。不得将该轮写成所有变异通过。
+
+## 修正后的已观察结果
+
+Actions [42673697311](https://github.com/xxz3312/XAirDrop-17/actions/runs/42673697311)，源码 `a5c62c23e09797c35c1d0a56d9b5c8009c4423f0`：
+
+- bridge-controller 整项 success，包含 16 项 native policy、四项 policy 变异和新增聚合拒绝场景。
+- Owned retry queue and completion ownership 步骤 success。
+- Retry prestart and native retirement composite 步骤 success：704 组合、七项特殊场景及三项各自先运行基线的行为变异通过。
+- Native retry group submission 步骤 success，含原生 SME/WMA 循环及实际 receipt validator 的十类篡改拒绝。
+
+观察时后续 BSSID/退出回归仍在运行，完整目标构建尚待调度/完成，不能据此声称整轮全部通过。上述结果仍是原生代码和模型组合验证，不是手机或固件 ACK 证明。
