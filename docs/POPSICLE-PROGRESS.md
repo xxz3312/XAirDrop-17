@@ -1,6 +1,10 @@
+## 最新代码阶段 0165（重试次数内部一次性执行器）
+
+参考两个上游并核对本机 SME→WMA 路径，新增 dormant MC 执行器：data→AGGR、mgmt→NONAGGR，各组最多四个 AC，零值沿用跳过语义。精确 WMA/VDEV/MLME 身份检查后锁定一次性 receipt；组失败可能已提交部分 AC，因此立即停止并保留失败，不重试、不回滚，不将返回成功写成固件 ACK。新增实际 SME/WMA 循环组合测试及六项行为变异，编译在 Actions 进行；100 项本地 Python 回归与源码生成通过。尚未接入 runtime work/初始化桥接，公开 init/START 继续关闭，手机无需操作。见 [0165 合同](POPSICLE-RETRY-EXECUTOR-0165.md)。
+
 ## 最新代码阶段 0164（owned VDEV 的 host-MLME BSSID 绑定）
 
-参考上游 0007 BSSID setter 的同字段字节写入，新增内部一次性绑定：runtime attach 后、固件 CREATE/PE 前，冻结请求 BSSID 并写入精确 owned MLME，读回确认；后续同值只验证，改值/漂移/关闭/异步工作分别拒绝或等待。request bridge 先绑定再推进 prestart，PE 仍以原 self MAC 创建/识别，未改写 PE 会话 key。100 项本地 Python 回归和组合源码生成通过；512 组贯穿准备/退出、12 组原发布/隔离场景、11 项边界及三项 BSSID 变异已通过 Actions 42630346131 的独立步骤；bridge-controller 与 radio 取消顺序也通过，完整构建仍在运行。BSSID 仅为 host metadata，不是 firmware/RX filter 生效；retry/aggregation 仍未应用。公开 init/START 关闭，手机无需操作。见 [0164 实现与边界](POPSICLE-BSSID-BIND-0164.md)。
+参考上游 0007 BSSID setter 的同字段字节写入，新增内部一次性绑定：runtime attach 后、固件 CREATE/PE 前，冻结请求 BSSID 并写入精确 owned MLME，读回确认；后续同值只验证，改值/漂移/关闭/异步工作分别拒绝或等待。request bridge 先绑定再推进 prestart，PE 仍以原 self MAC 创建/识别，未改写 PE 会话 key。100 项本地 Python 回归和组合源码生成通过；512 组贯穿准备/退出、12 组原发布/隔离场景、11 项边界及三项 BSSID 变异已通过 Actions 42630346131 的独立步骤；八项必需 CI 全部通过，包括 diagnostic 完整目标编译、严格链接和模块记录检查；这不构成实机认证。BSSID 仅为 host metadata，不是 firmware/RX filter 生效；retry/aggregation 仍未应用。公开 init/START 关闭，手机无需操作。见 [0164 实现与边界](POPSICLE-BSSID-BIND-0164.md)。
 
 ## 最新代码阶段 0163（完整请求绑定到内部准备桥接）
 

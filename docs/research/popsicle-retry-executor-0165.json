@@ -1,0 +1,13 @@
+{
+  "stage": "0165",
+  "status": "LOCAL_SOURCE_CHECKS_PASS_CI_PENDING",
+  "python_regressions": 100,
+  "native_compilation_local": false,
+  "native_group_loop": "pinned SME and WMA actual bodies; per-AC WMI modeled",
+  "mutation_controls": 6,
+  "runtime_work_integration": false,
+  "request_bridge_integration": false,
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "stock_cnss2": true
+}

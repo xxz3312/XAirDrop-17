@@ -1,6 +1,6 @@
 {
   "stage": "0164",
-  "status": "BSSID_NATIVE_STEP_PASS_FULL_CI_PENDING",
+  "status": "ALL_REQUIRED_CI_PASS_NO_RUNTIME_CERTIFICATION",
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -43,7 +43,8 @@
     "step_conclusion": "success",
     "bridge_controller": "success",
     "radio_cancel_ordering": "success",
-    "full_lifecycle": "in_progress",
-    "full_target_build": "in_progress"
+    "full_lifecycle": "success",
+    "full_target_build": "success",
+    "required_jobs_passed": 8
   }
 }

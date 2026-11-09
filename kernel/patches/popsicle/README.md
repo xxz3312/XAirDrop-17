@@ -93,3 +93,7 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
 ### 0037 HTT peer-unmap consumed-prefix and nbuf ownership
 
 `dp_htt_t2h_peer_unmap_try_handle()` runs before generic packet-context/header reads. Transport errors/cancellation, absent buffers/data and short headers are consumed safely; successful non-unmap packets remain owned by the original dispatcher. V1 consumes at least four bytes; V2 consumes the prefix through the WDS-free-count field (twenty bytes), allowing unused trailing fields. A bounded copy into aligned local words preserves the original wire GET macros and MAC deswizzle. Valid unmaps enter the existing native DP handler before exactly one nbuf free. This patch does not enable the MiShare backend or validate other HTT message payloads.
+
+### 0068 dormant retry executor
+
+Compiles the private MC-only one-shot retry executor into WLAN. No public or automatic caller; upstream SME/WMA semantics and partial-failure limits are recorded in docs/POPSICLE-RETRY-EXECUTOR-0165.md.
