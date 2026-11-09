@@ -1,6 +1,6 @@
 ## 最新代码阶段 0161（准备控制器与原生退出组合验收）
 
-新增 production prestart/session/runtime/rate bridge/owned MC 与 selected native CREATE/context/PE/channel/普通清理/SM 最终释放的单体组合，速率执行与物理原语仍为模型。补齐零发送尝试的 MC 完成发布期间退出门禁：仍有 work_pending/users 时不能提前提交 PE 删除，错误优先保留。100 项本地 Python 回归和组合源码生成通过；计划 512 组组合、12 组发布失败/flush/隔离场景和四项变异，待 Actions。0160 八项必选 CI 已全部通过。公开 init/START 关闭，手机无需操作。见 [0161 验证与修复](POPSICLE-PRESTART-NATIVE-0161.md)。
+新增 production prestart/session/runtime/rate bridge/owned MC 与 selected native CREATE/context/PE/channel/普通清理/SM 最终释放的单体组合，速率执行与物理原语仍为模型。补齐零发送尝试的 MC 完成发布期间退出门禁：仍有 work_pending/users 时不能提前提交 PE 删除，错误优先保留。100 项本地 Python 回归和组合源码生成通过；512 组组合、12 组发布失败/flush/隔离场景和四项变异已通过 Actions 42618977716 的独立步骤；完整生命周期回归和目标编译仍在运行。0160 八项必选 CI 已全部通过。公开 init/START 关闭，手机无需操作。见 [0161 验证与修复](POPSICLE-PRESTART-NATIVE-0161.md)。
 
 ## 最新代码阶段 0160（内部会话接入固定速率准备）
 

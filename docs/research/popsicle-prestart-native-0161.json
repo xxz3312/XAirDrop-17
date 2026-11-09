@@ -1,6 +1,6 @@
 {
   "stage": "0161",
-  "status": "LOCAL_PASS_NATIVE_CI_PENDING",
+  "status": "NATIVE_PRESTART_STEP_PASS_FULL_CI_PENDING",
   "previous_stage_ci": {
     "run_id": 42515932856,
     "required_jobs_success": 8,
@@ -20,15 +20,26 @@
   ],
   "local": {
     "python_regressions": 100,
-    "native_source_generated_only": true,
+    "native_source_generated_only": false,
     "native_compilation_local": false
   },
-  "native_cases_planned": {
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Actual production prestart/runtime/rate MC code plus selected native lifecycle bodies; executor, transport, PE create/channel pre-start and physical primitives modeled. No full managed init, automatic parent lease, START/UP or phone/RF/Apple proof.",
+  "native_verified": {
     "combinations": 512,
     "publication_and_retention": 12,
     "mutations": 4
   },
-  "public_start_enabled": false,
-  "phone_action_required": false,
-  "limitations": "Actual production prestart/runtime/rate MC code plus selected native lifecycle bodies; executor, transport, PE create/channel pre-start and physical primitives modeled. No full managed init, automatic parent lease, START/UP or phone/RF/Apple proof."
+  "native_ci": {
+    "run_id": 42618977716,
+    "source_commit": "8ee246a580674f188d7167548aefae02aa79c645",
+    "job_id": 129165901204,
+    "step_name": "Native prestart configuration and ordinary retirement with sanitizers",
+    "step_conclusion": "success",
+    "peer_reset_step_conclusion": "success",
+    "bridge_controller": "success",
+    "lifecycle_regressions": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }
