@@ -245,6 +245,8 @@ int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host);
 /* Internal pre-START preparation only; caller holds RTNL/exclusive native
  * transition and retains the same parents across polls. Zero is fixed-rate
  * submission completion, not radio UP or full Wonder initialization. */
+/* Bind frozen BSSID to host MLME before firmware CREATE/PE. */
+int mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *host, const u8 *bssid);
 struct mishare_init_request;
 /* Read-only native admission under caller's exclusive transition + RTNL.
  * Does not set country, retain parents across calls or authorize full init. */

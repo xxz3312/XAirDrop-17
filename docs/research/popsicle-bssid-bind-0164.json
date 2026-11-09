@@ -1,0 +1,38 @@
+{
+  "stage": "0164",
+  "status": "LOCAL_PASS_BSSID_NATIVE_CI_PENDING",
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "paths": [
+        "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch",
+        "kernel/patches/0007-session-dp-and-hardware-guards.patch"
+      ]
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "python_regressions": 100,
+    "native_source_generated_only": true,
+    "native_compilation_local": false
+  },
+  "native_planned": {
+    "prestart_combinations": 512,
+    "publication_and_retention": 12,
+    "edge_cases": 11,
+    "bssid_mutations": 3
+  },
+  "bssid_scope": "host MLME metadata write/readback before native CREATE/PE, no firmware command",
+  "unapplied_fields": [
+    "retry",
+    "aggregation"
+  ],
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Owned private setter mirrors upstream field copy; selected native lifecycle bodies with modeled physical primitives. No firmware/filter/radio acceptance, parent lease, full managed config or phone/RF/Apple proof."
+}

@@ -173,7 +173,7 @@ def fixture(root):
                        declared(config, 'wlan_mlme_ratemask'),
                        declared((root / PARAM).read_text(), 'wmi_ratemask_type')])
     native = '\n'.join(function(wma, name) for name in NAMES)
-    source = owner.replace_once(source, 'reg_class_id; } generic;', 'reg_class_id,tx_pwrlimit;u8 bssid[6]; } generic;')
+    source = owner.replace_once(source, 'reg_class_id; } generic;', 'reg_class_id,tx_pwrlimit; } generic;')
     source = owner.replace_once(source, 'void *del_staself_req;unsigned peer_count;};', 'void *del_staself_req;unsigned peer_count,tx_streams,aid;};')
     source = owner.replace_once(source, 'struct wma {struct wlan_objmgr_psoc *psoc;', 'struct wma {struct wlan_objmgr_psoc *psoc;struct wlan_objmgr_pdev *pdev;struct mac_context *mac_context;')
     source = owner.replace_once(source, 'wma_context.psoc=&psoc;', 'wma_context.psoc=&psoc;wma_context.pdev=&pdev;wma_context.mac_context=&pe_mac;')

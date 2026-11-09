@@ -215,6 +215,7 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,struct mishare_r
 }
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev,const u8 *address,void *osif,struct wireless_dev *wdev,struct mishare_runtime_owner **owner) { pins_live();assert(pdev && pdev->refs==1 && address && osif && wdev);if(*owner)return -EBUSY;*owner=calloc(1,sizeof(**owner));runtime_tokens++;return 0; }
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner) { idle_cleanup_boundary();pins_live();if(!*owner)return 0;if(runtime_ssr)return -EUCLEAN;if(runtime_error)return runtime_error;if(runtime_busy)return -EINPROGRESS;assert(runtime_tokens==1);runtime_tokens--;free(*owner);*owner=NULL;runtime_closed++;return 0; }
+int mishare_runtime_bssid_bind(struct mishare_runtime_owner *o,const u8 *b) {(void)o;(void)b;return -EOPNOTSUPP;}
 int mishare_runtime_rate_configure(struct mishare_runtime_owner *o,const struct wondertap_fixed_tx_rate_params *p) {(void)o;(void)p;return -EOPNOTSUPP;}
 int mishare_runtime_snapshot(struct mishare_runtime_owner *o,struct mishare_runtime_status *s) { (void)o;(void)s;return -EOPNOTSUPP; }
 int mishare_runtime_ndi_create(struct mishare_runtime_owner *o,u8 a,u8 b) { (void)o;(void)a;(void)b;return -EOPNOTSUPP; }

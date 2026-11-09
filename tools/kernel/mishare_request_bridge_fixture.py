@@ -10,8 +10,9 @@ from mishare_recovery_fixture import function
 ROOT=legacy.ROOT
 MODEL=r'''
 static unsigned preflights,prepared_steps;
-static int policy_error,prepared_result;
+static int policy_error,prepared_result,bssid_result;
 static struct mishare_request_bridge *request_control;
+int mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *o,const u8 *b) {assert(o==&host && request_control && b==request_control->request.params.bssid);return bssid_result;}
 int mishare_wonder_request_preflight_locked(struct hdd_context *h,const struct mishare_init_request *q,u8 a,u8 b) {
  assert(parent_lease && h==&parent && q && a==1 && b==2);preflights++;return policy_error;
 }
@@ -24,7 +25,7 @@ int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *o,u32 f
 static struct mishare_init_request input;
 static void request_reset(struct mishare_request_bridge *c) {
  memset(c,0,sizeof(*c));reset(&c->bridge);request_control=c;
- preflights=prepared_steps=0;policy_error=0;prepared_result=-EINPROGRESS;
+ preflights=prepared_steps=0;policy_error=bssid_result=0;prepared_result=-EINPROGRESS;
  struct wondertap_init_params p={.channel={.freq=5240},.tx_rate={.preamble=WONDERTAP_RATE_PREAMBLE_HT,.nss=1,.mcs=7},
   .mgmt_retry_limit=3,.data_retry_limit=5};
  memcpy(p.mac_addr,mac,6);p.bssid[5]=7;memcpy(p.country_code,"CN",3);assert(!mishare_init_parse(&p,&input));
@@ -93,6 +94,13 @@ static void request_cases(void) {
   assert(request_step(&c)==expected && before==creates+attaches+prepared_steps && "EXPECTED_REQUEST_BRIDGE_NO_RETRY");
   assert(!retire(&c.bridge) && destroys==1);
  }
+ request_reset(&c);assert(request_step(&c)==-EINPROGRESS && request_step(&c)==-EINPROGRESS);
+ bssid_result=-EINPROGRESS;
+ assert(request_step(&c)==-EINPROGRESS && !prepared_steps && !c.bridge.start_error && "EXPECTED_REQUEST_BRIDGE_BSSID_WAIT");
+ bssid_result=0;assert(request_step(&c)==-EINPROGRESS && prepared_steps==1 && "EXPECTED_REQUEST_BRIDGE_BSSID_RESUME");
+ bssid_result=-EUCLEAN;
+ assert(request_step(&c)==-EUCLEAN && request_step(&c)==-EUCLEAN && prepared_steps==1 && c.bridge.host==&host &&
+  "EXPECTED_REQUEST_BRIDGE_BSSID_ERROR_RETAIN");assert(!retire(&c.bridge));
  request_reset(&c);c.bridge.host=&host;
  assert(request_step(&c)==-EBUSY && !c.bound && !creates && "EXPECTED_REQUEST_BRIDGE_NO_ADOPTION");
  request_reset(&c);assert(request_step(&c)==-EINPROGRESS);c.bridge.freq++;
@@ -168,7 +176,7 @@ def main():
     if os.environ.get('GITHUB_ACTIONS')!='true':raise SystemExit('Compilation runs on Actions')
     prod=ROOT/'kernel/popsicle-hdd'
     decl=legacy.DECL.replace('typedef uint32_t u32;','typedef uint32_t u32;typedef uint16_t u16;\n#define BIT(n) (1U << (n))')
-    decl+='\nstruct mishare_init_request;struct wondertap_fixed_tx_rate_params;\nint mishare_wonder_request_preflight_locked(struct hdd_context *,const struct mishare_init_request *,u8,u8);\nint mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *,u32,u8,u8,const struct wondertap_fixed_tx_rate_params *);\n'
+    decl+='\nint mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *,const u8 *);\nstruct mishare_init_request;struct wondertap_fixed_tx_rate_params;\nint mishare_wonder_request_preflight_locked(struct hdd_context *,const struct mishare_init_request *,u8,u8);\nint mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *,u32,u8,u8,const struct wondertap_fixed_tx_rate_params *);\n'
     code=legacy.HARNESS.replace('#include "wlan_hdd_mishare_bridge.h"','#include "wlan_hdd_mishare_request_bridge.h"').replace('int main(void)','static int legacy_bridge_main(void)',1)+'\n'+MODEL
     host=(prod/'wlan_hdd_mishare_host.c').read_text();reg=function(host,'mishare_init_regulatory_check');pre=function(host,'mishare_wonder_request_preflight_locked')
     policy=POLICY.replace('NATIVE_REGULATORY',reg,1).replace('NATIVE_PREFLIGHT',pre,1)

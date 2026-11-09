@@ -848,6 +848,29 @@ int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
                                   freq, nss_2g, nss_5g, params);
 }
 
+int mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *host,
+                                            const u8 *bssid)
+{
+    int ret;
+
+    if (!host)
+        return -EINVAL;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (host->session.closing)
+        return -ESHUTDOWN;
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    return mishare_runtime_bssid_bind(host->runtime, bssid);
+}
+
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
 {
     struct mishare_wonder_host *host;

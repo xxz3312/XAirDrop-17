@@ -1,3 +1,7 @@
+## 最新代码阶段 0164（owned VDEV 的 host-MLME BSSID 绑定）
+
+参考上游 0007 BSSID setter 的同字段字节写入，新增内部一次性绑定：runtime attach 后、固件 CREATE/PE 前，冻结请求 BSSID 并写入精确 owned MLME，读回确认；后续同值只验证，改值/漂移/关闭/异步工作分别拒绝或等待。request bridge 先绑定再推进 prestart，PE 仍以原 self MAC 创建/识别，未改写 PE 会话 key。100 项本地 Python 回归和组合源码生成通过；计划 512 组贯穿准备/退出、12 组原发布/隔离场景、11 项边界及三项 BSSID 变异，待 CI。BSSID 仅为 host metadata，不是 firmware/RX filter 生效；retry/aggregation 仍未应用。公开 init/START 关闭，手机无需操作。见 [0164 实现与边界](POPSICLE-BSSID-BIND-0164.md)。
+
 ## 最新代码阶段 0163（完整请求绑定到内部准备桥接）
 
 新增 request-bound 内部桥接，先规范化并冻结完整请求，再按同一份 MAC/频率/NSS/速率推进 host 分配、VDEV attach 和 prestart；每次 native 进展前重查当前国家域、HT20 监管及 NSS。请求有效字段或父级/NSS 变化拒绝；raw START 模式互斥，partial host 和退出回执沿用原有权威槽。BSSID/重试/聚合仍只保存，未声称已应用；managed/public 初始化保持关闭。100 项本地 Python 回归和语法/diff 检查通过；8 组成功模式、15 类请求变更、13 项原生策略模型及 8 项变异已通过 Actions 42626922090 的 bridge-controller；完整 host 回归和目标编译仍在运行。0162 七项必选已成功，diagnostic 仍在运行。手机无需操作。见 [0163 实现与边界](POPSICLE-REQUEST-BRIDGE-0163.md)。

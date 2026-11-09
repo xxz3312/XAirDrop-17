@@ -17,7 +17,13 @@ enum mishare_quiesce_reason {
     MISHARE_QUIESCE_MODULE_STOP,
     MISHARE_QUIESCE_UNAVAILABLE,
 };
+struct mishare_runtime_bssid_status {
+    bool requested, applied; /* Host MLME write/readback only, no firmware ACK. */
+    u8 value[6];
+    int error;
+};
 struct mishare_runtime_status {
+    struct mishare_runtime_bssid_status bssid;
     struct mishare_runtime_rate_status rate;
     bool allocated;
     bool freed;
@@ -239,6 +245,9 @@ int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *owner);
  * All exclusive parent and serialized handle contracts above remain required.
  */
 int mishare_runtime_ndi_start(struct mishare_runtime_owner *owner);
+/* One-shot host BSSID metadata before native CREATE/PE. Same-value polls
+ * verify readback; changed input is EBUSY. Caller owns native parent scope. */
+int mishare_runtime_bssid_bind(struct mishare_runtime_owner *owner, const u8 *bssid);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);

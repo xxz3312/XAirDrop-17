@@ -5,7 +5,7 @@
 #include "wlan_hdd_mishare_init.h"
 
 /* Internal pre-START subset only. Bind the full canonical request once, but
- * apply only MAC/frequency/NSS/fixed-rate preparation. BSSID/retry/aggregation
+ * bind host-MLME BSSID and prepare MAC/frequency/NSS/fixed-rate. Retry/aggregation
  * remain metadata until their own native application contract is installed.
  * Zero is NOT full Wonder initialization or firmware/radio/RX/TX readiness.
  *
@@ -80,6 +80,11 @@ mishare_request_bridge_step_locked(struct mishare_request_bridge *c,
             return mishare_bridge_fail(b, ret);
         return -EINPROGRESS;
     }
+    ret = mishare_wonder_host_bssid_bind_locked(b->host, c->request.params.bssid);
+    if (ret == -EINPROGRESS)
+        return ret;
+    if (ret)
+        return mishare_bridge_fail(b, ret);
     ret = mishare_wonder_host_prestart_step_locked(b->host,
                 c->request.params.channel.freq, b->nss_2g, b->nss_5g,
                 &c->request.params.tx_rate);

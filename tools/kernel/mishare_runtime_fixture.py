@@ -64,7 +64,7 @@ struct wlan_objmgr_psoc { int id; };
 struct wlan_objmgr_pdev { struct wlan_objmgr_psoc *psoc; };
 struct wireless_dev { int dummy; };
 struct vdev_osif_priv { struct wireless_dev *wdev;void *legacy_osif_priv; };
-struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;struct mlme_legacy_priv *ext_vdev_ptr;struct { struct { u8 type,subtype; } generic; } mgmt; struct {struct {u8 nss_2g,nss_5g;} generic;} proto; };
+struct vdev_mlme_obj { struct wlan_objmgr_vdev *vdev;struct mlme_legacy_priv *ext_vdev_ptr;struct { struct { u8 type,subtype;u8 bssid[6]; } generic; } mgmt; struct {struct {u8 nss_2g,nss_5g;} generic;} proto; };
 struct wlan_objmgr_vdev {
  struct wlan_objmgr_pdev *pdev;u8 mac[6];int mode,refs,dead,vdev_lock;
  struct { void *bss_chan,*des_chan; } vdev_mlme;

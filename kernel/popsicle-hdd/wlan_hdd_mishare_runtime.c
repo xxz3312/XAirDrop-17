@@ -2142,6 +2142,72 @@ void mishare_runtime_ndi_delete_event(struct wlan_objmgr_psoc *psoc, u8 id,
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
 }
 
+/* Host MLME metadata, equivalent to upstream's BSSID setter. This must run
+ * before firmware CREATE/PE on this owner; it does not change PE's MAC key or
+ * send firmware commands. Caller serializes polls and retains native parents. */
+int mishare_runtime_bssid_bind(struct mishare_runtime_owner *entry, const u8 *bssid)
+{
+    struct mishare_runtime_bssid_status *b;
+    struct vdev_mlme_obj *m;
+    unsigned long flags;
+    bool write;
+    int ret = 0;
+
+    if (!entry || !bssid)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    b = &entry->state.bssid;
+    if (entry->state.quiesced || entry->state.draining || entry->state.freed)
+        ret = -ESHUTDOWN;
+    else if (entry->state.blocked || entry->state.ndi.blocked || entry->state.work_error ||
+             entry->state.ndi.completion_error || b->error)
+        ret = b->error ? b->error : -EUCLEAN;
+    else if (!entry->vdev || !entry->referenced || !entry->events ||
+             entry->cookie != (unsigned long)entry->vdev || !entry->state.allocated)
+        ret = -EUCLEAN;
+    else if (b->requested && memcmp(b->value, bssid, ETH_ALEN))
+        ret = -EBUSY;
+    else if (entry->state.work_pending || entry->state.work_users)
+        ret = -EINPROGRESS;
+    else if (!b->requested && (entry->state.ndi.active || entry->state.ndi.create.wire_attempted ||
+             entry->state.ndi.pe_requested || entry->state.rate.requested || entry->radio))
+        ret = -EBUSY;
+    else if (b->requested && !b->applied)
+        ret = -EUCLEAN;
+    write = !b->requested;
+    if (!ret && write) {
+        b->requested = true;
+        memcpy(b->value, bssid, ETH_ALEN);
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    if (ret)
+        return ret;
+    m = wlan_vdev_mlme_get_cmpt_obj(entry->vdev);
+    if (!m || m->vdev != entry->vdev || m->mgmt.generic.subtype ||
+        m->mgmt.generic.type != (entry->state.ndi.active ?
+            WLAN_VDEV_MLME_TYPE_NDI : WLAN_VDEV_MLME_TYPE_PASSTHRU) ||
+        wlan_vdev_mlme_get_opmode(entry->vdev) != QDF_PASSTHRU_MODE ||
+        (write && (m->ext_vdev_ptr || m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_PASSTHRU ||
+                   wlan_vdev_mlme_get_state(entry->vdev) != WLAN_VDEV_S_INIT)))
+        ret = -EUCLEAN;
+    else {
+        if (write)
+            memcpy(m->mgmt.generic.bssid, b->value, ETH_ALEN);
+        if (memcmp(m->mgmt.generic.bssid, b->value, ETH_ALEN))
+            ret = -EUCLEAN;
+    }
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (ret) {
+        if (!b->error)
+            b->error = ret;
+        entry->state.blocked = true;
+        entry->state.ndi.blocked = true;
+    } else
+        b->applied = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
 int mishare_runtime_ndi_create(struct mishare_runtime_owner *entry,
                                u8 nss_2g, u8 nss_5g)
 {
