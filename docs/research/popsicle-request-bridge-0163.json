@@ -1,0 +1,42 @@
+{
+  "stage": "0163",
+  "status": "LOCAL_PASS_REQUEST_BRIDGE_CI_PENDING",
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "python_regressions": 100,
+    "native_compilation_local": false
+  },
+  "checks_planned": {
+    "success_modes": 8,
+    "immutable_fields": 15,
+    "native_policy_cases": 13,
+    "bridge_mutations": 5,
+    "policy_mutations": 3
+  },
+  "previous_stage_ci": {
+    "run_id": 42621983916,
+    "required_success": 7,
+    "required_total": 8,
+    "diagnostic": "in_progress"
+  },
+  "public_start_enabled": false,
+  "managed_prepared_step_enabled": false,
+  "phone_action_required": false,
+  "unapplied_snapshot_fields": [
+    "BSSID",
+    "retry",
+    "aggregation"
+  ],
+  "limitations": "Internal canonical request bridge and native-policy adapter only; host/lifetime/regulatory primitives modeled in new fixtures. No automatic parent lease, managed full init, configured START/UP or phone/RF/Apple proof."
+}

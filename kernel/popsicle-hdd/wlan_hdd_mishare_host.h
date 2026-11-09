@@ -245,6 +245,12 @@ int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host);
 /* Internal pre-START preparation only; caller holds RTNL/exclusive native
  * transition and retains the same parents across polls. Zero is fixed-rate
  * submission completion, not radio UP or full Wonder initialization. */
+struct mishare_init_request;
+/* Read-only native admission under caller's exclusive transition + RTNL.
+ * Does not set country, retain parents across calls or authorize full init. */
+int mishare_wonder_request_preflight_locked(struct hdd_context *hdd,
+                                            const struct mishare_init_request *request,
+                                            u8 nss_2g, u8 nss_5g);
 struct wondertap_fixed_tx_rate_params;
 int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
                                              u32 freq, u8 nss_2g, u8 nss_5g,

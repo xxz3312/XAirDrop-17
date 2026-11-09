@@ -26,6 +26,7 @@ struct mishare_bridge {
     bool attempted, attached, closing, retired, retire_broken;
     int start_error;
     bool handed_off;
+    bool prestart_mode; /* Request-bound preparation cannot use raw START. */
     struct mishare_host_retirement retirement;
 };
 
@@ -92,6 +93,8 @@ mishare_bridge_step_locked(struct mishare_bridge *b, struct hdd_context *hdd,
         return -EINVAL;
     if (b->closing || b->retired)
         return -ESHUTDOWN;
+    if (b->prestart_mode)
+        return -EBUSY;
     if (b->attempted && (b->hdd != hdd || b->freq != freq ||
         b->nss_2g != nss_2g || b->nss_5g != nss_5g ||
         memcmp(b->mac, mac, ETH_ALEN)))

@@ -1,3 +1,7 @@
+## 最新代码阶段 0163（完整请求绑定到内部准备桥接）
+
+新增 request-bound 内部桥接，先规范化并冻结完整请求，再按同一份 MAC/频率/NSS/速率推进 host 分配、VDEV attach 和 prestart；每次 native 进展前重查当前国家域、HT20 监管及 NSS。请求有效字段或父级/NSS 变化拒绝；raw START 模式互斥，partial host 和退出回执沿用原有权威槽。BSSID/重试/聚合仍只保存，未声称已应用；managed/public 初始化保持关闭。100 项本地 Python 回归和语法/diff 检查通过；8 组成功模式、15 类请求变更、13 项原生策略模型及 8 项变异待 CI。0162 七项必选已成功，diagnostic 仍在运行。手机无需操作。见 [0163 实现与边界](POPSICLE-REQUEST-BRIDGE-0163.md)。
+
 ## 最新代码阶段 0162（先取消 radio，再等待 MC 排空）
 
 修复 0161 完整 CI 暴露的退出顺序回归：工作引用门禁移到 radio_drain 之后、PE/peer/VDEV 清理之前。排队中的 START 仍须先看到 closing/cancel；零发送尝试的 rate flush 回执发布期间仍不能删除 PE。增强旧 radio 回归及门禁前移变异，提早加入独立 Actions 步骤；保留 0161 的 512/12/4 组合同时复验。100 项本地 Python 回归、语法和源码生成通过；Actions 42621983916 的独立 radio 及 prestart 步骤已成功，含取消顺序变异与 512/12/4 组合；完整生命周期回归和目标构建仍在运行。未接入新的请求/START 入口，手机无需操作。见 [0162 修复与证据](POPSICLE-RADIO-CANCEL-ORDER-0162.md)。

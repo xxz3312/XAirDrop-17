@@ -22,6 +22,7 @@
 #include "wlan_hdd_mishare_bridge.h"
 #include "wlan_hdd_mishare_bridge_scope.h"
 #include "wlan_hdd_mishare_init.h"
+#include "wlan_hdd_mishare_request_bridge.h"
 #include "wlan_hdd_mishare_rate.h"
 
 struct mishare_wonder_host {
@@ -1105,6 +1106,37 @@ static int mishare_init_regulatory_check(struct hdd_context *hdd,
         wlan_reg_is_passive_for_freq(hdd->pdev, p->channel.freq))
         return -EOPNOTSUPP;
     return 0;
+}
+
+int mishare_wonder_request_preflight_locked(struct hdd_context *hdd,
+                                            const struct mishare_init_request *request,
+                                            u8 nss_2g, u8 nss_5g)
+{
+    struct mishare_init_request canonical;
+    int ret;
+
+    if (!hdd || !hdd->parent_dev || !hdd->psoc || !hdd->pdev || !request ||
+        !nss_2g || nss_2g > 2 || !nss_5g || nss_5g > 2)
+        return -EINVAL;
+    ret = mishare_init_parse(&request->params, &canonical);
+    if (ret)
+        return ret;
+    if (canonical.params.channel.bandwidth != WONDERTAP_RATE_BW_20 ||
+        canonical.params.rate_adaptation_enable)
+        return -EOPNOTSUPP;
+    ret = mishare_rate_check(&canonical.params.tx_rate);
+    if (ret)
+        return ret;
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    ret = wlan_hdd_validate_context(hdd);
+    if (!ret && cds_is_driver_recovering())
+        ret = -ESHUTDOWN;
+    if (!ret && hdd_get_conparam() != QDF_GLOBAL_MISSION_MODE)
+        ret = -EOPNOTSUPP;
+    if (!ret)
+        ret = mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);
+    return ret;
 }
 
 int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_params *params,
