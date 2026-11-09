@@ -1,6 +1,6 @@
 {
   "stage": "0164",
-  "status": "LOCAL_PASS_BSSID_NATIVE_CI_PENDING",
+  "status": "BSSID_NATIVE_STEP_PASS_FULL_CI_PENDING",
   "upstream": [
     {
       "repo": "Weverses/OPAirDrop",
@@ -18,14 +18,8 @@
   ],
   "local": {
     "python_regressions": 100,
-    "native_source_generated_only": true,
+    "native_source_generated_only": false,
     "native_compilation_local": false
-  },
-  "native_planned": {
-    "prestart_combinations": 512,
-    "publication_and_retention": 12,
-    "edge_cases": 11,
-    "bssid_mutations": 3
   },
   "bssid_scope": "host MLME metadata write/readback before native CREATE/PE, no firmware command",
   "unapplied_fields": [
@@ -34,5 +28,22 @@
   ],
   "public_start_enabled": false,
   "phone_action_required": false,
-  "limitations": "Owned private setter mirrors upstream field copy; selected native lifecycle bodies with modeled physical primitives. No firmware/filter/radio acceptance, parent lease, full managed config or phone/RF/Apple proof."
+  "limitations": "Owned private setter mirrors upstream field copy; selected native lifecycle bodies with modeled physical primitives. No firmware/filter/radio acceptance, parent lease, full managed config or phone/RF/Apple proof.",
+  "native_verified": {
+    "prestart_combinations": 512,
+    "publication_and_retention": 12,
+    "edge_cases": 11,
+    "bssid_mutations": 3
+  },
+  "ci": {
+    "run_id": 42630346131,
+    "source_commit": "5db2017f693ebbefa75866ba935c894fda17489a",
+    "job_id": 129204748248,
+    "step_name": "Native owned BSSID binding and prestart retirement with sanitizers",
+    "step_conclusion": "success",
+    "bridge_controller": "success",
+    "radio_cancel_ordering": "success",
+    "full_lifecycle": "in_progress",
+    "full_target_build": "in_progress"
+  }
 }

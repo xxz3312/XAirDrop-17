@@ -27,8 +27,16 @@
 
 旧模型的 MLME BSSID 字段下移至共同平台布局，START-plan/WMA 模型只保留一份该字段；未改变真实内核布局。request bridge 模型新增 frozen BSSID 来源、等待恢复及错误保留场景；host fixture 增加新 runtime API 的显式模型 stub，完整目标编译仍验证真正字段/API。
 
-新组合与变异、原有回归和实际 WLAN 编译待 Actions。0163 的 controller 与 stop-admission 已 success，其他作业仍有在途；不记作全门禁完成。
+新 BSSID 组合与变异已通过独立步骤，请求桥接与 radio 取消顺序回归也通过；其余完整回归和实际 WLAN 编译仍在运行。0163 的 controller 与 stop-admission 已 success，其他作业仍有在途；不记作全门禁完成。
 
 ## 未完成内容
 
 此处没有向 firmware 发送 BSSID/滤波命令，也没有 START-plan/START/UP，因此不能声称 firmware、RX filter 或 Apple 发现已使用该 BSSID。retry、聚合、完整 managed config、自动 parent lease 和端到端互通仍未完成。公开初始化和 START 保持关闭，无新手机包或操作。
+
+## 已验证结果
+
+源码提交 `5db2017f693ebbefa75866ba935c894fda17489a`，Actions 42630346131、stop-admission 作业 129204748248 的 `Native owned BSSID binding and prestart retirement with sanitizers` 步骤 success，覆盖 512/12/11 组合与三项 BSSID 变异。紧随的 radio cancel ordering 步骤 success；bridge-controller 作业 129204748361 同样 success，包含新 BSSID 来源/等待恢复/错误保留模型。
+
+另核对锁定源 `qcacld-3.0/core/mac/src/pe/lim/lim_utils.c` 的 `lim_pre_vdev_start`，没有直接覆盖 MLME BSSID；但该准备函数及物理接口仍属于本组合的模型边界，不能据此写成实机保持已认证。
+
+本地最终 100 项 Python 回归通过。完整作业与目标编译仍在运行，不记为全门禁通过。公开 init/START 与手机部署状态不变。
