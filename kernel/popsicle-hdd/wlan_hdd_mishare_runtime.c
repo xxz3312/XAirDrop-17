@@ -2637,10 +2637,14 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry)
         return ret;
     }
 
-    ret = entry->state.blocked || ndi->blocked || ndi->completion_error;
+    ret = entry->state.blocked || ndi->blocked || ndi->completion_error ? -EUCLEAN : 0;
+    /* A zero-attempt rate completion still owns its MC reservation while
+     * publishing the receipt. No native cleanup before reservation release. */
+    if (!ret && (entry->state.work_pending || entry->state.work_users))
+        ret = -EINPROGRESS;
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     if (ret)
-        return -EUCLEAN;
+        return ret;
     {
         struct mishare_radio_status last = {0};
         bool had_radio = entry->radio != NULL;

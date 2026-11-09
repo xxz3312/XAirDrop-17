@@ -1,0 +1,34 @@
+{
+  "stage": "0161",
+  "status": "LOCAL_PASS_NATIVE_CI_PENDING",
+  "previous_stage_ci": {
+    "run_id": 42515932856,
+    "required_jobs_success": 8,
+    "required_jobs_total": 8
+  },
+  "upstream": [
+    {
+      "repo": "Weverses/OPAirDrop",
+      "commit": "28a3a1dbc9f515fa5705417a3973616e5ae6180d",
+      "path": "kernel/patches/0006-stage3-hdd-ops-lifecycle-ddk.patch"
+    },
+    {
+      "repo": "Leekin2/XAirDrop",
+      "commit": "891ffe6ccf040fdc86975b4fc649add002dbebcb",
+      "path": "module/action.sh"
+    }
+  ],
+  "local": {
+    "python_regressions": 100,
+    "native_source_generated_only": true,
+    "native_compilation_local": false
+  },
+  "native_cases_planned": {
+    "combinations": 512,
+    "publication_and_retention": 12,
+    "mutations": 4
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "limitations": "Actual production prestart/runtime/rate MC code plus selected native lifecycle bodies; executor, transport, PE create/channel pre-start and physical primitives modeled. No full managed init, automatic parent lease, START/UP or phone/RF/Apple proof."
+}

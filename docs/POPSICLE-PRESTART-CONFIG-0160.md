@@ -35,3 +35,5 @@
 源码提交 `5c933713a3a4d3053fda5e0020e8045c20e4dfef`，Actions 42515932856 的 bridge-controller 作业 128838832694 已 success，包含新 controller 的 16 组成功模型、15 组回执错误保留与六项变异，以及原有 session/bridge/scope/rate/runtime/managed/provider 回归。首轮夹具缺少 kernel BIT 宏已补齐；不更改生产支持合同。
 
 完整 host native 生命周期回归和目标 WLAN 编译仍在运行，不将 controller 模型结果记成原生全链或实机成功。
+
+最终复核：Actions 42515932856 八项必选作业全部 success，含完整 host 回归及目标编译；可选 ICNSS reference skipped。仍是内部 pre-START 准备，不代表公开初始化或实机互通。
