@@ -171,7 +171,7 @@ def main():
     decl+='\nstruct mishare_init_request;struct wondertap_fixed_tx_rate_params;\nint mishare_wonder_request_preflight_locked(struct hdd_context *,const struct mishare_init_request *,u8,u8);\nint mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *,u32,u8,u8,const struct wondertap_fixed_tx_rate_params *);\n'
     code=legacy.HARNESS.replace('#include "wlan_hdd_mishare_bridge.h"','#include "wlan_hdd_mishare_request_bridge.h"').replace('int main(void)','static int legacy_bridge_main(void)',1)+'\n'+MODEL
     host=(prod/'wlan_hdd_mishare_host.c').read_text();reg=function(host,'mishare_init_regulatory_check');pre=function(host,'mishare_wonder_request_preflight_locked')
-    policy=POLICY.replace('NATIVE_REGULATORY',reg).replace('NATIVE_PREFLIGHT',pre)
+    policy=POLICY.replace('NATIVE_REGULATORY',reg,1).replace('NATIVE_PREFLIGHT',pre,1)
     bridge=(prod/'wlan_hdd_mishare_bridge.h').read_text();bound=(prod/'wlan_hdd_mishare_request_bridge.h').read_text()
     controls=[
         ('wlan_hdd_mishare_request_bridge.h',bound.replace('!mishare_init_equal(&c->request, &canonical)','false',1)),
