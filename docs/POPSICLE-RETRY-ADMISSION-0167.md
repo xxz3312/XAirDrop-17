@@ -21,3 +21,7 @@ Actions [42657490299](https://github.com/xxz3312/XAirDrop-17/actions/runs/426574
 - 100 项本地 Python 回归、py_compile、native fixture 源码生成和 diff 检查通过；不在本地编译。全部相关修改集中为一批 CI。
 
 公开 init/START 仍关闭，保留原厂 CNSS2；没有手机或 Apple/RF 成功声明，无需手机操作。重试后的 SSR 合格回收、aggregation 原生应用、完整父级跨轮询 lease 仍待完成。
+
+## 首轮复验与测试入口修正
+
+Actions [42673135994](https://github.com/xxz3312/XAirDrop-17/actions/runs/42673135994) 的 request bridge 与 retry work 通过，retry composite 初始主程序完整返回成功（704 组合和七项特殊场景），随后第一项 negative control 未被杀死而失败。原因是 engine.audit 调用 extra_audit 前留下 drift-only main，新 fixture 未显式切换到 retry 入口；变异代码没有执行。现为三个控制分别指定普通、重复完成、SSR retry 基线，先验证未变异基线成功，再验证变异以 SIGABRT 和 EXPECTED_RETRY_NATIVE 标记被拒绝。不得将该轮写成所有变异通过。

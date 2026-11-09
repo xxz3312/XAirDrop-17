@@ -159,15 +159,22 @@ def negative_controls(directory,c_file,command,env,source,root):
     prod=ROOT/'kernel/popsicle-hdd';once=previous.ordinary.cleanup.owner.replace_once
     work=(prod/'wlan_hdd_mishare_retry_work.c').read_text()
     runtime=(prod/'wlan_hdd_mishare_runtime.c').read_text()
-    controls=[('wlan_hdd_mishare_retry_work.c',once(work,'    complete(owner, &receipt, ret);','    mishare_runtime_work_put(vdev, owner);\n    complete(owner, &receipt, ret);')),
-              ('wlan_hdd_mishare_runtime.c',once(runtime,'if (!r->requested || r->completed || (r->posted && !r->accepted) ||\n            !entry->vdev','if (!r->requested || false || (r->posted && !r->accepted) ||\n            !entry->vdev')),
-              ('wlan_hdd_mishare_runtime.c',once(runtime,'        if (entry->state.quiesced)\n            return -EUCLEAN;','        if (false && entry->state.quiesced)\n            return -EUCLEAN;'))]
-    for name,changed in controls:
-        path=directory/name;path.write_text(changed)
+    controls=[('wlan_hdd_mishare_retry_work.c',0,once(work,'    complete(owner, &receipt, ret);','    mishare_runtime_work_put(vdev, owner);\n    complete(owner, &receipt, ret);')),
+              ('wlan_hdd_mishare_runtime.c',6,once(runtime,'if (!r->requested || r->completed || (r->posted && !r->accepted) ||\n            !entry->vdev','if (!r->requested || false || (r->posted && !r->accepted) ||\n            !entry->vdev')),
+              ('wlan_hdd_mishare_runtime.c',7,once(runtime,'        if (entry->state.quiesced)\n            return -EUCLEAN;','        if (false && entry->state.quiesced)\n            return -EUCLEAN;'))]
+    for name,fault,changed in controls:
+        # engine.audit leaves a drift-only main selected; each extra control
+        # must select its own retry baseline before applying an override.
+        main='int main(void) {retry_data=5;retry_mgmt=3;retry_failure=0;retry_fault='+str(fault)+';retry_inline=false;prestart_native_cycle(5240,0,0,false,0);return 0;}'
+        c_file.write_text(once(source,function(source,'main'),main))
+        path=directory/name;path.unlink(missing_ok=True)
+        subprocess.run(command,check=True)
+        subprocess.run([directory/'engine'],check=True,timeout=90,env=env)
+        path.write_text(changed)
         try:
             subprocess.run(command,check=True)
             bad=subprocess.run([str(directory/'engine')],capture_output=True,text=True,timeout=90,env=env)
-            assert bad.returncode and 'EXPECTED_RETRY_NATIVE_' in bad.stderr,(name,bad.returncode,bad.stderr[-1400:])
+            assert bad.returncode==-6 and 'EXPECTED_RETRY_NATIVE_' in bad.stderr,(name,bad.returncode,bad.stderr[-1400:])
         finally:path.unlink()
 
 def audit(root):

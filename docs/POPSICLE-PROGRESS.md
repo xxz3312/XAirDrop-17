@@ -1,6 +1,6 @@
 ## 最新代码阶段 0167（SSR 优先隔离与参数支持门禁）
 
-0166 完整目标构建及七项任务通过，retry work 与 request bridge 通过，但重试 native composite 在 SSR 完成发布的保留返回码断言失败。已将 retry 的 SSR 隔离判断移到 pending 工作等待之前，继续保留 owner；704 组合与七项特殊场景待重验。参考上游未声明聚合能力、未应用两个 enable 字段，本批在 managed prepare、native preflight 和 request bridge 明确拒绝聚合 enable；零值不当作固件禁用证明。增加三种聚合拒绝、16 项 native policy 及每个重试 receipt 的十项篡改拒绝覆盖。100 项本地 Python 回归与非编译检查通过，整批集中 CI。公开 init/START 关闭，手机无需操作。见 [0167 变更与验证边界](POPSICLE-RETRY-ADMISSION-0167.md)。
+0166 完整目标构建及七项任务通过，retry work 与 request bridge 通过，但重试 native composite 在 SSR 完成发布的保留返回码断言失败。已将 retry 的 SSR 隔离判断移到 pending 工作等待之前，继续保留 owner；704 组合与七项特殊场景已在 42673135994 主测试通过；negative control 暴露继承 drift-only main 的测试入口问题，现已显式选择各自 retry 基线，行为变异待重验。参考上游未声明聚合能力、未应用两个 enable 字段，本批在 managed prepare、native preflight 和 request bridge 明确拒绝聚合 enable；零值不当作固件禁用证明。增加三种聚合拒绝、16 项 native policy 及每个重试 receipt 的十项篡改拒绝覆盖。100 项本地 Python 回归与非编译检查通过，整批集中 CI。公开 init/START 关闭，手机无需操作。见 [0167 变更与验证边界](POPSICLE-RETRY-ADMISSION-0167.md)。
 
 ## 最新代码阶段 0166（重试配置批量接入）
 

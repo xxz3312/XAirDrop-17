@@ -1,6 +1,6 @@
 {
   "stage": "0167",
-  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "status": "PRIMARY_RETRY_MATRIX_PASS_NEGATIVE_ENTRY_FIXED_REVERIFY_PENDING",
   "changes": [
     "SSR retry fence precedes pending wait",
     "aggregation-enable refused at three admission boundaries",
@@ -18,5 +18,15 @@
     "retry_native_composite": "failure"
   },
   "public_start_enabled": false,
-  "phone_action_required": false
+  "phone_action_required": false,
+  "ci": {
+    "run_id": 42673135994,
+    "source_commit": "21a23187954c93cb08850f4b51e8398ce0fd1ecb",
+    "bridge_controller": "success",
+    "retry_work": "success",
+    "retry_combinations": 704,
+    "publication_retention_cases": 7,
+    "negative_controls": "failed: drift-only main inherited from engine audit; explicit per-case baseline added, reverify pending",
+    "full_build": "in_progress"
+  }
 }
