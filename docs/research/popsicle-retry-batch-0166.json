@@ -1,6 +1,6 @@
 {
   "stage": "0166",
-  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "status": "TARGET_BUILD_PASS_RETRY_COMPOSITE_FAILED",
   "batch": [
     "owned retry MC work",
     "registry result and one-shot state",
@@ -16,5 +16,15 @@
   "public_start_enabled": false,
   "phone_action_required": false,
   "retry_ssr_reclaim_enabled": false,
-  "stock_cnss2": true
+  "stock_cnss2": true,
+  "ci": {
+    "run_id": 42657490299,
+    "source_commit": "4523ae1aa437d9a9bbd08e08514dc1e686aa3649",
+    "required_jobs_passed": 7,
+    "diagnostic": "success",
+    "retry_work_fixture": "success",
+    "request_bridge": "success",
+    "retry_composite": "failure",
+    "failure": "EXPECTED_RETRY_NATIVE_RETAIN_DURING_PUBLISH: fenced pending work priority; corrected in 0167, verification pending"
+  }
 }

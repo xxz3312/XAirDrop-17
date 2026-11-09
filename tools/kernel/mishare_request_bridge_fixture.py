@@ -42,7 +42,7 @@ static int request_step(struct mishare_request_bridge *c) {
 static void request_cases(void) {
  struct mishare_request_bridge c;
  for(unsigned mode=0;mode<8;mode++) {
-  request_reset(&c);input.params.amsdu_enable=mode&1;input.params.ampdu_enable=mode&2;
+  request_reset(&c);input.params.mgmt_retry_limit=(mode&1)?0:3;input.params.data_retry_limit=(mode&2)?0:5;
   if(mode&4){input.params.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HE;input.params.tx_rate.mcs=11;}
   assert(request_step(&c)==-EINPROGRESS && c.bound && c.bridge.prestart_mode && c.bridge.attempted &&
    creates==1 && !attaches && !prepared_steps && "EXPECTED_REQUEST_BRIDGE_BIND");
@@ -57,6 +57,11 @@ static void request_cases(void) {
   assert(retire(&c.bridge)==-EINPROGRESS && c.bridge.host==&host && request_step(&c)==-ESHUTDOWN &&
    "EXPECTED_REQUEST_BRIDGE_CLOSE");
   destroy_ret=0;assert(!retire(&c.bridge) && !c.bridge.host && c.bridge.retired && "EXPECTED_REQUEST_BRIDGE_RETIRE");
+ }
+ for(unsigned flags=1;flags<4;flags++) {
+  request_reset(&c);input.params.amsdu_enable=flags&1;input.params.ampdu_enable=!!(flags&2);
+  assert(request_step(&c)==-EOPNOTSUPP && !c.bound && !c.bridge.attempted && !creates && !preflights &&
+   !attaches && !retry_steps && "EXPECTED_REQUEST_BRIDGE_AGGREGATION_REFUSAL");
  }
  request_reset(&c);policy_error=-EOPNOTSUPP;
  assert(request_step(&c)==-EOPNOTSUPP && !c.bound && !c.bridge.attempted && !creates && "EXPECTED_REQUEST_BRIDGE_POLICY_FIRST");
@@ -159,7 +164,7 @@ static bool wlan_reg_is_passive_for_freq(void *p,u32 f) {assert(p==hdd.pdev && f
 NATIVE_REGULATORY
 NATIVE_PREFLIGHT
 int main(void) {
- for(unsigned fault=0;fault<13;fault++) {
+ for(unsigned fault=0;fault<16;fault++) {
   struct wondertap_init_params p={.channel={.freq=5240},.tx_rate={.preamble=WONDERTAP_RATE_PREAMBLE_HT,.nss=1,.mcs=7}};
   p.mac_addr[0]=2;memcpy(p.country_code,"CN",3);
   context_error=mode=country_error=reads=0;channel_state=1;recovering=passive=false;memcpy(country,"CN",3);
@@ -175,6 +180,9 @@ int main(void) {
   if(fault==10)mode=1;
   if(fault==11){p.rate_adaptation_enable=true;p.tx_rate_mask.max_nss=1;}
   if(fault==12)p.tx_rate.nss=0;
+  if(fault==13)p.amsdu_enable=1;
+  if(fault==14)p.ampdu_enable=1;
+  if(fault==15){p.amsdu_enable=1;p.ampdu_enable=1;}
   struct mishare_init_request q={.params=p};
   int expected=fault==0?0:fault==2?-EPERM:fault==8?-ENODEV:fault==9?-ESHUTDOWN:fault==12?-EINVAL:-EOPNOTSUPP;
   assert(mishare_wonder_request_preflight_locked(&hdd,&q,1,2)==expected && "EXPECTED_REQUEST_NATIVE_POLICY");
@@ -201,7 +209,8 @@ def main():
         ('wlan_hdd_mishare_request_bridge.h',bound.replace('b->attempted = true;', 'b->attempted = false;',1)),
         ('wlan_hdd_mishare_request_bridge.h',bound.replace('b->attached = true;', 'b->attached = false;',1)),
     ]
-    policies=[policy.replace('ret = mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);','ret = 0 * mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);',1),
+    policies=[policy.replace('ret = mishare_init_aggregation_check(&canonical);', 'ret = 0 * mishare_init_aggregation_check(&canonical);',1),
+              policy.replace('ret = mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);','ret = 0 * mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);',1),
               policy.replace('if (memcmp(country, p->country_code, 2))','if (false && memcmp(country, p->country_code, 2))',1),
               policy.replace('if (!ret && cds_is_driver_recovering())','if (false && !ret && cds_is_driver_recovering())',1)]
     with tempfile.TemporaryDirectory() as tmp:
@@ -228,7 +237,7 @@ def main():
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
             assert bad.returncode==-6 and 'EXPECTED_REQUEST_NATIVE_' in bad.stderr,(bad.returncode,bad.stderr[-1500:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-request-bridge-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text(json.dumps({'status':'MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY','success_modes':8,'immutable_fields':15,'native_policy_cases':13,'bridge_mutations':5,'policy_mutations':3,'limitations':'Production request/bridge and extracted native-policy adapter functions with modeled host allocation/retirement and regulatory/native scope APIs. No full managed init, parent lease, BSSID/retry/aggregation application, START/UP or phone/RF/Apple proof.'},indent=2)+'\n')
+    out.write_text(json.dumps({'status':'MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY','success_modes':8,'immutable_fields':15,'native_policy_cases':16,'bridge_mutations':5,'policy_mutations':len(policies),'limitations':'Production request/bridge and extracted native-policy adapter functions with modeled host allocation/retirement and regulatory/native scope APIs. Aggregation enables refused before allocation. Host execution is modeled here; no full managed init, parent lease, firmware ACK, START/UP or phone/RF/Apple proof.'},indent=2)+'\n')
     print('MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY')
 
 

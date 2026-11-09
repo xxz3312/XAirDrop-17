@@ -1203,6 +1203,9 @@ int mishare_wonder_request_preflight_locked(struct hdd_context *hdd,
     if (canonical.params.channel.bandwidth != WONDERTAP_RATE_BW_20 ||
         canonical.params.rate_adaptation_enable)
         return -EOPNOTSUPP;
+    ret = mishare_init_aggregation_check(&canonical);
+    if (ret)
+        return ret;
     ret = mishare_rate_check(&canonical.params.tx_rate);
     if (ret)
         return ret;
@@ -1236,6 +1239,9 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
     if (request.params.channel.bandwidth != WONDERTAP_RATE_BW_20 ||
         request.params.rate_adaptation_enable)
         return -EOPNOTSUPP;
+    ret = mishare_init_aggregation_check(&request);
+    if (ret)
+        return ret;
     ret = mishare_rate_check(&request.params.tx_rate);
     if (ret)
         return ret;

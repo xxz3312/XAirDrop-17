@@ -6,7 +6,7 @@
 
 /* Internal pre-START subset only. Bind the full canonical request once, but
  * bind host-MLME BSSID and prepare MAC/frequency/NSS/fixed-rate/retry limits.
- * Aggregation remains metadata until its native application contract exists.
+ * Aggregation enable is rejected; zero flags do not prove firmware disable.
  * Zero is NOT full Wonder initialization or firmware/radio/RX/TX readiness.
  *
  * Same caller serialization, exclusive native transition/RTNL and retained
@@ -49,6 +49,9 @@ mishare_request_bridge_step_locked(struct mishare_request_bridge *c,
         b->freq != c->request.params.channel.freq ||
         memcmp(b->mac, c->request.params.mac_addr, ETH_ALEN)))
         return mishare_bridge_fail(b, -EUCLEAN);
+    ret = mishare_init_aggregation_check(&canonical);
+    if (ret)
+        return c->bound ? mishare_bridge_fail(b, ret) : ret;
     /* Recheck native current policy on EVERY poll, before allocation, attach,
      * or progression. First refusal leaves a pristine controller untouched. */
     ret = mishare_wonder_request_preflight_locked(hdd, &canonical, nss_2g, nss_5g);

@@ -1,0 +1,22 @@
+{
+  "stage": "0167",
+  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "changes": [
+    "SSR retry fence precedes pending wait",
+    "aggregation-enable refused at three admission boundaries",
+    "retry receipt corruption coverage"
+  ],
+  "python_regressions": 100,
+  "native_compilation_local": false,
+  "retry_combinations_to_reverify": 704,
+  "publication_retention_cases_to_reverify": 7,
+  "native_policy_cases": 16,
+  "receipt_corruption_fields": 10,
+  "prior_ci": {
+    "run_id": 42657490299,
+    "required_jobs_passed": 7,
+    "retry_native_composite": "failure"
+  },
+  "public_start_enabled": false,
+  "phone_action_required": false
+}

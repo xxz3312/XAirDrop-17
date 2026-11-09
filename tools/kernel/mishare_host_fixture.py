@@ -1196,6 +1196,11 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
  struct mishare_managed_instance *prepared=handle;
  managed_context();idle_trans_failure=true;
+ for(unsigned flags=1;flags<4;flags++) {
+  struct wondertap_init_params aggr=params;aggr.amsdu_enable=flags&1;aggr.ampdu_enable=!!(flags&2);
+  assert(mishare_wonder_managed_prepare(handle,&aggr,1,2)==-EOPNOTSUPP && !prepared->request_prepared &&
+   "EXPECTED_AGGREGATION_PREPARE_NO_SIDE_EFFECT");
+ }
  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-EBUSY && !prepared->request_prepared);idle_trans_failure=false;
  managed_context();failure=4;
  assert(mishare_wonder_managed_prepare(handle,&params,1,2)==-ENODEV && !prepared->request_prepared);failure=0;

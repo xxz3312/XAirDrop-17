@@ -31,6 +31,7 @@ typedef int wmi_vdev_custom_sw_retry_type_t;
 #define WMI_AC_MAX 4
 #define sme_err(...) ((void)0)
 #include "wlan_hdd_mishare_retry.h"
+#include "wlan_hdd_mishare_runtime_retry.h"
 struct vdev_mlme_obj;
 struct wlan_objmgr_vdev {int mode;u8 id;void *psoc;struct vdev_mlme_obj *mlme;};
 struct vdev_mlme_obj {struct wlan_objmgr_vdev *vdev;void *ext_vdev_ptr;struct {struct {u8 type,subtype;} generic;} mgmt;};
@@ -85,6 +86,24 @@ int main(void){
     if(!failure || failure>start+4)submitted|=BIT(group);
    }
    assert(r.attempted_mask==attempted && r.submitted_mask==submitted && r.skipped_mask==skipped && "EXPECTED_RETRY_MASK");
+   struct mishare_runtime_retry_status state={.data_limit=data,.mgmt_limit=mgmt};
+   assert(mishare_runtime_retry_receipt_valid(&state,&r,ret,v.id) && "EXPECTED_RETRY_RECEIPT_VALID");
+   for(unsigned field=0;field<10;field++) {
+    struct mishare_retry_submission bad=r;
+    switch(field) {
+     case 0:bad.busy=true;break;
+     case 1:bad.complete=!bad.complete;break;
+     case 2:bad.attempted=false;break;
+     case 3:bad.vdev_id^=1;break;
+     case 4:bad.data_limit^=1;break;
+     case 5:bad.mgmt_limit^=1;break;
+     case 6:bad.attempted_mask^=4;break;
+     case 7:bad.submitted_mask^=4;break;
+     case 8:bad.skipped_mask^=4;break;
+     case 9:bad.first_error--;break;
+    }
+    assert(!mishare_runtime_retry_receipt_valid(&state,&bad,ret,v.id) && "EXPECTED_RETRY_RECEIPT_CORRUPTION");
+   }
    unsigned before=calls;
    assert(mishare_retry_submit_mc(NULL,0,0,&r)==(failure?-ENOSPC:-EALREADY) && calls==before && "EXPECTED_RETRY_REPLAY");
    cases++;
@@ -134,7 +153,8 @@ def main():
         d=Path(tmp);(d/'linux').mkdir()
         for name in ['linux/types.h','wlan_objmgr_vdev_obj.h','wlan_vdev_mlme_api.h','wlan_vdev_mlme.h','wlan_hdd_main.h','wma.h','wma_api.h','wma_internal.h','sme_api.h']:(d/name).write_text('/* modeled boundary */\n')
         (d/'linux/errno.h').write_text('#include_next <linux/errno.h>\n')
-        (d/'wlan_hdd_mishare_retry.h').write_bytes((ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_retry.h').read_bytes())
+        for name in ['wlan_hdd_mishare_retry.h','wlan_hdd_mishare_runtime_retry.h']:
+            (d/name).write_bytes((ROOT/'kernel/popsicle-hdd'/name).read_bytes())
         (d/'test.c').write_text(source(a.wlan));body=d/production.name;body.write_text(original)
         exe=d/'test';cmd=['cc','-std=c11','-Wall','-Wextra','-Werror','-Wno-misleading-indentation','-fsanitize=address,undefined','-fno-omit-frame-pointer','-I'+tmp,str(d/'test.c'),'-o',str(exe)]
         env=dict(os.environ,ASAN_OPTIONS='detect_leaks=1:abort_on_error=1',UBSAN_OPTIONS='halt_on_error=1')

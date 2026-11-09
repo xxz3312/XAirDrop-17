@@ -26,6 +26,14 @@ int main(void)
 {
  struct wondertap_init_params p={0},q;
  struct mishare_init_request a,b;
+ assert(mishare_init_aggregation_check(NULL)==-EINVAL);
+ for(unsigned flags=0;flags<4;flags++) {
+  struct mishare_init_request r={0};r.params.amsdu_enable=flags&1;r.params.ampdu_enable=!!(flags&2);
+  struct mishare_init_request saved=r;
+  assert(mishare_init_aggregation_check(&r)==(flags?-EOPNOTSUPP:0) &&
+   !memcmp(&r,&saved,sizeof(r)) && "EXPECTED_INIT_AGGREGATION_SUPPORT");
+ }
+
  p.channel.freq=5240;p.tx_rate.nss=1;p.mac_addr[0]=2;p.bssid[5]=7;
  memcpy(p.country_code,"CN",3);p.mgmt_retry_limit=3;p.data_retry_limit=5;
  p.rate_adaptation_enable=1;p.tx_rate_mask.max_preamble=WONDERTAP_RATE_PREAMBLE_HE;

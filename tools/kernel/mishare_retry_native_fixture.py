@@ -50,7 +50,11 @@ static void retry_publish(struct mishare_runtime_owner *o,const struct mishare_r
  if(!state(o).quiesced && !ret)assert(retry_host_poll(retry_data,retry_mgmt)==-EINPROGRESS &&
   "EXPECTED_RETRY_NATIVE_HOST_PUBLISH_BARRIER");
  struct mishare_runtime_owner *held=o;
- assert(mishare_runtime_destroy(&held)==(state(o).quiesced?-EUCLEAN:-EINPROGRESS) && held==o &&
+ int destroy_result=mishare_runtime_destroy(&held);
+ if(destroy_result!=(state(o).quiesced?-EUCLEAN:-EINPROGRESS) || held!=o || state(o).ndi.pe_delete_requested)
+  fprintf(stderr,"retry publish: d=%u m=%u fail=%u fault=%u inline=%u quiesced=%u pending=%u posted=%u destroy=%d\n",
+   retry_data,retry_mgmt,retry_failure,retry_fault,retry_inline,state(o).quiesced,state(o).work_pending,state(o).retry.posted,destroy_result);
+ assert(destroy_result==(state(o).quiesced?-EUCLEAN:-EINPROGRESS) && held==o &&
   !state(o).ndi.pe_delete_requested && "EXPECTED_RETRY_NATIVE_RETAIN_DURING_PUBLISH");
 }
 #define mishare_runtime_retry_complete retry_publish

@@ -39,6 +39,10 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
         (retry->posted || retry->accepted || retry->completed || retry->receipt.attempted)))
         return -EUCLEAN;
     if (retry->requested) {
+        /* Fencing takes precedence over the ordinary pending-work wait. The
+         * reservation still retains storage until completion returns. */
+        if (entry->state.quiesced)
+            return -EUCLEAN;
         if (!retry->posted || !retry->completed || entry->state.work_pending ||
             entry->state.work_users)
             return -EINPROGRESS;
@@ -47,8 +51,6 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
         if (!r->requested || (!retry->accepted && retry->receipt.attempted) ||
             !mishare_runtime_retry_receipt_valid(retry, &retry->receipt,
                                                   retry->result, retry->receipt.vdev_id))
-            return -EUCLEAN;
-        if (entry->state.quiesced)
             return -EUCLEAN;
     }
     if (r->integrity_error)

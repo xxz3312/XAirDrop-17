@@ -14,6 +14,19 @@ struct mishare_init_request {
     struct wondertap_init_params params;
 };
 
+/* Pinned OPAirDrop leaves both capability bits clear and does not apply
+ * these flags. Reject an enable request before allocation/native side effects.
+ * A zero request does not prove aggregation is disabled in firmware.
+ */
+static inline int
+mishare_init_aggregation_check(const struct mishare_init_request *request)
+{
+    if (!request)
+        return -EINVAL;
+    return request->params.amsdu_enable || request->params.ampdu_enable ?
+           -EOPNOTSUPP : 0;
+}
+
 static inline int
 mishare_init_parse(const struct wondertap_init_params *p, struct mishare_init_request *out)
 {
