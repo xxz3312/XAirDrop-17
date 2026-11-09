@@ -823,6 +823,62 @@ int mishare_wonder_host_session_step_locked(struct mishare_wonder_host *host,
                                  freq, nss_2g, nss_5g);
 }
 
+int mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *host,
+                                           u8 data_limit, u8 mgmt_limit)
+{
+    struct mishare_runtime_status state;
+    const struct mishare_runtime_retry_status *r = &state.retry;
+    int ret;
+
+    if (!host)
+        return -EINVAL;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (host->session.closing)
+        return -ESHUTDOWN;
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    if (!host->prestart.selected || !host->prestart.posted ||
+        host->session.stage != MISHARE_SESSION_PLAN)
+        return -EBUSY;
+    if (host->session.error)
+        return host->session.error;
+    ret = mishare_runtime_snapshot(host->runtime, &state);
+    if (ret)
+        return ret;
+    if (state.quiesced || state.draining || state.freed)
+        return -ESHUTDOWN;
+    if (state.blocked || state.ndi.blocked || state.work_error ||
+        state.ndi.completion_error || r->integrity_error)
+        return mishare_session_fail(&host->session, -EUCLEAN);
+    if (r->requested && (r->data_limit != data_limit || r->mgmt_limit != mgmt_limit))
+        return -EBUSY;
+    if (!r->requested) {
+        if (state.work_pending || state.work_users)
+            return -EINPROGRESS;
+        ret = mishare_runtime_retry_configure(host->runtime, data_limit, mgmt_limit);
+        if (ret != -EINPROGRESS)
+            return mishare_session_fail(&host->session, ret ? ret : -EUCLEAN);
+        return -EINPROGRESS; /* Separate submit-return and completion polls. */
+    }
+    if (!r->posted || !r->completed)
+        return -EINPROGRESS;
+    if (r->result)
+        return mishare_session_fail(&host->session, r->result);
+    if (!r->accepted || !r->receipt.attempted || !r->receipt.complete)
+        return mishare_session_fail(&host->session, -EUCLEAN);
+    if (state.work_pending || state.work_users)
+        return -EINPROGRESS;
+    return 0; /* Submission evidence only; no START or firmware ACK. */
+}
+
 int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
                                             u32 freq, u8 nss_2g, u8 nss_5g,
                                               const struct wondertap_fixed_tx_rate_params *params)

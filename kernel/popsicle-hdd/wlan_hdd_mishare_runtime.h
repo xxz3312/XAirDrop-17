@@ -3,6 +3,7 @@
 #define WLAN_HDD_MISHARE_RUNTIME_H
 #include <linux/types.h>
 #include "wlan_hdd_mishare_runtime_rate.h"
+#include "wlan_hdd_mishare_runtime_retry.h"
 #include "wlan_hdd_mishare_ndi.h"
 #include "wlan_hdd_mishare_radio.h"
 struct wlan_objmgr_pdev;
@@ -25,6 +26,7 @@ struct mishare_runtime_bssid_status {
 struct mishare_runtime_status {
     struct mishare_runtime_bssid_status bssid;
     struct mishare_runtime_rate_status rate;
+    struct mishare_runtime_retry_status retry;
     bool allocated;
     bool freed;
     bool draining;

@@ -1,6 +1,6 @@
 {
   "stage": "0165",
-  "status": "LOCAL_SOURCE_CHECKS_PASS_CI_PENDING",
+  "status": "ALL_REQUIRED_CI_PASS_NO_RUNTIME_CERTIFICATION",
   "python_regressions": 100,
   "native_compilation_local": false,
   "native_group_loop": "pinned SME and WMA actual bodies; per-AC WMI modeled",
@@ -9,5 +9,12 @@
   "request_bridge_integration": false,
   "public_start_enabled": false,
   "phone_action_required": false,
-  "stock_cnss2": true
+  "stock_cnss2": true,
+  "ci": {
+    "run_id": 42652443620,
+    "source_commit": "f6d293383c927ff5e0de7134f56ff8e410b2b342",
+    "required_jobs_passed": 8,
+    "retry_native_group_step": "success",
+    "full_target_build": "success"
+  }
 }

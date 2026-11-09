@@ -97,3 +97,7 @@ Fresh object compilation and symbol inspection are delegated to GitHub Actions.
 ### 0068 dormant retry executor
 
 Compiles the private MC-only one-shot retry executor into WLAN. No public or automatic caller; upstream SME/WMA semantics and partial-failure limits are recorded in docs/POPSICLE-RETRY-EXECUTOR-0165.md.
+
+### 0069 owned retry work and runtime bridge
+
+Compiles retry MC work and registry configuration bridge; 0166 also connects the internal request bridge. Public init/START remain disabled. Ordinary retirement waits for work and immutable receipt; retry SSR remains retained.

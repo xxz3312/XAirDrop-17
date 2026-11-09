@@ -89,6 +89,8 @@ on:
       - tools/kernel/mishare_runtime_fixture.py
       - tools/kernel/mishare_ops_fixture.py
       - tools/kernel/mishare_commands_fixture.py
+      - tools/kernel/mishare_retry_native_fixture.py
+      - tools/kernel/mishare_retry_work_fixture.py
       - tools/kernel/mishare_retry_fixture.py
       - tools/kernel/mishare_rate_fixture.py
       - tools/kernel/mishare_rate_work_fixture.py
@@ -208,6 +210,10 @@ jobs:
         run: python3 tools/kernel/mishare_cnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss.json
       - name: Restored native CNSS2 interfaces with sanitizers
         run: python3 tools/kernel/mishare_cnss_interfaces_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss-interfaces.json
+      - name: Owned retry queue and completion ownership with sanitizers
+        run: python3 tools/kernel/mishare_retry_work_fixture.py
+      - name: Retry prestart and native retirement composite with sanitizers
+        run: python3 tools/kernel/mishare_retry_native_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry-native.json
       - name: Native retry group submission with sanitizers
         run: python3 tools/kernel/mishare_retry_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry.json
       - name: Native owned BSSID binding and prestart retirement with sanitizers
@@ -243,6 +249,7 @@ jobs:
           path: |
             stop-host.json
             stop-runtime.json
+            stop-retry-native.json
             stop-retry.json
             stop-bssid-native.json
             stop-radio-cancel-order.json

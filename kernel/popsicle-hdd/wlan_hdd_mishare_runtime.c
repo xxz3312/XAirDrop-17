@@ -34,6 +34,23 @@ static void mishare_runtime_ndi_dp_freed(void *context);
 static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry)
 {
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
+    const struct mishare_runtime_retry_status *retry = &entry->state.retry;
+    if (retry->integrity_error || (!retry->requested &&
+        (retry->posted || retry->accepted || retry->completed || retry->receipt.attempted)))
+        return -EUCLEAN;
+    if (retry->requested) {
+        if (!retry->posted || !retry->completed || entry->state.work_pending ||
+            entry->state.work_users)
+            return -EINPROGRESS;
+        /* SSR after retry is deliberately retained until separately qualified.
+         * Do not consume the rate-only reset/tail certification for new work. */
+        if (!r->requested || (!retry->accepted && retry->receipt.attempted) ||
+            !mishare_runtime_retry_receipt_valid(retry, &retry->receipt,
+                                                  retry->result, retry->receipt.vdev_id))
+            return -EUCLEAN;
+        if (entry->state.quiesced)
+            return -EUCLEAN;
+    }
     if (r->integrity_error)
         return -EUCLEAN;
     if ((r->peer_reset_armed && (!r->ordinary_admitted || r->late_peer_armed)) ||
@@ -486,6 +503,115 @@ void mishare_runtime_rate_complete(struct mishare_runtime_owner *owner,
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
 }
 /* MISHARE_RUNTIME_RATE_END */
+
+/* MISHARE_RUNTIME_RETRY_BEGIN */
+int mishare_runtime_retry_begin(struct mishare_runtime_owner *owner,
+                    u8 data_limit, u8 mgmt_limit, struct wlan_objmgr_vdev **vdev)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_ndi_status *n;
+    struct mishare_runtime_rate_status *r;
+    unsigned long flags;
+    int ret = -ENOENT;
+    if (!vdev)
+        return -EINVAL;
+    *vdev = NULL;
+    if (!owner)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        if (entry != owner)
+            continue;
+        n = &entry->state.ndi;
+        r = &entry->state.rate;
+        if (entry->state.retry.integrity_error || r->integrity_error ||
+            entry->state.work_error || n->completion_error)
+            ret = -EUCLEAN;
+        else if (entry->state.retry.requested)
+            ret = -EALREADY;
+        else if (entry->state.quiesced || entry->state.draining || entry->state.freed)
+            ret = -ESHUTDOWN;
+        else if (entry->state.blocked || n->blocked)
+            ret = -EUCLEAN;
+        else if (!entry->vdev || !entry->referenced || !entry->events ||
+                 entry->cookie != (unsigned long)entry->vdev || !entry->pe_cookie ||
+                 !entry->state.allocated || entry->state.work_pending || entry->state.work_users ||
+                 entry->radio || n->radio_requested || n->start_plan_requested ||
+                 n->pe_delete_requested || n->peer_delete_pending || n->delete_pending ||
+                 !n->active || !n->legacy_ready || !n->wma_bound || !n->peer_created ||
+                 !n->pe_ready || !n->pe_submitted || !n->pe_completed ||
+                 !n->channel_submitted || !n->channel_completed || !n->channel_prepared ||
+                 !r->requested || !r->posted || !r->accepted || !r->completed ||
+                 r->receipt.result || r->receipt.first_error || r->receipt.busy ||
+                 !r->receipt.attempted || !r->receipt.complete ||
+                 r->receipt.attempted_mask != 7 || r->receipt.submitted_mask != 7 ||
+                 r->ordinary_admitted || r->reset_admitted)
+            ret = -EBUSY;
+        else {
+            entry->state.retry.requested = true;
+            entry->state.retry.data_limit = data_limit;
+            entry->state.retry.mgmt_limit = mgmt_limit;
+            *vdev = entry->vdev;
+            ret = 0;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
+void mishare_runtime_retry_posted(struct mishare_runtime_owner *owner, int result)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        struct mishare_runtime_retry_status *r = &entry->state.retry;
+        if (entry != owner)
+            continue;
+        if (!r->requested || r->posted || result > 0 || (result && r->completed))
+            r->integrity_error = true;
+        else {
+            r->posted = true;
+            r->accepted = !result;
+            if (result) {
+                r->completed = true;
+                r->result = result;
+            }
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+void mishare_runtime_retry_complete(struct mishare_runtime_owner *owner,
+                     const struct mishare_retry_submission *receipt, int result)
+{
+    struct mishare_runtime_owner *entry;
+    unsigned long flags;
+    if (!receipt)
+        return;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next) {
+        struct mishare_runtime_retry_status *r = &entry->state.retry;
+        if (entry != owner)
+            continue;
+        if (!r->requested || r->completed || (r->posted && !r->accepted) ||
+            !entry->vdev || !entry->state.work_pending || entry->state.work_users ||
+            !mishare_runtime_retry_receipt_valid(r, receipt, result,
+                                                 wlan_vdev_get_id(entry->vdev)))
+            r->integrity_error = true;
+        else {
+            r->receipt = *receipt;
+            r->result = result;
+            r->completed = true;
+        }
+        break;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+/* MISHARE_RUNTIME_RETRY_END */
+
 
 enum mishare_radio_cancel_origin { MISHARE_CANCEL_FLUSH, MISHARE_CANCEL_REFUSAL, MISHARE_CANCEL_BODY_ABORT, MISHARE_CANCEL_PREPARED_ABORT, MISHARE_CANCEL_SM_ENTRY_ABORT, MISHARE_CANCEL_INIT_REJECT };
 

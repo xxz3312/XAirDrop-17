@@ -11,6 +11,7 @@ from mishare_rate_work_fixture import HARNESS as WORK_HARNESS, ROOT
 
 MODEL=r'''
 #include "wlan_hdd_mishare_runtime_rate.h"
+#include "wlan_hdd_mishare_runtime_retry.h"
 struct mishare_ndi_status {
  struct {bool timer_ready,dp_attached,stats_owned,dp_attempted;unsigned long dp_cookie;} create;
  bool blocked,active,legacy_ready,wma_bound,peer_created,pe_ready,pe_submitted,pe_completed;
@@ -28,6 +29,7 @@ struct runtime_model_state {
  unsigned work_pending,work_users;
  struct mishare_ndi_status ndi;
  struct mishare_runtime_rate_status rate;
+ struct mishare_runtime_retry_status retry;
 };
 struct mishare_runtime_owner {
  struct mishare_runtime_owner *next;struct wlan_objmgr_vdev *vdev;
@@ -365,7 +367,7 @@ def main():
         d=Path(tmp);(d/'linux').mkdir()
         for name in ['linux/slab.h','qdf_status.h','scheduler_api.h','wlan_objmgr_vdev_obj.h','wlan_hdd_mishare_ndi.h','linux/if_ether.h']:(d/name).write_text('/* modeled in harness */\n')
         (d/'linux/errno.h').write_text('#include_next <linux/errno.h>\n');(d/'linux/types.h').write_text('/* scalar types in harness */\n')
-        sources=['wlan_hdd_mishare_rate_work.c','wlan_hdd_mishare_runtime_rate.c','wlan_hdd_mishare_rate.h','wlan_hdd_mishare_runtime_rate.h']
+        sources=['wlan_hdd_mishare_retry.h','wlan_hdd_mishare_runtime_retry.h','wlan_hdd_mishare_rate_work.c','wlan_hdd_mishare_runtime_rate.c','wlan_hdd_mishare_rate.h','wlan_hdd_mishare_runtime_rate.h']
         for name in sources:(d/name).write_bytes((production/name).read_bytes())
         (d/'wlan_hdd_mishare_wonder_api.h').write_bytes((ROOT/'kernel/provider/wondertap.h').read_bytes())
         source=d/'test.c';source.write_text(code);exe=d/'test'

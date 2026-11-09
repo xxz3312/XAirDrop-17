@@ -1,0 +1,7 @@
+--- a/qcacld-3.0/Kbuild
++++ b/qcacld-3.0/Kbuild
+@@ -268,2 +268,4 @@
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_retry.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_retry_work.o
++HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_runtime_retry.o
+ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_mishare_rate_work.o

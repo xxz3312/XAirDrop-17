@@ -254,6 +254,8 @@ int mishare_wonder_request_preflight_locked(struct hdd_context *hdd,
                                             const struct mishare_init_request *request,
                                             u8 nss_2g, u8 nss_5g);
 struct wondertap_fixed_tx_rate_params;
+int mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *host,
+                                           u8 data_limit, u8 mgmt_limit);
 int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
                                              u32 freq, u8 nss_2g, u8 nss_5g,
                                              const struct wondertap_fixed_tx_rate_params *params);

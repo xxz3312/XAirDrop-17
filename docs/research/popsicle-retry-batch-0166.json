@@ -1,0 +1,20 @@
+{
+  "stage": "0166",
+  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "batch": [
+    "owned retry MC work",
+    "registry result and one-shot state",
+    "host and request bridge",
+    "ordinary work-drain and conservative SSR retention"
+  ],
+  "python_regressions": 100,
+  "native_compilation_local": false,
+  "planned_native_retry_combinations": 704,
+  "planned_publication_retention_cases": 7,
+  "planned_native_mutations": 3,
+  "planned_work_mutations": 5,
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "retry_ssr_reclaim_enabled": false,
+  "stock_cnss2": true
+}

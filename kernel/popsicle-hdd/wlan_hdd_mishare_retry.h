@@ -24,4 +24,14 @@ struct mishare_retry_submission {
 int mishare_retry_submit_mc(struct wlan_objmgr_vdev *vdev, u8 data_limit,
                             u8 mgmt_limit,
                             struct mishare_retry_submission *receipt);
+typedef void (*mishare_retry_complete_fn)(void *owner,
+                       const struct mishare_retry_submission *receipt, int result);
+/* Internal serialized one-shot post. Caller checkpoints before calling: inline
+ * completion is allowed. Scalar limits are captured before queue publication.
+ * Completion follows request free but precedes reservation/ref release; copy
+ * receipt inside callback. Pre-publication failure has no callback. Not ACK.
+ */
+int mishare_retry_post(struct wlan_objmgr_vdev *vdev, void *owner,
+                        u8 data_limit, u8 mgmt_limit,
+                        mishare_retry_complete_fn complete);
 #endif

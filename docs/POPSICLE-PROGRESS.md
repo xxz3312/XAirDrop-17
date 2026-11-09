@@ -1,3 +1,7 @@
+## 最新代码阶段 0166（重试配置批量接入）
+
+按用户要求，一批完成 owned MC 工作、runtime 状态与 receipt 校验、host/request bridge 及普通退出等待，不在各小步骤间重复编译。速率和前一批工作完成后才一次性提交重试；失败和取消记录保留，重复完成隔离。普通退出沿原生 PE/peer/VDEV/DP 链，重试后的 SSR 暂保留资源。100 项本地 Python 回归、源码生成、py_compile 和 Kbuild 顺序检查通过；704 组组合及七项特殊场景已编写，原生执行待本批集中 CI。0165 的八项必需 CI 已全部通过。aggregation、自动父级 lease、公开 init/START 和实机互传仍未完成，手机无需操作。见 [0166 批量接线](POPSICLE-RETRY-BATCH-0166.md)。
+
 ## 最新代码阶段 0165（重试次数内部一次性执行器）
 
 参考两个上游并核对本机 SME→WMA 路径，新增 dormant MC 执行器：data→AGGR、mgmt→NONAGGR，各组最多四个 AC，零值沿用跳过语义。精确 WMA/VDEV/MLME 身份检查后锁定一次性 receipt；组失败可能已提交部分 AC，因此立即停止并保留失败，不重试、不回滚，不将返回成功写成固件 ACK。新增实际 SME/WMA 循环组合测试及六项行为变异，编译在 Actions 进行；100 项本地 Python 回归与源码生成通过。尚未接入 runtime work/初始化桥接，公开 init/START 继续关闭，手机无需操作。见 [0165 合同](POPSICLE-RETRY-EXECUTOR-0165.md)。
