@@ -161,7 +161,7 @@ def negative_controls(directory,c_file,command,env,source,root):
     runtime=(prod/'wlan_hdd_mishare_runtime.c').read_text()
     controls=[('wlan_hdd_mishare_retry_work.c',0,once(work,'    complete(owner, &receipt, ret);','    mishare_runtime_work_put(vdev, owner);\n    complete(owner, &receipt, ret);')),
               ('wlan_hdd_mishare_runtime.c',6,once(runtime,'if (!r->requested || r->completed || (r->posted && !r->accepted) ||\n            !entry->vdev','if (!r->requested || false || (r->posted && !r->accepted) ||\n            !entry->vdev')),
-              ('wlan_hdd_mishare_runtime.c',7,once(runtime,'        if (entry->state.quiesced &&\n            !mishare_runtime_retry_zero_attempt_ssr(entry))','        if (false && entry->state.quiesced &&\n            !mishare_runtime_retry_zero_attempt_ssr(entry))'))]
+              ('wlan_hdd_mishare_runtime.c',7,once(runtime,'        if (entry->state.quiesced &&\n            !mishare_runtime_retry_zero_attempt_ssr(entry) &&\n            !mishare_runtime_retry_prepared_ssr(entry))','        if (false && entry->state.quiesced &&\n            !mishare_runtime_retry_zero_attempt_ssr(entry) &&\n            !mishare_runtime_retry_prepared_ssr(entry))'))]
     for name,fault,changed in controls:
         # engine.audit leaves a drift-only main selected; each extra control
         # must select its own retry baseline before applying an override.

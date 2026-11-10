@@ -1,0 +1,14 @@
+{
+  "stage": "0169",
+  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "planned_retry_prepared_combinations": 352,
+  "planned_retry_prepared_retention_faults": 16,
+  "planned_total_native_mutations": 8,
+  "python_regressions": 100,
+  "native_compilation_local": false,
+  "frozen_retry_vdev_id": true,
+  "scope": "never-START prepared SSR after successful rate and completed attempted retry; no ordinary-tail/peer-reset extension",
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "stock_cnss2": true
+}

@@ -45,6 +45,31 @@ static bool mishare_runtime_retry_zero_attempt_ssr(struct mishare_runtime_owner 
            mishare_runtime_retry_receipt_valid(r, &r->receipt, r->result, 0);
 }
 
+/* Submitted retry settings belong to this never-STARTed VDEV, and are
+ * discarded by the existing qualified prepared reset. Do not adopt ordinary
+ * cleanup/peer/tail origins. Metadata only: safe after final native free too.
+ */
+static bool mishare_runtime_retry_prepared_ssr(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_retry_status *r = &entry->state.retry;
+    const struct mishare_runtime_rate_status *rate = &entry->state.rate;
+    return r->requested && r->posted && r->accepted && r->completed &&
+           !r->integrity_error && r->receipt.attempted &&
+           entry->state.quiesced == MISHARE_QUIESCE_SSR && entry->state.mc_drained &&
+           !entry->state.work_pending && !entry->state.work_users && !entry->state.work_error &&
+           !entry->radio && !entry->state.ndi.radio_requested && !entry->state.ndi.start_plan_requested &&
+           !rate->ordinary_admitted && !rate->ordinary_completed &&
+           !rate->late_peer_armed && !rate->late_peer_reply &&
+           !rate->late_delete_armed && !rate->late_delete_reply &&
+           !rate->peer_reset_armed && !rate->peer_reset_admitted && !rate->peer_reset_completed &&
+           !rate->tail_dp_attempted && !rate->tail_attempted && !rate->tail_completed &&
+           rate->requested && rate->posted && rate->accepted && rate->completed && !rate->integrity_error &&
+           rate->receipt.attempted && rate->receipt.complete && !rate->receipt.busy &&
+           !rate->receipt.result && !rate->receipt.first_error &&
+           rate->receipt.attempted_mask == 7 && rate->receipt.submitted_mask == 7 &&
+           mishare_runtime_retry_receipt_valid(r, &r->receipt, r->result, r->vdev_id);
+}
+
 static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry)
 {
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
@@ -56,16 +81,17 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
         /* Fencing takes precedence over the ordinary pending-work wait. The
          * reservation still retains storage until completion returns. */
         if (entry->state.quiesced &&
-            !mishare_runtime_retry_zero_attempt_ssr(entry))
+            !mishare_runtime_retry_zero_attempt_ssr(entry) &&
+            !mishare_runtime_retry_prepared_ssr(entry))
             return -EUCLEAN;
         if (!retry->posted || !retry->completed || entry->state.work_pending ||
             entry->state.work_users)
             return -EINPROGRESS;
-        /* Only completed zero-attempt retry may reuse rate-only prepared
-         * reset. Any attempted retry remains quarantined across SSR. */
+        /* Separate zero-attempt and submitted prepared-SSR evidence. Ordinary
+         * tail/peer-reset histories cannot inherit the latter permission. */
         if (!r->requested || (!retry->accepted && retry->receipt.attempted) ||
             !mishare_runtime_retry_receipt_valid(retry, &retry->receipt,
-                                                  retry->result, retry->receipt.vdev_id))
+                                                  retry->result, retry->vdev_id))
             return -EUCLEAN;
     }
     if (r->integrity_error)
@@ -568,6 +594,7 @@ int mishare_runtime_retry_begin(struct mishare_runtime_owner *owner,
             entry->state.retry.requested = true;
             entry->state.retry.data_limit = data_limit;
             entry->state.retry.mgmt_limit = mgmt_limit;
+            entry->state.retry.vdev_id = wlan_vdev_get_id(entry->vdev);
             *vdev = entry->vdev;
             ret = 0;
         }
@@ -614,7 +641,8 @@ void mishare_runtime_retry_complete(struct mishare_runtime_owner *owner,
         if (entry != owner)
             continue;
         if (!r->requested || r->completed || (r->posted && !r->accepted) ||
-            !entry->vdev || !entry->state.work_pending || entry->state.work_users ||
+            !entry->vdev || entry->state.retry.vdev_id != wlan_vdev_get_id(entry->vdev) ||
+            !entry->state.work_pending || entry->state.work_users ||
             !mishare_runtime_retry_receipt_valid(r, receipt, result,
                                                  wlan_vdev_get_id(entry->vdev)))
             r->integrity_error = true;

@@ -1,6 +1,6 @@
 {
   "stage": "0168",
-  "status": "ZERO_ATTEMPT_SSR_AND_RETRY_REGRESSION_STEPS_PASS_FULL_CI_PENDING",
+  "status": "ALL_REQUIRED_CI_PASS_NO_RUNTIME_CERTIFICATION",
   "scope": "zero-attempt retry only, original rate-only prepared SSR native qualification unchanged",
   "planned_retry_zero_reset_combinations": 32,
   "planned_retry_zero_retention_faults": 12,
@@ -27,9 +27,10 @@
     "retry_prestart_native_step": "success",
     "retry_native_group_step": "success",
     "bridge_controller": "success",
-    "full_target_build": "in_progress",
-    "remaining_lifecycle": "in_progress",
-    "all_eight_required_jobs_present": true
+    "full_target_build": "success",
+    "remaining_lifecycle": "success",
+    "all_eight_required_jobs_present": true,
+    "required_jobs_passed": 8
   },
   "first_attempt": {
     "run_id": 42807927198,

@@ -89,6 +89,7 @@ on:
       - tools/kernel/mishare_runtime_fixture.py
       - tools/kernel/mishare_ops_fixture.py
       - tools/kernel/mishare_commands_fixture.py
+      - tools/kernel/mishare_retry_prepared_reset_fixture.py
       - tools/kernel/mishare_retry_zero_reset_fixture.py
       - tools/kernel/mishare_retry_native_fixture.py
       - tools/kernel/mishare_retry_work_fixture.py
@@ -213,6 +214,8 @@ jobs:
         run: python3 tools/kernel/mishare_cnss_interfaces_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss-interfaces.json
       - name: Owned retry queue and completion ownership with sanitizers
         run: python3 tools/kernel/mishare_retry_work_fixture.py
+      - name: Submitted retry native prepared SSR with sanitizers
+        run: python3 tools/kernel/mishare_retry_prepared_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry-prepared-reset.json
       - name: Zero-attempt retry native prepared SSR with sanitizers
         run: python3 tools/kernel/mishare_retry_zero_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry-zero-reset.json
       - name: Retry prestart and native retirement composite with sanitizers
@@ -252,6 +255,7 @@ jobs:
           path: |
             stop-host.json
             stop-runtime.json
+            stop-retry-prepared-reset.json
             stop-retry-zero-reset.json
             stop-retry-native.json
             stop-retry.json

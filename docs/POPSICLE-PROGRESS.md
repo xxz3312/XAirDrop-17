@@ -1,3 +1,7 @@
+## 最新代码阶段 0169（已提交重试配置的 prepared SSR 回收）
+
+0168 八项必需 CI 全部通过。新批次冻结 exact VDEV ID 并复核完成/退出 receipt，增加 never-START prepared SSR 的已提交重试资格，允许成功或部分失败记录在严格 MC drain/native window/精确对象条件下走既有原生回收；ordinary/peer/tail/START 混入继续拒绝。新增实际 retry MC work 与 native prepared reset 的 352 组合、16 拒绝及三项新变异，保留速率和零尝试回归。100 项本地 Python 回归及非编译检查通过，整批 CI 待执行。公开 init/START 关闭，手机无需操作。见 [0169 合同与测试](POPSICLE-RETRY-PREPARED-RESET-0169.md)。
+
 ## 最新代码阶段 0168（零尝试重试的 prepared SSR 回收）
 
 只为严格零尝试、负结果、已完成且 work 释放的 retry receipt 增加 SSR 资格检查，继续走既有 rate-only prepared reset 的 native MC/HTC/HIF/WMI 窗口和精确身份门禁；已尝试重试、pending/畸形结果仍保留。Actions 42808171189 的零尝试 SSR 步骤已通过：32 个回收组合、12 项拒绝、原三个加新两个变异；原 704 组重试普通退出组合及 native retry/receipt 也通过，bridge-controller 通过。100 项本地 Python 回归及源码生成通过；八项必需 CI 均已启动，完整构建与其余生命周期仍在运行。0167 最终 run 虽有六项必需任务通过，但缺 diagnostic/transport-stop 且整体 failure，已如实纠正，不能称全绿。公开 init/START 关闭，手机无需操作。见 [0168 范围与验证](POPSICLE-RETRY-ZERO-RESET-0168.md)。

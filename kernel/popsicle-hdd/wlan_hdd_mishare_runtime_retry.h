@@ -6,6 +6,7 @@ struct mishare_runtime_owner;
 struct mishare_runtime_retry_status {
     bool requested, posted, accepted, completed, integrity_error;
     u8 data_limit, mgmt_limit;
+    u8 vdev_id; /* Frozen at begin; remains valid metadata after native free. */
     struct mishare_retry_submission receipt;
     int result;
 };
