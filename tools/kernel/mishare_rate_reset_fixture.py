@@ -115,12 +115,16 @@ int main(void) {
 '''
 
 
-def audit(root):
-    if os.environ.get('GITHUB_ACTIONS')!='true':raise ValueError('Native composition runs on Actions')
-    if subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()!=pre.pe.destructor.pe.PIN:raise ValueError('Unexpected native revision')
+def fixture(root):
     source=pre.fixture(root)
     assert source.count('int main(void) {')==1
-    source=source.replace('int main(void) {','static int pre_rate_regressions(void) {',1).replace('puts("MISHARE_PRE_RADIO_PREPARED_RESET_FIXTURE_PASS_ONLY");','')+HARNESS
+    return source.replace('int main(void) {','static int pre_rate_regressions(void) {',1).replace('puts("MISHARE_PRE_RADIO_PREPARED_RESET_FIXTURE_PASS_ONLY");','')+HARNESS
+
+
+def audit(root, fixture_builder=None, additional_mutations=None, mutation_markers=('EXPECTED_RATE_RESET_',)):
+    if os.environ.get('GITHUB_ACTIONS')!='true':raise ValueError('Native composition runs on Actions')
+    if subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()!=pre.pe.destructor.pe.PIN:raise ValueError('Unexpected native revision')
+    source=(fixture_builder or fixture)(root)
     production=ROOT/'kernel/popsicle-hdd'
     original=(production/'wlan_hdd_mishare_runtime.c').read_text()
     mutations=[
@@ -132,6 +136,8 @@ def audit(root):
     for n,_ in mutations:assert original.count(n)==1,n
     controls=[original.replace(n,r,1) for n,r in mutations]
     controls.append(original.replace(body,body.replace('mishare_runtime_rate_reset_check(entry)','mishare_runtime_rate_retire_check(entry)',1),1))
+    if additional_mutations:
+        controls.extend(additional_mutations(original))
     with tempfile.TemporaryDirectory() as tmp:
         d=Path(tmp);(d/'linux').mkdir();(d/'dispatcher/inc').mkdir(parents=True);(d/'core/src').mkdir(parents=True)
         (d/'linux/types.h').write_text('#pragma once\n#include <stdint.h>\n#include <stdbool.h>\ntypedef uint8_t u8;typedef uint32_t u32;typedef uint64_t u64;\n')
@@ -144,7 +150,7 @@ def audit(root):
         for changed in controls:
             (d/'wlan_hdd_mishare_runtime.c').write_text(changed);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=60)
-            assert bad.returncode==-6 and ('EXPECTED_RATE_RESET_' in bad.stderr or 'recovery_window' in bad.stderr),(bad.returncode,bad.stderr[-2000:])
+            assert bad.returncode==-6 and (any(marker in bad.stderr for marker in mutation_markers) or 'recovery_window' in bad.stderr),(bad.returncode,bad.stderr[-2000:])
     return {'status':out,'source_commit':pre.pe.destructor.pe.PIN,'configured_combinations':16,'native_mutation_controls':len(controls),'qualification_failures':6,'retention_faults':7,'production_sha256':hashlib.sha256(original.encode()).hexdigest(),'fixture_sha256':hashlib.sha256(source.encode()).hexdigest(),'limitations':'Production registry/rate hooks and prepared SSR cleanup plus selected native CDS/HIF/WMI/PE/timer/DP/object lifecycle functions. Native rate submission results, refs/locks/IRQ/firmware/DP physical primitives modeled; no ordinary post-config cleanup, START/UP, full parent/remove coordination, RF or Apple certification.'}
 
 

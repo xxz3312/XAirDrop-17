@@ -31,6 +31,20 @@ static int mishare_runtime_ndi_drain(struct mishare_runtime_owner *entry);
 static void mishare_runtime_ndi_dp_freed(void *context);
 
 /* MISHARE_RUNTIME_RATE_BEGIN */
+/* A zero-attempt retry receipt adds no WMI setting to the already-qualified
+ * rate-only prepared reset. This is eligibility, never a recovery window.
+ * Keep attempted, pending, malformed and non-SSR origins quarantined.
+ */
+static bool mishare_runtime_retry_zero_attempt_ssr(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_runtime_retry_status *r = &entry->state.retry;
+    return r->requested && r->posted && r->completed && !r->integrity_error &&
+           entry->state.quiesced == MISHARE_QUIESCE_SSR &&
+           !entry->state.work_pending && !entry->state.work_users &&
+           !entry->state.work_error && r->result < 0 && !r->receipt.attempted &&
+           mishare_runtime_retry_receipt_valid(r, &r->receipt, r->result, 0);
+}
+
 static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry)
 {
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
@@ -41,13 +55,14 @@ static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry
     if (retry->requested) {
         /* Fencing takes precedence over the ordinary pending-work wait. The
          * reservation still retains storage until completion returns. */
-        if (entry->state.quiesced)
+        if (entry->state.quiesced &&
+            !mishare_runtime_retry_zero_attempt_ssr(entry))
             return -EUCLEAN;
         if (!retry->posted || !retry->completed || entry->state.work_pending ||
             entry->state.work_users)
             return -EINPROGRESS;
-        /* SSR after retry is deliberately retained until separately qualified.
-         * Do not consume the rate-only reset/tail certification for new work. */
+        /* Only completed zero-attempt retry may reuse rate-only prepared
+         * reset. Any attempted retry remains quarantined across SSR. */
         if (!r->requested || (!retry->accepted && retry->receipt.attempted) ||
             !mishare_runtime_retry_receipt_valid(retry, &retry->receipt,
                                                   retry->result, retry->receipt.vdev_id))

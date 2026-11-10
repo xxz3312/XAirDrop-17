@@ -1,0 +1,14 @@
+{
+  "stage": "0168",
+  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "scope": "zero-attempt retry only, original rate-only prepared SSR native qualification unchanged",
+  "planned_retry_zero_reset_combinations": 32,
+  "planned_retry_zero_retention_faults": 12,
+  "planned_additional_native_mutations": 2,
+  "python_regressions": 100,
+  "native_compilation_local": false,
+  "attempted_retry_ssr_enabled": false,
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "stock_cnss2": true
+}

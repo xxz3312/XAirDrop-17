@@ -1,6 +1,6 @@
 {
   "stage": "0167",
-  "status": "RETRY_NATIVE_MATRIX_AND_MUTATIONS_PASS_FULL_CI_PENDING",
+  "status": "AVAILABLE_LIFECYCLE_JOBS_PASS_WORKFLOW_INCOMPLETE_FAILURE",
   "changes": [
     "SSR retry fence precedes pending wait",
     "aggregation-enable refused at three admission boundaries",
@@ -29,8 +29,14 @@
     "retry_combinations": 704,
     "publication_retention_cases": 7,
     "native_mutations": 3,
-    "full_build": "pending",
-    "remaining_lifecycle_jobs": "in_progress"
+    "full_build": "not present in final jobs API",
+    "remaining_lifecycle_jobs": "six required jobs present, all success",
+    "workflow_conclusion": "failure",
+    "missing_required_jobs": [
+      "diagnostic",
+      "transport-stop"
+    ],
+    "note": "Final jobs?filter=all&per_page=100 has seven records: six required success and optional ICNSS skipped. Do not infer missing target jobs succeeded; earlier 42673135994 diagnostic passed on production-equivalent source before fixture-only correction."
   },
   "historical_first_reverify": {
     "run_id": 42673135994,

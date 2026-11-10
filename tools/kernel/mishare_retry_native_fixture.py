@@ -93,7 +93,7 @@ static void retry_batch(void) {
    mishare_runtime_work_put(last_vdev,o);wlan_objmgr_vdev_release_ref(last_vdev,WLAN_LEGACY_MAC_ID);
   }
   if(retry_fault==7)mark_closed(o);
-  if(retry_fault==5 || retry_fault==7)assert(mishare_runtime_rate_reset_check(o)==-EUCLEAN &&
+  if(retry_fault==5 || retry_fault==7)assert(mishare_runtime_rate_reset_check(o)==(retry_fault==5?-EINPROGRESS:-EUCLEAN) &&
    "EXPECTED_RETRY_NATIVE_SSR_RESET_FENCE");
   if(retry_fault==6)assert(state(o).retry.integrity_error && "EXPECTED_RETRY_NATIVE_DUPLICATE_FENCE");
   assert(mishare_runtime_destroy(&o)<0 && o && state(o).ndi.active && pe_slot.valid && dp_objects &&
@@ -161,7 +161,7 @@ def negative_controls(directory,c_file,command,env,source,root):
     runtime=(prod/'wlan_hdd_mishare_runtime.c').read_text()
     controls=[('wlan_hdd_mishare_retry_work.c',0,once(work,'    complete(owner, &receipt, ret);','    mishare_runtime_work_put(vdev, owner);\n    complete(owner, &receipt, ret);')),
               ('wlan_hdd_mishare_runtime.c',6,once(runtime,'if (!r->requested || r->completed || (r->posted && !r->accepted) ||\n            !entry->vdev','if (!r->requested || false || (r->posted && !r->accepted) ||\n            !entry->vdev')),
-              ('wlan_hdd_mishare_runtime.c',7,once(runtime,'        if (entry->state.quiesced)\n            return -EUCLEAN;','        if (false && entry->state.quiesced)\n            return -EUCLEAN;'))]
+              ('wlan_hdd_mishare_runtime.c',7,once(runtime,'        if (entry->state.quiesced &&\n            !mishare_runtime_retry_zero_attempt_ssr(entry))','        if (false && entry->state.quiesced &&\n            !mishare_runtime_retry_zero_attempt_ssr(entry))'))]
     for name,fault,changed in controls:
         # engine.audit leaves a drift-only main selected; each extra control
         # must select its own retry baseline before applying an override.
