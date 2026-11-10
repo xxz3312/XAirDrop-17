@@ -27,3 +27,16 @@
 Actions [42673697311](https://github.com/xxz3312/XAirDrop-17/actions/runs/42673697311) 最终 conclusion=failure；完整 jobs API 仅七条记录，其中六项必需生命周期/桥接任务 success、optional ICNSS skipped，缺 diagnostic 与 transport-stop 任务。不能继续把两项标记为运行中或通过。原因尚未确认，不把缺失归因于代码。此前 [42673135994](https://github.com/xxz3312/XAirDrop-17/actions/runs/42673135994) 的 diagnostic 确实成功，之后修正的是 fixture 入口，但仍不将不同 run 拼成同一轮全绿。本批集中 CI 同时重新核对完整任务集合。
 
 公开 init/START 保持关闭，已尝试重试的 SSR 回收、自动父级 lease 与手机 Apple 互传未完成；手机无需操作。
+
+## 已观察 CI 结果
+
+首次 [42807927198](https://github.com/xxz3312/XAirDrop-17/actions/runs/42807927198) 在新 fixture 的继承 close guard 遇到 `-Werror=misleading-indentation`，没有执行到回收断言；为该 if 增加括号和独立换行，未关闭 warning 或降低断言。
+
+修正版源码 `c0ba33930e34ac1ed4aaa4efe1beaa198a945879`，Actions [42808171189](https://github.com/xxz3312/XAirDrop-17/actions/runs/42808171189)：
+
+- Zero-attempt retry native prepared SSR 步骤 success：32 回收组合、12 拒绝、原三个加新两个行为变异通过。
+- 原 retry work、704 组 prestart/普通退出组合（另七项特殊场景、三个变异）、native retry group/receipt 步骤均 success。
+- bridge-controller 整项 success。
+- 本轮八项必需任务均存在且已启动，diagnostic、transport-stop 与其余生命周期观察时仍在运行；不能提前写成整轮全绿。
+
+以上仍为生产 C/选定原生代码与模型组合验证，未部署到手机。

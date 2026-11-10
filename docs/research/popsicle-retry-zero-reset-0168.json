@@ -1,6 +1,6 @@
 {
   "stage": "0168",
-  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "status": "ZERO_ATTEMPT_SSR_AND_RETRY_REGRESSION_STEPS_PASS_FULL_CI_PENDING",
   "scope": "zero-attempt retry only, original rate-only prepared SSR native qualification unchanged",
   "planned_retry_zero_reset_combinations": 32,
   "planned_retry_zero_retention_faults": 12,
@@ -10,5 +10,30 @@
   "attempted_retry_ssr_enabled": false,
   "public_start_enabled": false,
   "phone_action_required": false,
-  "stock_cnss2": true
+  "stock_cnss2": true,
+  "native_verified": {
+    "retry_zero_reset_combinations": 32,
+    "retry_zero_retention_faults": 12,
+    "native_mutation_controls": 5,
+    "retry_prestart_ordinary_combinations": 704,
+    "retry_publication_retention_cases": 7,
+    "retry_native_mutations": 3
+  },
+  "ci": {
+    "run_id": 42808171189,
+    "source_commit": "c0ba33930e34ac1ed4aaa4efe1beaa198a945879",
+    "zero_attempt_ssr_step": "success",
+    "retry_work_step": "success",
+    "retry_prestart_native_step": "success",
+    "retry_native_group_step": "success",
+    "bridge_controller": "success",
+    "full_target_build": "in_progress",
+    "remaining_lifecycle": "in_progress",
+    "all_eight_required_jobs_present": true
+  },
+  "first_attempt": {
+    "run_id": 42807927198,
+    "source_commit": "24c4833f531628e157406634ab1ef50998b4b5c0",
+    "zero_attempt_ssr": "fixture compilation failed Werror misleading-indentation in inherited close guard; braces/newline added, strict check retained"
+  }
 }
