@@ -88,7 +88,7 @@ int main(void) {assert(!previous_rate_reset_cases());retry_zero_cases();return 0
 def fixture(root):
     source=previous.fixture(root)
     main=function(source,'main')
-    stop=function(source,'stop_recovery').replace('stop_recovery(', 'retry_zero_stop_recovery(',1).replace('mark_closed(o);','if(!state(o).quiesced)mark_closed(o);',1)
+    stop=function(source,'stop_recovery').replace('stop_recovery(', 'retry_zero_stop_recovery(',1).replace('mark_closed(o);','if(!state(o).quiesced) {mark_closed(o);}\n ',1)
     return source.replace(main,main.replace('int main(void)','static int previous_rate_reset_cases(void)',1),1)+'\n'+stop+'\n'+HARNESS
 
 def controls(original):
