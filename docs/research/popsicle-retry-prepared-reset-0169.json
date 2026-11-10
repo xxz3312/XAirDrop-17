@@ -1,6 +1,6 @@
 {
   "stage": "0169",
-  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "status": "PREPARED_AND_ZERO_RETRY_SSR_STEPS_PASS_FULL_CI_PENDING",
   "planned_retry_prepared_combinations": 352,
   "planned_retry_prepared_retention_faults": 16,
   "planned_total_native_mutations": 8,
@@ -10,5 +10,26 @@
   "scope": "never-START prepared SSR after successful rate and completed attempted retry; no ordinary-tail/peer-reset extension",
   "public_start_enabled": false,
   "phone_action_required": false,
-  "stock_cnss2": true
+  "stock_cnss2": true,
+  "native_verified": {
+    "retry_prepared_combinations": 352,
+    "retry_prepared_retention_faults": 16,
+    "total_native_mutations": 8,
+    "retry_zero_combinations": 32,
+    "retry_zero_retention_faults": 12,
+    "ordinary_retry_combinations": 704,
+    "ordinary_publication_retention_cases": 7,
+    "ordinary_native_mutations": 3
+  },
+  "ci": {
+    "run_id": 42837056822,
+    "source_commit": "1fb5ba911e55384817a944ed84d7b3d1a40a4cd8",
+    "submitted_retry_prepared_ssr_step": "success",
+    "zero_attempt_retry_ssr_step": "success",
+    "retry_work_step": "success",
+    "bridge_controller": "success",
+    "retry_ordinary_regression_step": "success",
+    "full_target_build": "in_progress",
+    "native_retry_group_step": "success"
+  }
 }

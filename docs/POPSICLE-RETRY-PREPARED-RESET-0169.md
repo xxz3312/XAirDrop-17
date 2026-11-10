@@ -27,3 +27,14 @@ runtime retry begin 保存精确 VDEV ID；completion 同时核对当前 exact V
 0168 Actions [42808171189](https://github.com/xxz3312/XAirDrop-17/actions/runs/42808171189) 八项必需任务已全部 success，包含完整 diagnostic 和 transport-stop。
 
 公开 init/START 仍关闭；automatic parent lease、ordinary-tail/peer-reset 的 retry 扩展和手机 Apple 发现/握手/双向传输未完成。手机无需操作。
+
+## 已观察验证结果
+
+Actions [42837056822](https://github.com/xxz3312/XAirDrop-17/actions/runs/42837056822)，源码 `1fb5ba911e55384817a944ed84d7b3d1a40a4cd8`：
+
+- Submitted retry native prepared SSR 步骤 success：352 组合、16 拒绝、原 rate/zero 回归及总八项 native 行为变异通过。
+- 独立 Zero-attempt retry native prepared SSR 步骤 success，保持 32 组合和 12 拒绝。
+- retry work 步骤与 bridge-controller 整项 success。
+- 普通 704 组组合（另七项特殊场景和三项变异）与 native retry group 步骤也 success；后续退出回归和完整 diagnostic 仍在运行。不能提前标记整轮全绿。
+
+未部署到手机；上述成功不等于固件 ACK、射频或 Apple 互传成功。
