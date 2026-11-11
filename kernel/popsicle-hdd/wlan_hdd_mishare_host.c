@@ -55,6 +55,12 @@ struct mishare_managed_instance {
     struct mishare_request_bridge request_bridge;
     bool busy;
     bool request_prepared;
+    /* Published under host_lock before leaving the first attempted scope.
+     * Native stop gates retain these exact parents until instance retirement.
+     * Identity only: not an object ref or firmware/readiness assertion. */
+    struct hdd_context *parent_hdd;
+    struct wlan_objmgr_psoc *parent_psoc;
+    struct wlan_objmgr_pdev *parent_pdev;
     struct mishare_init_request request;
     u8 request_nss_2g, request_nss_5g;
 };
@@ -115,6 +121,7 @@ static int mishare_host_parent_identity(struct mishare_wonder_host *host)
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
 {
     struct mishare_wonder_host *host;
+    struct mishare_managed_instance *instance;
     unsigned long flags;
     bool busy = false;
 
@@ -127,6 +134,9 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc)
             break;
         }
     }
+    for (instance = mishare_instances; !busy && instance; instance = instance->next)
+        if (instance->parent_psoc == psoc)
+            busy = true;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     return busy;
 }
@@ -153,6 +163,7 @@ bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter)
 static bool mishare_host_hdd_mismatch(struct hdd_context *hdd)
 {
     struct mishare_wonder_host *host;
+    struct mishare_managed_instance *instance;
     unsigned long flags;
     bool mismatch = false;
 
@@ -165,6 +176,11 @@ static bool mishare_host_hdd_mismatch(struct hdd_context *hdd)
             break;
         }
     }
+    for (instance = mishare_instances; !mismatch && instance; instance = instance->next)
+        if (instance->parent_hdd == hdd &&
+            (instance->dev != hdd->parent_dev || instance->parent_psoc != hdd->psoc ||
+             instance->parent_pdev != hdd->pdev))
+            mismatch = true;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     return mismatch;
 }
@@ -428,7 +444,7 @@ int mishare_ssr_stop_unload_ready_locked(struct mishare_ssr_stop_checkpoint *c,
     busy = upper_blocked || c->phase != MISHARE_SSR_STOP_EMPTY ||
            c->first_error || c->paused || c->hdd || c->parent_dev ||
            c->psoc || c->pdev || c->driver_status || c->module_lease.held ||
-           mishare_hosts;
+           mishare_hosts || mishare_instances;
     spin_unlock_irqrestore(&mishare_host_lock, flags);
     if (busy || mishare_runtime_any_busy())
         return -EBUSY;
@@ -1148,6 +1164,34 @@ static void mishare_instance_release(struct mishare_managed_instance *instance)
     spin_unlock_irqrestore(&mishare_host_lock, flags);
 }
 
+/* Caller owns instance claim and a fresh native scope. Never dereference a
+ * retained HDD pointer: compare it with the freshly resolved context first.
+ * Publication/observation uses the same registry lock as native stop gates.
+ */
+static int mishare_instance_parent_check(struct mishare_managed_instance *instance,
+                                        struct hdd_context *hdd)
+{
+    if (instance->parent_hdd &&
+        (instance->parent_hdd != hdd || instance->dev != hdd->parent_dev ||
+         instance->parent_psoc != hdd->psoc || instance->parent_pdev != hdd->pdev))
+        return -EUCLEAN;
+    return 0;
+}
+
+static void mishare_instance_parent_publish(struct mishare_managed_instance *instance,
+                                            struct hdd_context *hdd)
+{
+    unsigned long flags;
+
+    if (!instance->request_bridge.bridge.attempted || instance->parent_hdd)
+        return;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    instance->parent_hdd = hdd;
+    instance->parent_psoc = hdd->psoc;
+    instance->parent_pdev = hdd->pdev;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+}
+
 /* Read current native policy inside ONE scope. This is deliberately not a
  * country setter: a global country transaction needs restoration/parent
  * lifetime coordination before it can be exposed to a managed caller.
@@ -1282,7 +1326,10 @@ release:
 
 /* Internal process-context typed path. Object/text references are owned by
  * instance/host, but caller still retains native HDD/components/firmware across
- * asynchronous polls. No public Wonder callback invokes this entry.
+ * asynchronous polls. The registry fence additionally blocks parent retirement
+ * between polls, including failed creates with no host. It does not prevent
+ * SSR firmware loss or replace native recovery coordination. No public Wonder
+ * callback invokes this entry.
  */
 int mishare_wonder_managed_prestart_step(void *handle)
 {
@@ -1303,10 +1350,13 @@ int mishare_wonder_managed_prestart_step(void *handle)
     ret = mishare_bridge_scope_begin(&scope, instance->dev);
     if (ret)
         goto release;
-    ret = wlan_hdd_validate_context(scope.hdd);
+    ret = mishare_instance_parent_check(instance, scope.hdd);
+    if (!ret)
+        ret = wlan_hdd_validate_context(scope.hdd);
     if (!ret)
         ret = mishare_request_bridge_step_locked(&instance->request_bridge, scope.hdd,
                   &instance->request, instance->request_nss_2g, instance->request_nss_5g);
+    mishare_instance_parent_publish(instance, scope.hdd);
     mishare_bridge_scope_end(&scope);
 release:
     mishare_instance_release(instance);
@@ -1390,6 +1440,11 @@ int mishare_wonder_managed_retire_process(void **handle)
         /* No native submission took place: admission contention is a wait. */
         if (ret == -EAGAIN || ret == -EBUSY)
             ret = -EINPROGRESS;
+        goto retain;
+    }
+    ret = mishare_instance_parent_check(instance, scope.hdd);
+    if (ret) {
+        mishare_bridge_scope_end(&scope);
         goto retain;
     }
     if (!bridge->handed_off)

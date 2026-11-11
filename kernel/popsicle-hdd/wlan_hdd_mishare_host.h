@@ -56,7 +56,11 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
  * pins, and re-enters a fresh native scope each call. Zero means only BSSID,
  * MAC/channel/fixed-rate/retry prestart submissions, never public init or UP.
  * Retire through existing managed retire/process entries, even after errors.
- * No automatic native-parent lease or public caller is installed.
+ * An attempted typed instance now remains visible to native parent-stop gates
+ * until actual instance retirement, even with no host after allocation failure.
+ * Fresh scopes reject replacement HDD/PSOC/PDEV identities. This is a parent
+ * retirement fence, NOT firmware readiness or automatic SSR recovery. Caller
+ * still coordinates native recovery; no public caller is installed.
  */
 int mishare_wonder_managed_prestart_step(void *handle);
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
@@ -66,7 +70,8 @@ int mishare_wonder_managed_retire_process(void **handle);
 /* Host lifetime observation for the native idle-shutdown path. The caller must
  * hold the exclusive psoc transition after draining operations, through its
  * decision and module stop. Creation/retirement use that same transition.
- * Covers allocation before runtime creation, asynchronous drain and close.
+ * Covers allocation before runtime creation, asynchronous drain and close,
+ * plus attempted typed instances until process retirement.
  * Not a reference, SSR/remove barrier, firmware or radio readiness predicate.
  */
 bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
@@ -79,7 +84,8 @@ bool mishare_wonder_host_psoc_busy(struct wlan_objmgr_psoc *psoc);
 bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter);
 /* Idle/mode-change stop admission only. Caller drains operations and holds
  * the exclusive driver/psoc transition through the native stop call. Covers
- * hosts before runtime creation AND standalone runtime owners. EBUSY retains
+ * hosts before runtime creation, attempted typed instances AND standalone
+ * runtime owners. EBUSY retains
  * every object; no cleanup, firmware command or quarantine reset is attempted.
  * EUCLEAN rejects a retained host whose same HDD now names different parents,
  * including PSOC migration that would otherwise evade an exact-PSOC scan.

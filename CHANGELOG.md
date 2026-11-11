@@ -203,3 +203,7 @@
 - 模块名称调整为 OPAirDrop，版本号改为语义化版本，使用中文模块描述。
 - 自动检测 LSPosed、安装 OShare 桥接并启用主用户的 OShare、Mosey 作用域。
 - 整合已校验的 r27 运行组件与最新用户态构建产物。
+
+## 0171 — typed managed parent retirement fence
+
+Retain attempted typed instance HDD/PSOC/PDEV identities across asynchronous polls, include them in native stop/unload admission, and refuse replacement parents before progression or native retirement. Add full-host boundary and behavior-mutation coverage. This does not qualify firmware lifetime or automatic SSR ownership transfer; see docs/POPSICLE-PARENT-FENCE-0171.md. Native/target CI pending.

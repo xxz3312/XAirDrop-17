@@ -1289,6 +1289,18 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
    instance->request_bridge.bridge.host && active && !runtime_tokens && "EXPECTED_TYPED_MANAGED_CREATE");
   assert(!instance->busy && !parent_owned && !rtnl_owned && managed_device_refs==1 && lease_refs==1 &&
    "EXPECTED_TYPED_MANAGED_SCOPE_BALANCE");
+  /* No native locks span polls. The instance fence survives independently of
+   * the host owner and rejects replacement parents before any native use. */
+  assert(instance->parent_hdd==h && mishare_wonder_host_psoc_busy(h->psoc) &&
+   mishare_wonder_host_stop_ready_locked(h)==-EBUSY && "EXPECTED_PARENT_FENCE_BUSY");
+  struct wlan_objmgr_pdev *saved_pdev=h->pdev,replacement_pdev={0};h->pdev=&replacement_pdev;
+  assert(mishare_wonder_host_stop_ready_locked(h)==-EUCLEAN && "EXPECTED_PARENT_FENCE_MISMATCH");
+  assert(mishare_instance_parent_check(instance,h)==-EUCLEAN && "EXPECTED_PARENT_FENCE_IDENTITY");
+  h->pdev=saved_pdev;
+  struct hdd_context replacement_hdd=*h;mode_context=&replacement_hdd;
+  managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EUCLEAN &&
+   instance->parent_hdd==h && !instance->busy && "EXPECTED_PARENT_FENCE_IDENTITY");
+  mode_context=h;
   managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EOPNOTSUPP && !runtime_tokens &&
    "EXPECTED_TYPED_MANAGED_NO_RAW_BYPASS");
   if(typed) {
@@ -1302,12 +1314,39 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
    managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EOPNOTSUPP && runtime_tokens==1 &&
     "EXPECTED_TYPED_MANAGED_ERROR_STICKY");
   }
+  runtime_ssr=true;
+  managed_context();assert(mishare_wonder_managed_retire_process(&handle)==-ESHUTDOWN && handle &&
+   instance->parent_hdd==h && mishare_wonder_host_stop_ready_locked(h)==-EBUSY &&
+   "EXPECTED_PARENT_FENCE_SSR_RETAIN");runtime_ssr=false;
   assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS);
   managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-ESHUTDOWN);
   managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle && !active && !runtime_tokens &&
    !managed_device_refs && !lease_refs && !device_pins && "EXPECTED_TYPED_MANAGED_RETIRE");
   parent_owned=rtnl_owned=true;managed_instance_case=false;
  }
+ /* Failed first host allocation retains an attempted typed instance even
+  * with empty host/runtime registries; native idle/SSR/unload must see it. */
+ reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
+ assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
+ managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));
+ failure=1;managed_context();
+ assert(mishare_wonder_managed_prestart_step(handle)==-ENOMEM && !active && !mishare_hosts &&
+  !runtime_tokens && "EXPECTED_PARENT_FENCE_PARTIAL_CREATE");failure=0;
+ struct mishare_managed_instance *failed=handle;
+ assert(failed->parent_hdd==h && mishare_wonder_host_psoc_busy(h->psoc) &&
+  mishare_wonder_host_stop_ready_locked(h)==-EBUSY && "EXPECTED_PARENT_FENCE_NO_HOST");
+ struct mishare_ssr_stop_checkpoint empty_stop={0};
+ assert(mishare_ssr_stop_unload_ready_locked(&empty_stop,false)==-EBUSY && "EXPECTED_PARENT_FENCE_UNLOAD");
+ struct wlan_objmgr_psoc *saved_psoc=h->psoc;h->psoc=NULL;
+ assert(mishare_host_hdd_mismatch(h) && "EXPECTED_PARENT_FENCE_NO_HOST_MISMATCH");h->psoc=saved_psoc;
+ runtime_ssr=true;parent_owned=rtnl_owned=true;
+ assert(mishare_wonder_host_ssr_prepare_locked(h)==-EBUSY && "EXPECTED_PARENT_FENCE_SSR_EMPTY");
+ runtime_ssr=false;
+ managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle &&
+  !mishare_instances && !managed_device_refs && !lease_refs && "EXPECTED_PARENT_FENCE_RELEASE");
+ assert(!mishare_wonder_host_psoc_busy(h->psoc) && !mishare_wonder_host_stop_ready_locked(h) &&
+  !mishare_ssr_stop_unload_ready_locked(&empty_stop,false) && "EXPECTED_PARENT_FENCE_RELEASE");
+ parent_owned=rtnl_owned=true;managed_instance_case=false;
  for(int band=0;band<3;band++) {
   reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
   assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
@@ -1652,6 +1691,21 @@ def run(wlan, output):
         stdout=subprocess.check_output([exe],text=True,env=env,timeout=10)
         # Mutation controls must reach behavior assertions, not fail compilation.
         host_source=(production/'wlan_hdd_mishare_host.c').read_text()
+        parent_controls = [
+            ('    mishare_instance_parent_publish(instance, scope.hdd);',
+             '    if (false) mishare_instance_parent_publish(instance, scope.hdd);'),
+            ('if (instance->parent_psoc == psoc)', 'if (false && instance->parent_psoc == psoc)'),
+            ('if (instance->parent_hdd == hdd &&', 'if (false && instance->parent_hdd == hdd &&'),
+            ('    ret = mishare_instance_parent_check(instance, scope.hdd);',
+             '    ret = 0 * mishare_instance_parent_check(instance, scope.hdd);'),
+            ('mishare_hosts || mishare_instances;', 'mishare_hosts;'),
+        ]
+        for needle,replacement in parent_controls:
+            assert needle in host_source,needle
+            (d/'wlan_hdd_mishare_host.c').write_text(host_source.replace(needle,replacement,1))
+            subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode == -6 and 'EXPECTED_PARENT_FENCE_' in bad.stderr,(needle,bad.returncode,bad.stderr[-1800:])
         regulatory_controls = [
             ('ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);',
              'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),

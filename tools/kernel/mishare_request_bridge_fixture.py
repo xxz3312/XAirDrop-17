@@ -155,6 +155,14 @@ static void mishare_bridge_scope_end(struct mishare_bridge_scope *s) {
  assert(managed_entered && s->hdd==&parent && "EXPECTED_MANAGED_REQUEST_SCOPE_END");managed_entered=false;managed_ends++;
 }
 static int wlan_hdd_validate_context(struct hdd_context *h) {assert(managed_entered && h==&parent);return managed_context_error;}
+/* Parent stop registry executes in the full host fixture; this narrow model
+ * only checks scope ordering of the coordinator's boundary calls. */
+static int mishare_instance_parent_check(struct mishare_managed_instance *m,struct hdd_context *h) {
+ assert(m==&managed && managed_entered && h==&parent);return 0;
+}
+static void mishare_instance_parent_publish(struct mishare_managed_instance *m,struct hdd_context *h) {
+ assert(m==&managed && managed_entered && h==&parent);
+}
 MANAGED_FUNCTION
 static void managed_request_reset(void) {
  managed=(struct mishare_managed_instance){0};request_reset(&managed.request_bridge);
