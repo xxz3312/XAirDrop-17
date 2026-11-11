@@ -23,3 +23,9 @@ request bridge fixture 编译从 production 提取的 managed coordinator，与�
 0169 Actions [42837056822](https://github.com/xxz3312/XAirDrop-17/actions/runs/42837056822) 八项必需任务已全部 success，包括完整 WLAN 编译/严格链接。
 
 跨轮询原生父级 lease、retry ordinary-tail/peer-reset 扩展、完整公开初始化/START、Apple 发现/握手/双向传输仍待完成；手机无需操作。
+
+## 已观察结果
+
+首次 [43059732571](https://github.com/xxz3312/XAirDrop-17/actions/runs/43059732571) 的 bridge 模型在 foreign-host refusal 的清理断言失败：测试注入未知来源 host 后要求 retire 成功，实际严格身份门禁拒绝清理。修正断言为失败且保留 host；未放松生产门禁。
+
+修正版源码 `0169385d82f8cec6c31861f27198ab765facea5e`，Actions [43060141951](https://github.com/xxz3312/XAirDrop-17/actions/runs/43060141951) 的 bridge-controller 整项 success：八组 managed 成功、九项边界、四项行为变异，以及原 request/native-policy/桥接回归通过。它使用实际 managed coordinator 函数和 request bridge，scope/claim/host 为模型；完整 host fixture 新增三组引用/部分 owner 退出及目标编译观察时仍在运行，不能提前写成全绿或长期父级 lease 已完成。

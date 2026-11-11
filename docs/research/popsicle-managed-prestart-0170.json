@@ -1,6 +1,6 @@
 {
   "stage": "0170",
-  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "status": "MANAGED_COORDINATOR_BRIDGE_MODEL_PASS_FULL_HOST_AND_BUILD_PENDING",
   "changes": [
     "single authoritative raw/typed bridge owner",
     "process-context typed prestart coordinator",
@@ -15,5 +15,23 @@
   "automatic_native_parent_lease": false,
   "public_start_enabled": false,
   "phone_action_required": false,
-  "stock_cnss2": true
+  "stock_cnss2": true,
+  "verified_managed_model": {
+    "success_modes": 8,
+    "boundary_cases": 9,
+    "behavior_mutations": 4
+  },
+  "ci": {
+    "run_id": 43060141951,
+    "source_commit": "0169385d82f8cec6c31861f27198ab765facea5e",
+    "bridge_controller": "success",
+    "full_native_host": "pending",
+    "full_target_build": "in_progress",
+    "remaining_lifecycle": "in_progress"
+  },
+  "initial_attempt": {
+    "run_id": 43059732571,
+    "source_commit": "5e8549423ec980a4837cff2a98b0b2065bb94017",
+    "bridge_model": "failed: foreign host refusal test incorrectly expected retirement; assertion corrected to retain unknown owner"
+  }
 }

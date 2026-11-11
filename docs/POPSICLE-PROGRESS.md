@@ -1,6 +1,6 @@
 ## 最新代码阶段 0170（内部完整请求的进程上下文准备）
 
-0169 八项必需 CI 全部通过。本批新增 managed_prestart_step，在实例 claim 后使用新 native transition/RTNL scope 推进冻结请求；raw/typed/retire/handoff 共用 request_bridge.bridge 唯一 owner，部分错误不释放或复制 owner。已有 device/PSOC/PDEV/text 引用继续持有，但跨轮询 HDD/components/firmware lease 仍要求调用者提供，公开 init/START 不启用。新增八组完整请求成功、九项边界、四项变异及三组完整 host 部分准备/退出测试；100 项本地 Python 回归及非编译检查通过，整批 CI 待运行。手机无需操作。见 [0170 合同与测试](POPSICLE-MANAGED-PRESTART-0170.md)。
+0169 八项必需 CI 全部通过。本批新增 managed_prestart_step，在实例 claim 后使用新 native transition/RTNL scope 推进冻结请求；raw/typed/retire/handoff 共用 request_bridge.bridge 唯一 owner，部分错误不释放或复制 owner。已有 device/PSOC/PDEV/text 引用继续持有，但跨轮询 HDD/components/firmware lease 仍要求调用者提供，公开 init/START 不启用。Actions 43060141951 的 bridge-controller 已通过八组 managed 请求成功、九项边界、四项变异及原桥接/policy 回归；三组完整 host 部分准备/退出检查和目标编译仍在运行。100 项本地 Python 回归及非编译检查通过，不提前称整轮通过。手机无需操作。见 [0170 合同与测试](POPSICLE-MANAGED-PRESTART-0170.md)。
 
 ## 最新代码阶段 0169（已提交重试配置的 prepared SSR 回收）
 
