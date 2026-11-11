@@ -194,7 +194,9 @@ static void managed_request_cases(void) {
   if(fault<6)assert(!managed.request_bridge.bound && !creates && !attaches && "EXPECTED_MANAGED_REQUEST_NO_ALLOCATION");
   if(fault==7){unsigned before=retry_steps;retry_result=0;assert(managed_step()==-EIO && retry_steps==before && managed.request_bridge.bridge.host==&host && "EXPECTED_MANAGED_REQUEST_STICKY_OWNER");}
   managed_scope_error=managed_context_error=policy_error=0;
-  if(managed.request_bridge.bridge.host)assert(!retire(&managed.request_bridge.bridge));
+  if(fault==8)assert(retire(&managed.request_bridge.bridge)<0 && managed.request_bridge.bridge.host==&host &&
+   "EXPECTED_MANAGED_REQUEST_FOREIGN_OWNER_RETAIN");
+  else if(managed.request_bridge.bridge.host)assert(!retire(&managed.request_bridge.bridge));
  }
 }
 
