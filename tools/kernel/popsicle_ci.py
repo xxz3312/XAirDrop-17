@@ -223,7 +223,7 @@ def check_mishare_host_symbols(work, module, report_name):
              'mishare_retry_submit_mc', 'mishare_retry_post',
              'mishare_runtime_retry_configure', 'mishare_runtime_retry_begin',
              'mishare_runtime_retry_posted', 'mishare_runtime_retry_complete',
-             'mishare_wonder_host_retry_step_locked',
+             'mishare_wonder_host_retry_step_locked', 'mishare_wonder_managed_prestart_step',
              'mishare_rate_submit', 'mishare_rate_submit_mc',
              'mishare_rate_post', 'mishare_ndi_rate_command',
              'mishare_runtime_rate_configure', 'mishare_runtime_rate_begin',

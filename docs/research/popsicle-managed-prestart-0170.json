@@ -1,0 +1,19 @@
+{
+  "stage": "0170",
+  "status": "LOCAL_NONCOMPILE_CHECKS_PASS_BATCH_CI_PENDING",
+  "changes": [
+    "single authoritative raw/typed bridge owner",
+    "process-context typed prestart coordinator",
+    "same registry busy/native scope retirement contract"
+  ],
+  "planned_managed_success_modes": 8,
+  "planned_managed_boundary_cases": 9,
+  "planned_managed_mutations": 4,
+  "planned_full_host_typed_cases": 3,
+  "python_regressions": 100,
+  "native_compilation_local": false,
+  "automatic_native_parent_lease": false,
+  "public_start_enabled": false,
+  "phone_action_required": false,
+  "stock_cnss2": true
+}

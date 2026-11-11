@@ -1269,6 +1269,45 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  mode_context=NULL;managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle);
  assert(!managed_device_refs && !lease_refs && !mishare_instances);
  parent_owned=rtnl_owned=true;managed_instance_case=false;
+ /* Full production typed coordinator: scope refusal leaves it pristine,
+  * partial create/attach share the same retired owner and native pins. */
+ for(unsigned typed=0;typed<3;typed++) {
+  reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
+  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
+  struct mishare_managed_instance *instance=handle;
+  managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EINVAL && !active && !instance->busy &&
+   "EXPECTED_TYPED_MANAGED_NO_REQUEST");
+  managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));
+  instance->busy=true;assert(mishare_wonder_managed_prestart_step(handle)==-EINPROGRESS);instance->busy=false;
+  managed_context();idle_trans_failure=true;
+  assert(mishare_wonder_managed_prestart_step(handle)==-EBUSY && !instance->request_bridge.bound && !active &&
+   !instance->busy && "EXPECTED_TYPED_MANAGED_SCOPE_REFUSAL");idle_trans_failure=false;
+  managed_context();reg_state=0;
+  assert(mishare_wonder_managed_prestart_step(handle)==-EOPNOTSUPP && !instance->request_bridge.bound && !active &&
+   "EXPECTED_TYPED_MANAGED_POLICY_REFUSAL");reg_state=1;
+  managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EINPROGRESS && instance->request_bridge.bound &&
+   instance->request_bridge.bridge.host && active && !runtime_tokens && "EXPECTED_TYPED_MANAGED_CREATE");
+  assert(!instance->busy && !parent_owned && !rtnl_owned && managed_device_refs==1 && lease_refs==1 &&
+   "EXPECTED_TYPED_MANAGED_SCOPE_BALANCE");
+  managed_context();assert(mishare_wonder_managed_step(handle,mac,5240,1,2)==-EOPNOTSUPP && !runtime_tokens &&
+   "EXPECTED_TYPED_MANAGED_NO_RAW_BYPASS");
+  if(typed) {
+   active->dev->ieee80211_ptr=wdev;managed_context();
+   assert(mishare_wonder_managed_prestart_step(handle)==-EINPROGRESS && runtime_tokens==1 &&
+    instance->request_bridge.bridge.attached && "EXPECTED_TYPED_MANAGED_ATTACH");
+  }
+  if(typed==2) {
+   managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EOPNOTSUPP &&
+    instance->request_bridge.bridge.start_error==-EOPNOTSUPP && runtime_tokens==1 && "EXPECTED_TYPED_MANAGED_PARTIAL_RETAIN");
+   managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EOPNOTSUPP && runtime_tokens==1 &&
+    "EXPECTED_TYPED_MANAGED_ERROR_STICKY");
+  }
+  assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS);
+  managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-ESHUTDOWN);
+  managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle && !active && !runtime_tokens &&
+   !managed_device_refs && !lease_refs && !device_pins && "EXPECTED_TYPED_MANAGED_RETIRE");
+  parent_owned=rtnl_owned=true;managed_instance_case=false;
+ }
  for(int band=0;band<3;band++) {
   reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
   assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
@@ -1292,13 +1331,13 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
   assert(mishare_wonder_managed_retire_process(&handle)==-EINPROGRESS && handle==saved);instance->busy=false;
   assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS && handle==saved);
   managed_context();idle_trans_failure=true;
-  assert(mishare_wonder_managed_retire_process(&handle)==-EINPROGRESS && handle==saved && instance->bridge.host && !instance->bridge.handed_off);
+  assert(mishare_wonder_managed_retire_process(&handle)==-EINPROGRESS && handle==saved && instance->request_bridge.bridge.host && !instance->request_bridge.bridge.handed_off);
   assert(managed_device_refs==1 && lease_refs==1);idle_trans_failure=false;
   if(mode)runtime_busy=1;
   managed_context();int result=mishare_wonder_managed_retire_process(&handle);
   if(!mode){assert(!result && !handle);}
   else {
-   assert(result==-EINPROGRESS && handle==saved && instance->bridge.handed_off && !instance->bridge.host && lease_refs==2 && managed_device_refs==1);
+   assert(result==-EINPROGRESS && handle==saved && instance->request_bridge.bridge.handed_off && !instance->request_bridge.bridge.host && lease_refs==2 && managed_device_refs==1);
    runtime_busy=0;
    if(mode==2){parent_owned=rtnl_owned=true;runtime_ssr=true;trace[0]=0;assert(!mishare_wonder_host_reclaim_handoff_ssr_locked(h));runtime_ssr=false;mode_context=NULL;}
    managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle);

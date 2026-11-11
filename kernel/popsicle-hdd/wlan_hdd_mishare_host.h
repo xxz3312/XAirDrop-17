@@ -50,6 +50,15 @@ int mishare_wonder_managed_create(struct device *dev, void **handle);
  */
 int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_params *params,
                                    u8 nss_2g, u8 nss_5g);
+/* Internal process-context typed preparation. Caller is outside native ops,
+ * transition and RTNL and retains HDD/components/firmware across polls.
+ * Instance serializes its one authoritative raw/typed owner, owns text/device
+ * pins, and re-enters a fresh native scope each call. Zero means only BSSID,
+ * MAC/channel/fixed-rate/retry prestart submissions, never public init or UP.
+ * Retire through existing managed retire/process entries, even after errors.
+ * No automatic native-parent lease or public caller is installed.
+ */
+int mishare_wonder_managed_prestart_step(void *handle);
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
                                 u8 nss_2g, u8 nss_5g);
 int mishare_wonder_managed_retire(void **handle);

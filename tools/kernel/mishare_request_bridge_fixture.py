@@ -127,7 +127,78 @@ static void request_cases(void) {
  assert(mishare_bridge_handoff_idle_locked(&c.bridge,&parent)==-EINPROGRESS && !c.bridge.host && request_step(&c)==-ESHUTDOWN);
  parent_lease=false;receipt_result=0;assert(!mishare_bridge_retire_locked(&c.bridge,NULL));parent_lease=true;
 }
-int main(void) {request_cases();assert(!legacy_bridge_main());puts("MISHARE_REQUEST_BRIDGE_FIXTURE_PASS_ONLY");return 0;}
+struct mishare_managed_instance {
+ struct mishare_request_bridge request_bridge;
+ struct mishare_init_request request;
+ u8 request_nss_2g,request_nss_5g;
+ void *dev;bool busy,request_prepared,pins;
+};
+struct mishare_bridge_scope {struct hdd_context *hdd;};
+static struct mishare_managed_instance managed;
+static int managed_scope_error,managed_context_error;
+static unsigned managed_claims,managed_releases,managed_scopes,managed_ends;
+static bool managed_entered;
+static int mishare_instance_claim(void *handle,struct mishare_managed_instance **out) {
+ if(handle!=&managed)return -EINVAL;
+ if(managed.busy)return -EINPROGRESS;
+ assert(managed.pins && "EXPECTED_MANAGED_REQUEST_PINS");managed.busy=true;managed_claims++;*out=&managed;return 0;
+}
+static void mishare_instance_release(struct mishare_managed_instance *m) {
+ assert(m==&managed && m->busy && !managed_entered && "EXPECTED_MANAGED_REQUEST_RELEASE_ORDER");m->busy=false;managed_releases++;
+}
+static int mishare_bridge_scope_begin(struct mishare_bridge_scope *s,void *d) {
+ assert(d==&managed && managed.busy && !managed_entered && "EXPECTED_MANAGED_REQUEST_SCOPE");managed_scopes++;
+ if(managed_scope_error)return managed_scope_error;
+ managed_entered=true;s->hdd=&parent;return 0;
+}
+static void mishare_bridge_scope_end(struct mishare_bridge_scope *s) {
+ assert(managed_entered && s->hdd==&parent && "EXPECTED_MANAGED_REQUEST_SCOPE_END");managed_entered=false;managed_ends++;
+}
+static int wlan_hdd_validate_context(struct hdd_context *h) {assert(managed_entered && h==&parent);return managed_context_error;}
+MANAGED_FUNCTION
+static void managed_request_reset(void) {
+ managed=(struct mishare_managed_instance){0};request_reset(&managed.request_bridge);
+ managed.dev=&managed;managed.pins=managed.request_prepared=true;managed.request=input;
+ managed.request_nss_2g=1;managed.request_nss_5g=2;managed_scope_error=managed_context_error=0;
+ managed_claims=managed_releases=managed_scopes=managed_ends=0;managed_entered=false;
+}
+static int managed_step(void) {
+ int ret=mishare_wonder_managed_prestart_step(&managed);
+ assert(!managed.busy && !managed_entered && managed_claims==managed_releases && managed.pins &&
+  managed_ends==managed_scopes-(managed_scope_error!=0) && "EXPECTED_MANAGED_REQUEST_BALANCE");return ret;
+}
+static void managed_request_cases(void) {
+ for(unsigned mode=0;mode<8;mode++) {
+  managed_request_reset();managed.request.params.data_retry_limit=mode&1?0:5;managed.request.params.mgmt_retry_limit=mode&2?0:3;
+  if(mode&4){managed.request.params.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HE;managed.request.params.tx_rate.mcs=11;}
+  assert(managed_step()==-EINPROGRESS && creates==1 && managed.request_bridge.bound && "EXPECTED_MANAGED_REQUEST_CREATE");
+  assert(managed_step()==-EINPROGRESS && attaches==1 && "EXPECTED_MANAGED_REQUEST_ATTACH");
+  prepared_result=0;retry_result=-EINPROGRESS;
+  assert(managed_step()==-EINPROGRESS && retry_steps==1 && "EXPECTED_MANAGED_REQUEST_RETRY_WAIT");
+  retry_result=0;assert(!managed_step() && retry_steps==2 && !steps && "EXPECTED_MANAGED_REQUEST_PRESTART_ONLY");
+  assert(!retire(&managed.request_bridge.bridge));unsigned before=managed_scopes;
+  assert(managed_step()==-ESHUTDOWN && managed_scopes==before && "EXPECTED_MANAGED_REQUEST_CLOSE");
+ }
+ for(unsigned fault=0;fault<9;fault++) {
+  managed_request_reset();int expected=-EBUSY;
+  if(fault==0){managed.busy=true;assert(mishare_wonder_managed_prestart_step(&managed)==-EINPROGRESS && !managed_scopes);managed.busy=false;continue;}
+  if(fault==1){managed.request_prepared=false;expected=-EINVAL;}
+  if(fault==2){managed.request_bridge.bridge.closing=true;expected=-ESHUTDOWN;}
+  if(fault==3){managed_scope_error=-EAGAIN;expected=-EAGAIN;}
+  if(fault==4){managed_context_error=-ENODEV;expected=-ENODEV;}
+  if(fault==5){policy_error=-EOPNOTSUPP;expected=-EOPNOTSUPP;}
+  if(fault==6){assert(managed_step()==-EINPROGRESS);managed.request.params.tx_rate.mcs--;}
+  if(fault==7){assert(managed_step()==-EINPROGRESS && managed_step()==-EINPROGRESS);prepared_result=0;retry_result=-EIO;expected=-EIO;}
+  if(fault==8)managed.request_bridge.bridge.host=&host;
+  assert(managed_step()==expected && "EXPECTED_MANAGED_REQUEST_REFUSAL");
+  if(fault<6)assert(!managed.request_bridge.bound && !creates && !attaches && "EXPECTED_MANAGED_REQUEST_NO_ALLOCATION");
+  if(fault==7){unsigned before=retry_steps;retry_result=0;assert(managed_step()==-EIO && retry_steps==before && managed.request_bridge.bridge.host==&host && "EXPECTED_MANAGED_REQUEST_STICKY_OWNER");}
+  managed_scope_error=managed_context_error=policy_error=0;
+  if(managed.request_bridge.bridge.host)assert(!retire(&managed.request_bridge.bridge));
+ }
+}
+
+int main(void) {request_cases();managed_request_cases();assert(!legacy_bridge_main());puts("MISHARE_REQUEST_BRIDGE_FIXTURE_PASS_ONLY");return 0;}
 '''
 POLICY=r'''
 #include <assert.h>
@@ -200,6 +271,12 @@ def main():
     decl+='\nint mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *,u8,u8);\nint mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *,const u8 *);\nstruct mishare_init_request;struct wondertap_fixed_tx_rate_params;\nint mishare_wonder_request_preflight_locked(struct hdd_context *,const struct mishare_init_request *,u8,u8);\nint mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *,u32,u8,u8,const struct wondertap_fixed_tx_rate_params *);\n'
     code=legacy.HARNESS.replace('#include "wlan_hdd_mishare_bridge.h"','#include "wlan_hdd_mishare_request_bridge.h"').replace('int main(void)','static int legacy_bridge_main(void)',1)+'\n'+MODEL
     host=(prod/'wlan_hdd_mishare_host.c').read_text();reg=function(host,'mishare_init_regulatory_check');pre=function(host,'mishare_wonder_request_preflight_locked')
+    managed_function=function(host,'mishare_wonder_managed_prestart_step')
+    code=code.replace('MANAGED_FUNCTION',managed_function,1)
+    managed_controls=[code.replace('if (!instance->request_prepared)', 'if (false && !instance->request_prepared)',1),
+                      code.replace('    mishare_bridge_scope_end(&scope);', '    if (false) mishare_bridge_scope_end(&scope);',1),
+                      code.replace('    mishare_instance_release(instance);', '    if (false) mishare_instance_release(instance);',1),
+                      code.replace('&instance->request, instance->request_nss_2g', '&instance->request_bridge.request, instance->request_nss_2g',1)]
     policy=POLICY.replace('NATIVE_REGULATORY',reg,1).replace('NATIVE_PREFLIGHT',pre,1)
     bridge=(prod/'wlan_hdd_mishare_bridge.h').read_text();bound=(prod/'wlan_hdd_mishare_request_bridge.h').read_text()
     controls=[
@@ -225,6 +302,12 @@ def main():
         def run(text):
             f.write_text(text);subprocess.run(command,check=True);subprocess.run([exe],check=True,env=env,timeout=15)
         run(code)
+        for managed_code in managed_controls:
+            assert managed_code!=code;f.write_text(managed_code);subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
+            assert bad.returncode==-6 and 'EXPECTED_MANAGED_REQUEST_' in bad.stderr,(bad.returncode,bad.stderr[-1500:])
+        f.write_text(code)
+
         for name,text in controls:
             original=(prod/name).read_text();assert text!=original
             (d/name).write_text(text);f.write_text(code);subprocess.run(command,check=True)
@@ -237,7 +320,7 @@ def main():
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
             assert bad.returncode==-6 and 'EXPECTED_REQUEST_NATIVE_' in bad.stderr,(bad.returncode,bad.stderr[-1500:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-request-bridge-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text(json.dumps({'status':'MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY','success_modes':8,'immutable_fields':15,'native_policy_cases':16,'bridge_mutations':5,'policy_mutations':len(policies),'limitations':'Production request/bridge and extracted native-policy adapter functions with modeled host allocation/retirement and regulatory/native scope APIs. Aggregation enables refused before allocation. Host execution is modeled here; no full managed init, parent lease, firmware ACK, START/UP or phone/RF/Apple proof.'},indent=2)+'\n')
+    out.write_text(json.dumps({'status':'MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY','success_modes':8,'immutable_fields':15,'native_policy_cases':16,'bridge_mutations':5,'policy_mutations':len(policies),'managed_success_modes':8,'managed_boundary_cases':9,'managed_mutations':len(managed_controls),'limitations':'Production typed managed coordinator, request/bridge and extracted native-policy functions with modeled host allocation/retirement, instance serialization and regulatory/native scope APIs. Aggregation enables refused before allocation. Host execution is modeled here; no full managed init, parent lease, firmware ACK, START/UP or phone/RF/Apple proof.'},indent=2)+'\n')
     print('MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY')
 
 

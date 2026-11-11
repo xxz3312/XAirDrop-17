@@ -52,7 +52,7 @@ struct mishare_managed_instance {
     struct mishare_managed_instance *next;
     struct device *dev;
     struct mishare_module_lease module_lease;
-    struct mishare_bridge bridge;
+    struct mishare_request_bridge request_bridge;
     bool busy;
     bool request_prepared;
     struct mishare_init_request request;
@@ -1248,11 +1248,11 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
     ret = mishare_instance_claim(handle, &instance);
     if (ret)
         return ret;
-    if (instance->bridge.closing) {
+    if (instance->request_bridge.bridge.closing) {
         ret = -ESHUTDOWN;
         goto release;
     }
-    if (instance->bridge.attempted || (instance->request_prepared &&
+    if (instance->request_bridge.bridge.attempted || (instance->request_prepared &&
         (!mishare_init_equal(&instance->request, &request) ||
          instance->request_nss_2g != nss_2g || instance->request_nss_5g != nss_5g))) {
         ret = -EBUSY;
@@ -1280,6 +1280,39 @@ release:
     return ret;
 }
 
+/* Internal process-context typed path. Object/text references are owned by
+ * instance/host, but caller still retains native HDD/components/firmware across
+ * asynchronous polls. No public Wonder callback invokes this entry.
+ */
+int mishare_wonder_managed_prestart_step(void *handle)
+{
+    struct mishare_managed_instance *instance;
+    struct mishare_bridge_scope scope = {0};
+    int ret = mishare_instance_claim(handle, &instance);
+
+    if (ret)
+        return ret;
+    if (instance->request_bridge.bridge.closing) {
+        ret = -ESHUTDOWN;
+        goto release;
+    }
+    if (!instance->request_prepared) {
+        ret = -EINVAL;
+        goto release;
+    }
+    ret = mishare_bridge_scope_begin(&scope, instance->dev);
+    if (ret)
+        goto release;
+    ret = wlan_hdd_validate_context(scope.hdd);
+    if (!ret)
+        ret = mishare_request_bridge_step_locked(&instance->request_bridge, scope.hdd,
+                  &instance->request, instance->request_nss_2g, instance->request_nss_5g);
+    mishare_bridge_scope_end(&scope);
+release:
+    mishare_instance_release(instance);
+    return ret; /* Zero is the prestart subset only, never full init/START. */
+}
+
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
                                 u8 nss_2g, u8 nss_5g)
 {
@@ -1288,12 +1321,12 @@ int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
 
     if (ret)
         return ret;
-    if (instance->bridge.closing)
+    if (instance->request_bridge.bridge.closing)
         ret = -ESHUTDOWN;
     else if (instance->request_prepared)
         ret = -EOPNOTSUPP; /* Full request application/lease is not installed. */
     else
-        ret = mishare_bridge_step(&instance->bridge, instance->dev, mac, freq, nss_2g, nss_5g);
+        ret = mishare_bridge_step(&instance->request_bridge.bridge, instance->dev, mac, freq, nss_2g, nss_5g);
     mishare_instance_release(instance);
     return ret;
 }
@@ -1310,9 +1343,9 @@ int mishare_wonder_managed_retire(void **handle)
     ret = mishare_instance_claim(*handle, &instance);
     if (ret)
         return ret;
-    instance->bridge.closing = true;
-    ret = instance->bridge.handed_off ?
-          mishare_bridge_poll_retired(&instance->bridge) : 0;
+    instance->request_bridge.bridge.closing = true;
+    ret = instance->request_bridge.bridge.handed_off ?
+          mishare_bridge_poll_retired(&instance->request_bridge.bridge) : 0;
     mishare_instance_release(instance);
     /* Metadata/device release belongs to the process-context entry, never a
      * callback whose outer RTNL/provider locks are unknown here.
@@ -1335,7 +1368,7 @@ int mishare_wonder_managed_retire_process(void **handle)
     ret = mishare_instance_claim(*handle, &instance);
     if (ret)
         return ret;
-    bridge = &instance->bridge;
+    bridge = &instance->request_bridge.bridge;
     bridge->closing = true;
     if (bridge->retire_broken) {
         ret = -EUCLEAN;

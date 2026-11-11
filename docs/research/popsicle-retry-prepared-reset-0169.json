@@ -1,6 +1,6 @@
 {
   "stage": "0169",
-  "status": "PREPARED_AND_ZERO_RETRY_SSR_STEPS_PASS_FULL_CI_PENDING",
+  "status": "ALL_REQUIRED_CI_PASS_NO_RUNTIME_CERTIFICATION",
   "planned_retry_prepared_combinations": 352,
   "planned_retry_prepared_retention_faults": 16,
   "planned_total_native_mutations": 8,
@@ -29,7 +29,9 @@
     "retry_work_step": "success",
     "bridge_controller": "success",
     "retry_ordinary_regression_step": "success",
-    "full_target_build": "in_progress",
-    "native_retry_group_step": "success"
+    "full_target_build": "success",
+    "native_retry_group_step": "success",
+    "required_jobs_passed": 8,
+    "remaining_lifecycle": "success"
   }
 }
