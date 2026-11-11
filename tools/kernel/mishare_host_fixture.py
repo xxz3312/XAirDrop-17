@@ -1190,7 +1190,7 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  parent_owned=rtnl_owned=true;managed_instance_case=false;
  /* Preparing a typed request is read-only native admission, not radio start. */
  struct wondertap_init_params params={0},changed;
- params.channel.freq=5240;params.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HE;params.tx_rate.nss=1;params.mac_addr[0]=2;
+ params.channel.freq=5240;params.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HE;params.tx_rate.nss=1;memcpy(params.mac_addr,mac,sizeof(mac));
  params.mgmt_retry_limit=3;params.data_retry_limit=5;memcpy(params.country_code,"CN",3);
  reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
