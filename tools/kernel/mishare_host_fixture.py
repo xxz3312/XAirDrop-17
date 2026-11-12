@@ -1629,7 +1629,7 @@ static void managed_commit_cases(struct hdd_context *h,struct wireless_dev *wdev
   plan_values(&ready_snapshot,false);
   if(!mode)for(unsigned fault=0;fault<12;fault++) {
    pid_t child=fork();assert(child>=0);if(!child) {
-    int expected=-EUCLEAN;unsigned reads=ready_snapshot_reads;unsigned checks=validations;
+    int expected=-EUCLEAN;unsigned reads=ready_snapshot_reads;int checks=validations;
     if(fault==0){instance->busy=true;expected=-EINPROGRESS;}
     if(fault==1){rtnl_contended=true;expected=-EAGAIN;}
     struct wlan_objmgr_pdev replacement={0};
