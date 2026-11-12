@@ -1,3 +1,10 @@
+## 0177 — first active-radio fence observation
+
+- Confirmed all eight required 0176 CI jobs passed at 2ce56a7 / Actions 43259916582.
+- Capture controller-local phase/error/closing, command facts, work/callback occupancy and native-dispatch/reply facts before the first explicit parent fence changes BLOCKED state. Repeated fences never overwrite the original record; runtime reason stays sticky.
+- Added native SM/WMA active retention matrix: 88 SSR, four fences inside native START-send, eight non-SSR cases and 11 new mutations. No configured START guard bypass or active recovery permission.
+- Local noncompiling/Python checks passed; native/sanitizer and complete target CI pending at submission. No init_boot changes, phone package or RF/Apple certification.
+
 ## 0176 — full-request START-plan caller
 
 - Confirmed all eight required 0175 jobs passed at e96839c / Actions 43231437844.

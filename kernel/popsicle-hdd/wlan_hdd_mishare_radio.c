@@ -91,6 +91,34 @@ static bool radio_init_reject_context(struct mishare_radio *r,
            !r->applying_start_reply && !r->applying_stop_reply && radio_init_idle(r);
 }
 
+/* Caller holds the radio registry lock. Capture BEFORE phase/error/closing
+ * are changed, once even when ordinary STOP/DOWN already set closing. Keep
+ * the origin immutable across late work/responses and repeated parent fences. */
+static void radio_capture_fence_locked(struct mishare_radio *r)
+{
+    struct mishare_radio_fence_status *f = &r->state.fence;
+
+    if (f->recorded)
+        return;
+    f->phase = r->state.phase;
+    f->error = r->state.error;
+    f->closing = r->state.closing;
+    f->start_attempted = r->state.start_attempted;
+    f->stop_attempted = r->state.stop_attempted;
+    f->host_up = r->state.host_up;
+    f->down_attempted = r->state.down_attempted;
+    f->down_accepted = r->state.down_accepted;
+    f->pending = r->state.pending;
+    f->users = r->state.users;
+    f->start_sm_entered = r->start_sm_entered;
+    f->start_sm_call_active = r->start_sm_call_active;
+    f->start_reply_queued = r->start_reply_queued;
+    f->stop_reply_queued = r->stop_reply_queued;
+    f->applying_start_reply = r->applying_start_reply;
+    f->applying_stop_reply = r->applying_stop_reply;
+    f->recorded = true;
+}
+
 void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
 {
     struct mishare_radio *r;
@@ -101,6 +129,7 @@ void mishare_radio_quiesce_psoc(struct wlan_objmgr_psoc *psoc)
     for (r = mishare_radios; r; r = r->next) {
         if (wlan_vdev_get_psoc(r->vdev) != psoc)
             continue;
+        radio_capture_fence_locked(r);
         if (!r->state.closing && r->state.phase == MISHARE_RADIO_NEW &&
             !r->state.error && r->state.pending == 1 && !r->state.users &&
             r->start_posted && !r->start_callback_entered && !r->preflight &&

@@ -1,3 +1,7 @@
+## 当前代码阶段 0177（active radio 的首次封锁来源）
+
+0176 八项必需 CI 全部通过。radio 在首次 parent fence 改成 BLOCKED 前冻结原 phase/error/closing、命令阶段、pending/users 和 native dispatch/reply 状态，重复 fence 与迟到回调不覆盖；不增加恢复资格。新增原生 SM/WMA 88 组 active SSR、4 组 native START-send 栈内 fence、8 组非 SSR 来源与11 项变异，原基线保留。本地 100 项 Python/源码构造通过，原生/目标 CI 待观察。active 资源仍明确保留，实际 START/UP SSR 回收、configured radio/public init 和 Apple 互传尚未开放。见 [0177](POPSICLE-ACTIVE-FENCE-0177.md)。
+
 ## 当前代码阶段 0176（完整请求的 START-plan 提交调用链）
 
 0175 八项必需 CI 全部通过。新增 managed→request bridge→host→runtime 的内部提交调用，逐轮 claim/fresh scope/父级核对及当前 canonical 请求/监管检查；只采纳已完成 preview，不创建或重放，不启动 radio。共用配置观察加独立 committed-plan 标量检查，旧 ready/preview 入口仍拒绝已提交计划。新增纯 32 组合/35 边界/六项变异、bridge 三项变异、host 两种退出模式/12 类边界/五项变异。本地 100 项 Python 和非编译检查通过，原生/完整 CI 待观察。实际 START/UP、公开 init 和 Apple 互通未开放。见 [0176](POPSICLE-PLAN-CALLER-0176.md)。

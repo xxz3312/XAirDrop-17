@@ -20,7 +20,22 @@ enum mishare_radio_phase {
     MISHARE_RADIO_CANCELLED,
     MISHARE_RADIO_BLOCKED,
 };
+/* Frozen controller-local observation before the FIRST explicit parent fence.
+ * Independent radio lock only: not a native SM/firmware/IRQ quiescence proof,
+ * and never sufficient permission for recovery. Runtime retains fence reason. */
+struct mishare_radio_fence_status {
+    bool recorded;
+    enum mishare_radio_phase phase;
+    int error;
+    bool closing;
+    bool start_attempted, stop_attempted, host_up, down_attempted, down_accepted;
+    unsigned int pending, users;
+    bool start_sm_entered, start_sm_call_active;
+    bool start_reply_queued, stop_reply_queued;
+    bool applying_start_reply, applying_stop_reply;
+};
 struct mishare_radio_status {
+    struct mishare_radio_fence_status fence;
     enum mishare_radio_phase phase;
     bool start_attempted;
     bool stop_attempted;

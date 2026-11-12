@@ -54,6 +54,7 @@ on:
       - tools/kernel/mishare_native_sm_owner_fixture.py
       - tools/kernel/mishare_native_callbacks_fixture.py
       - tools/kernel/mishare_native_wma_start_fixture.py
+      - tools/kernel/mishare_active_fence_fixture.py
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
@@ -207,6 +208,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Native active radio fence origins and retention
+        run: python3 tools/kernel/mishare_active_fence_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-active-fence.json
       - name: Configured START-plan adoption and native retirement
         run: python3 tools/kernel/mishare_plan_commit_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-plan-commit.json
       - name: Configured native START encoder preview and retirement
@@ -264,6 +267,7 @@ jobs:
           name: popsicle-stop-admission-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             stop-host.json
+            stop-active-fence.json
             stop-plan-commit.json
             stop-plan-preview.json
             stop-runtime.json
