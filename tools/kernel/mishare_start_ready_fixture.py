@@ -153,7 +153,8 @@ static void plan_commit_observation_cases(void)
   case 1:s.start_preview.posted=false;break;
   case 2:s.start_preview.completed=false;break;
   case 3:s.start_preview.integrity_error=true;break;
-  case 4:s.start_preview.freq++;break;
+  case 4:s.start_preview.freq=5180;s.start_preview.summary.freq=s.start_preview.summary.center_freq=5180;
+         s.ndi.start_plan=s.start_preview.summary;break;
   case 5:s.start_preview.vdev_id++;break;
   case 6:s.start_preview.result=-EIO;break;
   case 7:s.start_preview.summary.freq++;break;
