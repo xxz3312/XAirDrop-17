@@ -1513,7 +1513,8 @@ static int mishare_managed_ssr_claim_locked(struct hdd_context *hdd,
             break;
         }
         if (instance->busy) {
-            ret = -EBUSY;
+            /* Native stop journal can pause/resume this transient claim. */
+            ret = -EINPROGRESS;
             break;
         }
         if (!selected)

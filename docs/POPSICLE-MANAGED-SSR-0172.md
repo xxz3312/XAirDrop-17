@@ -22,8 +22,10 @@
 
 完整 host fixture 执行实际生产 instance/coordinator/reclaim/receipt 代码，新增四种成功状态（host-only、runtime-attached、handed-off、failed create）和九种保留边界（busy、RTNL 争用、PDEV 替换、非恢复状态、native wait、native hard error、额外 owner、请求修改、retire-broken）。错误子进程有意保留资源退出，不伪造生产重置或故障恢复。成功测试核对实际 host/runtime 模型释放、无重复回收、关闭后的请求拒绝、撤下登记后的 stop admission，以及无 HDD 的 metadata 释放。
 
-八项行为变异检查覆盖原生接线、busy claim、请求一致性、closing、提前/遗漏撤销父级登记、原生 wait 结果、busy 释放和 RTNL 释放。修正原 parent-fence 报告中与后续 parent mutation 变量同名而导致计数不准确的问题。
+九项行为变异检查覆盖原生接线、busy claim、请求一致性、closing、提前/遗漏撤销父级登记、原生 wait 结果、busy 释放和 RTNL 释放。修正原 parent-fence 报告中与后续 parent mutation 变量同名而导致计数不准确的问题。
 
-本地 100 项 Python 回归、py_compile、diff 检查和八项变异构造检查通过。生产 host sanitizer 与完整目标构建交给同一轮 CI，提交时尚未观察结果。此 fixture 的 runtime batch、native transport/固件资格、锁和完成源仍有平台模型；真实 runtime 和 native lifecycle 的既有组合回归继续运行。自动调用位置沿用已有真实 native post-disable 接线，但没有本批实机 SSR 或射频验证。
+本地 100 项 Python 回归、py_compile、diff 检查和九项变异构造检查通过。生产 host sanitizer 与完整目标构建交给同一轮 CI，提交时尚未观察结果。此 fixture 的 runtime batch、native transport/固件资格、锁和完成源仍有平台模型；真实 runtime 和 native lifecycle 的既有组合回归继续运行。自动调用位置沿用已有真实 native post-disable 接线，但没有本批实机 SSR 或射频验证。
 
 保留原厂 CNSS2，不触碰 init_boot，不开放公开 Wonder init/START。Apple 发现、握手与双向文件传输仍未认证；手机无需操作。
+
+忙实例返回 EINPROGRESS 以适配原生 stop journal 的 POST_DISABLED pause/resume；EBUSY 会被该 journal 记录为硬错误。新增实际 journal begin/step/pause/resume 组合及一项 errno 变异来验证该区别。首次 CI 的未变异 host 基线通过；故障变异先命中了旧的最终释放断言，已将 busy/closing/父级清空的检查前移至 SSR 成功出口，修正版仍以新 CI 为准。

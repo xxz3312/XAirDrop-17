@@ -210,4 +210,4 @@ Retain attempted typed instance HDD/PSOC/PDEV identities across asynchronous pol
 
 ## 0172 — typed managed native SSR coordination
 
-Claim and close related typed managed instances in the existing native post-disable coordinator. Retire their authoritative host/receipt through existing qualified reclaim and detach parent fences only after physical retirement, retaining caller-owned closed metadata until process-retire. Add four success modes, nine retained fault cases and eight behavior mutations; raw caller-owned hosts remain excluded. See docs/POPSICLE-MANAGED-SSR-0172.md. Native and target CI pending.
+Claim and close related typed managed instances in the existing native post-disable coordinator. Retire their authoritative host/receipt through existing qualified reclaim and detach parent fences only after physical retirement, retaining caller-owned closed metadata until process-retire. Add four success modes, nine retained fault cases and nine behavior mutations, including native journal pause/resume for busy claims; raw caller-owned hosts remain excluded. See docs/POPSICLE-MANAGED-SSR-0172.md. Native and target CI pending.

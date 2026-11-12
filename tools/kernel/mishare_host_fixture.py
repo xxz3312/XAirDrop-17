@@ -1461,7 +1461,7 @@ static void managed_auto_ssr_cases(struct hdd_context *h,struct wireless_dev *wd
     struct mishare_wonder_host *host=bridge->host;
     runtime_ssr=fault!=3;
     int expected=-EUCLEAN;
-    if(fault==0){instance->busy=true;expected=-EBUSY;}
+    if(fault==0){instance->busy=true;expected=-EINPROGRESS;}
     if(fault==1){rtnl_contended=true;expected=-EAGAIN;}
     if(fault==2)h->pdev=&replacement;
     if(fault==3)expected=-ESHUTDOWN;
@@ -1474,6 +1474,18 @@ static void managed_auto_ssr_cases(struct hdd_context *h,struct wireless_dev *wd
     assert(managed_ssr_step(h)==expected && bridge->host==host && active && runtime_tokens==1 &&
      instance->parent_hdd==h && "EXPECTED_AUTO_SSR_RETAIN");
     assert(instance->busy==(fault==0) && "EXPECTED_AUTO_SSR_BUSY_RELEASE");
+    if(fault==0) {
+     struct mishare_bridge_scope scope={0};struct mishare_ssr_stop_checkpoint journal={0};
+     bool tracked=false,resumed=false;
+     assert(!mishare_bridge_scope_begin(&scope,h->parent_dev));
+     assert(!mishare_ssr_stop_begin_locked(&journal,h,&tracked) && tracked);
+     assert(!mishare_ssr_stop_step_locked(&journal,h,MISHARE_SSR_STOP_POST_DISABLED,0,tracked));
+     assert(mishare_ssr_stop_pause_locked(&journal,h,expected,tracked)==expected &&
+      journal.paused && !journal.first_error && journal.module_lease.held && "EXPECTED_AUTO_SSR_PAUSE");
+     assert(!mishare_ssr_stop_resume_locked(&journal,h,&resumed) && resumed &&
+      !journal.paused && !journal.first_error && "EXPECTED_AUTO_SSR_PAUSE");
+     mishare_bridge_scope_end(&scope);
+    }
     if(fault<4 || fault>6)assert(!bridge->closing && "EXPECTED_AUTO_SSR_NO_MUTATION");
     else assert(bridge->closing && "EXPECTED_AUTO_SSR_CLOSED");
     _Exit(0); /* Deliberate retained owner in fault child, no reset/cleanup. */
@@ -1831,6 +1843,7 @@ def run(wlan, output):
         auto_ssr_mutate(native_ssr_prepare,'ret = mishare_managed_ssr_prepare_locked(hdd);',
                         'ret = false ? mishare_managed_ssr_prepare_locked(hdd) : 0;')
         auto_ssr_mutate(auto_ssr_claim,'if (instance->busy)', 'if (false && instance->busy)')
+        auto_ssr_mutate(auto_ssr_claim,'ret = -EINPROGRESS;', 'ret = -EBUSY;')
         auto_ssr_mutate(auto_ssr_owner,'!mishare_init_equal(&instance->request, &instance->request_bridge.request)',
                         '(false && !mishare_init_equal(&instance->request, &instance->request_bridge.request))')
         auto_ssr_mutate(auto_ssr_owner,'    bridge->closing = true;', '    bridge->closing = false;')
