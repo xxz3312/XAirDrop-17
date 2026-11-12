@@ -29,3 +29,5 @@
 request bridge fixture 增加无创建副作用、每轮新结果以及 policy 拒绝不读取 host 的检查。100 项本地 Python 回归、py_compile、diff 以及 14 项变异构造检查通过；原生 sanitizer 和完整目标构建集中交给本轮 Actions，提交时待结果。
 
 没有本批手机或射频测试。公开 init/START、过滤/数据面与 Apple 发现/握手/双向文件传输仍待完成。手机无需操作。
+
+首次两轮 CI 的生产 host、request bridge、纯快照未变异基线均通过；变异验证暴露的是测试隔离/断言覆盖和变异代码自身的 -Werror 问题。新 readiness 用例移到原 request cases 之后；无 prepared 的用例同时核对未进入 native scope，避免下层 NSS=0 同样返回 EINVAL 掩盖缺失门禁；BSSID 变异改用合法布尔短路，保留编译告警为错误。修正版仍需行为变异和目标 CI 通过。

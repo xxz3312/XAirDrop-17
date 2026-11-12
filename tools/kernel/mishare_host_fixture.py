@@ -1530,7 +1530,7 @@ static void managed_readiness_cases(struct hdd_context *h,struct wireless_dev *w
  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
  struct mishare_managed_instance *instance=handle;
  managed_context();assert(mishare_wonder_managed_start_ready(handle)==-EINVAL && !instance->busy &&
-  !active && "EXPECTED_MANAGED_READY_PREPARED");
+  !active && !idle_trace[0] && !parent_owned && !rtnl_owned && "EXPECTED_MANAGED_READY_PREPARED");
  managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));
  managed_context();assert(mishare_wonder_managed_start_ready(handle)==-EINPROGRESS && !active &&
   !instance->request_bridge.bound && !instance->busy && !parent_owned && !rtnl_owned &&

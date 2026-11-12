@@ -131,7 +131,7 @@ def main():
               ('!rate->accepted ||','false ||'),
               ('rate->receipt.submitted_mask != 7','false'),
               ('!mishare_runtime_retry_receipt_valid(retry, &retry->receipt, 0, retry->vdev_id)','(false && !mishare_runtime_retry_receipt_valid(retry, &retry->receipt, 0, retry->vdev_id))'),
-              ('memcmp(s->bssid.value, p->bssid, ETH_ALEN)','(0 * memcmp(s->bssid.value, p->bssid, ETH_ALEN))'),
+              ('memcmp(s->bssid.value, p->bssid, ETH_ALEN)','(false && memcmp(s->bssid.value, p->bssid, ETH_ALEN))'),
               ('session->stage > MISHARE_SESSION_PLAN','false'),
               ('session->freq != p->channel.freq','false'),
               ('n->channel_freq != p->channel.freq','false')]
