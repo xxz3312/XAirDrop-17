@@ -118,10 +118,16 @@ static void preview_ordinary_cases(void) {
  for(unsigned band=0;band<2;band++)for(unsigned pair=0;pair<4;pair++)for(unsigned origin=0;origin<5;origin++)
  for(unsigned timing=0;timing<2;timing++)for(unsigned tail=0;tail<4;tail++) {
   if(origin==2 || (timing && origin))continue;
-  preview_cycle_enabled=true;preview_cycle_origin=origin;preview_cycle_inline=!!timing;
-  retry_data=pairs[pair][0];retry_mgmt=pairs[pair][1];retry_failure=retry_fault=0;retry_inline=false;
-  prestart_native_cycle(band?5240:2437,0,modes[tail],false,0);
-  assert(!allocations && !objects_live && !dp_objects && !module_refs && "EXPECTED_PLAN_PREVIEW_ORDINARY_BALANCE");
+  /* Native ordinary cleanup adapters are one lifecycle per process, as in
+   * the underlying prestart/retry fixture; do not reuse their terminal state. */
+  pid_t child=fork();assert(child>=0);if(!child) {
+   preview_cycle_enabled=true;preview_cycle_origin=origin;preview_cycle_inline=!!timing;
+   retry_data=pairs[pair][0];retry_mgmt=pairs[pair][1];retry_failure=retry_fault=0;retry_inline=false;
+   prestart_native_cycle(band?5240:2437,0,modes[tail],false,0);
+   assert(!allocations && !objects_live && !dp_objects && !module_refs && "EXPECTED_PLAN_PREVIEW_ORDINARY_BALANCE");
+   _Exit(0);
+  }
+  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status) && "EXPECTED_PLAN_PREVIEW_ORDINARY_CHILD");
  }
  preview_cycle_enabled=false;
 }
