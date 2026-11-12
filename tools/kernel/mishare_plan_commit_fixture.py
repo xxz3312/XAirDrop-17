@@ -15,10 +15,11 @@ static void commit_observe(struct mishare_runtime_owner *o,u32 freq,unsigned ori
  for(unsigned repeat=0;repeat<3;repeat++) {
   assert(mishare_runtime_start_plan_commit(o,freq)==expected && pe_posts==posts && plan_builds==builds &&
    "EXPECTED_PLAN_COMMIT_NO_REPLAY");
+  struct mishare_runtime_status snapshot=state(o);
   if(!expected)assert(state(o).start_preview.committed &&
    state(o).ndi.start_plan_requested && state(o).ndi.start_plan_submitted &&
    state(o).ndi.start_plan_completed && state(o).ndi.start_plan_ready &&
-   !state(o).ndi.start_plan_error && mishare_preview_summary_equal(&state(o).start_preview.summary,&state(o).ndi.start_plan) &&
+   !state(o).ndi.start_plan_error && mishare_preview_summary_equal(&snapshot.start_preview.summary,&snapshot.ndi.start_plan) &&
    "EXPECTED_PLAN_COMMIT_EXACT_RECORD");
   else assert(!state(o).start_preview.committed && !state(o).ndi.start_plan_requested &&
    "EXPECTED_PLAN_COMMIT_ERROR_PRESERVED");

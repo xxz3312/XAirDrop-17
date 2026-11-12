@@ -24,7 +24,8 @@ struct mishare_runtime_bssid_status {
     int error;
 };
 /* Owned MC preview of native START encoder inputs, never an SM/WMI START.
- * It has a separate receipt so NDI START-plan/radio history is not invented. */
+ * The separate receipt records native encoder provenance and explicit plan
+ * adoption; neither operation manufactures radio START history. */
 struct mishare_start_preview_status {
     bool requested, posted, completed, integrity_error;
     bool committed; /* Exact successful encoder receipt adopted as START-plan, no radio. */

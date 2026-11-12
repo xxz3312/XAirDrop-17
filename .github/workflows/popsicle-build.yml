@@ -264,6 +264,8 @@ jobs:
           name: popsicle-stop-admission-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             stop-host.json
+            stop-plan-commit.json
+            stop-plan-preview.json
             stop-runtime.json
             stop-retry-prepared-reset.json
             stop-retry-zero-reset.json
