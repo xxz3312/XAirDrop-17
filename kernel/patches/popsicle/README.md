@@ -101,3 +101,5 @@ Compiles the private MC-only one-shot retry executor into WLAN. No public or aut
 ### 0069 owned retry work and runtime bridge
 
 Compiles retry MC work and registry configuration bridge; 0166 also connects the internal request bridge. Public init/START remain disabled. Ordinary retirement waits for work and immutable receipt; retry SSR remains retained.
+
+0070: 在 bounded native CDS recovery helper 内调用 handed-off raw DOWN host observer；在停止之后、candidate qualification 之前，错误保持窗口关闭。详见 docs/POPSICLE-DOWN-AUTO-0180.md。

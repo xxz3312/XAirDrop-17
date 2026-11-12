@@ -1,0 +1,16 @@
+--- a/qcacld-3.0/core/cds/src/cds_api.c
++++ b/qcacld-3.0/core/cds/src/cds_api.c
+@@ -1401,11 +1401,13 @@
+ 
+ /* MISHARE_RECOVERY_BEGIN:cds_helper */
+ #include "wmi_unified_api.h"
++extern int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *psoc);
+ static void mishare_cds_recovery_window(tp_wma_handle wma,
+                                       struct hif_opaque_softc *hif)
+ {
+  if (!wma || !wma->psoc || !hif || !gp_cds_context ||
+      !gp_cds_context->htc_ctx || !cds_is_driver_recovering() ||
++     mishare_wonder_host_down_observe(wma->psoc) ||
+      !mishare_runtime_recovery_candidates(wma->psoc) ||
+      wmi_validate_handle(wma->wmi_handle) || !wmi_is_blocked(wma->wmi_handle) ||
+      hif_get_target_status(hif) != TARGET_STATUS_RESET)

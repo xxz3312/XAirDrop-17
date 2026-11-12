@@ -1,3 +1,7 @@
+## 当前代码阶段 0180（handed-off raw DOWN 自动原生观察）
+
+0179 八项必需 CI 全部通过。0180 在原生 CDS 停止后、候选窗口检查前自动观察 exact-PSOC handed-off raw DOWN host；保留唯一 runtime 槽，RTNL trylock，错误阻止窗口，原有 post-disable retire 继续完成回收。新增 64 组原生自动组合、两类观察拒绝/两项原生变异，实际 host 边界和五项变异单独验证。完整 CI 待观察；typed managed 配置、caller-owned/独立 runtime、UP/WAIT/失败来源不被此入口接管，无手机/RF/Apple 验收。见 [0180](POPSICLE-DOWN-AUTO-0180.md)。
+
 ## 当前代码阶段 0179（完成 DOWN 的显式 runtime SSR 接线）
 
 0178 七项必需任务通过，诊断构建仍运行。0179 新增 MC 停止后、native CDS 资格检查前的显式 raw-DOWN observation，经原生停止窗口后按实际 timer/controller 回执接入 PE/peer/DP/context/host/native SM 退役；保留首次 fence、真实 STOP serial=2 和 partial 错误，最终引用释放可延迟。64 组合、15 边界和六项变异已构造；完整 CI 待观察。自动 managed caller、configured START、UP/WAIT/失败回收与手机验收尚未完成。见 [0179](POPSICLE-DOWN-RUNTIME-0179.md)。

@@ -13,6 +13,8 @@ WMI='qca-wifi-host-cmn/wmi/src/wmi_unified.c'
 DP='qca-wifi-host-cmn/dp/wifi3.0/dp_main.c'
 BASE={CDS:'6d3d5066c16ad68f23a80247ada0aca2149c83b7b0cdc30810bb83f2a3584d84',TIMER:'de9ae1bee934653e908c504b57b9e5a94da37e0b1b6f5fbee03b92c1834b86a0',DISP:'5eb7b61812b8f4f4a4977691b6b433ff953cb47fba74291498d3848d52b10079'}
 MODELS=r'''
+static int (*down_host_observer)(struct wlan_objmgr_psoc *);
+int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *p) {return down_host_observer?down_host_observer(p):0;}
 /* PE_RESET_TRANSPORT_STUBS */
 int mishare_ndi_reset_pe_check(struct wlan_objmgr_vdev *v,void *o,unsigned long c,unsigned long d,u32 f) { (void)v;(void)o;(void)c;(void)d;(void)f;return -EOPNOTSUPP; }
 int mishare_ndi_reset_pe_release(struct wlan_objmgr_vdev *v,void *o,unsigned long c,unsigned long d,u32 f,bool *r) { (void)v;(void)o;(void)c;(void)d;(void)f;*r=false;return -EOPNOTSUPP; }

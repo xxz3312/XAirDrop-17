@@ -143,6 +143,12 @@ int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd);
  * does not schedule retries, resume a partial stop or clear failure admission.
  */
 int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd);
+/* Native CDS-only preflight after MC/HIF/HTC/RX stop and before candidate
+ * qualification. Exact retained PSOC transition required when a handed-off raw
+ * host exists. Observe only; no window, token transfer or cleanup. Standalone,
+ * caller-owned and typed configured paths are not adopted. Error leaves the
+ * native window closed; existing parent stop journal retains the graph. */
+int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *psoc);
 enum mishare_ssr_stop_phase {
     MISHARE_SSR_STOP_EMPTY,
     MISHARE_SSR_STOP_PREFIX,

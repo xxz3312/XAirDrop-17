@@ -1,3 +1,10 @@
+## 0180 — native CDS observation of handed-off raw DOWN hosts
+
+- Confirmed all eight required 0179 CI jobs, including target diagnostic compilation, passed at 4341e7c / Actions 43291591879.
+- Before native recovery candidate qualification, observe only exact retained PSOC/HDD/device/PDEV raw DOWN hosts already handed off to the registry; RTNL trylock and actual runtime qualification preserve ownership and propagate refusals. No window or cleanup is manufactured by observation.
+- Added 64 automatic native/runtime combinations, two refusal paths and two native mutations, plus actual host boundary/propagation checks with five host mutations. Host/runtime boundary models remain explicit; complete Actions pending at submission.
+- Typed managed configured START, caller-owned/standalone runtime adoption, UP/WAIT/failure recovery and phone deployment remain closed; stock CNSS2 and init_boot policy unchanged.
+
 ## 0179 — explicit raw completed-DOWN runtime SSR retirement
 
 - Added authenticated post-MC, pre-native-CDS observation; the existing native stop qualification alone opens the recovery window. Automatic managed observation scheduling remains unconnected.

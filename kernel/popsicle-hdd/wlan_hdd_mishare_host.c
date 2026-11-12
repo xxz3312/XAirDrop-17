@@ -389,6 +389,73 @@ int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd)
     return mishare_wonder_host_stop_ready_locked(hdd);
 }
 
+/* Native CDS recovery-window preflight, after MC/HIF/HTC/RX stop. Parent
+ * exclusion protects registry nodes across unlocked observation; RTNL is only
+ * tried, never waited for in the reverse of host-create lock order. */
+int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *psoc)
+{
+    struct mishare_wonder_host *host;
+    struct hdd_context *hdd = NULL;
+    struct mishare_runtime_status state;
+    unsigned long flags;
+    bool selected = false;
+    int ret = 0;
+
+    if (!psoc)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->psoc != psoc)
+            continue;
+        if (!hdd)
+            hdd = host->hdd;
+        if (!hdd || host->hdd != hdd || host->parent_dev != hdd->parent_dev ||
+            host->pdev != hdd->pdev || hdd->psoc != psoc) {
+            ret = -EUCLEAN;
+            break;
+        }
+        if (host->idle_owned && host->runtime && !host->prestart.selected &&
+            !host->session.configured)
+            selected = true;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    if (ret || !selected)
+        return ret; /* Empty, foreign and caller-owned paths are unchanged. */
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    if (!cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    if (!rtnl_trylock())
+        return -EAGAIN;
+    for (host = mishare_hosts; host; host = host->next) {
+        if (host->psoc != psoc || !host->idle_owned || !host->runtime ||
+            host->prestart.selected || host->session.configured)
+            continue;
+        ret = mishare_host_parent_identity(host);
+        if (ret)
+            break;
+        if (!host->adapter || !host->adapter->dev || !host->adapter->deflink ||
+            netif_running(host->adapter->dev) ||
+            test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+            test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags)) {
+            ret = -EBUSY;
+            break;
+        }
+        ret = mishare_runtime_snapshot(host->runtime, &state);
+        if (ret)
+            break;
+        /* Other origins stay governed by their original recovery policy.
+         * Runtime authenticates the complete raw-DOWN source independently. */
+        if (!state.radio.fence.recorded || state.radio.fence.phase != MISHARE_RADIO_DOWN ||
+            state.rate.requested || state.retry.requested || state.start_preview.requested)
+            continue;
+        ret = mishare_runtime_fenced_down_prepare(host->runtime);
+        if (ret)
+            break;
+    }
+    rtnl_unlock();
+    return ret;
+}
+
 int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd)
 {
     struct mishare_wonder_host *host;
