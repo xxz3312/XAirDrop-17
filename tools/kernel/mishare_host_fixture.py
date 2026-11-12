@@ -2584,7 +2584,7 @@ def run(wlan, output):
         down_controls=[]
         for old,new in [
             ('if (!cds_is_driver_recovering())','if (false && !cds_is_driver_recovering())'),
-            ('if (!rtnl_trylock())','if (0 * !rtnl_trylock())'),
+            ('if (!rtnl_trylock())','if ((rtnl_trylock(), false))'),
             ('state.rate.requested ||','false ||'),
             ('ret = mishare_runtime_fenced_down_prepare(host->runtime);','ret = 0;'),
             ('ret = mishare_runtime_fenced_down_prepare(host->runtime);','ret = 0 * mishare_runtime_fenced_down_prepare(host->runtime);'),

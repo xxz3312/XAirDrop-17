@@ -63,7 +63,7 @@ def negative_controls(directory,c_file,command,env,source,root):
     body=function(source,'mishare_cds_recovery_window')
     needle='mishare_wonder_host_down_observe(wma->psoc) ||'
     assert body.count(needle)==1
-    for replacement in ['false ||','(0 * mishare_wonder_host_down_observe(wma->psoc)) ||']:
+    for replacement in ['false ||','(mishare_wonder_host_down_observe(wma->psoc), false) ||']:
         c_file.write_text(source.replace(body,body.replace(needle,replacement,1),1))
         subprocess.run(command,check=True)
         bad=subprocess.run([directory/'engine'],capture_output=True,text=True,env=env,timeout=60)
