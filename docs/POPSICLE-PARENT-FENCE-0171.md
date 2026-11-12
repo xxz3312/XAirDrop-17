@@ -19,3 +19,11 @@
 完整 host fixture 执行生产 instance、父级登记、原 stop-ready/unload 和退休代码，增加跨轮询登记/父级替换/SSR 退出拒绝，以及无 host 的首次分配失败后 idle/SSR/unload 拒绝与最终释放。五项行为变异分别移除发布、PSOC 观察、迁移观察、调用前身份检查和卸载 instance 观察；必须编译成功并在指定行为断言处失败。request bridge fixture 增加 scope 内父级边界调用模型；父级注册表本体由完整 host fixture 验证。
 
 100 项本地 Python 回归、py_compile、diff 检查通过。原生 sanitizer 执行与完整目标 WLAN 编译集中交给本批 Actions；提交时结果待观察，不能写成已通过。模型不证明固件 ACK、实机 RF、公开 init/START 或 Apple 发现/握手/双向传输。手机无需操作。
+
+## 2026-11-12 验证修复
+
+0170 修正版 `c47500861fcf9b1a1fdb48f3851506ebc19f8406` 的 Actions `43082708943` 全部八项必需任务 success，包括目标构建。
+
+0171 `3d9fdcc9b4f8f4ce8984139fb8778ce82449ebcd` 的 Actions `43084226811` 中，stop-admission 与 diagnostic 均被同一个 host fixture 的 `mishare_runtime_psoc_busy: parent_owned` 断言阻断。诊断任务尚未进入完整目标构建，不能称作生产驱动编译失败。新增的停机观察在 managed API 退出 scope 后直接调用 locked helper；现改为通过实际 `mishare_bridge_scope_begin/end` 观察忙、迁移及最终空注册表，检查入口/退出均未持锁。保留所有生产断言及失败保留门禁。
+
+完整 host sanitizer 测试提前至 stop-admission 的源码准备之后，只移动原调用，不增加一次重复执行。该批修改不扩展公开初始化或 SSR 所有权移交；100 项本地 Python 回归、py_compile 和 diff 检查通过，修正版原生/目标 CI 仍待观察。

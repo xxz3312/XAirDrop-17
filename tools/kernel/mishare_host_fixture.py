@@ -1167,6 +1167,21 @@ static void receipt_cases(struct hdd_context *h,struct wireless_dev *wdev)
 }
 static void managed_context(void)
 { parent_owned=rtnl_owned=false;trace[0]=idle_trace[0]=0; }
+/* Observe native stop admission under the same production scope used by
+ * managed operations. An instance fence does not replace the caller's native
+ * transition: both busy and empty registry queries need serialized parents.
+ */
+static int managed_stop_ready(struct hdd_context *h)
+{
+ struct mishare_bridge_scope scope={0};
+ assert(!parent_owned && !rtnl_owned && "EXPECTED_PARENT_FENCE_QUERY_ENTRY");
+ assert(!mishare_bridge_scope_begin(&scope,h->parent_dev) && scope.hdd==h &&
+  "EXPECTED_PARENT_FENCE_QUERY_SCOPE");
+ int ret=mishare_wonder_host_stop_ready_locked(scope.hdd);
+ mishare_bridge_scope_end(&scope);
+ assert(!parent_owned && !rtnl_owned && "EXPECTED_PARENT_FENCE_QUERY_RELEASE");
+ return ret;
+}
 static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
 {
  void *handle=NULL;
@@ -1292,9 +1307,9 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
   /* No native locks span polls. The instance fence survives independently of
    * the host owner and rejects replacement parents before any native use. */
   assert(instance->parent_hdd==h && mishare_wonder_host_psoc_busy(h->psoc) &&
-   mishare_wonder_host_stop_ready_locked(h)==-EBUSY && "EXPECTED_PARENT_FENCE_BUSY");
+   managed_stop_ready(h)==-EBUSY && "EXPECTED_PARENT_FENCE_BUSY");
   struct wlan_objmgr_pdev *saved_pdev=h->pdev,replacement_pdev={0};h->pdev=&replacement_pdev;
-  assert(mishare_wonder_host_stop_ready_locked(h)==-EUCLEAN && "EXPECTED_PARENT_FENCE_MISMATCH");
+  assert(managed_stop_ready(h)==-EUCLEAN && "EXPECTED_PARENT_FENCE_MISMATCH");
   assert(mishare_instance_parent_check(instance,h)==-EUCLEAN && "EXPECTED_PARENT_FENCE_IDENTITY");
   h->pdev=saved_pdev;
   struct hdd_context replacement_hdd=*h;mode_context=&replacement_hdd;
@@ -1316,7 +1331,7 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
   }
   runtime_ssr=true;
   managed_context();assert(mishare_wonder_managed_retire_process(&handle)==-ESHUTDOWN && handle &&
-   instance->parent_hdd==h && mishare_wonder_host_stop_ready_locked(h)==-EBUSY &&
+   instance->parent_hdd==h && managed_stop_ready(h)==-EBUSY &&
    "EXPECTED_PARENT_FENCE_SSR_RETAIN");runtime_ssr=false;
   assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS);
   managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-ESHUTDOWN);
@@ -1345,7 +1360,7 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
   !runtime_tokens && "EXPECTED_PARENT_FENCE_PARTIAL_CREATE");failure=0;
  struct mishare_managed_instance *failed=handle;
  assert(failed->parent_hdd==h && mishare_wonder_host_psoc_busy(h->psoc) &&
-  mishare_wonder_host_stop_ready_locked(h)==-EBUSY && "EXPECTED_PARENT_FENCE_NO_HOST");
+  managed_stop_ready(h)==-EBUSY && "EXPECTED_PARENT_FENCE_NO_HOST");
  struct mishare_ssr_stop_checkpoint empty_stop={0};
  assert(mishare_ssr_stop_unload_ready_locked(&empty_stop,false)==-EBUSY && "EXPECTED_PARENT_FENCE_UNLOAD");
  struct wlan_objmgr_psoc *saved_psoc=h->psoc;h->psoc=NULL;
@@ -1355,7 +1370,7 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  runtime_ssr=false;
  managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle &&
   !mishare_instances && !managed_device_refs && !lease_refs && "EXPECTED_PARENT_FENCE_RELEASE");
- assert(!mishare_wonder_host_psoc_busy(h->psoc) && !mishare_wonder_host_stop_ready_locked(h) &&
+ assert(!mishare_wonder_host_psoc_busy(h->psoc) && !managed_stop_ready(h) &&
   !mishare_ssr_stop_unload_ready_locked(&empty_stop,false) && "EXPECTED_PARENT_FENCE_RELEASE");
  parent_owned=rtnl_owned=true;managed_instance_case=false;
  for(int band=0;band<3;band++) {

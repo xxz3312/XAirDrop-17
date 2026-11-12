@@ -202,6 +202,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Production host stop admission with sanitizers
+        run: python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
       - name: External live-unload and native lifecycle with sanitizers
         run: python3 tools/kernel/mishare_live_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-live.json
       - name: Complete HDD unload result with sanitizers
@@ -241,7 +243,6 @@ jobs:
       - name: Production host and runtime stop admission with sanitizers
         run: |
           python3 tools/kernel/mishare_rate_tail_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-tail.json
-          python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
           python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
           python3 tools/kernel/mishare_rate_final_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-final.json
           python3 tools/kernel/mishare_rate_ordinary_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-ordinary.json
