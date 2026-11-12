@@ -103,7 +103,7 @@ def ordinary_fixture(root):
     body=function(source,'prestart_clean_end')
     needle='!state(*o).ndi.start_plan_requested'
     assert body.count(needle)==1
-    changed=body.replace(needle,'state(*o).start_preview.committed && state(*o).ndi.start_plan_ready',1)
+    changed=body.replace(needle,'(state(*o).start_preview.result ? (!state(*o).start_preview.committed && !state(*o).ndi.start_plan_requested) : (state(*o).start_preview.committed && state(*o).ndi.start_plan_ready))',1)
     return source.replace(body,changed,1),exits,stubbed
 
 def mutations(original):
