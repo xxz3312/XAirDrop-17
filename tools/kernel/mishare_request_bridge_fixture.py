@@ -44,15 +44,6 @@ static int request_step(struct mishare_request_bridge *c) {
  return mishare_request_bridge_step_locked(c,&parent,&input,1,2);
 }
 static void request_cases(void) {
- /* Observation cannot create/attach/configure or cache readiness. */
- struct mishare_request_bridge observation;request_reset(&observation);
- assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==-EINPROGRESS && !creates && !ready_reads && "EXPECTED_REQUEST_READY_NO_CREATE");
- assert(request_step(&observation)==-EINPROGRESS && request_step(&observation)==-EINPROGRESS);
- for(int result=0;result<3;result++){ready_result=result==0?-EINPROGRESS:result==1?0:-EUCLEAN;
- unsigned before=prepared_steps;assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==ready_result && prepared_steps==before && ready_reads==(unsigned)result+1 && "EXPECTED_REQUEST_READY_FRESH");}
- policy_error=-EOPNOTSUPP;unsigned reads=ready_reads;
- assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==-EOPNOTSUPP && ready_reads==reads && "EXPECTED_REQUEST_READY_POLICY");policy_error=0;
- assert(!retire(&observation.bridge));
 
  struct mishare_request_bridge c;
  for(unsigned mode=0;mode<8;mode++) {
@@ -141,6 +132,19 @@ static void request_cases(void) {
  assert(mishare_bridge_handoff_idle_locked(&c.bridge,&parent)==-EINPROGRESS && !c.bridge.host && request_step(&c)==-ESHUTDOWN);
  parent_lease=false;receipt_result=0;assert(!mishare_bridge_retire_locked(&c.bridge,NULL));parent_lease=true;
 }
+static void request_ready_cases(void) {
+ /* Observation cannot create/attach/configure or cache readiness. */
+ struct mishare_request_bridge observation;request_reset(&observation);
+ assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==-EINPROGRESS && !creates && !ready_reads && "EXPECTED_REQUEST_READY_NO_CREATE");
+ assert(request_step(&observation)==-EINPROGRESS && request_step(&observation)==-EINPROGRESS);
+ for(int result=0;result<3;result++){ready_result=result==0?-EINPROGRESS:result==1?0:-EUCLEAN;
+ unsigned before=prepared_steps;assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==ready_result && prepared_steps==before && ready_reads==(unsigned)result+1 && "EXPECTED_REQUEST_READY_FRESH");}
+ policy_error=-EOPNOTSUPP;unsigned reads=ready_reads;
+ assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==-EOPNOTSUPP && ready_reads==reads && "EXPECTED_REQUEST_READY_POLICY");policy_error=0;
+ assert(!retire(&observation.bridge));
+
+}
+
 struct mishare_managed_instance {
  struct mishare_request_bridge request_bridge;
  struct mishare_init_request request;
@@ -222,7 +226,7 @@ static void managed_request_cases(void) {
  }
 }
 
-int main(void) {request_cases();managed_request_cases();assert(!legacy_bridge_main());puts("MISHARE_REQUEST_BRIDGE_FIXTURE_PASS_ONLY");return 0;}
+int main(void) {request_cases();request_ready_cases();managed_request_cases();assert(!legacy_bridge_main());puts("MISHARE_REQUEST_BRIDGE_FIXTURE_PASS_ONLY");return 0;}
 '''
 POLICY=r'''
 #include <assert.h>

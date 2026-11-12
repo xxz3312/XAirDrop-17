@@ -1935,11 +1935,11 @@ def run(wlan, output):
             if needle=='ret = mishare_request_bridge_ready_locked(':
                 changed=changed.replace('&instance->request, instance->request_nss_2g, instance->request_nss_5g);',
                                         '&instance->request, instance->request_nss_2g, instance->request_nss_5g) : 0;',1)
-            readiness_controls.append(host_source.replace(body,changed,1))
-        for changed in readiness_controls:
+            readiness_controls.append((needle,host_source.replace(body,changed,1)))
+        for label,changed in readiness_controls:
             (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
-            assert bad.returncode==-6 and 'EXPECTED_MANAGED_READY_' in bad.stderr,(bad.returncode,bad.stderr[-2000:])
+            assert bad.returncode==-6 and 'EXPECTED_MANAGED_READY_' in bad.stderr,(label,bad.returncode,bad.stderr[-2000:])
         regulatory_controls = [
             ('ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);',
              'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),
