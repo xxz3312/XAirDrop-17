@@ -57,7 +57,7 @@ static bool mishare_runtime_retry_prepared_ssr(struct mishare_runtime_owner *ent
            !r->integrity_error && r->receipt.attempted &&
            entry->state.quiesced == MISHARE_QUIESCE_SSR && entry->state.mc_drained &&
            !entry->state.work_pending && !entry->state.work_users && !entry->state.work_error &&
-           !entry->radio && !entry->state.ndi.radio_requested && !entry->state.ndi.start_plan_requested &&
+           !entry->radio && !entry->state.ndi.radio_requested && (!entry->state.ndi.start_plan_requested || entry->state.start_preview.committed) &&
            !rate->ordinary_admitted && !rate->ordinary_completed &&
            !rate->late_peer_armed && !rate->late_peer_reply &&
            !rate->late_delete_armed && !rate->late_delete_reply &&
@@ -79,16 +79,32 @@ static bool mishare_preview_summary_empty(const struct mishare_ndi_start_summary
            !p->rx_streams && !p->beacon_interval && !p->dtim_period;
 }
 
+/* Compare named scalars, not structure padding. Safe after native free. */
+static bool mishare_preview_summary_equal(const struct mishare_ndi_start_summary *a,
+                                          const struct mishare_ndi_start_summary *b)
+{
+    return a->freq == b->freq && a->center_freq == b->center_freq &&
+           a->phy_mode == b->phy_mode && a->tx_streams == b->tx_streams &&
+           a->rx_streams == b->rx_streams && a->beacon_interval == b->beacon_interval &&
+           a->dtim_period == b->dtim_period;
+}
+
 static int mishare_runtime_preview_retire_check(struct mishare_runtime_owner *entry)
 {
     const struct mishare_start_preview_status *p = &entry->state.start_preview;
 
     if (!p->requested)
-        return p->posted || p->completed || p->integrity_error || p->vdev_id || p->freq ||
+        return p->posted || p->completed || p->integrity_error || p->committed || p->vdev_id || p->freq ||
                p->result || !mishare_preview_summary_empty(&p->summary) ? -EUCLEAN : 0;
     if (p->integrity_error || !p->freq || p->result > 0 ||
         !entry->state.rate.requested || !entry->state.retry.requested ||
         p->vdev_id != entry->state.retry.vdev_id)
+        return -EUCLEAN;
+    if (p->committed && (!p->posted || !p->completed || p->result ||
+        !entry->state.ndi.start_plan_requested || !entry->state.ndi.start_plan_submitted ||
+        !entry->state.ndi.start_plan_completed || !entry->state.ndi.start_plan_ready ||
+        entry->state.ndi.start_plan_error ||
+        !mishare_preview_summary_equal(&p->summary, &entry->state.ndi.start_plan)))
         return -EUCLEAN;
     if (!p->completed) {
         if (p->result || !mishare_preview_summary_empty(&p->summary))
@@ -208,7 +224,7 @@ static int mishare_runtime_rate_ordinary_check(struct mishare_runtime_owner *ent
     if (ret != -EOPNOTSUPP)
         return ret;
     if (entry->state.quiesced || r->reset_admitted || r->reset_completed ||
-        entry->radio || n->radio_requested || n->start_plan_requested ||
+        entry->radio || n->radio_requested || (n->start_plan_requested && !entry->state.start_preview.committed) ||
         entry->state.ndi_reclaim_started || entry->state.host_reclaim ||
         entry->state.recovery_window || entry->state.recovery_window_closed)
         return -EOPNOTSUPP;
@@ -245,7 +261,7 @@ static int mishare_runtime_rate_reset_check(struct mishare_runtime_owner *entry)
         return ret;
     if (r->ordinary_admitted || r->ordinary_completed ||
         entry->state.quiesced != MISHARE_QUIESCE_SSR ||
-        entry->radio || n->radio_requested || n->start_plan_requested)
+        entry->radio || n->radio_requested || (n->start_plan_requested && !entry->state.start_preview.committed))
         return -EOPNOTSUPP;
     if (entry->state.work_error || entry->state.recovery_error ||
         entry->state.reclaim_error || n->completion_error)
@@ -2893,6 +2909,100 @@ void mishare_runtime_ndi_start_plan_event(struct wlan_objmgr_psoc *psoc, u8 id,
         break;
     }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+}
+
+/* No work/native mutation here. The completed owned MC encoder is the
+ * provenance; parent/request policy must still be checked by a future caller
+ * before real START. This record is not a reusable firmware readiness lease. */
+int mishare_runtime_start_plan_commit(struct mishare_runtime_owner *owner, u32 freq)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_start_preview_status *p;
+    struct mishare_ndi_status *n;
+    unsigned long flags;
+    int ret = -ENOENT;
+
+    if (!owner || !freq)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry && entry != owner; entry = entry->next)
+        ;
+    if (!entry)
+        goto unlock;
+    p = &entry->state.start_preview;
+    n = &entry->state.ndi;
+    if (entry->state.quiesced || entry->state.draining || entry->state.freed) {
+        ret = -ESHUTDOWN;
+        goto unlock;
+    }
+    if (entry->state.blocked || n->blocked || n->completion_error || entry->state.work_error ||
+        entry->state.rate.integrity_error || entry->state.retry.integrity_error) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    ret = mishare_runtime_preview_retire_check(entry);
+    if (ret)
+        goto unlock;
+    if (!p->requested || !p->completed) {
+        ret = -EINPROGRESS;
+        goto unlock;
+    }
+    if (p->freq != freq) {
+        ret = -EBUSY;
+        goto unlock;
+    }
+    if (p->result) {
+        ret = p->result;
+        goto unlock;
+    }
+    if (!entry->vdev || !entry->referenced || !entry->events || !entry->pe_cookie ||
+        entry->cookie != (unsigned long)entry->vdev || !entry->state.allocated ||
+        !n->active || !n->legacy_ready || !n->wma_bound || !n->peer_created || !n->pe_ready ||
+        !n->channel_prepared || n->channel_freq != freq ||
+        n->radio_requested || entry->radio || n->pe_delete_requested ||
+        n->peer_delete_pending || n->delete_pending || n->dp_detaching ||
+        entry->state.rate.ordinary_admitted || entry->state.rate.reset_admitted) {
+        ret = -EBUSY;
+        goto unlock;
+    }
+    /* Validate original configuration history too; no successful preview can
+     * overwrite a later corrupt or partially retired rate/retry receipt. */
+    ret = mishare_runtime_rate_retire_check(entry);
+    if (ret != -EOPNOTSUPP) {
+        if (!ret)
+            ret = -EUCLEAN;
+        goto unlock;
+    }
+    if (!entry->state.bssid.requested || !entry->state.bssid.applied || entry->state.bssid.error ||
+        !entry->state.rate.requested || !entry->state.rate.posted || !entry->state.rate.accepted ||
+        !entry->state.rate.completed || !entry->state.rate.receipt.attempted ||
+        !entry->state.rate.receipt.complete || entry->state.rate.receipt.busy ||
+        entry->state.rate.receipt.result || entry->state.rate.receipt.first_error ||
+        entry->state.rate.receipt.attempted_mask != 7 || entry->state.rate.receipt.submitted_mask != 7 ||
+        !entry->state.retry.requested || !entry->state.retry.posted || !entry->state.retry.accepted ||
+        !entry->state.retry.completed || entry->state.retry.result ||
+        !mishare_runtime_retry_receipt_valid(&entry->state.retry, &entry->state.retry.receipt, 0,
+                                             wlan_vdev_get_id(entry->vdev))) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    if (!p->committed) {
+        if (n->start_plan_requested || n->start_plan_submitted || n->start_plan_completed ||
+            n->start_plan_ready || n->start_plan_error || !mishare_preview_summary_empty(&n->start_plan)) {
+            ret = -EUCLEAN;
+            goto unlock;
+        }
+        n->start_plan = p->summary;
+        n->start_plan_requested = true;
+        n->start_plan_submitted = true;
+        n->start_plan_completed = true;
+        n->start_plan_ready = true;
+        p->committed = true;
+    }
+    ret = 0;
+unlock:
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
 }
 
 int mishare_runtime_ndi_start_plan(struct mishare_runtime_owner *entry)

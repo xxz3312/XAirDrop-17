@@ -99,6 +99,7 @@ on:
       - tools/kernel/mishare_bssid_native_fixture.py
       - tools/kernel/mishare_request_bridge_fixture.py
       - tools/kernel/mishare_prestart_native_fixture.py
+      - tools/kernel/mishare_plan_commit_fixture.py
       - tools/kernel/mishare_plan_preview_fixture.py
       - tools/kernel/mishare_start_ready_fixture.py
       - tools/kernel/mishare_prestart_fixture.py
@@ -206,6 +207,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Configured START-plan adoption and native retirement
+        run: python3 tools/kernel/mishare_plan_commit_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-plan-commit.json
       - name: Configured native START encoder preview and retirement
         run: python3 tools/kernel/mishare_plan_preview_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-plan-preview.json
       - name: Production host stop admission with sanitizers

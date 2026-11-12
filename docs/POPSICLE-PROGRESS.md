@@ -1,3 +1,7 @@
+## 当前代码阶段 0175（已完成编码回执的 START-plan 提交）
+
+0174 的八项必需 CI 全部通过，含完整目标构建。新增内部 plan_commit：在同一 owner 上原子采纳成功的原生 preview 编码回执，重复提交无 post/build/WMI；七字段和计划标志持续校验到最终释放，普通 never-radio 与 qualified prepared SSR 扩展该来源。192 组 SSR/160 组普通退出、12 类新边界及七项新变异已编写；本地 Python/非编译构造检查完成，原生/完整目标 CI 待观察。尚未接入 managed caller，真实 START/UP 和混合 ordinary-tail SSR 仍关闭，不构成 Apple 互传认证。见 [0175](POPSICLE-PLAN-COMMIT-0175.md)。
+
 ## 当前代码阶段 0174（配置后原生 START 参数预览）
 
 0173 的八项必需 CI 已全部通过。新增独立的原生参数预览回执，通过真实 MC START encoder 构建摘要，但不设置 NDI START-plan/radio 标志，也不发送 WMI START。预览等待、失败和成功分别纳入 owned-work 与原普通/qualified SSR 退出；request/host/managed 接线仍使用冻结请求和同一 owner。192 组 SSR、160 组普通退出、九类边界和九项新增行为变异已编写并完成非编译构造检查；100 项 Python 回归通过，原生/完整目标 CI 待观察。见 [0174](POPSICLE-PLAN-PREVIEW-0174.md)。手机无需操作。

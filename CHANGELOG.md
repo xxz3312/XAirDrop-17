@@ -1,3 +1,10 @@
+## 0175 — owned encoder receipt commit
+
+- Confirmed all eight required 0174 CI jobs passed at b969313 / Actions 43213576160.
+- Added internal authenticated, one-shot START-plan adoption from a completed native preview; original configuration/receipt history and exact seven-field scalar provenance survive retirement. No post/build replay, WMI or radio activation.
+- Qualified never-radio ordinary and prepared SSR cleanup for committed plans; corrupt records retain owners, unqualified mixed SSR origins remain closed.
+- Added configured native commit/retirement composition: 192 SSR and 160 ordinary combinations, 12 commit boundaries and seven new mutations. Native/target CI pending at submission; no caller/public init or phone deployment enabled.
+
 # OPAirDrop 更新日志
 
 ## 1.0.31

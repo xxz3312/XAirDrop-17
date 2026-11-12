@@ -27,12 +27,17 @@ struct mishare_runtime_bssid_status {
  * It has a separate receipt so NDI START-plan/radio history is not invented. */
 struct mishare_start_preview_status {
     bool requested, posted, completed, integrity_error;
+    bool committed; /* Exact successful encoder receipt adopted as START-plan, no radio. */
     u8 vdev_id;
     u32 freq;
     int result;
     struct mishare_ndi_start_summary summary;
 };
 int mishare_runtime_start_preview(struct mishare_runtime_owner *owner, u32 freq);
+/* Internal process-context adoption only. Caller retains and serializes the
+ * same parent lifetime as preview. Rechecks receipt and owner history before
+ * publishing the already-owned plan; never submits WMI or radio START. */
+int mishare_runtime_start_plan_commit(struct mishare_runtime_owner *owner, u32 freq);
 struct mishare_runtime_status {
     struct mishare_runtime_bssid_status bssid;
     struct mishare_runtime_rate_status rate;

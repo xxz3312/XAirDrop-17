@@ -12,14 +12,16 @@ from mishare_rate_work_fixture import HARNESS as WORK_HARNESS, ROOT
 MODEL=r'''
 #include "wlan_hdd_mishare_runtime_rate.h"
 #include "wlan_hdd_mishare_runtime_retry.h"
+PREVIEW_TYPES
 struct mishare_ndi_status {
  struct {bool timer_ready,dp_attached,stats_owned,dp_attempted;unsigned long dp_cookie;} create;
  bool blocked,active,legacy_ready,wma_bound,peer_created,pe_ready,pe_submitted,pe_completed;
  bool channel_submitted,channel_completed,channel_prepared,start_plan_requested,radio_requested;
  bool pe_delete_requested,pe_delete_submitted,pe_delete_completed,peer_delete_pending,peer_delete_submitted,peer_delete_replied,delete_pending,delete_submitted,delete_replied,dp_detaching,dp_detach_submitted,dp_freed;
+ bool start_plan_submitted,start_plan_completed,start_plan_ready;
+ int start_plan_error;struct mishare_ndi_start_summary start_plan;
  int completion_error;
 };
-PREVIEW_TYPES
 struct runtime_model_state {
  bool blocked,draining,allocated,freed,host_reclaim,host_delete_accepted;int quiesced;
  bool mc_drained,recovery_window,recovery_window_closed,ndi_reclaim_started,ndi_reclaim_ready;
