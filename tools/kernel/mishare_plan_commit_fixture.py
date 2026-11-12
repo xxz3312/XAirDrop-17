@@ -2,6 +2,7 @@
 """Actions-only adoption of owned START encoder receipt, never radio activation."""
 import argparse
 import json
+import subprocess
 from pathlib import Path
 import mishare_plan_preview_fixture as previous
 from mishare_recovery_fixture import function
@@ -115,14 +116,30 @@ def mutations(original):
     mutate('mishare_runtime_start_plan_commit','n->start_plan_submitted = true;','n->start_plan_submitted = false;')
     mutate('mishare_runtime_start_plan_commit','!entry->state.rate.accepted ||','false ||')
     mutate('mishare_runtime_preview_retire_check','!mishare_preview_summary_equal(&p->summary, &entry->state.ndi.start_plan)','false')
-    mutate('mishare_runtime_rate_ordinary_check','(n->start_plan_requested && !entry->state.start_preview.committed)','n->start_plan_requested')
     mutate('mishare_runtime_rate_reset_check','(n->start_plan_requested && !entry->state.start_preview.committed)','n->start_plan_requested')
     return out
+
+def ordinary_mutation(directory,c_file,command,env,source,root):
+    # This control changes ordinary eligibility; execute it with the ordinary
+    # native lifecycle rather than expecting an SSR-only matrix to detect it.
+    original=(ROOT/'kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c').read_text()
+    body=function(original,'mishare_runtime_rate_ordinary_check')
+    needle='(n->start_plan_requested && !entry->state.start_preview.committed)'
+    assert body.count(needle)==1
+    changed=original.replace(body,body.replace(needle,'n->start_plan_requested',1),1)
+    override=directory/'wlan_hdd_mishare_runtime.c'
+    try:
+        override.write_text(changed);c_file.write_text(source)
+        subprocess.run(command,check=True)
+        bad=subprocess.run([directory/'engine'],capture_output=True,text=True,env=env,timeout=60)
+        assert bad.returncode==-6 and 'EXPECTED_PLAN_PREVIEW_ORDINARY_CHILD' in bad.stderr,(bad.returncode,bad.stderr[-2000:])
+    finally:
+        override.unlink(missing_ok=True)
 
 def audit(root):
     r=previous.reset.previous.previous.audit(root,fixture_builder=reset_fixture,additional_mutations=mutations,
        mutation_markers=('EXPECTED_PLAN_PREVIEW_','EXPECTED_PLAN_COMMIT_'))
-    q=previous.ordinary.previous.ordinary.cleanup.engine.audit(root,fixture_builder=ordinary_fixture)
+    q=previous.ordinary.previous.ordinary.cleanup.engine.audit(root,fixture_builder=ordinary_fixture,extra_audit=ordinary_mutation)
     return {'status':'MISHARE_CONFIGURED_PLAN_COMMIT_FIXTURE_PASS_ONLY','ssr_combinations':192,
       'ordinary_combinations':160,'commit_faults':12,'preview_faults':9,'new_commit_mutations':7,
       'ssr_report':r,'ordinary_report':q,
