@@ -1,3 +1,7 @@
+## 当前代码阶段 0176（完整请求的 START-plan 提交调用链）
+
+0175 八项必需 CI 全部通过。新增 managed→request bridge→host→runtime 的内部提交调用，逐轮 claim/fresh scope/父级核对及当前 canonical 请求/监管检查；只采纳已完成 preview，不创建或重放，不启动 radio。共用配置观察加独立 committed-plan 标量检查，旧 ready/preview 入口仍拒绝已提交计划。新增纯 32 组合/35 边界/六项变异、bridge 三项变异、host 两种退出模式/12 类边界/五项变异。本地 100 项 Python 和非编译检查通过，原生/完整 CI 待观察。实际 START/UP、公开 init 和 Apple 互通未开放。见 [0176](POPSICLE-PLAN-CALLER-0176.md)。
+
 ## 当前代码阶段 0175（已完成编码回执的 START-plan 提交）
 
 0174 的八项必需 CI 全部通过，含完整目标构建。新增内部 plan_commit：在同一 owner 上原子采纳成功的原生 preview 编码回执，重复提交无 post/build/WMI；七字段和计划标志持续校验到最终释放，普通 never-radio 与 qualified prepared SSR 扩展该来源。192 组 SSR/160 组普通退出、12 类新边界及七项新变异已编写；本地 Python/非编译构造检查完成，原生/完整目标 CI 待观察。尚未接入 managed caller，真实 START/UP 和混合 ordinary-tail SSR 仍关闭，不构成 Apple 互传认证。见 [0175](POPSICLE-PLAN-COMMIT-0175.md)。

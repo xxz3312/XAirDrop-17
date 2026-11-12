@@ -14,7 +14,9 @@ static int policy_error,prepared_result,bssid_result,retry_result;
 static unsigned retry_steps;
 static struct mishare_request_bridge *request_control;
 static unsigned ready_reads;static int ready_result;
+static unsigned commit_reads;static int commit_result;
 int mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) {assert(o==&host && q && a==1 && b==2);return -EOPNOTSUPP;}
+int mishare_wonder_host_plan_commit_step_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) {assert(parent_lease && o==&host && q==&request_control->request && a==1 && b==2 && "EXPECTED_REQUEST_COMMIT_SOURCE");commit_reads++;return commit_result;}
 int mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) { assert(parent_lease && o==&host && q==&request_control->request && a==1 && b==2);ready_reads++;return ready_result;}
 
 int mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *o,u8 d,u8 m) {
@@ -35,7 +37,7 @@ int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *o,u32 f
 static struct mishare_init_request input;
 static void request_reset(struct mishare_request_bridge *c) {
  memset(c,0,sizeof(*c));reset(&c->bridge);request_control=c;
- ready_reads=0;ready_result=-EINPROGRESS;
+ ready_reads=commit_reads=0;ready_result=commit_result=-EINPROGRESS;
  preflights=prepared_steps=retry_steps=0;policy_error=bssid_result=retry_result=0;prepared_result=-EINPROGRESS;
  struct wondertap_init_params p={.channel={.freq=5240},.tx_rate={.preamble=WONDERTAP_RATE_PREAMBLE_HT,.nss=1,.mcs=7},
   .mgmt_retry_limit=3,.data_retry_limit=5};
@@ -142,7 +144,24 @@ static void request_ready_cases(void) {
  unsigned before=prepared_steps;assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==ready_result && prepared_steps==before && ready_reads==(unsigned)result+1 && "EXPECTED_REQUEST_READY_FRESH");}
  policy_error=-EOPNOTSUPP;unsigned reads=ready_reads;
  assert(mishare_request_bridge_ready_locked(&observation,&parent,&input,1,2)==-EOPNOTSUPP && ready_reads==reads && "EXPECTED_REQUEST_READY_POLICY");policy_error=0;
+ /* Commit validates current policy without using the pre-plan observer. */
+ for(unsigned result=0;result<3;result++) {
+  commit_result=result==0?-EINPROGRESS:result==1?0:-EUCLEAN;
+  unsigned previews=ready_reads,posts=prepared_steps,policies=preflights;
+  assert(mishare_request_bridge_plan_commit_step_locked(&observation,&parent,&input,1,2)==commit_result &&
+   commit_reads==result+1 && ready_reads==previews && prepared_steps==posts && preflights==policies+1 &&
+   "EXPECTED_REQUEST_COMMIT_FRESH");
+ }
+ struct mishare_init_request drift=input;drift.params.bssid[5]++;
+ unsigned commits=commit_reads;
+ assert(mishare_request_bridge_plan_commit_step_locked(&observation,&parent,&drift,1,2)==-EBUSY &&
+  commit_reads==commits && "EXPECTED_REQUEST_COMMIT_IDENTITY");
+ policy_error=-EOPNOTSUPP;
+ assert(mishare_request_bridge_plan_commit_step_locked(&observation,&parent,&input,1,2)==-EOPNOTSUPP &&
+  commit_reads==commits && "EXPECTED_REQUEST_COMMIT_POLICY");policy_error=0;
  assert(!retire(&observation.bridge));
+ assert(mishare_request_bridge_plan_commit_step_locked(&observation,&parent,&input,1,2)==-ESHUTDOWN &&
+  commit_reads==commits && "EXPECTED_REQUEST_COMMIT_CLOSE");
 
 }
 
@@ -299,6 +318,7 @@ def main():
     decl=legacy.DECL.replace('typedef uint32_t u32;','typedef uint32_t u32;typedef uint16_t u16;\n#define BIT(n) (1U << (n))')
     decl+='\nint mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *,u8,u8);\nint mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *,const u8 *);\nstruct mishare_init_request;struct wondertap_fixed_tx_rate_params;\nint mishare_wonder_request_preflight_locked(struct hdd_context *,const struct mishare_init_request *,u8,u8);\nint mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *,u32,u8,u8,const struct wondertap_fixed_tx_rate_params *);\n'
     decl+='\nint mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
+    decl+='\nint mishare_wonder_host_plan_commit_step_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     decl+='\nint mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     code=legacy.HARNESS.replace('#include "wlan_hdd_mishare_bridge.h"','#include "wlan_hdd_mishare_request_bridge.h"').replace('int main(void)','static int legacy_bridge_main(void)',1)+'\n'+MODEL
     host=(prod/'wlan_hdd_mishare_host.c').read_text();reg=function(host,'mishare_init_regulatory_check');pre=function(host,'mishare_wonder_request_preflight_locked')
@@ -317,6 +337,16 @@ def main():
         ('wlan_hdd_mishare_request_bridge.h',bound.replace('b->attempted = true;', 'b->attempted = false;',1)),
         ('wlan_hdd_mishare_request_bridge.h',bound.replace('b->attached = true;', 'b->attached = false;',1)),
     ]
+    validate=function(bound,'mishare_request_bridge_validate_locked')
+    commit=function(bound,'mishare_request_bridge_plan_commit_step_locked')
+    commit_controls=[]
+    for body,old,new in [
+        (validate,'!mishare_init_equal(&c->request, &canonical)','false'),
+        (validate,'if (ret)\n        return ret;\n    if (!b->host','if (false && ret)\n        return ret;\n    if (!b->host'),
+        (commit,'if (ret)\n        return ret;','if (false && ret)\n        return ret;'),
+    ]:
+        assert body.count(old)==1,old
+        commit_controls.append(bound.replace(body,body.replace(old,new,1),1))
     policies=[policy.replace('ret = mishare_init_aggregation_check(&canonical);', 'ret = 0 * mishare_init_aggregation_check(&canonical);',1),
               policy.replace('ret = mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);','ret = 0 * mishare_init_regulatory_check(hdd, &canonical, nss_2g, nss_5g);',1),
               policy.replace('if (memcmp(country, p->country_code, 2))','if (false && memcmp(country, p->country_code, 2))',1),
@@ -345,13 +375,18 @@ def main():
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
             assert bad.returncode==-6 and 'EXPECTED_REQUEST_BRIDGE_' in bad.stderr,(name,bad.returncode,bad.stderr[-1500:])
             (d/name).write_text(original)
+        for changed in commit_controls:
+            (d/'wlan_hdd_mishare_request_bridge.h').write_text(changed);f.write_text(code);subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
+            assert bad.returncode==-6 and ('EXPECTED_REQUEST_COMMIT_' in bad.stderr or 'EXPECTED_REQUEST_READY_' in bad.stderr),(bad.returncode,bad.stderr[-2000:])
+        (d/'wlan_hdd_mishare_request_bridge.h').write_text(bound)
         run(policy)
         for text in policies:
             assert text!=policy;f.write_text(text);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
             assert bad.returncode==-6 and 'EXPECTED_REQUEST_NATIVE_' in bad.stderr,(bad.returncode,bad.stderr[-1500:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-request-bridge-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text(json.dumps({'status':'MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY','success_modes':8,'immutable_fields':15,'native_policy_cases':16,'bridge_mutations':5,'policy_mutations':len(policies),'managed_success_modes':8,'managed_boundary_cases':9,'managed_mutations':len(managed_controls),'limitations':'Production typed managed coordinator, request/bridge and extracted native-policy functions with modeled host allocation/retirement, instance serialization and regulatory/native scope APIs. Aggregation enables refused before allocation. Host execution is modeled here; no full managed init, parent lease, firmware ACK, START/UP or phone/RF/Apple proof.'},indent=2)+'\n')
+    out.write_text(json.dumps({'status':'MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY','success_modes':8,'immutable_fields':15,'native_policy_cases':16,'bridge_mutations':5,'commit_mutations':len(commit_controls),'commit_results':3,'commit_refusals':3,'policy_mutations':len(policies),'managed_success_modes':8,'managed_boundary_cases':9,'managed_mutations':len(managed_controls),'limitations':'Production typed managed coordinator, request/bridge and extracted native-policy functions with modeled host allocation/retirement, instance serialization and regulatory/native scope APIs. Aggregation enables refused before allocation. Host execution is modeled here; no full managed init, parent lease, firmware ACK, START/UP or phone/RF/Apple proof.'},indent=2)+'\n')
     print('MISHARE_REQUEST_BRIDGE_AND_PREFLIGHT_FIXTURE_PASS_ONLY')
 
 

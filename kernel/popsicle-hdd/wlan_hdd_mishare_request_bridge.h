@@ -102,7 +102,7 @@ mishare_request_bridge_step_locked(struct mishare_request_bridge *c,
 /* Read-only fresh-policy/current-owner observation. No preparation, replay,
  * metadata update or START call. Readiness is never cached between scopes. */
 static inline int
-mishare_request_bridge_ready_locked(const struct mishare_request_bridge *c,
+mishare_request_bridge_validate_locked(const struct mishare_request_bridge *c,
                                      struct hdd_context *hdd,
                                      const struct mishare_init_request *request,
                                      u8 nss_2g, u8 nss_5g)
@@ -135,8 +135,21 @@ mishare_request_bridge_ready_locked(const struct mishare_request_bridge *c,
         return ret;
     if (!b->host || !b->attached)
         return -EINPROGRESS;
-    return mishare_wonder_host_start_ready_locked(b->host, &c->request, nss_2g, nss_5g);
+    return 0; /* Bound current request and attached host, no snapshot/commit yet. */
 }
+static inline int
+mishare_request_bridge_ready_locked(const struct mishare_request_bridge *c,
+                                     struct hdd_context *hdd,
+                                     const struct mishare_init_request *request,
+                                     u8 nss_2g, u8 nss_5g)
+{
+    int ret = mishare_request_bridge_validate_locked(c, hdd, request, nss_2g, nss_5g);
+
+    if (ret)
+        return ret;
+    return mishare_wonder_host_start_ready_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
+}
+
 /* Configuration may finish or a preview may still own MC work. The host
  * rechecks its coherent state before first submission and every result poll. */
 static inline int
@@ -152,5 +165,19 @@ mishare_request_bridge_plan_step_locked(struct mishare_request_bridge *c,
     if (!c->bound || !c->bridge.host || !c->bridge.attached)
         return -EINPROGRESS;
     return mishare_wonder_host_plan_step_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
+}
+/* Adoption validates the canonical frozen request and CURRENT native policy
+ * independently of the old pre-plan observer, including repeated commits. */
+static inline int
+mishare_request_bridge_plan_commit_step_locked(const struct mishare_request_bridge *c,
+                                                struct hdd_context *hdd,
+                                                const struct mishare_init_request *request,
+                                                u8 nss_2g, u8 nss_5g)
+{
+    int ret = mishare_request_bridge_validate_locked(c, hdd, request, nss_2g, nss_5g);
+
+    if (ret)
+        return ret;
+    return mishare_wonder_host_plan_commit_step_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
 }
 #endif

@@ -991,6 +991,41 @@ int mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *host,
     return mishare_runtime_start_preview(host->runtime, request->params.channel.freq);
 }
 
+/* Adopt an observed encoder receipt under the same current parent scope. */
+int mishare_wonder_host_plan_commit_step_locked(struct mishare_wonder_host *host,
+                                            const struct mishare_init_request *request,
+                                            u8 nss_2g, u8 nss_5g)
+{
+    struct mishare_runtime_status state;
+    int ret;
+
+    if (!host || !request)
+        return -EINVAL;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (host->session.closing || cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    if (!host->runtime)
+        return -EINPROGRESS;
+    ret = mishare_runtime_snapshot(host->runtime, &state);
+    if (ret)
+        return ret;
+    ret = mishare_start_plan_commit_check(&state, &host->prestart, &host->session,
+                                     request, nss_2g, nss_5g);
+    if (ret)
+        return ret;
+    return mishare_runtime_start_plan_commit(host->runtime, request->params.channel.freq);
+}
+
 int mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *host,
                                             const u8 *bssid)
 {
@@ -1488,6 +1523,36 @@ int mishare_wonder_managed_plan_step(void *handle)
     ret = mishare_instance_parent_check(instance, scope.hdd);
     if (!ret)
         ret = mishare_request_bridge_plan_step_locked(&instance->request_bridge, scope.hdd,
+                  &instance->request, instance->request_nss_2g, instance->request_nss_5g);
+    mishare_bridge_scope_end(&scope);
+release:
+    mishare_instance_release(instance);
+    return ret;
+}
+
+/* No cached ready state or implicit preview/START submission. */
+int mishare_wonder_managed_plan_commit_step(void *handle)
+{
+    struct mishare_managed_instance *instance;
+    struct mishare_bridge_scope scope = {0};
+    int ret = mishare_instance_claim(handle, &instance);
+
+    if (ret)
+        return ret;
+    if (instance->request_bridge.bridge.closing) {
+        ret = -ESHUTDOWN;
+        goto release;
+    }
+    if (!instance->request_prepared) {
+        ret = -EINVAL;
+        goto release;
+    }
+    ret = mishare_bridge_scope_begin(&scope, instance->dev);
+    if (ret)
+        goto release;
+    ret = mishare_instance_parent_check(instance, scope.hdd);
+    if (!ret)
+        ret = mishare_request_bridge_plan_commit_step_locked(&instance->request_bridge, scope.hdd,
                   &instance->request, instance->request_nss_2g, instance->request_nss_5g);
     mishare_bridge_scope_end(&scope);
 release:

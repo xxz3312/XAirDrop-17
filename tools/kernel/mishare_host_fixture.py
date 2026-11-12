@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from mishare_live_origins import restore_live_additions
-from mishare_start_ready_fixture import READY_VALUES
+from mishare_start_ready_fixture import READY_VALUES, PLAN_VALUES
 """Actions-only ASan/UBSan execution of the actual dormant HDD host helper."""
 import argparse
 import hashlib
@@ -232,6 +232,22 @@ int mishare_runtime_start_preview(struct mishare_runtime_owner *o,u32 freq) {
  assert(ready_snapshot_enabled && o && freq==ready_snapshot.ndi.channel_freq && parent_owned && rtnl_owned &&
   !ready_snapshot.work_pending && !ready_snapshot.work_users && "EXPECTED_MANAGED_PLAN_SOURCE");
  preview_model_calls++;return preview_model_result;
+}
+
+static unsigned commit_model_calls;static int commit_model_result;
+int mishare_runtime_start_plan_commit(struct mishare_runtime_owner *o,u32 freq) {
+ assert(ready_snapshot_enabled && o && runtime_tokens==1 && parent_owned && rtnl_owned &&
+  !ready_snapshot.work_pending && !ready_snapshot.work_users && !ready_snapshot.quiesced &&
+  ready_snapshot.start_preview.completed && !ready_snapshot.start_preview.integrity_error &&
+  freq==ready_snapshot.start_preview.freq && freq==ready_snapshot.ndi.channel_freq &&
+  ready_snapshot.rate.request.mcs==7 && !ready_snapshot.ndi.radio_requested &&
+  "EXPECTED_MANAGED_COMMIT_SOURCE");
+ commit_model_calls++;
+ if(commit_model_result)return commit_model_result;
+ ready_snapshot.start_preview.committed=true;ready_snapshot.ndi.start_plan=ready_snapshot.start_preview.summary;
+ ready_snapshot.ndi.start_plan_requested=ready_snapshot.ndi.start_plan_submitted=
+  ready_snapshot.ndi.start_plan_completed=ready_snapshot.ndi.start_plan_ready=true;
+ return 0; /* Real registry/adoption/retirement executed by 0175 native fixture. */
 }
 int mishare_runtime_ndi_create(struct mishare_runtime_owner *o,u8 a,u8 b) { (void)o;(void)a;(void)b;return -EOPNOTSUPP; }
 int mishare_runtime_ndi_prepare(struct mishare_runtime_owner *o) { (void)o;return -EOPNOTSUPP; }
@@ -1584,6 +1600,101 @@ static void managed_readiness_cases(struct hdd_context *h,struct wireless_dev *w
  parent_owned=rtnl_owned=true;managed_instance_case=false;
 }
 
+static void managed_commit_cases(struct hdd_context *h,struct wireless_dev *wdev)
+{
+ for(unsigned mode=0;mode<2;mode++) {
+  void *handle=NULL;struct wondertap_init_params params={0};
+  params.channel.freq=5240;params.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HT;params.tx_rate.nss=1;params.tx_rate.mcs=7;
+  memcpy(params.mac_addr,mac,6);memcpy(params.country_code,"CN",3);params.bssid[5]=8;
+  params.data_retry_limit=5;params.mgmt_retry_limit=3;
+  reset(0);managed_instance_case=managed_factory_io=true;mode_context=h;
+  assert(!mishare_wonder_managed_create(h->parent_dev,&handle));managed_factory_io=false;
+  struct mishare_managed_instance *instance=handle;
+  managed_context();assert(mishare_wonder_managed_plan_commit_step(handle)==-EINVAL &&
+   !instance->busy && !active && !idle_trace[0] && !parent_owned && !rtnl_owned &&
+   "EXPECTED_MANAGED_COMMIT_PREPARED");
+  managed_context();assert(!mishare_wonder_managed_prepare(handle,&params,1,2));
+  managed_context();assert(mishare_wonder_managed_plan_commit_step(handle)==-EINPROGRESS &&
+   !active && !instance->request_bridge.bound && !instance->busy && !parent_owned && !rtnl_owned &&
+   "EXPECTED_MANAGED_COMMIT_NO_CREATE");
+  managed_context();assert(mishare_wonder_managed_prestart_step(handle)==-EINPROGRESS);
+  active->dev->ieee80211_ptr=wdev;managed_context();
+  assert(mishare_wonder_managed_prestart_step(handle)==-EINPROGRESS && runtime_tokens==1);
+  struct mishare_wonder_host *host=instance->request_bridge.bridge.host;
+  ready_values(&ready_snapshot,&host->prestart,&host->session,&instance->request);
+  ready_snapshot_enabled=true;ready_snapshot_reads=0;commit_model_calls=0;commit_model_result=0;
+  unsigned previews=preview_model_calls;
+  managed_context();assert(mishare_wonder_managed_plan_commit_step(handle)==-EINPROGRESS &&
+   !commit_model_calls && preview_model_calls==previews && "EXPECTED_MANAGED_COMMIT_NO_PREVIEW");
+  plan_values(&ready_snapshot,false);
+  if(!mode)for(unsigned fault=0;fault<12;fault++) {
+   pid_t child=fork();assert(child>=0);if(!child) {
+    int expected=-EUCLEAN;unsigned reads=ready_snapshot_reads;unsigned checks=validations;
+    if(fault==0){instance->busy=true;expected=-EINPROGRESS;}
+    if(fault==1){rtnl_contended=true;expected=-EAGAIN;}
+    struct wlan_objmgr_pdev replacement={0};
+    if(fault==2)h->pdev=&replacement;
+    if(fault==3){reg_state=0;expected=-EOPNOTSUPP;}
+    if(fault==4){instance->request.params.data_retry_limit++;expected=-EBUSY;}
+    if(fault==5)ready_snapshot.start_preview.vdev_id++;
+    if(fault==6){ready_snapshot.quiesced=MISHARE_QUIESCE_SSR;expected=-ESHUTDOWN;}
+    if(fault==7){ready_snapshot.work_users=1;expected=-EINPROGRESS;}
+    if(fault==8){ready_snapshot.start_preview.completed=false;ready_snapshot.start_preview.summary=(struct mishare_ndi_start_summary){0};expected=-EINPROGRESS;}
+    if(fault==9)ready_snapshot.rate.request.mcs++;
+    if(fault==10){host->session.closing=true;expected=-ESHUTDOWN;}
+    if(fault==11){plan_values(&ready_snapshot,true);ready_snapshot.ndi.start_plan.dtim_period++;}
+    managed_context();
+    assert(mishare_wonder_managed_plan_commit_step(handle)==expected && !commit_model_calls &&
+     preview_model_calls==previews && instance->request_bridge.bridge.host==host && runtime_tokens==1 &&
+     "EXPECTED_MANAGED_COMMIT_REFUSAL");
+    assert(instance->busy==(fault==0) && !parent_owned && !rtnl_owned && "EXPECTED_MANAGED_COMMIT_RELEASE");
+    if(fault<5 || fault==10)assert(ready_snapshot_reads==reads && "EXPECTED_MANAGED_COMMIT_BEFORE_SNAPSHOT");
+    if(fault==2)assert(validations==checks && "EXPECTED_MANAGED_COMMIT_PARENT_FIRST");
+    _Exit(0);
+   }
+   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status) &&
+    "EXPECTED_MANAGED_COMMIT_BOUNDARY_CHILD");
+  }
+  commit_model_result=-EINPROGRESS;managed_context();
+  assert(mishare_wonder_managed_plan_commit_step(handle)==-EINPROGRESS && commit_model_calls==1 &&
+   !ready_snapshot.start_preview.committed && !instance->busy && !parent_owned && !rtnl_owned &&
+   "EXPECTED_MANAGED_COMMIT_SCOPE");
+  commit_model_result=0;
+  for(unsigned repeat=0;repeat<3;repeat++) {
+   managed_context();
+   assert(!mishare_wonder_managed_plan_commit_step(handle) && commit_model_calls==2+repeat &&
+    ready_snapshot.start_preview.committed && !instance->busy && !parent_owned && !rtnl_owned &&
+    instance->request_bridge.bridge.host==host && runtime_tokens==1 && preview_model_calls==previews &&
+    host->session.stage==MISHARE_SESSION_PLAN && "EXPECTED_MANAGED_COMMIT_POLL");
+  }
+  unsigned commits=commit_model_calls,reads=ready_snapshot_reads;
+  reg_state=0;managed_context();
+  assert(mishare_wonder_managed_plan_commit_step(handle)==-EOPNOTSUPP && ready_snapshot_reads==reads &&
+   commit_model_calls==commits && "EXPECTED_MANAGED_COMMIT_CURRENT_POLICY");reg_state=1;
+  managed_context();assert(mishare_wonder_managed_plan_step(handle)==-EBUSY && preview_model_calls==previews &&
+   "EXPECTED_MANAGED_COMMIT_NO_PREVIEW_REPLAY");
+  ready_snapshot_enabled=false;
+  if(mode) {
+   runtime_ssr=true;batch_rc=-EINPROGRESS;managed_context();
+   assert(managed_ssr_step(h)==-EINPROGRESS && instance->request_bridge.bridge.closing &&
+    instance->request_bridge.bridge.host==host && instance->parent_hdd==h && runtime_tokens==1 &&
+    "EXPECTED_MANAGED_COMMIT_SSR_RETAIN");
+   managed_context();assert(mishare_wonder_managed_plan_commit_step(handle)==-ESHUTDOWN &&
+    commit_model_calls==commits && "EXPECTED_MANAGED_COMMIT_SSR_CLOSED");
+   batch_rc=0;managed_context();assert(!managed_ssr_step(h) && !runtime_tokens && !active &&
+    !instance->parent_hdd && instance->request_bridge.bridge.retired && "EXPECTED_MANAGED_COMMIT_SSR_FINISH");
+   runtime_ssr=false;mode_context=NULL;
+  } else {
+   assert(mishare_wonder_managed_retire(&handle)==-EINPROGRESS);
+   managed_context();assert(mishare_wonder_managed_plan_commit_step(handle)==-ESHUTDOWN &&
+    commit_model_calls==commits && "EXPECTED_MANAGED_COMMIT_CLOSED");
+  }
+  managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle && !active &&
+   !runtime_tokens && !managed_device_refs && !lease_refs && "EXPECTED_MANAGED_COMMIT_RETIRE");
+  parent_owned=rtnl_owned=true;managed_instance_case=false;
+ }
+}
+
 int main(void)
 {
  struct device dev={0};struct wlan_objmgr_psoc psoc={0},other_psoc={0};struct wlan_objmgr_pdev pdev={.psoc=&psoc};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&psoc,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;expected_psoc=&psoc;
@@ -1772,7 +1883,7 @@ int main(void)
  receipt_cases(&h,&wdev);
  managed_cases(&h,&wdev);
  managed_auto_ssr_cases(&h,&wdev);
- managed_readiness_cases(&h,&wdev);
+ managed_readiness_cases(&h,&wdev);managed_commit_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
@@ -1874,7 +1985,7 @@ def run(wlan, output):
     for tag, body in [('NATIVE_UNLOAD_WRAPPERS',unload_wrappers),('NATIVE_UNLOAD_HELPER',unload_helper),('NATIVE_UNLOAD_PREFIX',unload_prefix),('NATIVE_QDF_FROM_OS',qdf_from_os),('NATIVE_SSR_STATE',state_native),('NATIVE_MODULE_STATE',module_state),('NATIVE_MODULE_BEGIN',module_begin),('NATIVE_MODULE_FINISH',module_finish),('NATIVE_MODULE_RESUME',module_resume),('NATIVE_POST_DISABLE',post_native),('NATIVE_POWER_COMPLETION',power_completion),('NATIVE_POWER_SHUTDOWN',power_native),('NATIVE_SOC_SHUTDOWN',soc_native),('NATIVE_SOC_REINIT',reinit_native),('NATIVE_MODULE_REMOVE',module_remove),('NATIVE_REMOVE_PREPARE',remove_prepare),('NATIVE_IPCI_REMOVE',ipci_remove)]:
         ssr_models=ssr_models.replace(tag,body)
     code = wrappers + '\n#include "wlan_hdd_mishare_host.c"\n' + IDLE_MODELS.replace('NATIVE_IDLE',idle+'\n'+mode) + RESET_MODELS.replace('NATIVE_QDF_STATUS',qdf_enum).replace('NATIVE_RESET',reset_native) + ssr_models + HARNESS.replace('\n GUARD\n','\n '+guard+'\n').replace('\n ROLLBACK\n','\n '+rollback+'\n')
-    code=code.replace('\nREADY_VALUES\n', '\n'+READY_VALUES+'\n', 1)
+    code=code.replace('\nREADY_VALUES\n', '\n'+READY_VALUES+'\n'+PLAN_VALUES+'\n', 1)
     production = ROOT/'kernel/popsicle-hdd'
     hashes = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in production.glob('*') if p.is_file()}
     with tempfile.TemporaryDirectory() as tmp:
@@ -1968,6 +2079,24 @@ def run(wlan, output):
             (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             assert bad.returncode==-6 and 'EXPECTED_MANAGED_PLAN_' in bad.stderr,(label,bad.returncode,bad.stderr[-2000:])
+
+        commit_managed=extract(host_source,r'^int mishare_wonder_managed_plan_commit_step\([^;{]+?\)\s*\{.*?^\}')
+        commit_host=extract(host_source,r'^int mishare_wonder_host_plan_commit_step_locked\([^;{]+?\)\s*\{.*?^\}')
+        commit_controls=[]
+        for body,needle,replacement in [
+            (commit_managed,'if (!instance->request_prepared)','if (false && !instance->request_prepared)'),
+            (commit_managed,'    mishare_bridge_scope_end(&scope);','    if (false) mishare_bridge_scope_end(&scope);'),
+            (commit_managed,'    mishare_instance_release(instance);','    if (false) mishare_instance_release(instance);'),
+            (commit_managed,'ret = mishare_instance_parent_check(instance, scope.hdd);','ret = 0 * mishare_instance_parent_check(instance, scope.hdd);'),
+            (commit_host,'    if (ret)\n        return ret;\n    return mishare_runtime_start_plan_commit',
+                         '    if (false && ret)\n        return ret;\n    return mishare_runtime_start_plan_commit'),
+        ]:
+            assert body.count(needle)==1,needle
+            commit_controls.append((needle,host_source.replace(body,body.replace(needle,replacement,1),1)))
+        for label,changed in commit_controls:
+            (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode==-6 and 'EXPECTED_MANAGED_COMMIT_' in bad.stderr,(label,bad.returncode,bad.stderr[-2000:])
         regulatory_controls = [
             ('ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);',
              'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),
@@ -2400,7 +2529,7 @@ def run(wlan, output):
         subprocess.run(command,check=True)
         bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
         assert bad.returncode==-6 and 'EXPECTED_EXEC_UNLOAD_REFUSAL' in bad.stderr,(bad.returncode,bad.stderr[:2400])
-    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','managed_plan_mutations':len(plan_controls),'managed_readiness_mutations':len(readiness_controls),'managed_parent_fence_mutations':len(managed_parent_controls),'managed_auto_ssr_success_modes':4,'managed_auto_ssr_retained_faults':9,'managed_auto_ssr_mutations':len(auto_ssr_controls),'managed_parent_fence_no_host_failure':True,'managed_parent_fence_ssr_handoff_receipt':True,'negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'negative_ssr_stop_controls_rejected':8,'negative_ssr_prepare_controls_rejected':7,'ssr_prepare_contract_cases':18,'ssr_journal_scenarios':8,'ssr_resume_scenarios':17,'ssr_upper_scenarios':16,'external_execution_unload_cases':2,'negative_external_execution_unload_controls_rejected':1,'stop_lease_cases':4,'negative_stop_module_lease_controls_rejected':6,'independent_stop_module_API_ledger':True,'synthetic_scope_reset_is_not_production_cleanup':True,'module_host_cases':5,'negative_module_controls_rejected':3,'module_api_is_modeled':True,'unload_scenarios':17,'soft_unload_scenarios':4,'negative_unload_controls_rejected':9,'native_unload_sha256':hashlib.sha256(unload_native.encode()).hexdigest(),'native_unload_prefix_sha256':hashlib.sha256(unload_prefix.encode()).hexdigest(),'remove_scenarios':17,'negative_remove_controls_rejected':10,'native_remove_source_sha256':hashlib.sha256(remove_source.encode()).hexdigest(),'native_remove_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_mishare_module_remove_ready',module_remove),('hdd_mishare_remove_prepare',remove_prepare),('pld_ipci_remove',ipci_remove)]},'native_sync_resume_sha256':hashlib.sha256(sync_resume.encode()).hexdigest(),'native_sync_source_sha256':hashlib.sha256(sync_source.encode()).hexdigest(),'negative_ssr_upper_controls_rejected':10,'negative_ssr_resume_controls_rejected':10,'negative_ssr_journal_controls_rejected':8,'native_module_begin_sha256':hashlib.sha256(module_begin.encode()).hexdigest(),'native_module_finish_sha256':hashlib.sha256(module_finish.encode()).hexdigest(),'native_module_resume_sha256':hashlib.sha256(module_resume.encode()).hexdigest(),'ssr_stop_contract_cases':15,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
+    report={'status':'MISHARE_HOST_LIFETIME_FIXTURE_PASS_ONLY','managed_plan_mutations':len(plan_controls),'managed_commit_mutations':len(commit_controls),'managed_commit_modes':2,'managed_commit_boundaries':12,'managed_readiness_mutations':len(readiness_controls),'managed_parent_fence_mutations':len(managed_parent_controls),'managed_auto_ssr_success_modes':4,'managed_auto_ssr_retained_faults':9,'managed_auto_ssr_mutations':len(auto_ssr_controls),'managed_parent_fence_no_host_failure':True,'managed_parent_fence_ssr_handoff_receipt':True,'negative_stop_controls_rejected':6,'negative_parent_controls_rejected':7,'negative_idle_controls_rejected':13,'negative_handoff_ssr_controls_rejected':6,'negative_reset_controls_rejected':5,'negative_ssr_stop_controls_rejected':8,'negative_ssr_prepare_controls_rejected':7,'ssr_prepare_contract_cases':18,'ssr_journal_scenarios':8,'ssr_resume_scenarios':17,'ssr_upper_scenarios':16,'external_execution_unload_cases':2,'negative_external_execution_unload_controls_rejected':1,'stop_lease_cases':4,'negative_stop_module_lease_controls_rejected':6,'independent_stop_module_API_ledger':True,'synthetic_scope_reset_is_not_production_cleanup':True,'module_host_cases':5,'negative_module_controls_rejected':3,'module_api_is_modeled':True,'unload_scenarios':17,'soft_unload_scenarios':4,'negative_unload_controls_rejected':9,'native_unload_sha256':hashlib.sha256(unload_native.encode()).hexdigest(),'native_unload_prefix_sha256':hashlib.sha256(unload_prefix.encode()).hexdigest(),'remove_scenarios':17,'negative_remove_controls_rejected':10,'native_remove_source_sha256':hashlib.sha256(remove_source.encode()).hexdigest(),'native_remove_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_mishare_module_remove_ready',module_remove),('hdd_mishare_remove_prepare',remove_prepare),('pld_ipci_remove',ipci_remove)]},'native_sync_resume_sha256':hashlib.sha256(sync_resume.encode()).hexdigest(),'native_sync_source_sha256':hashlib.sha256(sync_source.encode()).hexdigest(),'negative_ssr_upper_controls_rejected':10,'negative_ssr_resume_controls_rejected':10,'negative_ssr_journal_controls_rejected':8,'native_module_begin_sha256':hashlib.sha256(module_begin.encode()).hexdigest(),'native_module_finish_sha256':hashlib.sha256(module_finish.encode()).hexdigest(),'native_module_resume_sha256':hashlib.sha256(module_resume.encode()).hexdigest(),'ssr_stop_contract_cases':15,'native_reset_contract_cases':62,'parent_identity_rejections':36,'production_sha256':hashes,'fixture_sha256':hashlib.sha256((COMMON+code).encode()).hexdigest(),
             'production_ssr_prepare_sha256':hashlib.sha256(prepare_ssr.encode()).hexdigest(),'native_idle_sha256':hashlib.sha256(idle.encode()).hexdigest(),'native_reset_sha256':hashlib.sha256(reset_native.encode()).hexdigest(),'native_reset_original_sha256':hashlib.sha256(reset_original.encode()).hexdigest(),'native_ssr_source_sha256':{name:hashlib.sha256((wlan/name).read_bytes()).hexdigest() for name in ['qcacld-3.0/core/hdd/src/wlan_hdd_main.c',power_path,ops_path,qdf_path]},'native_ssr_function_sha256':{name:hashlib.sha256(body.encode()).hexdigest() for name,body in [('hdd_wlan_shutdown',power_native),('__hdd_soc_recovery_shutdown',soc_native),('hdd_soc_recovery_reinit',reinit_native),('qdf_status_from_os_return',qdf_from_os),('post_disable_section',post_native),('power_completion_helpers',power_completion)]},
             'native_mode_stop_sha256':hashlib.sha256(mode.encode()).hexdigest(),'native_mode_request_prefix_sha256':hashlib.sha256(request_prefix.encode()).hexdigest(),'checks':['actual native post-disable calls production SSR preparation and qualified host reclamation; failed CDS disable never admits cleanup', 'SSR prepare uses RTNL trylock, preserves empty/standalone/caller-owned/foreign-parent admission and exact recovery qualification, and unlocks on every pending/error/success result', 'asynchronous runtime token, quarantine policy and sync-close failure retain registry authority for later qualified polling', 'native SSR post-disable prefix refuses retained owners before modeled parent close and preserves CDS failure instead of entering its assert/teardown continuation', 'complete native power shutdown and SoC shutdown/reinit functions propagate private stop errors, retain failure across owner retirement, reject duplicate stop and block reinit with failure notification', 'native QDF errno-to-status converter executes unchanged; production post-disable qualified retirement success permits normal completion under modeled qualification, but metadata retirement plus pending parent stop still blocks', 'no-private-owner recovery, legacy status handling, HIF-missing and EPPING behavior preserved; suspended/IPA/capture power branches execute with modeled primitives', 'native hdd_reset_all_adapters skips exact registered private adapters before any link reset and balances current/next iterator references', 'caller-owned, runtime-attached, pending ordinary drain and handed-off pending SSR hosts retain ownership through native reset; modeled quarantine child also skips reset', 'empty registry and mixed STA/P2P/SAP/unowned PAS preserve native queue/WMM/scan/stop and VDEV reference boundaries; owned pointer at first/middle/last position', 'NULL lookup during pre-adapter construction is false; publication and global ownership lookup use the same registry lock', 'same HDD with a replaced PSOC blocks both native idle and handed-off SSR polling; foreign HDD/PSOC pairs remain excluded', 'qualified explicit handed-off SSR entry rejects caller-owned hosts, wrong parents, missing recovery, omitted runtime coverage and policy errors without losing registry ownership', 'SSR poll preserves runtime token across repeated waits and quarantine, retains host/pins after runtime retirement if sync close fails, and later completes without stale caller slots', 'empty host registry and runtime-free host cannot hide a standalone runtime; modeled allocated runtime token count balances', 'explicit handoff closes admission, transfers sole ownership and clears a temporary caller slot without retaining its address', 'native ordinary idle retires handed-off DOWN hosts only; caller-owned, foreign-HDD, changed device/PDEV and recovering sessions cannot be adopted', 'RTNL trylock contention defers without cleanup; pending runtime drain, quarantine and sync mismatch retain registry ownership and pins', 'post-drain standalone runtime guard and original open-interface/native-stop error behavior retained; RTNL released on every attempted cleanup', 'device/PSOC/PDEV pins acquired before host registration; device, PSOC and PDEV refusal and wrong PDEV parent fully roll back', 'pins remain through runtime waits, policy rejection, sync mismatch, adapter close and sync destruction; release in reverse order exactly once', 'all six host operations reject each changed HDD parent identity before mutation, both without and with a runtime token', 'idle, mode request and both mode-change stop entries reject runtime-only and host-only ownership before native module stop; rejected inner mode retains flag; empty registries preserve native errors','SSR host bridge rejects missing recovery state, changed psoc and running/open/session adapters before handoff', 'runtime token restored on incomplete coverage, asynchronous wait and policy rejection', 'host and idle inhibition retained after runtime retirement if sync close fails', 'runtime-free host still requires exact-psoc registry emptiness', 'complete native idle shutdown defers tracked DOWN host before module stop', 'host tracked before sync/adapter allocation and retained through adapter/sync close', 'failed create rolls back idle inhibition', 'pending runtime drain and sync mismatch retain idle inhibition', 'foreign psoc and no owner preserve native idle stop result', 'failed psoc transition and open-interface paths preserve native flow', 'invalid input','owner allocation failure','sync allocation failure','adapter creation failure','context rejection','existing adapter rejection','duplicate owner rejection','running/open/session rejection retaining owner','sync registry mismatch retaining owner','unregister/drain/close/destroy ordering','repeat destroy','ordinary wrapper rejection','ndo_open rejection','factory registered-netdev failure rollback'],
             'sanitizers':['address','undefined','leak detection'],'limitations':'Complete native power shutdown/internal SoC shutdown/reinit and a bounded post-disable section execute against modeled CDS/parent-stop/probe/IRQ primitives. The native post-disable call now invokes production host preparation and qualified reclamation. SSR qualification results and later parent/probe operations remain models; no fake CDS callback performs retirement. Only explicit POST_DISABLED transient waits have a native module-suffix resume API; the native reinit callback performs one qualified module poll and the shared power tail before clearing the upper gate; pending/hard failures retain the transition; no independent worker/timer is installed; hard failures have no reset API; this is failure admission/propagation, not a complete recovery coordinator. Explicit native driver unload prefix now refuses globally retained private owners/journal before unload flags, bus unregister and component teardown. Full unload body, kernel module exit veto and module text references remain uncoordinated. Independent journal and upper power leases execute against a separate module-API ledger; successful module finish does not release the power lease before its tail ACK. Inherited scope reset discards synthetic retained references between cases and is not a production reset API. Linux loader/refcount concurrency and return-to-caller safety are not executed. IPCI remove preflight now refuses private lifetimes before sync unregister and preserves the transition; its actual callback, hardware disappearance and complete module unload remain uncoordinated and modeled here. Other bus remove paths are unchanged. Complete native adapter-reset function executes with modeled held-safe iterator, one active link per adapter, queue/scan/WMM/TWT/TDLS/stop primitives and VDEV references. No real SSR timing, kernel iterator concurrency, adapter-stop bodies or native parent teardown is certified by this reset fixture. Real helper C and extracted factory/rollback fragments with simulated HDD and synchronization. Complete native idle shutdown executes against modeled psoc synchronization, event and module-stop calls. SSR batch is a result/ownership model here; actual runtime batch, recovery policy and native callbacks are exercised by the separate existing runtime fixtures. The ordinary-idle coordinator executes production C against modeled runtime return values and synchronization; real native runtime destruction is covered separately, not end-to-end with this host here. This does not certify SSR/remove or prepared/UP recovery. Registry mutexes model spinlocks. Device and object-manager reference primitives are models; this validates host pin ownership and identity admission, not physical native parent deletion. Allocation pins do not preserve HDD, native components or firmware. Caller must retain and serialize complete parent lifetime across polls. The explicit handed-off SSR poll delegates qualification to the existing bridge and modeled batch here; actual batch policy/native cleanup have separate fixtures. Native SSR post-disable now reaches the qualified bridge; native reinit-triggered continuation is installed; independent retry scheduling and physical-remove coordination remain unconnected. This does not certify native kernel locking, teardown or radio validation.'}

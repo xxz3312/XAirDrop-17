@@ -1,3 +1,10 @@
+## 0176 — full-request START-plan caller
+
+- Confirmed all eight required 0175 jobs passed at e96839c / Actions 43231437844.
+- Connected a dedicated managed/request/host entry to existing native-receipt commit, with fresh parent scopes, complete canonical request and current native policy on every poll. Missing preview waits without allocation or replay.
+- Added coherent committed-plan/configuration observation; old readiness/preview behavior stays pre-plan only. Ordinary and SSR callers retain the same authoritative owner.
+- Added 32 pure combinations, 35 boundaries, six pure mutations, three bridge mutations and two host exit modes / 12 boundaries / five mutations. Native and complete target CI pending at submission. No radio START/UP, public init or phone deployment.
+
 ## 0175 — owned encoder receipt commit
 
 - Confirmed all eight required 0174 CI jobs passed at b969313 / Actions 43213576160.
