@@ -426,8 +426,19 @@ int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *psoc)
         return -ESHUTDOWN;
     if (!rtnl_trylock())
         return -EAGAIN;
-    for (host = mishare_hosts; host; host = host->next) {
-        if (host->psoc != psoc || !host->idle_owned || !host->runtime ||
+    host = NULL;
+    for (;;) {
+        /* Foreign PSOCs may mutate their own nodes concurrently. Traverse
+         * links only under the registry lock; retain only an exact-PSOC node,
+         * whose lifetime is serialized by this native exclusive transition. */
+        spin_lock_irqsave(&mishare_host_lock, flags);
+        host = host ? host->next : mishare_hosts;
+        while (host && host->psoc != psoc)
+            host = host->next;
+        spin_unlock_irqrestore(&mishare_host_lock, flags);
+        if (!host)
+            break;
+        if (!host->idle_owned || !host->runtime ||
             host->prestart.selected || host->session.configured)
             continue;
         ret = mishare_host_parent_identity(host);
