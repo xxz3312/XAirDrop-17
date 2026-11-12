@@ -1100,6 +1100,136 @@ int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
     return 0;
 }
 
+/* Registry lock held, scalar/handle presence only. No native dereference. */
+static bool mishare_runtime_down_origin_valid(struct mishare_runtime_owner *e)
+{
+    const struct mishare_radio_status *r = &e->state.radio;
+    const struct mishare_radio_fence_status *f = &r->fence;
+
+    return e->state.recovery_down_observed && e->state.quiesced == MISHARE_QUIESCE_SSR &&
+           !e->state.rate.requested && !e->state.retry.requested && !e->state.start_preview.requested &&
+           !e->state.recovery_radio_released && !e->state.recovery_radio_start_flushed &&
+           !e->state.recovery_radio_start_refused && !e->state.recovery_radio_start_aborted &&
+           !e->state.recovery_radio_prepared_aborted && !e->state.recovery_radio_sm_entry_aborted &&
+           !e->state.recovery_radio_init_rejected && !e->state.ndi.radio_submit_error &&
+           e->state.ndi.radio_requested && f->recorded && f->phase == MISHARE_RADIO_DOWN &&
+           !f->error && f->closing && f->start_attempted && f->stop_attempted && f->host_up &&
+           f->down_attempted && f->down_accepted && !f->pending && !f->users &&
+           r->phase == MISHARE_RADIO_BLOCKED && r->error == -ESHUTDOWN && r->closing &&
+           r->start_attempted && r->stop_attempted && r->host_up && r->down_attempted && r->down_accepted &&
+           !r->pending && !r->users && !r->ssr_cancelled_before_start &&
+           !r->down_retire_error && !r->down_fence_callback_seen &&
+           (e->state.recovery_down_released ?
+            (!e->radio && r->down_retired && r->down_retire_timer_attempted && r->down_retire_timer_released &&
+             e->state.recovery_timer_attempted && e->state.recovery_timer_released && !e->state.ndi.create.timer_ready) :
+            (e->radio && !r->down_retired && !r->down_retire_timer_attempted && !r->down_retire_timer_released));
+}
+
+static bool mishare_runtime_down_completion_valid(struct mishare_runtime_owner *e)
+{
+    return mishare_runtime_down_origin_valid(e) && e->state.recovery_down_released &&
+           e->state.ndi_reclaim_ready && e->state.recovery_pe_released && !e->pe_cookie &&
+           e->state.recovery_peer_released && e->state.recovery_dp_freed &&
+           e->state.recovery_context_released && !e->state.ndi.active && !e->state.ndi.pe_ready &&
+           !e->state.ndi.peer_created && !e->state.ndi.legacy_ready && !e->state.ndi.wma_bound &&
+           !e->state.ndi.create.dp_attached && !e->state.ndi.create.stats_owned;
+}
+
+/* Parent serialization keeps the authenticated owner and native handles alive
+ * across the unlocked native component check. No new work or cleanup here. */
+int mishare_runtime_fenced_down_prepare(struct mishare_runtime_owner *owner)
+{
+    struct mishare_runtime_owner *e;
+    struct mishare_radio *radio;
+    struct wlan_objmgr_vdev *vdev;
+    struct mishare_event_owner *events;
+    struct mishare_radio_status observed = {0};
+    unsigned long flags, cookie;
+    u32 freq;
+    int ret = -ENOENT;
+
+    if (!owner)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (e = mishare_runtime_owners; e && e != owner; e = e->next)
+        ;
+    if (!e)
+        goto unlock;
+    if (e->state.quiesced != MISHARE_QUIESCE_SSR || e->state.recovery_window_closed ||
+        e->state.draining || e->state.freed) {
+        ret = -ESHUTDOWN;
+        goto unlock;
+    }
+    if (!e->state.mc_drained || e->state.work_pending || e->state.work_users) {
+        ret = -EINPROGRESS;
+        goto unlock;
+    }
+    if (e->state.rate.requested || e->state.retry.requested || e->state.start_preview.requested) {
+        ret = -EOPNOTSUPP;
+        goto unlock;
+    }
+    if (!e->vdev || !e->referenced || !e->events || !e->radio || !e->pe_cookie ||
+        e->cookie != (unsigned long)e->vdev || !e->state.allocated ||
+        e->state.work_error || e->state.recovery_error || e->state.reclaim_error ||
+        e->state.ndi.completion_error || e->state.ndi_reclaim_started || e->state.host_reclaim ||
+        e->state.recovery_down_released || e->state.recovery_radio_released ||
+        e->state.recovery_timer_attempted || e->state.recovery_context_attempted ||
+        e->state.recovery_pe_attempted || e->state.recovery_dp_attempted ||
+        !e->state.ndi.active || !e->state.ndi.legacy_ready || !e->state.ndi.wma_bound ||
+        !e->state.ndi.peer_created || !e->state.ndi.pe_ready || !e->state.ndi.channel_prepared ||
+        !e->state.ndi.start_plan_ready || !e->state.ndi.radio_requested || e->state.ndi.radio_submit_error ||
+        !e->state.ndi.create.timer_ready || !e->state.ndi.create.dp_attached ||
+        e->state.ndi.pe_delete_requested || e->state.ndi.peer_delete_pending ||
+        e->state.ndi.delete_pending || e->state.ndi.dp_detaching) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    if ((e->state.recovery_down_observed &&
+         (!mishare_runtime_down_origin_valid(e) || e->state.recovery_down_vdev_id != wlan_vdev_get_id(e->vdev))) ||
+        e->state.recovery_radio_start_flushed || e->state.recovery_radio_start_refused ||
+        e->state.recovery_radio_start_aborted || e->state.recovery_radio_prepared_aborted ||
+        e->state.recovery_radio_sm_entry_aborted || e->state.recovery_radio_init_rejected ||
+        (!e->state.recovery_down_observed && e->state.recovery_window)) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    radio = e->radio; vdev = e->vdev; events = e->events;
+    cookie = e->pe_cookie; freq = e->state.ndi.channel_freq;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_radio_fenced_down_check(radio, vdev, events, owner, cookie, freq);
+    if (!ret)
+        ret = mishare_radio_snapshot(radio, &observed);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (!ret && (e->radio != radio || e->vdev != vdev || e->events != events || e->pe_cookie != cookie ||
+                 e->state.quiesced != MISHARE_QUIESCE_SSR || !e->state.mc_drained ||
+                 e->state.recovery_window_closed || e->state.draining || e->state.work_error ||
+                 e->state.work_pending || e->state.work_users))
+        ret = -EUCLEAN;
+    if (!ret) {
+        e->state.radio = observed;
+        e->state.recovery_down_vdev_id = wlan_vdev_get_id(vdev);
+        e->state.recovery_down_observed = true;
+        if (!mishare_runtime_down_origin_valid(e))
+            ret = -EUCLEAN;
+    }
+unlock:
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
+/* Event evidence is preserved for the completed DOWN route, never reset to
+ * cold/serial zero to fit the pre-START recovery policy. */
+static bool mishare_runtime_recovery_txn_valid(struct mishare_runtime_owner *e,
+                                               const struct mishare_vdev_txn *txn)
+{
+    if (txn->state != MISHARE_TXN_QUARANTINED || txn->pending != MISHARE_TXN_NONE)
+        return false;
+    return e->state.recovery_down_observed ?
+           (mishare_runtime_down_origin_valid(e) && txn->vdev_id == e->state.recovery_down_vdev_id &&
+            txn->serial == 2 && txn->submitted && txn->replied) :
+           (!txn->serial && !txn->submitted && !txn->replied);
+}
+
 static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bool reclaim)
 {
     struct mishare_runtime_owner *entry, **link;
@@ -1133,6 +1263,11 @@ static int mishare_runtime_host_destroy(struct mishare_runtime_owner **owner, bo
         return ret;
     }
 
+    if (reclaim && (entry->state.recovery_down_observed || entry->state.recovery_down_released) &&
+        !mishare_runtime_down_completion_valid(entry)) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -EUCLEAN;
+    }
     if (entry->state.ndi.completion_error || (entry->state.blocked && !reclaim)) {
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
         return -EUCLEAN;
@@ -1329,7 +1464,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
 {
     struct mishare_ndi_status *n = &entry->state.ndi;
     bool early, prepared, no_pe, ready_pe, no_channel, ready_channel, no_plan, ready_plan;
-    bool no_radio, cancelled_radio;
+    bool no_radio, cancelled_radio, completed_down;
 
     early = !entry->state.recovery_context_attempted &&
             !entry->state.recovery_context_released && !n->legacy_ready &&
@@ -1377,6 +1512,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
                         !entry->state.radio.start_attempted && !entry->state.radio.host_up &&
                         !entry->state.radio.stop_attempted && !entry->state.radio.down_attempted &&
                         !entry->state.radio.down_accepted));
+    completed_down = ready_plan && mishare_runtime_down_origin_valid(entry);
     if (mishare_runtime_rate_reset_check(entry))
         return false;
     return entry->state.quiesced == MISHARE_QUIESCE_SSR &&
@@ -1385,7 +1521,7 @@ static bool mishare_runtime_ndi_recovery_candidate(struct mishare_runtime_owner 
            !n->completion_error &&
            !entry->state.recovery_window_closed && !entry->state.ndi_reclaim_started &&
            !entry->state.host_reclaim && !entry->state.draining &&
-           entry->vdev && entry->referenced && entry->events && (no_radio || cancelled_radio) &&
+           entry->vdev && entry->referenced && entry->events && (no_radio || cancelled_radio || completed_down) &&
            entry->cookie == (unsigned long)entry->vdev && (no_pe || ready_pe) &&
            n->active && !n->create_error && n->create.timer_ready &&
            n->create.wire_attempted && n->create.wire_accepted &&
@@ -1762,8 +1898,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         u32 pe_freq = entry->state.ndi.channel_prepared ? entry->state.ndi.channel_freq : 0;
 
         if (mishare_events_snapshot(entry->events, &txn) ||
-            txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
-            txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+            !mishare_runtime_recovery_txn_valid(entry, &txn))
             return mishare_runtime_recovery_error(entry, -EUCLEAN);
         ret = mishare_ndi_reset_context_check(entry->vdev,
                                                entry->state.ndi.create.dp_cookie);
@@ -1775,7 +1910,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
             if (ret)
                 return mishare_runtime_recovery_error(entry, ret);
         }
-        if (entry->radio) {
+        if (entry->radio && !entry->state.recovery_down_observed) {
             struct mishare_radio_status radio_observed = {0};
 
             ret = mishare_radio_ssr_cancel_check(entry->radio, entry->vdev, entry->events,
@@ -1804,7 +1939,25 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         }
         entry->state.recovery_timer_attempted = true;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-        ret = mishare_ndi_reset_prepared_timer_deinit(entry->vdev);
+        if (entry->state.recovery_down_observed) {
+            struct mishare_radio_status last = {0};
+
+            ret = mishare_radio_snapshot(entry->radio, &last);
+            if (!ret)
+                ret = mishare_radio_fenced_down_release(&entry->radio, entry->vdev, entry->events,
+                                                        entry, entry->pe_cookie, pe_freq, &last);
+            spin_lock_irqsave(&mishare_runtime_lock, flags);
+            entry->state.radio = last;
+            entry->state.recovery_timer_attempted = last.down_retire_timer_attempted;
+            entry->state.recovery_timer_released = last.down_retire_timer_released;
+            if (last.down_retire_timer_released)
+                entry->state.ndi.create.timer_ready = false;
+            entry->state.recovery_down_released = !ret && !entry->radio && last.down_retired;
+            if (!ret && !mishare_runtime_down_origin_valid(entry))
+                ret = -EUCLEAN;
+            spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        } else
+            ret = mishare_ndi_reset_prepared_timer_deinit(entry->vdev);
         if (ret)
             return mishare_runtime_recovery_error(entry, ret);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
@@ -1816,7 +1969,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         timer_done = true;
         if (ret)
             return mishare_runtime_recovery_error(entry, ret);
-        if (entry->radio) {
+        if (entry->radio && !entry->state.recovery_down_observed) {
             struct mishare_radio_status last = {0};
 
             ret = mishare_radio_ssr_cancel_release(&entry->radio, entry->vdev, entry->events,
@@ -1885,8 +2038,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
         return mishare_runtime_recovery_error(entry, -EUCLEAN);
     if (ret == 2) {
         if (mishare_events_snapshot(entry->events, &txn) ||
-            txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
-            txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+            !mishare_runtime_recovery_txn_valid(entry, &txn))
             return mishare_runtime_recovery_error(entry, -EUCLEAN);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         if (!entry->state.recovery_window ||
@@ -1908,8 +2060,7 @@ int mishare_runtime_reclaim_ndi(struct mishare_runtime_owner **owner)
     }
     if (!started) {
         if (mishare_events_snapshot(entry->events, &txn) ||
-            txn.state != MISHARE_TXN_QUARANTINED || txn.serial ||
-            txn.pending != MISHARE_TXN_NONE || txn.submitted || txn.replied)
+            !mishare_runtime_recovery_txn_valid(entry, &txn))
             return mishare_runtime_recovery_error(entry, -EUCLEAN);
         spin_lock_irqsave(&mishare_runtime_lock, flags);
         entry->state.ndi_reclaim_started = true;
@@ -1999,7 +2150,9 @@ static bool mishare_runtime_final_shape_valid(struct mishare_runtime_owner *entr
 
     if (mishare_runtime_rate_final_check(entry))
         return false;
-    return ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
+    return (!(entry->state.recovery_down_observed || entry->state.recovery_down_released) ||
+            mishare_runtime_down_completion_valid(entry)) &&
+           ((!entry->state.recovery_radio_start_flushed && !entry->state.recovery_radio_start_refused &&
              !entry->state.recovery_radio_start_aborted && !entry->state.recovery_radio_prepared_aborted &&
            !entry->state.recovery_radio_sm_entry_aborted && !entry->state.recovery_radio_init_rejected &&
            !entry->state.recovery_radio_released) ||

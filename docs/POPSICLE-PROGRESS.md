@@ -1,3 +1,7 @@
+## 当前代码阶段 0179（完成 DOWN 的显式 runtime SSR 接线）
+
+0178 七项必需任务通过，诊断构建仍运行。0179 新增 MC 停止后、native CDS 资格检查前的显式 raw-DOWN observation，经原生停止窗口后按实际 timer/controller 回执接入 PE/peer/DP/context/host/native SM 退役；保留首次 fence、真实 STOP serial=2 和 partial 错误，最终引用释放可延迟。64 组合、15 边界和六项变异已构造；完整 CI 待观察。自动 managed caller、configured START、UP/WAIT/失败回收与手机验收尚未完成。见 [0179](POPSICLE-DOWN-RUNTIME-0179.md)。
+
 ## 当前代码阶段 0178（完成 DOWN 的 timer/controller 退役组件）
 
 0177 八项必需 CI 全部通过。新增独立 fenced-down check/release：首次完整 DOWN、exact identity/native INIT-IDLE/真实 STOP receipt/重建计划匹配后同步释放原生 response timer，再复核并 unlink controller/drop 一个 VDEV 引用；迟到 callback 撤销资格，partial timer 错误保留且不重试。32 组合/18 边界/十项新变异已构造，本地100项 Python通过，原生/目标 CI待观察。尚未接入 runtime recovery window/状态发布，剩余 PE/peer/DP/VDEV/SM 仍保留，非完整 active SSR 回收。见 [0178](POPSICLE-DOWN-RETIRE-0178.md)。

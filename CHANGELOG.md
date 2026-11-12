@@ -1,3 +1,9 @@
+## 0179 — explicit raw completed-DOWN runtime SSR retirement
+
+- Added authenticated post-MC, pre-native-CDS observation; the existing native stop qualification alone opens the recovery window. Automatic managed observation scheduling remains unconnected.
+- Publish actual timer/controller retirement and partial errors, then use existing native PE/peer/DP/context/host/SM retirement. Preserve first fence, STOP transaction serial 2, historical command facts and extra-reference final-free ordering; no new firmware commands or synthetic ACKs.
+- Added 64 native combinations, 15 refusal/partial cases and six new mutations. Python/source checks and complete Actions validation are reported separately; configured START/public init and phone deployment stay closed.
+
 ## 0178 — completed-DOWN controller retirement component
 
 - Confirmed all eight required 0177 CI jobs passed at eb9c13b / Actions 43280086420.

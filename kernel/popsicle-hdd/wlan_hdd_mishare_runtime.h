@@ -67,6 +67,9 @@ struct mishare_runtime_status {
     bool recovery_radio_sm_entry_aborted;
     bool recovery_radio_init_rejected;
     bool recovery_radio_released;
+    bool recovery_down_observed; /* Explicit post-MC observation, not a native window. */
+    bool recovery_down_released; /* Actual 0178 component result, separate from pre-START. */
+    u8 recovery_down_vdev_id;
     bool recovery_pe_attempted;
     bool recovery_pe_released;
     bool recovery_context_attempted;
@@ -120,6 +123,11 @@ int mishare_runtime_reclaim_host(struct mishare_runtime_owner **owner);
  * active reclaim call. Caller must serialize teardown with all reclaim polls.
  * No firmware ACK or ownership reset is manufactured.
  */
+/* Explicit process-context preparation under retained/serialized parents.
+ * Read-only native DOWN validation and scalar origin publication only. Call
+ * after the original SSR fence + MC drain, before native CDS qualification.
+ * Never opens a window, submits work or releases resources. Raw mode only. */
+int mishare_runtime_fenced_down_prepare(struct mishare_runtime_owner *owner);
 unsigned int mishare_runtime_recovery_candidates(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_open(struct wlan_objmgr_psoc *psoc);
 void mishare_runtime_recovery_close(struct wlan_objmgr_psoc *psoc);
