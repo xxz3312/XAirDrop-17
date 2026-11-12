@@ -166,7 +166,7 @@ def ordinary_fixture(root):
     declarations='static bool preview_cycle_enabled,preview_cycle_inline;static unsigned preview_cycle_origin;\nstatic void preview_exercise(struct mishare_runtime_owner *,u32,unsigned,bool);\n'
     source=source.replace(cycle,declarations+modified,1)
     main=main_body(source)
-    source=source.replace(main,MODEL+ORDINARY+'\nint main(void) {\n preview_ordinary_cases();engine_contract();return 0;\n}\n',1)
+    source=source.replace(main,MODEL+ORDINARY+'\nint main(void) {\n preview_ordinary_cases();engine_contract();puts("MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY");return 0;\n}\n',1)
     return source,exits,stubbed
 
 def mutations(original):
