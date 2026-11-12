@@ -213,6 +213,8 @@ static struct mishare_radio *radio_get_kind(struct vdev_mlme_obj *mlme,
     spin_lock_irqsave(&mishare_radio_lock, flags);
     for (r = mishare_radios; r; r = r->next) {
         if (r->vdev == mlme->vdev) {
+            if (r->state.fence.recorded && r->state.fence.phase == MISHARE_RADIO_DOWN)
+                r->state.down_fence_callback_seen = true;
             if (r->ssr_fenced_init) {
                 bool expected = r->start_sm_call_active && radio_init_reject_context(r, 1, 0) &&
                     ((kind == RADIO_CB_INIT_VALIDATE && !r->init_validate_rejected &&
@@ -1129,6 +1131,133 @@ int mishare_radio_ssr_cancel_release(struct mishare_radio **handle,
     r->state.ssr_cancelled_before_start = true;
     r->state.ssr_start_submit_error = r->start_post_error;
     *last = r->state; /* Preserve BLOCKED/original error, never DOWN/CANCELLED. */
+    *handle = NULL;
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+    kfree(r);
+    return 0;
+}
+
+/* Radio lock held. These are complete ordinary START/STOP/DOWN facts, not
+ * pre-START cancellation. host_up is historical and must NOT be cleared. */
+static bool radio_fenced_down_shape(struct mishare_radio *r)
+{
+    const struct mishare_radio_fence_status *f = &r->state.fence;
+
+    return f->recorded && f->phase == MISHARE_RADIO_DOWN && !f->error && f->closing &&
+           f->start_attempted && f->stop_attempted && f->host_up &&
+           f->down_attempted && f->down_accepted && !f->pending && !f->users &&
+           f->start_sm_entered && !f->start_sm_call_active &&
+           f->start_reply_queued && f->stop_reply_queued &&
+           !f->applying_start_reply && !f->applying_stop_reply &&
+           r->state.phase == MISHARE_RADIO_BLOCKED && r->state.closing && r->state.error == -ESHUTDOWN &&
+           r->state.start_attempted && r->state.stop_attempted && r->state.host_up &&
+           r->state.down_attempted && r->state.down_accepted && !r->state.pending && !r->state.users &&
+           !r->state.down_fence_callback_seen && !r->state.down_retired && !r->state.down_retire_error &&
+           r->state.down_retire_timer_attempted == r->state.down_retire_timer_released &&
+           r->start_posted && r->start_callback_entered && r->start_work_admitted &&
+           r->start_prepare_entered && r->start_prepare_succeeded && r->preflight &&
+           r->start_sm_committed && r->start_sm_entered && r->start_sm_return_success && !r->start_sm_call_active &&
+           r->start_reply_queued && r->stop_reply_queued &&
+           !r->applying_start_reply && !r->applying_stop_reply && !r->start_post_error &&
+           !r->ssr_fenced_new && !r->ssr_start_flushed && !r->ssr_callback_after_fence &&
+           !r->ssr_fenced_rejected && !r->ssr_start_refused && !r->ssr_fenced_before_prepare &&
+           !r->ssr_start_aborted && !r->ssr_fenced_preparation && !r->ssr_prepared_abort &&
+           !r->ssr_fenced_sm_gate && !r->ssr_sm_entry_aborted && !r->ssr_fenced_init && !r->ssr_init_rejected &&
+           !r->state.ssr_cancelled_before_start && !r->state.ssr_start_submit_error &&
+           !r->state.ssr_start_callback_refused && !r->state.ssr_start_body_aborted &&
+           !r->state.ssr_start_prepared_aborted && !r->state.ssr_start_sm_entry_aborted &&
+           !r->state.ssr_start_init_rejected;
+}
+
+int mishare_radio_fenced_down_check(struct mishare_radio *token,
+                                    struct wlan_objmgr_vdev *vdev,
+                                    struct mishare_event_owner *events, void *owner,
+                                    unsigned long cookie, u32 freq)
+{
+    struct mishare_radio *r;
+    struct mishare_ndi_start_summary expected = {0}, observed = {0};
+    struct mishare_vdev_txn txn;
+    struct vdev_mlme_obj *m;
+    unsigned long flags;
+    int ret = -ENOENT;
+
+    if (!token || !vdev || !events || !owner || !cookie || !freq)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    for (r = mishare_radios; r && r != token; r = r->next)
+        ;
+    if (r) {
+        ret = r->vdev != vdev || r->events != events || r->owner != owner ||
+              r->session_cookie != cookie || r->freq != freq || !radio_fenced_down_shape(r) ? -EUCLEAN : 0;
+        if (!ret)
+            expected = r->start_plan;
+    }
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    if (ret)
+        return ret;
+    m = wlan_vdev_mlme_get_cmpt_obj(vdev);
+    if (!m || m->vdev != vdev || !m->ext_vdev_ptr ||
+        wlan_vdev_mlme_get_opmode(vdev) != QDF_PASSTHRU_MODE ||
+        m->mgmt.generic.type != WLAN_VDEV_MLME_TYPE_NDI || m->mgmt.generic.subtype || !radio_init_idle(r) ||
+        mishare_events_snapshot(events, &txn) || txn.vdev_id != wlan_vdev_get_id(vdev) ||
+        txn.state != MISHARE_TXN_QUARANTINED || txn.serial != 2 || txn.pending != MISHARE_TXN_NONE ||
+        !txn.submitted || !txn.replied)
+        return -EUCLEAN;
+    if (mishare_ndi_start_plan_build(m, freq, &observed) || !radio_plan_equal(&observed, &expected))
+        return -EUCLEAN;
+    return 0;
+}
+
+int mishare_radio_fenced_down_release(struct mishare_radio **handle,
+                                      struct wlan_objmgr_vdev *vdev,
+                                      struct mishare_event_owner *events, void *owner,
+                                      unsigned long cookie, u32 freq,
+                                      struct mishare_radio_status *last)
+{
+    struct mishare_radio *r, **link;
+    unsigned long flags;
+    int ret;
+
+    if (!handle || !last)
+        return -EINVAL;
+    r = *handle;
+    ret = mishare_radio_fenced_down_check(r, vdev, events, owner, cookie, freq);
+    if (ret)
+        return ret;
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    if (!radio_fenced_down_shape(r) || r->state.down_retire_timer_attempted) {
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        return -EUCLEAN;
+    }
+    r->state.down_retire_timer_attempted = true;
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    ret = mishare_ndi_reset_prepared_timer_deinit(vdev);
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    if (ret)
+        r->state.down_retire_error = ret;
+    else
+        r->state.down_retire_timer_released = true;
+    spin_unlock_irqrestore(&mishare_radio_lock, flags);
+    /* Native timer sync may have admitted a final callback. Revalidate all
+     * facts after it, outside the radio lock, and never retry timer release. */
+    if (!ret)
+        ret = mishare_radio_fenced_down_check(r, vdev, events, owner, cookie, freq);
+    spin_lock_irqsave(&mishare_radio_lock, flags);
+    for (link = &mishare_radios; *link && *link != r; link = &(*link)->next)
+        ;
+    if (!ret && (!*link || !radio_fenced_down_shape(r) || !radio_init_idle(r)))
+        ret = -EUCLEAN;
+    if (ret) {
+        if (!r->state.down_retire_error)
+            r->state.down_retire_error = ret;
+        *last = r->state;
+        spin_unlock_irqrestore(&mishare_radio_lock, flags);
+        return ret;
+    }
+    *link = r->next;
+    r->state.down_retired = true;
+    *last = r->state;
     *handle = NULL;
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
     wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);

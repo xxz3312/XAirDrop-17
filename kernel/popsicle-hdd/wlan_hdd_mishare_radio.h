@@ -52,6 +52,10 @@ struct mishare_radio_status {
     bool ssr_start_body_aborted; /* Work admitted, fenced before prepare entry. */
     bool ssr_start_prepared_aborted; /* Preparation matched, no START SM commitment. */
     bool ssr_start_sm_entry_aborted; /* Committed intent, fenced before native dispatch entry. */
+    bool down_fence_callback_seen; /* Any MLME callback after a DOWN fence revokes retirement. */
+    bool down_retire_timer_attempted, down_retire_timer_released;
+    bool down_retired; /* Controller only; never PE/peer/DP/VDEV final-free proof. */
+    int down_retire_error;
     bool ssr_start_init_rejected; /* Native INIT rejected START, full dispatch returned. */
 };
 /* Internal one-shot owned radio controller. Caller keeps the exact event
@@ -78,6 +82,23 @@ int mishare_radio_snapshot(struct mishare_radio *radio,
 /* EINPROGRESS: poll, never sleep under RTNL/SM locks. EUCLEAN: keep every
  * parent/peer/PE/VDEV/DP resource. Success removes callbacks before ref release.
  */
+/* Component-only retirement of a completed ordinary DOWN caught by a parent
+ * fence. Caller must serialize original handles, retain exact parents and
+ * establish native stopped/IRQ/firmware/MC qualification before release.
+ * Check is read-only; release performs one native response-timer sync/deinit,
+ * rechecks callbacks/identity, then drops only the controller's VDEV reference.
+ * Runtime recovery eligibility/window/metadata are NOT installed by this API.
+ * Partial/error returns retain the controller and timer-attempt history; no retry.
+ */
+int mishare_radio_fenced_down_check(struct mishare_radio *radio,
+                                    struct wlan_objmgr_vdev *vdev,
+                                    struct mishare_event_owner *events, void *owner,
+                                    unsigned long cookie, u32 freq);
+int mishare_radio_fenced_down_release(struct mishare_radio **radio,
+                                      struct wlan_objmgr_vdev *vdev,
+                                      struct mishare_event_owner *events, void *owner,
+                                      unsigned long cookie, u32 freq,
+                                      struct mishare_radio_status *last);
 int mishare_radio_drain(struct mishare_radio **radio,
                         struct mishare_radio_status *last);
 /* Explicit SSR path for START flushed, scheduler-rejected, work-refused, early-aborted, prepared-without-SM or committed-but-not-entered.

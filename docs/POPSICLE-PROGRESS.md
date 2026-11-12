@@ -1,3 +1,7 @@
+## 当前代码阶段 0178（完成 DOWN 的 timer/controller 退役组件）
+
+0177 八项必需 CI 全部通过。新增独立 fenced-down check/release：首次完整 DOWN、exact identity/native INIT-IDLE/真实 STOP receipt/重建计划匹配后同步释放原生 response timer，再复核并 unlink controller/drop 一个 VDEV 引用；迟到 callback 撤销资格，partial timer 错误保留且不重试。32 组合/18 边界/十项新变异已构造，本地100项 Python通过，原生/目标 CI待观察。尚未接入 runtime recovery window/状态发布，剩余 PE/peer/DP/VDEV/SM 仍保留，非完整 active SSR 回收。见 [0178](POPSICLE-DOWN-RETIRE-0178.md)。
+
 ## 当前代码阶段 0177（active radio 的首次封锁来源）
 
 0176 八项必需 CI 全部通过。radio 在首次 parent fence 改成 BLOCKED 前冻结原 phase/error/closing、命令阶段、pending/users 和 native dispatch/reply 状态，重复 fence 与迟到回调不覆盖；不增加恢复资格。新增原生 SM/WMA 88 组 active SSR、4 组 native START-send 栈内 fence、8 组非 SSR 来源与11 项变异，原基线保留。本地 100 项 Python/源码构造通过，原生/目标 CI 待观察。active 资源仍明确保留，实际 START/UP SSR 回收、configured radio/public init 和 Apple 互传尚未开放。见 [0177](POPSICLE-ACTIVE-FENCE-0177.md)。

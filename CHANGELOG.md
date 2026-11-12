@@ -1,3 +1,10 @@
+## 0178 — completed-DOWN controller retirement component
+
+- Confirmed all eight required 0177 CI jobs passed at eb9c13b / Actions 43280086420.
+- Added authenticated read-only completed-DOWN qualification and one-shot native response-timer sync/deinit followed by full recheck and controller reference retirement. Original command/fence/STOP history stays intact; post-fence callbacks revoke eligibility and partial errors never retry.
+- Added 32 native combinations, 18 refusal/partial cases and ten new mutations, retaining 0177 native baselines. Python/noncompiling checks passed; native and complete target CI pending.
+- Component only: runtime candidate/window/returned-state publication and remaining graph retirement remain unconnected. Configured radio/public init stay closed; no phone deployment or init_boot changes.
+
 ## 0177 — first active-radio fence observation
 
 - Confirmed all eight required 0176 CI jobs passed at 2ce56a7 / Actions 43259916582.
