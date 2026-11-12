@@ -1382,7 +1382,9 @@ static void managed_cases(struct hdd_context *h,struct wireless_dev *wdev)
  struct wlan_objmgr_psoc *saved_psoc=h->psoc;h->psoc=NULL;
  assert(mishare_host_hdd_mismatch(h) && "EXPECTED_PARENT_FENCE_NO_HOST_MISMATCH");h->psoc=saved_psoc;
  runtime_ssr=true;managed_context();
- assert(!managed_ssr_step(h) && !failed->parent_hdd && failed->request_bridge.bridge.retired &&
+ assert(!managed_ssr_step(h) && !failed->busy && !failed->parent_hdd && !failed->parent_psoc &&
+  !failed->parent_pdev && failed->request_bridge.bridge.retired &&
+  failed->request_bridge.bridge.closing && !failed->request_bridge.bridge.hdd &&
   "EXPECTED_AUTO_SSR_EMPTY_CREATE");runtime_ssr=false;
  managed_context();assert(!mishare_wonder_managed_retire_process(&handle) && !handle &&
   !mishare_instances && !managed_device_refs && !lease_refs && "EXPECTED_PARENT_FENCE_RELEASE");
