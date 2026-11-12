@@ -70,10 +70,53 @@ static bool mishare_runtime_retry_prepared_ssr(struct mishare_runtime_owner *ent
            mishare_runtime_retry_receipt_valid(r, &r->receipt, r->result, r->vdev_id);
 }
 
+/* Scalar-only receipt validation, valid after native VDEV storage is gone.
+ * Existing MC reservations, native identity and cleanup qualification still
+ * govern retirement. A preview never authorizes actual radio START. */
+static bool mishare_preview_summary_empty(const struct mishare_ndi_start_summary *p)
+{
+    return !p->freq && !p->center_freq && !p->phy_mode && !p->tx_streams &&
+           !p->rx_streams && !p->beacon_interval && !p->dtim_period;
+}
+
+static int mishare_runtime_preview_retire_check(struct mishare_runtime_owner *entry)
+{
+    const struct mishare_start_preview_status *p = &entry->state.start_preview;
+
+    if (!p->requested)
+        return p->posted || p->completed || p->integrity_error || p->vdev_id || p->freq ||
+               p->result || !mishare_preview_summary_empty(&p->summary) ? -EUCLEAN : 0;
+    if (p->integrity_error || !p->freq || p->result > 0 ||
+        !entry->state.rate.requested || !entry->state.retry.requested ||
+        p->vdev_id != entry->state.retry.vdev_id)
+        return -EUCLEAN;
+    if (!p->completed) {
+        if (p->result || !mishare_preview_summary_empty(&p->summary))
+            return -EUCLEAN;
+        return -EINPROGRESS;
+    }
+    if (p->result) {
+        if (!mishare_preview_summary_empty(&p->summary))
+            return -EUCLEAN;
+    } else if (p->summary.freq != p->freq ||
+               p->summary.center_freq != p->freq || !p->summary.phy_mode ||
+               !p->summary.tx_streams || p->summary.tx_streams > 2 ||
+               p->summary.rx_streams != p->summary.tx_streams)
+        return -EUCLEAN;
+    if (entry->state.work_pending || entry->state.work_users)
+        return -EINPROGRESS;
+    if (!p->result && !p->posted)
+        return -EUCLEAN;
+    return 0;
+}
+
 static int mishare_runtime_rate_retire_check(struct mishare_runtime_owner *entry)
 {
     const struct mishare_runtime_rate_status *r = &entry->state.rate;
     const struct mishare_runtime_retry_status *retry = &entry->state.retry;
+    int preview_ret = mishare_runtime_preview_retire_check(entry);
+    if (preview_ret)
+        return preview_ret;
     if (retry->integrity_error || (!retry->requested &&
         (retry->posted || retry->accepted || retry->completed || retry->receipt.attempted)))
         return -EUCLEAN;
@@ -2700,6 +2743,115 @@ int mishare_runtime_ndi_channel(struct mishare_runtime_owner *entry, u32 freq)
     return ret;
 }
 
+/* Caller holds the runtime registry lock; event identity was matched first. */
+static void mishare_runtime_preview_event_locked(struct mishare_runtime_owner *entry,
+                     u32 freq, int result, const struct mishare_ndi_start_summary *summary)
+{
+    struct mishare_start_preview_status *p = &entry->state.start_preview;
+    const struct mishare_ndi_status *n = &entry->state.ndi;
+
+    if (!p->requested || p->completed || p->freq != freq || result > 0 ||
+        p->vdev_id != wlan_vdev_get_id(entry->vdev) || !n->active ||
+        !n->pe_ready || !n->channel_prepared || n->channel_freq != freq ||
+        n->start_plan_requested || n->radio_requested || entry->radio || n->pe_delete_requested ||
+        (!result && (!summary || summary->freq != freq || summary->center_freq != freq ||
+                     !summary->phy_mode || !summary->tx_streams || summary->tx_streams > 2 ||
+                     summary->rx_streams != summary->tx_streams))) {
+        p->integrity_error = true;
+        return;
+    }
+    p->completed = true;
+    p->result = result;
+    if (!result)
+        p->summary = *summary;
+}
+
+int mishare_runtime_start_preview(struct mishare_runtime_owner *owner, u32 freq)
+{
+    struct mishare_runtime_owner *entry;
+    struct mishare_start_preview_status *p;
+    const struct mishare_runtime_rate_status *r;
+    const struct mishare_runtime_retry_status *retry;
+    const struct mishare_ndi_status *n;
+    unsigned long flags;
+    int ret = -ENOENT;
+
+    if (!owner || !freq)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry; entry = entry->next)
+        if (entry == owner)
+            break;
+    if (!entry)
+        goto unlock;
+    p = &entry->state.start_preview;
+    n = &entry->state.ndi;
+    r = &entry->state.rate;
+    retry = &entry->state.retry;
+    if (entry->state.quiesced || entry->state.draining || entry->state.freed) {
+        ret = -ESHUTDOWN;
+        goto unlock;
+    }
+    if (entry->state.blocked || n->blocked || n->completion_error ||
+        entry->state.work_error || r->integrity_error || retry->integrity_error || p->integrity_error) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    if (p->requested) {
+        if (p->freq != freq) {
+            ret = -EBUSY;
+            goto unlock;
+        }
+        ret = mishare_runtime_preview_retire_check(entry);
+        if (!ret)
+            ret = p->result;
+        goto unlock;
+    }
+    ret = mishare_runtime_preview_retire_check(entry);
+    if (ret)
+        goto unlock;
+    if (!entry->vdev || !entry->referenced || !entry->events ||
+        entry->cookie != (unsigned long)entry->vdev || !entry->pe_cookie ||
+        !entry->state.allocated || !n->active || !n->legacy_ready || !n->wma_bound ||
+        !n->peer_created || !n->pe_submitted || !n->pe_completed || !n->pe_ready ||
+        !n->channel_submitted || !n->channel_completed || !n->channel_prepared || n->channel_freq != freq ||
+        n->start_plan_requested || n->radio_requested || entry->radio ||
+        n->pe_delete_requested || n->peer_delete_pending || n->delete_pending ||
+        !entry->state.bssid.requested || !entry->state.bssid.applied || entry->state.bssid.error ||
+        !r->requested || !r->posted || !r->accepted || !r->completed ||
+        !r->receipt.attempted || !r->receipt.complete || r->receipt.busy ||
+        r->receipt.result || r->receipt.first_error || r->receipt.attempted_mask != 7 ||
+        r->receipt.submitted_mask != 7 || !retry->requested || !retry->posted ||
+        !retry->accepted || !retry->completed || retry->result ||
+        !mishare_runtime_retry_receipt_valid(retry, &retry->receipt, 0, wlan_vdev_get_id(entry->vdev))) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    if (entry->state.work_pending || entry->state.work_users) {
+        ret = -EINPROGRESS;
+        goto unlock;
+    }
+    p->requested = true;
+    p->freq = freq;
+    p->vdev_id = wlan_vdev_get_id(entry->vdev);
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_ndi_start_plan_post(entry->vdev, entry, entry->pe_cookie, freq);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (ret) {
+        if (p->completed)
+            p->integrity_error = true;
+        else {
+            p->completed = true;
+            p->result = ret;
+        }
+    } else
+        p->posted = true;
+    ret = p->integrity_error ? -EUCLEAN : ret ? ret : -EINPROGRESS;
+unlock:
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
 void mishare_runtime_ndi_start_plan_event(struct wlan_objmgr_psoc *psoc, u8 id,
                                            void *owner, u32 freq, int result,
                                            const struct mishare_ndi_start_summary *summary)
@@ -2713,6 +2865,10 @@ void mishare_runtime_ndi_start_plan_event(struct wlan_objmgr_psoc *psoc, u8 id,
         if (entry != owner || entry->psoc != psoc || !entry->vdev ||
             wlan_vdev_get_id(entry->vdev) != id)
             continue;
+        if (entry->state.start_preview.requested) {
+            mishare_runtime_preview_event_locked(entry, freq, result, summary);
+            break;
+        }
         ndi = &entry->state.ndi;
         if (!ndi->active || !ndi->pe_ready || !ndi->channel_prepared ||
             !ndi->start_plan_requested || ndi->start_plan_completed ||

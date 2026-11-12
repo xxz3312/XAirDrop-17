@@ -14,6 +14,7 @@ static int policy_error,prepared_result,bssid_result,retry_result;
 static unsigned retry_steps;
 static struct mishare_request_bridge *request_control;
 static unsigned ready_reads;static int ready_result;
+int mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) {assert(o==&host && q && a==1 && b==2);return -EOPNOTSUPP;}
 int mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) { assert(parent_lease && o==&host && q==&request_control->request && a==1 && b==2);ready_reads++;return ready_result;}
 
 int mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *o,u8 d,u8 m) {
@@ -297,6 +298,7 @@ def main():
     prod=ROOT/'kernel/popsicle-hdd'
     decl=legacy.DECL.replace('typedef uint32_t u32;','typedef uint32_t u32;typedef uint16_t u16;\n#define BIT(n) (1U << (n))')
     decl+='\nint mishare_wonder_host_retry_step_locked(struct mishare_wonder_host *,u8,u8);\nint mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *,const u8 *);\nstruct mishare_init_request;struct wondertap_fixed_tx_rate_params;\nint mishare_wonder_request_preflight_locked(struct hdd_context *,const struct mishare_init_request *,u8,u8);\nint mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *,u32,u8,u8,const struct wondertap_fixed_tx_rate_params *);\n'
+    decl+='\nint mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     decl+='\nint mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     code=legacy.HARNESS.replace('#include "wlan_hdd_mishare_bridge.h"','#include "wlan_hdd_mishare_request_bridge.h"').replace('int main(void)','static int legacy_bridge_main(void)',1)+'\n'+MODEL
     host=(prod/'wlan_hdd_mishare_host.c').read_text();reg=function(host,'mishare_init_regulatory_check');pre=function(host,'mishare_wonder_request_preflight_locked')

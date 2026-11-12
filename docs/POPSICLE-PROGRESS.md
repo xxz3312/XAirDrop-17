@@ -1,3 +1,7 @@
+## 当前代码阶段 0174（配置后原生 START 参数预览）
+
+0173 的八项必需 CI 已全部通过。新增独立的原生参数预览回执，通过真实 MC START encoder 构建摘要，但不设置 NDI START-plan/radio 标志，也不发送 WMI START。预览等待、失败和成功分别纳入 owned-work 与原普通/qualified SSR 退出；request/host/managed 接线仍使用冻结请求和同一 owner。192 组 SSR、160 组普通退出、九类边界和九项新增行为变异已编写并完成非编译构造检查；100 项 Python 回归通过，原生/完整目标 CI 待观察。见 [0174](POPSICLE-PLAN-PREVIEW-0174.md)。手机无需操作。
+
 ## 当前代码阶段 0173（完整请求 pre-START 就绪观察）
 
 0172 修正版 fe399fb 的八项必需 CI 已全部通过，含完整目标构建。本批把单一 runtime 快照的 BSSID/rate/retry/PE/channel/工作排空观察接到 request bridge、实际 host 和 fresh-scope managed 入口；不缓存 ready、不分配/重放、不发送 START。新 pure fixture 含 16 种组合、56 项边界及九项变异，完整 host 新增五项观察接线变异。本地 100 项 Python 回归及非编译检查通过，原生/目标 CI 待观察。configured START 仍被 runtime 显式拒绝，后续须扩展相应退出/SSR 合同。见 [0173](POPSICLE-START-READY-0173.md)。

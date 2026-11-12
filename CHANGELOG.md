@@ -215,3 +215,7 @@ Claim and close related typed managed instances in the existing native post-disa
 ## 0173 — coherent pre-START configuration observation
 
 Add a read-only rate/retry/BSSID/native snapshot predicate and connect it through the request bridge, owned host and fresh-scope managed entry. Preserve explicit configured START restrictions and public init/poll rejection. Add 16 modeled combinations, 56 boundaries and 14 behavior mutations across snapshot/coordinator tests; native and target CI pending. See docs/POPSICLE-START-READY-0173.md.
+
+## 0174 — configured native START encoder preview
+
+Execute the native owned-MC START parameter builder after configuration using a distinct one-shot preview receipt, retaining real START-plan/radio restrictions. Validate receipt/work lifetime through ordinary and qualified SSR retirement; connect request/host/managed polling. Add 192 SSR and 160 ordinary combinations, nine boundaries and nine new behavior mutations; native/target CI pending. See docs/POPSICLE-PLAN-PREVIEW-0174.md.

@@ -19,6 +19,7 @@ struct mishare_ndi_status {
  bool pe_delete_requested,pe_delete_submitted,pe_delete_completed,peer_delete_pending,peer_delete_submitted,peer_delete_replied,delete_pending,delete_submitted,delete_replied,dp_detaching,dp_detach_submitted,dp_freed;
  int completion_error;
 };
+PREVIEW_TYPES
 struct runtime_model_state {
  bool blocked,draining,allocated,freed,host_reclaim,host_delete_accepted;int quiesced;
  bool mc_drained,recovery_window,recovery_window_closed,ndi_reclaim_started,ndi_reclaim_ready;
@@ -30,6 +31,7 @@ struct runtime_model_state {
  struct mishare_ndi_status ndi;
  struct mishare_runtime_rate_status rate;
  struct mishare_runtime_retry_status retry;
+ struct mishare_start_preview_status start_preview;
 };
 struct mishare_runtime_owner {
  struct mishare_runtime_owner *next;struct wlan_objmgr_vdev *vdev;
@@ -323,7 +325,10 @@ def main():
     runtime=(production/'wlan_hdd_mishare_runtime.c').read_text()
     block=runtime.split('/* MISHARE_RUNTIME_RATE_BEGIN */',1)[1].split('/* MISHARE_RUNTIME_RATE_END */',1)[0]
     code=WORK_HARNESS[:WORK_HARNESS.index('int main(void){')]
-    code=code.replace('static struct scheduler_msg queued;',MODEL.replace('RUNTIME_BLOCK',block)+'\nstatic struct scheduler_msg queued;')
+    summary=re.search(r'^struct mishare_ndi_start_summary \{.*?^\};',(production/'wlan_hdd_mishare_ndi.h').read_text(),re.S|re.M)[0]
+    preview=re.search(r'^struct mishare_start_preview_status \{.*?^\};',(production/'wlan_hdd_mishare_runtime.h').read_text(),re.S|re.M)[0]
+    model=MODEL.replace('PREVIEW_TYPES',summary+'\n'+preview,1).replace('RUNTIME_BLOCK',block)
+    code=code.replace('static struct scheduler_msg queued;',model+'\nstatic struct scheduler_msg queued;')
     code=code.replace('static int owner,allocs,','static int allocs,')
     code=code.replace('pending++;return 0;', 'pending++;owner.state.work_pending++;return 0;')
     code=code.replace('users++;return 0;', 'users++;owner.state.work_users++;return 0;')

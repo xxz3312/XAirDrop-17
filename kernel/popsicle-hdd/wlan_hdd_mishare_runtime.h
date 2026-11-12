@@ -23,10 +23,21 @@ struct mishare_runtime_bssid_status {
     u8 value[6];
     int error;
 };
+/* Owned MC preview of native START encoder inputs, never an SM/WMI START.
+ * It has a separate receipt so NDI START-plan/radio history is not invented. */
+struct mishare_start_preview_status {
+    bool requested, posted, completed, integrity_error;
+    u8 vdev_id;
+    u32 freq;
+    int result;
+    struct mishare_ndi_start_summary summary;
+};
+int mishare_runtime_start_preview(struct mishare_runtime_owner *owner, u32 freq);
 struct mishare_runtime_status {
     struct mishare_runtime_bssid_status bssid;
     struct mishare_runtime_rate_status rate;
     struct mishare_runtime_retry_status retry;
+    struct mishare_start_preview_status start_preview;
     bool allocated;
     bool freed;
     bool draining;

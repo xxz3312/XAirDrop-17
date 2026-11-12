@@ -68,6 +68,12 @@ int mishare_wonder_managed_prestart_step(void *handle);
 /* Internal read-only observation under a fresh scope; zero is current
  * pre-START configuration consistency, not radio UP or START authorization. */
 int mishare_wonder_managed_start_ready(void *handle);
+/* Internal owned-MC native START encoder preview, zero means a summary only.
+ * Public initialization, actual NDI START-plan and radio START remain closed. */
+int mishare_wonder_managed_plan_step(void *handle);
+int mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *host,
+                                          const struct mishare_init_request *request,
+                                          u8 nss_2g, u8 nss_5g);
 int mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *host,
                                             const struct mishare_init_request *request,
                                             u8 nss_2g, u8 nss_5g);
