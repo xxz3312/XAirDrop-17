@@ -65,6 +65,7 @@ struct mishare_managed_instance {
     u8 request_nss_2g, request_nss_5g;
 };
 static struct mishare_managed_instance *mishare_instances;
+static int mishare_managed_ssr_prepare_locked(struct hdd_context *hdd);
 
 /* Object references retain allocations, NOT HDD/component/firmware readiness.
  * The caller must still retain HDD and serialize native teardown throughout
@@ -400,11 +401,14 @@ int mishare_wonder_host_ssr_prepare_locked(struct hdd_context *hdd)
     osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
     if (!cds_is_driver_recovering())
         return -ESHUTDOWN;
+    ret = mishare_managed_ssr_prepare_locked(hdd);
+    if (ret)
+        return ret;
     ret = mishare_host_idle_candidate(hdd, &host);
     if (ret)
         return ret;
     if (!host)
-        return -EBUSY; /* Do not adopt a standalone runtime owner. */
+        return mishare_wonder_host_stop_ready_locked(hdd);
     /* The native post-disable caller already owns the PSOC transition. Never
      * wait for RTNL in the reverse of the host-create lock order.
      */
@@ -1479,5 +1483,132 @@ complete:
     return 0;
 retain:
     mishare_instance_release(instance);
+    return ret;
+}
+
+/* Native post-disable entry only. The existing stop journal retains parents
+ * and qualifies HIF/HTC/WMI/MC before this path. The instance busy claim, not a
+ * copied bridge/host token, grants temporary retirement authority to SSR.
+ * No worker, allocation or wait under registry/RTNL locks is introduced.
+ */
+static int mishare_managed_ssr_claim_locked(struct hdd_context *hdd,
+                                            struct mishare_managed_instance **out)
+{
+    struct mishare_managed_instance *instance, *selected = NULL;
+    unsigned long flags;
+    int ret = 0;
+
+    *out = NULL;
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    /* Preflight every related fence before changing any instance. A foreign
+     * device/PSOC is skipped; a retained identity migration is never adopted.
+     */
+    for (instance = mishare_instances; instance; instance = instance->next) {
+        if (!instance->parent_hdd || (instance->parent_hdd != hdd &&
+            instance->parent_psoc != hdd->psoc && instance->dev != hdd->parent_dev))
+            continue;
+        if (instance->parent_hdd != hdd || instance->parent_psoc != hdd->psoc ||
+            instance->parent_pdev != hdd->pdev || instance->dev != hdd->parent_dev) {
+            ret = -EUCLEAN;
+            break;
+        }
+        if (instance->busy) {
+            ret = -EBUSY;
+            break;
+        }
+        if (!selected)
+            selected = instance;
+    }
+    if (!ret && selected) {
+        selected->busy = true;
+        *out = selected;
+    }
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return ret;
+}
+
+static int mishare_managed_ssr_owner_locked(struct mishare_managed_instance *instance,
+                                            struct hdd_context *hdd)
+{
+    struct mishare_bridge *bridge = &instance->request_bridge.bridge;
+    unsigned long flags;
+    int ret;
+
+    ASSERT_RTNL();
+    osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    if (!cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    ret = mishare_instance_parent_check(instance, hdd);
+    if (ret)
+        return ret;
+    if (!instance->request_prepared || !instance->request_bridge.bound ||
+        !bridge->attempted || !bridge->prestart_mode || bridge->retire_broken ||
+        !mishare_init_equal(&instance->request, &instance->request_bridge.request))
+        return -EUCLEAN;
+    if (bridge->handed_off ? (bridge->host || bridge->hdd) :
+        (bridge->hdd != hdd || bridge->retirement.serial ||
+         bridge->retirement.module_lease.held))
+        return -EUCLEAN;
+    bridge->closing = true;
+    if (bridge->handed_off) {
+        ret = mishare_bridge_poll_retired(bridge);
+        if (ret == -EINPROGRESS) {
+            /* Existing registry owner, never reconstruct an old host alias.
+             * Its final stop check may still see this instance's fence. */
+            ret = mishare_wonder_host_reclaim_handoff_ssr_locked(hdd);
+            if (ret && ret != -EBUSY && ret != -EINPROGRESS)
+                return ret;
+            ret = mishare_bridge_poll_retired(bridge);
+        }
+        if (ret)
+            return ret;
+    } else {
+        ret = mishare_wonder_host_reclaim_ssr_locked(&bridge->host);
+        if (ret)
+            return ret;
+        if (bridge->host)
+            return -EUCLEAN;
+        bridge->hdd = NULL;
+        bridge->retired = true;
+    }
+    if (!bridge->retired || bridge->host || bridge->retirement.serial ||
+        bridge->retirement.module_lease.held)
+        return -EUCLEAN;
+    /* Only after actual owner/receipt retirement. Metadata/text/device pins
+     * remain caller-owned; process-retire later frees them without old HDD.
+     * Clearing a fence never grants global runtime or module-stop admission.
+     */
+    spin_lock_irqsave(&mishare_host_lock, flags);
+    instance->parent_hdd = NULL;
+    instance->parent_psoc = NULL;
+    instance->parent_pdev = NULL;
+    spin_unlock_irqrestore(&mishare_host_lock, flags);
+    return 0;
+}
+
+static int mishare_managed_ssr_prepare_locked(struct hdd_context *hdd)
+{
+    struct mishare_managed_instance *instance;
+    int ret;
+
+    /* Claim before RTNL to preserve the original no-instance/foreign-owner
+     * fast path and to reject a busy instance without touching its bridge.
+     * The native exclusive transition serializes all parent-bound operations.
+     */
+    ret = mishare_managed_ssr_claim_locked(hdd, &instance);
+    if (ret || !instance)
+        return ret;
+    if (!rtnl_trylock()) {
+        mishare_instance_release(instance);
+        return -EAGAIN;
+    }
+    do {
+        ret = mishare_managed_ssr_owner_locked(instance, hdd);
+        mishare_instance_release(instance);
+        if (ret)
+            break;
+        ret = mishare_managed_ssr_claim_locked(hdd, &instance);
+    } while (!ret && instance);
+    rtnl_unlock();
     return ret;
 }

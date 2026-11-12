@@ -27,3 +27,5 @@
 0171 `3d9fdcc9b4f8f4ce8984139fb8778ce82449ebcd` 的 Actions `43084226811` 中，stop-admission 与 diagnostic 均被同一个 host fixture 的 `mishare_runtime_psoc_busy: parent_owned` 断言阻断。诊断任务尚未进入完整目标构建，不能称作生产驱动编译失败。新增的停机观察在 managed API 退出 scope 后直接调用 locked helper；现改为通过实际 `mishare_bridge_scope_begin/end` 观察忙、迁移及最终空注册表，检查入口/退出均未持锁。保留所有生产断言及失败保留门禁。
 
 完整 host sanitizer 测试提前至 stop-admission 的源码准备之后，只移动原调用，不增加一次重复执行。该批修改不扩展公开初始化或 SSR 所有权移交；100 项本地 Python 回归、py_compile 和 diff 检查通过，修正版原生/目标 CI 仍待观察。
+
+0171 修正版 `8e440fa` 的 Actions `43173756828` 八项必需任务已全部通过。后续 typed managed 的原生 SSR 自动协调见 [0172](POPSICLE-MANAGED-SSR-0172.md)；该扩展以自身 CI 结果为准。

@@ -59,8 +59,9 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
  * An attempted typed instance now remains visible to native parent-stop gates
  * until actual instance retirement, even with no host after allocation failure.
  * Fresh scopes reject replacement HDD/PSOC/PDEV identities. This is a parent
- * retirement fence, NOT firmware readiness or automatic SSR recovery. Caller
- * still coordinates native recovery; no public caller is installed.
+ * retirement fence, NOT firmware readiness. The native qualified post-disable
+ * path can now claim and retire this typed owner, closing it permanently;
+ * metadata remains for caller process-retire. No public init is installed.
  */
 int mishare_wonder_managed_prestart_step(void *handle);
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
@@ -112,9 +113,13 @@ int mishare_wonder_host_handoff_idle_locked(struct mishare_wonder_host **owner);
 int mishare_wonder_host_idle_prepare_locked(struct hdd_context *hdd);
 /* Native recovery post-disable entry, after successful CDS post-disable and
  * before DP/PDEV/PSOC close. Caller retains the exclusive PSOC transition and
- * all exact native parents. Empty registries preserve the original stop path;
- * only explicitly handed-off hosts can enter qualified SSR reclamation. Uses
- * RTNL trylock only and releases it on every result. Pending/error retains the
+ * all exact native parents. Empty registries preserve the original stop path.
+ * Attempted typed managed instances can be claimed/closed and reclaimed through
+ * their authoritative owner slot; busy, malformed or migrated instances retain
+ * parents. Existing handed-off hosts remain eligible; raw caller-owned hosts
+ * are never adopted. Actual retirement detaches a typed instance parent fence,
+ * retaining closed metadata/module/device pins for later process-retire.
+ * Uses RTNL trylock only and releases it on every result. Pending/error retains the
  * authoritative registry tokens and must prevent parent close/reinit. This
  * does not schedule retries, resume a partial stop or clear failure admission.
  */

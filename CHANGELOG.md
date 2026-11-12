@@ -207,3 +207,7 @@
 ## 0171 — typed managed parent retirement fence
 
 Retain attempted typed instance HDD/PSOC/PDEV identities across asynchronous polls, include them in native stop/unload admission, and refuse replacement parents before progression or native retirement. Add full-host boundary and behavior-mutation coverage. This does not qualify firmware lifetime or automatic SSR ownership transfer; see docs/POPSICLE-PARENT-FENCE-0171.md. Native/target CI pending.
+
+## 0172 — typed managed native SSR coordination
+
+Claim and close related typed managed instances in the existing native post-disable coordinator. Retire their authoritative host/receipt through existing qualified reclaim and detach parent fences only after physical retirement, retaining caller-owned closed metadata until process-retire. Add four success modes, nine retained fault cases and eight behavior mutations; raw caller-owned hosts remain excluded. See docs/POPSICLE-MANAGED-SSR-0172.md. Native and target CI pending.
