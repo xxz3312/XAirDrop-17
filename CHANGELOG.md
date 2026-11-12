@@ -211,3 +211,7 @@ Retain attempted typed instance HDD/PSOC/PDEV identities across asynchronous pol
 ## 0172 — typed managed native SSR coordination
 
 Claim and close related typed managed instances in the existing native post-disable coordinator. Retire their authoritative host/receipt through existing qualified reclaim and detach parent fences only after physical retirement, retaining caller-owned closed metadata until process-retire. Add four success modes, nine retained fault cases and nine behavior mutations, including native journal pause/resume for busy claims; raw caller-owned hosts remain excluded. See docs/POPSICLE-MANAGED-SSR-0172.md. Native and target CI pending.
+
+## 0173 — coherent pre-START configuration observation
+
+Add a read-only rate/retry/BSSID/native snapshot predicate and connect it through the request bridge, owned host and fresh-scope managed entry. Preserve explicit configured START restrictions and public init/poll rejection. Add 16 modeled combinations, 56 boundaries and 14 behavior mutations across snapshot/coordinator tests; native and target CI pending. See docs/POPSICLE-START-READY-0173.md.

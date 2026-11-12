@@ -24,6 +24,7 @@
 #include "wlan_hdd_mishare_init.h"
 #include "wlan_hdd_mishare_request_bridge.h"
 #include "wlan_hdd_mishare_rate.h"
+#include "wlan_hdd_mishare_start_ready.h"
 
 struct mishare_wonder_host {
     struct mishare_wonder_host *next;
@@ -924,6 +925,37 @@ int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *host,
                                   freq, nss_2g, nss_5g, params);
 }
 
+int mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *host,
+                                            const struct mishare_init_request *request,
+                                            u8 nss_2g, u8 nss_5g)
+{
+    struct mishare_runtime_status state;
+    int ret;
+
+    if (!host || !request)
+        return -EINVAL;
+    ASSERT_RTNL();
+    ret = mishare_host_parent_identity(host);
+    if (ret)
+        return ret;
+    if (host->session.closing || cds_is_driver_recovering())
+        return -ESHUTDOWN;
+    ret = wlan_hdd_validate_context(host->hdd);
+    if (ret)
+        return ret;
+    if (netif_running(host->adapter->dev) ||
+        test_bit(DEVICE_IFACE_OPENED, &host->adapter->event_flags) ||
+        test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
+        return -EBUSY;
+    if (!host->runtime)
+        return -EINPROGRESS;
+    ret = mishare_runtime_snapshot(host->runtime, &state);
+    if (ret)
+        return ret;
+    return mishare_start_ready_check(&state, &host->prestart, &host->session,
+                                      request, nss_2g, nss_5g);
+}
+
 int mishare_wonder_host_bssid_bind_locked(struct mishare_wonder_host *host,
                                             const u8 *bssid)
 {
@@ -1365,6 +1397,37 @@ int mishare_wonder_managed_prestart_step(void *handle)
 release:
     mishare_instance_release(instance);
     return ret; /* Zero is the prestart subset only, never full init/START. */
+}
+
+/* Observation only: never allocate, publish a new fence, cache readiness or
+ * bypass the configured runtime START/SSR gates. Caller keeps the handle. */
+int mishare_wonder_managed_start_ready(void *handle)
+{
+    struct mishare_managed_instance *instance;
+    struct mishare_bridge_scope scope = {0};
+    int ret = mishare_instance_claim(handle, &instance);
+
+    if (ret)
+        return ret;
+    if (instance->request_bridge.bridge.closing) {
+        ret = -ESHUTDOWN;
+        goto release;
+    }
+    if (!instance->request_prepared) {
+        ret = -EINVAL;
+        goto release;
+    }
+    ret = mishare_bridge_scope_begin(&scope, instance->dev);
+    if (ret)
+        goto release;
+    ret = mishare_instance_parent_check(instance, scope.hdd);
+    if (!ret)
+        ret = mishare_request_bridge_ready_locked(&instance->request_bridge, scope.hdd,
+                  &instance->request, instance->request_nss_2g, instance->request_nss_5g);
+    mishare_bridge_scope_end(&scope);
+release:
+    mishare_instance_release(instance);
+    return ret;
 }
 
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,

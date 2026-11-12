@@ -104,6 +104,7 @@ def setup(work):
         ('wlan_hdd_mishare_module_lease.h', 'inc'),
         ('wlan_hdd_mishare_session.h', 'inc'),
         ('wlan_hdd_mishare_prestart.h', 'inc'),
+        ('wlan_hdd_mishare_start_ready.h', 'inc'),
         ('wlan_hdd_mishare_bridge.h', 'inc'),
         ('wlan_hdd_mishare_request_bridge.h', 'inc'),
         ('wlan_hdd_mishare_bridge_scope.h', 'inc'),

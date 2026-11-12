@@ -99,4 +99,42 @@ mishare_request_bridge_step_locked(struct mishare_request_bridge *c,
         return mishare_bridge_fail(b, ret);
     return ret;
 }
+/* Read-only fresh-policy/current-owner observation. No preparation, replay,
+ * metadata update or START call. Readiness is never cached between scopes. */
+static inline int
+mishare_request_bridge_ready_locked(const struct mishare_request_bridge *c,
+                                     struct hdd_context *hdd,
+                                     const struct mishare_init_request *request,
+                                     u8 nss_2g, u8 nss_5g)
+{
+    struct mishare_init_request canonical;
+    const struct mishare_bridge *b;
+    int ret;
+
+    if (!c || !hdd || !request || !nss_2g || nss_2g > 2 || !nss_5g || nss_5g > 2)
+        return -EINVAL;
+    b = &c->bridge;
+    if (b->closing || b->retired || b->handed_off)
+        return -ESHUTDOWN;
+    if (!c->bound)
+        return -EINPROGRESS;
+    ret = mishare_init_parse(&request->params, &canonical);
+    if (ret)
+        return ret;
+    if (!mishare_init_equal(&c->request, &canonical) || b->hdd != hdd ||
+        b->nss_2g != nss_2g || b->nss_5g != nss_5g)
+        return -EBUSY;
+    if (b->start_error)
+        return b->start_error;
+    if (!b->prestart_mode || !b->attempted || b->retire_broken ||
+        b->freq != c->request.params.channel.freq ||
+        memcmp(b->mac, c->request.params.mac_addr, ETH_ALEN))
+        return -EUCLEAN;
+    ret = mishare_wonder_request_preflight_locked(hdd, &canonical, nss_2g, nss_5g);
+    if (ret)
+        return ret;
+    if (!b->host || !b->attached)
+        return -EINPROGRESS;
+    return mishare_wonder_host_start_ready_locked(b->host, &c->request, nss_2g, nss_5g);
+}
 #endif

@@ -99,6 +99,7 @@ on:
       - tools/kernel/mishare_bssid_native_fixture.py
       - tools/kernel/mishare_request_bridge_fixture.py
       - tools/kernel/mishare_prestart_native_fixture.py
+      - tools/kernel/mishare_start_ready_fixture.py
       - tools/kernel/mishare_prestart_fixture.py
       - tools/kernel/mishare_runtime_rate_fixture.py
       - tools/kernel/mishare_rate_peer_reset_fixture.py
@@ -162,6 +163,7 @@ jobs:
       - name: Bridge and session ownership regression checks
         run: |
           python3 tools/kernel/mishare_request_bridge_fixture.py
+          python3 tools/kernel/mishare_start_ready_fixture.py
           python3 tools/kernel/mishare_prestart_fixture.py
           python3 tools/kernel/mishare_session_driver_fixture.py
           python3 tools/kernel/mishare_bridge_fixture.py
@@ -178,6 +180,7 @@ jobs:
           path: |
             .popsicle-ci/artifacts/reports/mishare-bridge*.json
             .popsicle-ci/artifacts/reports/mishare-request-bridge*.json
+            .popsicle-ci/artifacts/reports/mishare-start-ready*.json
             .popsicle-ci/artifacts/reports/mishare-prestart*.json
             .popsicle-ci/artifacts/reports/mishare-init*.json
             .popsicle-ci/artifacts/reports/mishare-rate*.json

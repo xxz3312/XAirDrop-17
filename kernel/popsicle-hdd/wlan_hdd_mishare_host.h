@@ -10,6 +10,7 @@ struct wlan_objmgr_psoc;
 struct wlan_objmgr_pdev;
 struct device;
 struct wondertap_init_params;
+struct mishare_init_request;
 /* One-shot handoff receipt, zero-initialized and never copied/reset while
  * live. Contains no borrowed HDD/host pointer. The serial cannot be reused
  * within this module lifetime; the independent lease pins text until poll
@@ -64,6 +65,12 @@ int mishare_wonder_managed_prepare(void *handle, const struct wondertap_init_par
  * metadata remains for caller process-retire. No public init is installed.
  */
 int mishare_wonder_managed_prestart_step(void *handle);
+/* Internal read-only observation under a fresh scope; zero is current
+ * pre-START configuration consistency, not radio UP or START authorization. */
+int mishare_wonder_managed_start_ready(void *handle);
+int mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *host,
+                                            const struct mishare_init_request *request,
+                                            u8 nss_2g, u8 nss_5g);
 int mishare_wonder_managed_step(void *handle, const u8 *mac, u32 freq,
                                 u8 nss_2g, u8 nss_5g);
 int mishare_wonder_managed_retire(void **handle);

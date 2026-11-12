@@ -1,3 +1,11 @@
+## 当前代码阶段 0173（完整请求 pre-START 就绪观察）
+
+0172 修正版 fe399fb 的八项必需 CI 已全部通过，含完整目标构建。本批把单一 runtime 快照的 BSSID/rate/retry/PE/channel/工作排空观察接到 request bridge、实际 host 和 fresh-scope managed 入口；不缓存 ready、不分配/重放、不发送 START。新 pure fixture 含 16 种组合、56 项边界及九项变异，完整 host 新增五项观察接线变异。本地 100 项 Python 回归及非编译检查通过，原生/目标 CI 待观察。configured START 仍被 runtime 显式拒绝，后续须扩展相应退出/SSR 合同。见 [0173](POPSICLE-START-READY-0173.md)。
+
+## 已验收代码阶段 0172（typed managed 原生 SSR 协调）
+
+Actions 43195729713 八项必需任务全部 success。相关 typed 实例由原生 post-disable coordinator claim/关闭，通过同一个权威 host 或退休凭据执行既有 qualified reclaim；实际回收后才撤下父级登记，关闭的 metadata 仍留给 caller process-retire。busy 使用 EINPROGRESS 进入原生 journal pause/resume。完整 host 覆盖四种成功、九类保留边界及九项变异；不构成实机 SSR、公开 init/START 或 Apple 互通认证。见 [0172](POPSICLE-MANAGED-SSR-0172.md)。
+
 ## 最新代码阶段 0170（内部完整请求的进程上下文准备）
 
 0169 八项必需 CI 全部通过。本批新增 managed_prestart_step，在实例 claim 后使用新 native transition/RTNL scope 推进冻结请求；raw/typed/retire/handoff 共用 request_bridge.bridge 唯一 owner，部分错误不释放或复制 owner。已有 device/PSOC/PDEV/text 引用继续持有，但跨轮询 HDD/components/firmware lease 仍要求调用者提供，公开 init/START 不启用。Actions 43060141951 的 bridge-controller 已通过八组 managed 请求成功、九项边界、四项变异及原桥接/policy 回归；三组完整 host 部分准备/退出检查和目标编译仍在运行。100 项本地 Python 回归及非编译检查通过，不提前称整轮通过。手机无需操作。见 [0170 合同与测试](POPSICLE-MANAGED-PRESTART-0170.md)。
