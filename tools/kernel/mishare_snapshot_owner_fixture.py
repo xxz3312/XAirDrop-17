@@ -99,7 +99,7 @@ def fixture(root):
     assert body.count(needle)==1
     changed=body.replace(needle,needle+'''
  void *snapshot_owner_token=o;struct mishare_radio *snapshot_radio_token=o->radio;
- if(freq==5240 && !initial && !early && !modes && !fault)snapshot_probe(o);
+ if(freq==2437 && !initial && !early && !modes && !fault)snapshot_probe(o);
 ''',1)
     needle=' assert(!o && composite_closed'
     assert changed.count(needle)==1
