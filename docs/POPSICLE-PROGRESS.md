@@ -1,3 +1,7 @@
+## 当前验证阶段 0183（普通 radio 全退出与真实 host idle close）
+
+0182 八项必需 CI 全部通过。0183 将普通 raw START/UP/STOP/DOWN、实际 PE/peer/DELETE/DP 普通回执与实际 host idle/destroy/pins/free 同进程组合，要求无 SSR/window。新增 256 组合、六类保留故障及两项 ACK 门禁变异；底层物理原语与 peer object-manager 仍有明确模型。生产门禁不变，无手机/RF/Apple 结论；完整 Actions 待观察。见 [0183](POPSICLE-ORDINARY-HOST-CLOSE-0183.md)。
+
 ## 当前验证阶段 0182（真实 host 终端关闭与完整 native 退役组合）
 
 0181 的八项必需 CI 全部通过。0182 用真实 host destroy/pin/unpin/tracked free 替换上一批的终端结果模型；adapter/netdev/link/sync/metadata 真正堆释放，核对 runtime 先退役、注销/排空/关闭/put/free/module put 顺序。保留 64 组合、16 类失败与 foreign 并发，新增两类 sync registry 边界及六项变异。本地 105 项 Python与源检查通过，完整 Actions 待观察。底层物理原语/factory 仍有模型，本批不改生产门禁、无手机结论。见 [0182](POPSICLE-DOWN-HOST-CLOSE-0182.md)。

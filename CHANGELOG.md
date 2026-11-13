@@ -1,3 +1,9 @@
+## 0183 — ordinary radio retirement through actual host idle close
+
+- Confirmed all eight required 0182 jobs passed at a743605 / Actions 43359590092.
+- Compose actual host idle/destroy/pin/free with raw native START/UP/STOP/DOWN, ordinary PE cleanup, native peer removal, peer/VDEV DELETE notifications, DP completion and native SM retirement. No SSR/window or reset force-delete adoption.
+- Add 256 combinations, six retained faults and two ACK-order mutations. Physical primitives and peer object-manager boundaries remain explicit models. Local checks passed; native/sanitizer/full target Actions pending. Production activation and phone behavior unchanged.
+
 ## 0182 — actual terminal host close after native DOWN retirement
 
 - Confirmed all eight required 0181 jobs passed at ee0efb1 / Actions 43354582023.
