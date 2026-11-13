@@ -1,6 +1,6 @@
 # 0188 — existing candidate artifact acceptance (no installation)
 
-0187 source `a4b9404257efe395cf3cf865a806bff5daba6f4b` completed all eight required jobs in [Actions 43390041712](https://github.com/xxz3312/XAirDrop-17/actions/runs/43390041712). This checkpoint changes audit tooling and records only, without another native build.
+0187 source `a4b9404257efe395cf3cf865a806bff5daba6f4b` completed all eight required jobs in [Actions 43390041712](https://github.com/xxz3312/XAirDrop-17/actions/runs/43390041712). This checkpoint changes audit tooling and records only. Its independent audit reuses existing artifacts and requires no native rebuild; the repository's existing test-file push rule also automatically triggered the separate full build.
 
 ## Upstream comparison
 
@@ -16,7 +16,7 @@ The raw WLAN ELF is 391,968,696 bytes including debug data. This audit does not 
 
 ## Validation and authority
 
-110 Python tests passed locally, including rejected source/workflow/job substitutions, digest/size/origin/expiry failures, unsafe or duplicate ZIP members and incomplete/substituted ELF records. A separate read-only Actions workflow repeats these tests, downloads the same existing artifacts and requires an identical audit report. Its result must be observed separately after submission.
+110 Python tests passed locally, including rejected source/workflow/job substitutions, digest/size/origin/expiry failures, unsafe or duplicate ZIP members and incomplete/substituted ELF records. A separate read-only Actions workflow repeats these tests, downloads the same existing artifacts and requires an identical audit report. The independent audit passed in [Actions 43404033165](https://github.com/xxz3312/XAirDrop-17/actions/runs/43404033165) at `e7ace31ffd4da2b88317961e838a78a5ad100474`, reproducing the committed JSON exactly. The separately triggered full build is not part of this immutable 0187 candidate acceptance.
 
 Result: `CANDIDATE_RECORDS_VERIFIED_NOT_FOR_INSTALL`. This is not full C/KCFI/ABI, firmware, unload/load, RF or Apple certification. No phone command ran. Configured START and public backend initialization remain closed. Stock CNSS2 and init_boot are unchanged.
 

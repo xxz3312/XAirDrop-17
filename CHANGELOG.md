@@ -2,7 +2,7 @@
 
 - Confirmed all eight required 0187 jobs passed at a4b9404 / Actions 43390041712.
 - Independently verify actual ZIP identities, 64 identical reports, five raw ELF identities/notes/version coverage/module headers, 64 stock CNSS2 imports and two private-provider CRCs. Preserve full kernel CRC/layout derivation as CI evidence only.
-- Add tamper rejection regressions (110 Python tests total) and a read-only artifact audit workflow; its Actions result is pending at submission. No native rebuild, installation package, old profile retarget, production gate change or phone action.
+- Add tamper rejection regressions (110 Python tests total) and a read-only artifact audit workflow; independent Actions 43404033165 passed with an identical JSON result. Existing test-file push rules separately triggered the full build; it is not needed for this immutable candidate audit. No installation package, old profile retarget, production gate change or phone action.
 
 ## 0187 — reject mixed history and lost resources in configuration observation
 
