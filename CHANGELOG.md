@@ -1,3 +1,9 @@
+## 0193 — verify actual identical kernel payload and preserve prior-boot state
+
+- Actual boot export matches the phone capture; complete kernel payload matches the reviewed kernel SHA. Corrected transaction report confirms a prior-boot active record with matching manifest/backup and no unfinished journal.
+- Record a 4.0.6 archive-only evidence profile; keep old install/loader profiles pinned. Add standalone check/archive tool with exact identity/record gates, shared legacy lock, no-clobber whole-directory rename, inode verification and stop-on-uncertain failure. No driver/service or partition effects.
+- Local: 79 device tests pass, 39 mksh cases skipped; 110 kernel Python tests pass. Mandatory shell CI pending. Phone archive not yet executed; no installation/runtime/RF/Apple qualification.
+
 ## 0192 — process real identities and repair Android parent admission
 
 - Actual current CNSS2/WLAN file/note observations match captured stock; firmware and active boot differ, transaction remains. Preserve rejection without retargeting old profiles.
