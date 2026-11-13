@@ -6,6 +6,10 @@ on:
       - '.github/workflows/popsicle-identity.yml'
       - 'tools/device/popsicle-identity-0189.sh'
       - 'tools/device/popsicle-identity-0190.sh'
+      - 'tools/device/popsicle-transaction-0191.sh'
+      - 'tools/device/tests/test_transaction_0191.py'
+      - 'tools/kernel/stock_cnss_transaction.py'
+      - 'kernel/abi/popsicle-stock-cnss-checker-base-0136.json'
       - 'tools/device/tests/test_identity_0189.py'
       - 'tools/kernel/stock_cnss_identity.py'
       - 'kernel/abi/popsicle-pair-deployment.json'
@@ -30,17 +34,20 @@ jobs:
         run: |
           sh -n tools/device/popsicle-identity-0190.sh
           mksh -n tools/device/popsicle-identity-0190.sh
-          python3 -m py_compile tools/kernel/stock_cnss_identity.py
+          sh -n tools/device/popsicle-transaction-0191.sh
+          mksh -n tools/device/popsicle-transaction-0191.sh
+          python3 -m py_compile tools/kernel/stock_cnss_identity.py tools/kernel/stock_cnss_transaction.py
           python3 -m unittest discover -s tools/device/tests -p 'test_*.py'
           python3 -m unittest discover -s tools/kernel -p 'test_*.py'
       - name: Digest standalone read-only collector
         run: |
           cd tools/device
-          sha256sum popsicle-identity-0190.sh > identity-SHA256SUMS
+          sha256sum popsicle-identity-0190.sh popsicle-transaction-0191.sh > identity-SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: popsicle-identity-0190-read-only-no-driver
+          name: popsicle-read-only-0191-no-driver
           path: |
             tools/device/popsicle-identity-0190.sh
+            tools/device/popsicle-transaction-0191.sh
             tools/device/identity-SHA256SUMS
           if-no-files-found: error
