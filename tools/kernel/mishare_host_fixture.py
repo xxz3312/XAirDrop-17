@@ -1996,8 +1996,9 @@ def creation_admission_code(code):
     lines=main.splitlines()
     assert lines[1]=='{' and 'struct device dev=' in lines[2]
     assert '.parent_dev=&dev' in lines[2] and 'expected_psoc=&psoc' in lines[2]
-    focused='int main(void)\n{\n'+lines[2]+'\n creation_admission_cases(&h,&wdev);return 0;\n}\n'
-    return code.replace(main,focused,1)
+    inherited=main.replace('int main(void)','static int inherited_creation_baseline(void)',1)
+    focused='int main(void)\n{\n'+lines[2]+'\n (void)owner;(void)other_psoc;volatile bool full_baseline=false;\n if(full_baseline)return inherited_creation_baseline();\n creation_admission_cases(&h,&wdev);return 0;\n}\n'
+    return code.replace(main,inherited+'\n'+focused,1)
 
 
 def creation_admission_mutations(host_source):
