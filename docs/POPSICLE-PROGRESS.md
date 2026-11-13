@@ -1,3 +1,7 @@
+## 当前验证阶段 0185（实际 factory→native constructor→普通退出）
+
+0184 八项必需 CI 全部通过。0185 将生产 host create/track/VDEV create 接入原普通 native 生命周期，256 组合不再手工关联初始 host/runtime；新增十四类 constructor 失败与三项 factory 所有权变异，部分 native VDEV 必须等真实引用/final-free 后才允许 host 关闭。物理 adapter/sync/ref/FW/DP 原语仍有模型。本地 105 项 Python与源检查通过，完整 Actions待观察，无手机结论，生产激活门禁未改。见 [0185](POPSICLE-FACTORY-NATIVE-LIFECYCLE-0185.md)。
+
 ## 当前代码阶段 0184（创建入口 recovery/closing 门禁）
 
 0183 八项必需 CI 全部通过。0184 给实际 host factory 加 recovery 早拒绝，给 VDEV factory 加 recovery/closing 的 lookup 前拒绝，避免 teardown transition 被误用为创建授权。新增零副作用检查、九类 factory 回滚/新对象健康重建、三项行为变异；完整 host baseline 和原回归保持。本地 105 项 Python通过，完整 Actions待观察，无手机/RF/Apple结论，configured START/public init未开放。见 [0184](POPSICLE-CREATION-ADMISSION-0184.md)。

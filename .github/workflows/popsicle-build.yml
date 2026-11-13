@@ -62,6 +62,7 @@ on:
       - tools/kernel/mishare_down_host_composite_fixture.py
       - tools/kernel/mishare_down_host_close_fixture.py
       - tools/kernel/mishare_ordinary_host_close_fixture.py
+      - tools/kernel/mishare_factory_native_lifecycle_fixture.py
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
@@ -215,6 +216,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Actual host factory through native ordinary retirement
+        run: python3 tools/kernel/mishare_factory_native_lifecycle_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-factory-native.json
       - name: Host recovery creation admission and factory rollback
         run: python3 tools/kernel/mishare_host_fixture.py --creation-only --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host-creation.json
       - name: Ordinary radio through actual host idle close
@@ -295,6 +298,7 @@ jobs:
             stop-down-host-close.json
             stop-ordinary-host-close.json
             stop-host-creation.json
+            stop-factory-native.json
             stop-active-fence.json
             stop-plan-commit.json
             stop-plan-preview.json

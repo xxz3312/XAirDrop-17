@@ -1,3 +1,9 @@
+## 0185 — actual host factory/native constructor/ordinary exit composition
+
+- Confirmed all eight required 0184 jobs passed at 52f3199 / Actions 43374571813.
+- Execute actual host create/track/pin and host VDEV entry into the native runtime constructor, then the existing raw radio/ordinary host retirement chain with real OSIF associations and actual handoff slot invalidation.
+- Keep 256 ordinary combinations and six retained exits; add 14 constructor failures and three factory authority mutations. Partial native constructors retain the actual host/runtime slot until real final-free notification. Physical primitive models remain explicit; full CI pending, no production activation or phone changes.
+
 ## 0184 — reject fresh host/VDEV creation during recovery
 
 - Confirmed all eight required 0183 jobs passed at 66068d2 / Actions 43364591966.
