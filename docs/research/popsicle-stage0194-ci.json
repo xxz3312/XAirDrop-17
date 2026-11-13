@@ -1,0 +1,30 @@
+{
+  "stage": "0194",
+  "status": "CI_CHECK_BACKUP_PACKAGE_PASSED_PHONE_PENDING",
+  "source_commit": "d91e33ed207a6c3b90927242eb7d6ad15fd61c12",
+  "workflow_run_id": 43465342560,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/43465342560",
+  "job_id": 132022853961,
+  "device_tests": {
+    "passed": 140,
+    "skipped": 0,
+    "mksh_included": true
+  },
+  "kernel_tests": {
+    "passed": 110,
+    "skipped": 0
+  },
+  "artifact_id": 14057762272,
+  "package": {
+    "name": "XAirDrop-17-stage-0194.zip",
+    "bytes": 168798643,
+    "sha256": "b218f6f44ccaea92cfee7e43580443cd3ff6a85e7d68632289dfb02ffbe90311",
+    "matches_local_production": true
+  },
+  "driver_recompiled": false,
+  "driver_rewritten": false,
+  "apply_enabled": false,
+  "autostart": false,
+  "phone_installed_or_executed": false,
+  "runtime_certified": false
+}
