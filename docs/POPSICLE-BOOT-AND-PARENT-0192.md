@@ -22,7 +22,7 @@ The strict classifier supports both stages and now returns an explicit blocked c
 
 Synthetic image tests cover whole-boot changes with identical kernel payload, changed kernel with unchanged version observations, hash substitution, unstable observations, short/bad header and out-of-bounds kernel/ramdisk. Even a payload match does not update the accepted target or authorize loading. The old exact `verify_stock_loader.py` and all stock profiles remain unchanged.
 
-Local validation: 98 device host cases, 69 passed and 29 mksh cases skipped locally; 110 kernel Python tests passed. CI requires mksh and runs the full matrix; its result is pending at initial submission. No native driver build.
+Local validation: 98 device host cases, 69 passed and 29 mksh cases skipped locally; 110 kernel Python tests passed. CI requires mksh and runs the full matrix. [Actions 43447227303](https://github.com/xxz3312/XAirDrop-17/actions/runs/43447227303) passed at `8534ff252454fbe5dd9e25b2ba175e595bff1e37`: all 98 device host cases (including all 29 mksh cases without skips) and 110 kernel Python tests passed. No native driver build.
 
 ## Next phone evidence
 

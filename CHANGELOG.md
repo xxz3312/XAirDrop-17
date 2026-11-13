@@ -2,7 +2,7 @@
 
 - Actual current CNSS2/WLAN file/note observations match captured stock; firmware and active boot differ, transaction remains. Preserve rejection without retargeting old profiles.
 - New read-only transaction collector accepts AOSP system:system 0771 /data while retaining root/private child checks and explicit parent diagnostics; classifier keeps UNKNOWN blocked. Add SHA-bound bounded boot-v4 kernel-payload comparison, never a version-string compatibility pass.
-- Local: 69 device tests pass, 29 mksh cases skipped; 110 kernel Python tests pass. Full shell CI pending. No native build, transaction mutation, install package or partition write.
+- Local: 69 device tests pass, 29 mksh cases skipped; 110 kernel Python tests pass. Actions 43447227303 passed all 98 device host cases (29 mksh, no skips) and 110 kernel Python tests. No native build, transaction mutation, install package or partition write.
 
 ## 0191 — inspect retained transaction without mutation
 

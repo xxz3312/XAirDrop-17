@@ -1,6 +1,6 @@
 ## 当前核验阶段 0192（原厂组件匹配，boot变化与父目录规则修复）
 
-完整0190报告显示CNSS2/WLAN两路径文件、已加载notes、内核release匹配；固件4.0.6.0、活动boot SHA变化与旧事务仍阻止准入。0191在父目录检查处提前退出。新增0192只读采集器，接受AOSP标准/data system:system 0771，继续严格验证/data/adb与事务，并输出实际父目录元数据；准备严格绑定上传SHA的boot v4内核载荷比对。98项device本地69通过、29mksh跳过；110项kernel Python通过，CI待观察。旧profile/loader门禁未改，无装载/清理/刷写。见 [0192](POPSICLE-BOOT-AND-PARENT-0192.md)。
+完整0190报告显示CNSS2/WLAN两路径文件、已加载notes、内核release匹配；固件4.0.6.0、活动boot SHA变化与旧事务仍阻止准入。0191在父目录检查处提前退出。新增0192只读采集器，接受AOSP标准/data system:system 0771，继续严格验证/data/adb与事务，并输出实际父目录元数据；准备严格绑定上传SHA的boot v4内核载荷比对。98项device本地69通过、29mksh跳过；110项kernel Python通过；CI 43447227303全部98项device与110项kernel通过，无跳过。旧profile/loader门禁未改，无装载/清理/刷写。见 [0192](POPSICLE-BOOT-AND-PARENT-0192.md)。
 
 ## 当前核查阶段 0191（旧事务只读分类）
 
