@@ -60,6 +60,8 @@ def fixture(root):
         nonlocal source
         assert source.count(old)==1,old
         source=source.replace(old,new,1)
+    once('assert(!lock_depth && soc && id==7 && cb && c && dp_objects==1 && !timers_live);',
+         'assert(!lock_depth && soc && id==7 && cb && c && dp_objects==1 && !timers_live && "EXPECTED_ORDINARY_DELETE_ACK");')
     once('static void finish_dp(void) {',cleanup.EARLY+'\nstatic void finish_dp(void) {\n if(clean_active && !clean_peer_gone) {clean_dp_deferred=true;return;}')
     native='\n'.join(function((root/cleanup.previous.WMA).read_text(),n) for n in ['wma_remove_objmgr_peer','wma_remove_peer'])
     delete=function(source,'mishare_ndi_self_peer_delete')
