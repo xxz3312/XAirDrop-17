@@ -1,0 +1,142 @@
+{
+  "stage": "0188",
+  "status": "CANDIDATE_RECORDS_VERIFIED_NOT_FOR_INSTALL",
+  "source_commit": "a4b9404257efe395cf3cf865a806bff5daba6f4b",
+  "workflow_run": 43390041712,
+  "required_jobs_success": 8,
+  "archives": {
+    "full": {
+      "id": 14021858523,
+      "name": "popsicle-diagnostics-43390041712-1",
+      "sha256": "688c77fea0d8c3fca58db03b07937c789167cfed567c9044f7d7d5c9020193cd",
+      "bytes": 340645998
+    },
+    "compact": {
+      "id": 14022515459,
+      "name": "popsicle-validation-43390041712-1",
+      "sha256": "395559d7814d25c1017882484e685a1e46dd173a05306128213e712a8e35f201",
+      "bytes": 124905
+    }
+  },
+  "identical_json_reports": 64,
+  "actual_module_records": {
+    "wonder_sysctl": {
+      "sha256": "b7ac3e8dd7d3544cfdfe67ea39b3b546fcc734897fe64478f20a88893532f625",
+      "note_sha256": "5d3d7236a5d7058973d6f4bd45a897bbc76933ce23e20b81c1597fc87c5096a5",
+      "bytes": 217400,
+      "version_records": 6,
+      "dependencies": [
+        ""
+      ],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "header_layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      }
+    },
+    "opairshare_wonder_provider": {
+      "sha256": "36fdef6d488321becde1fbbcf6c9ad69f680a3dfec05cbfcc7e56e93bee4f741",
+      "note_sha256": "814a7b7a69cc825aabe83bbdb0f2f0fb64d26b17fc6778aae66d7fa2e2dc91d7",
+      "bytes": 336976,
+      "version_records": 15,
+      "dependencies": [
+        ""
+      ],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "header_layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      }
+    },
+    "opairshare_route_b_probe": {
+      "sha256": "158e250cbef5d64f906758bdb2fea9ca755a9c4aa9ca6c2748ea8e5171ef8ade",
+      "note_sha256": "379297a39a1b92b43ebc62c342c90049ee44699607be671ce6b326dec9fbe74e",
+      "bytes": 113872,
+      "version_records": 3,
+      "dependencies": [
+        "opairshare_wonder_provider"
+      ],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "header_layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      }
+    },
+    "wonder": {
+      "sha256": "0b242804d90a7243389f3b48ddce7cf0fa324fa738c0b137a6cfc75d8cdc6780",
+      "note_sha256": "855c624aa9c4c95022ea49bef0947abe254549cdff0e77da712e35c5f0e505d8",
+      "bytes": 2419264,
+      "version_records": 110,
+      "dependencies": [
+        "cfg80211,mac80211,opairshare_wonder_provider"
+      ],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "header_layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      }
+    },
+    "wlan": {
+      "sha256": "713467f62587746e11db656214bd5843b65cbc28a54340f6933c7fcd96d7dd1a",
+      "note_sha256": "f69d973a9ccbaf4a583e2bc814e78b8e78eee6c2f67b1036f9126dd043a5371a",
+      "bytes": 391968696,
+      "version_records": 590,
+      "dependencies": [
+        "cfg80211,opairshare_wonder_provider,cnss_utils,cnss_nl,ipam,cnss_prealloc,qcom_iommu_util,hwid,qmi_helpers,cnss2"
+      ],
+      "vermagic": [
+        "6.12.69-4k-ge2b8ca7c8d05 SMP preempt mod_unload modversions aarch64"
+      ],
+      "vermagic_exact_match": false,
+      "header_layout": {
+        "section_size": 1600,
+        "init_offset": 392,
+        "exit_offset": 1528
+      }
+    }
+  },
+  "cnss2_import_count": 64,
+  "cnss2_crc_mismatches": {},
+  "forbidden_checked_or_live_imports": [],
+  "actual_private_provider_imports": [
+    "opairshare_set_wonder_managed_priv_data",
+    "opairshare_wlan_execution_close"
+  ],
+  "captured_firmware": "OS4.0.5.0.XPBCNXM",
+  "selected_layout_report_types": [
+    "cfg80211_chan_def",
+    "ieee80211_channel",
+    "module",
+    "net_device",
+    "sk_buff",
+    "wiphy",
+    "wireless_dev"
+  ],
+  "runtime_certified": false,
+  "phone_executed": false,
+  "load_authorized": false,
+  "deployment_bundle_created": false,
+  "old_0135_bundle_retargeted": false,
+  "remaining": [
+    "Fresh phone/kernel/firmware/CNSS2 identity must match the captured target.",
+    "A new independently qualified deployment profile/executor is required; old bundle remains pinned.",
+    "Native unload/load and reboot recovery still require staged device acceptance."
+  ],
+  "limitations": "Actual archive digests, raw ELF identities/notes/version coverage/module header, stock CNSS2 imports and private provider CRCs independently checked. Full kernel CRC comparisons and selected private layouts are retained CI evidence, not independently rederived here. No C declaration/KCFI/full ABI/firmware/unload/load/RF/Apple compatibility certification."
+}

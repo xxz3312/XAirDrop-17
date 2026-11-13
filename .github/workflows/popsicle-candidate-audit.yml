@@ -1,0 +1,42 @@
+name: Popsicle candidate records audit
+on:
+  push:
+    paths:
+      - 'tools/kernel/stock_cnss_candidate_audit.py'
+      - 'tools/kernel/test_stock_cnss_candidate_audit.py'
+      - 'docs/research/popsicle-candidate-0188-*.json'
+      - '.github/workflows/popsicle-candidate-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python integrity regression tests
+        run: python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+      - name: Download existing immutable diagnostic artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14021858523/zip > "$RUNNER_TEMP/diagnostics.zip"
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14022515459/zip > "$RUNNER_TEMP/validation.zip"
+      - name: Independently audit raw ELF records without building or loading
+        run: |
+          python3 tools/kernel/stock_cnss_candidate_audit.py \
+            --full "$RUNNER_TEMP/diagnostics.zip" \
+            --compact "$RUNNER_TEMP/validation.zip" \
+            --ci-evidence docs/research/popsicle-candidate-0188-ci.json \
+            --source-commit a4b9404257efe395cf3cf865a806bff5daba6f4b \
+            --output candidate-validation.json
+          diff -u docs/research/popsicle-candidate-0188-validation.json candidate-validation.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: candidate-0188-records-not-for-install
+          path: candidate-validation.json
+          if-no-files-found: error

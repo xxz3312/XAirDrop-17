@@ -1,3 +1,7 @@
+## 当前验收阶段 0188（实际候选产物独立校验）
+
+0187 八项必需 CI 全部通过。0188 独立检查实际两个 ZIP、64 份一致 JSON、五个原始 ELF、64 项 CNSS2 导入及两项私有符号 CRC；110 项 Python 通过。结果仅为候选记录校验通过，不是安装授权。新只读 Actions 待观察，不再重复原生编译；旧 0135 包未重定向，无手机操作。可控装载前仍需新鲜设备身份、新部署 profile/executor 与分步装载/重启恢复验收。见 [0188](POPSICLE-CANDIDATE-ACCEPTANCE-0188.md)。
+
 ## 当前代码阶段 0187（配置准入的资源与历史来源）
 
 0186八项必需CI全部通过。0187 补齐 pure配置观察的 pristine radio/fence/retirement 与 runtime recovery 历史检查，完整配置必须仍拥有 DP cookie/stats；不对原生 beacon/DTIM 增加未验证限制。新增141边界、四项零timing兼容正例和三项行为变异，仍只读、不提交START。105项Python通过，完整Actions待观察；configured START/public init未开放，无手机结论。见 [0187](POPSICLE-READINESS-PROVENANCE-0187.md)。

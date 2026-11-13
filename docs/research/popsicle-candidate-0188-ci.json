@@ -1,0 +1,98 @@
+{
+  "repository": "xxz3312/XAirDrop-17",
+  "run": {
+    "id": 43390041712,
+    "head_sha": "a4b9404257efe395cf3cf865a806bff5daba6f4b",
+    "conclusion": "success",
+    "status": "completed",
+    "run_attempt": 1,
+    "path": ".github/workflows/popsicle-build.yml",
+    "html_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/43390041712"
+  },
+  "jobs": [
+    {
+      "id": 131767490518,
+      "name": "stop-admission",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490707,
+      "name": "ce-buffers",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490773,
+      "name": "transport-stop",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490820,
+      "name": "bridge-controller",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490833,
+      "name": "htt-callbacks",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490838,
+      "name": "parent-peer-composite",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490845,
+      "name": "diagnostic",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767490922,
+      "name": "ce-stop",
+      "conclusion": "success",
+      "status": "completed"
+    },
+    {
+      "id": 131767492447,
+      "name": "Optional ICNSS reference (not target CNSS2)",
+      "conclusion": "skipped",
+      "status": "completed"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 14022515459,
+      "name": "popsicle-validation-43390041712-1",
+      "size_in_bytes": 124905,
+      "digest": "sha256:395559d7814d25c1017882484e685a1e46dd173a05306128213e712a8e35f201",
+      "expired": false,
+      "workflow_run": {
+        "id": 43390041712,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "a4b9404257efe395cf3cf865a806bff5daba6f4b"
+      }
+    },
+    {
+      "id": 14021858523,
+      "name": "popsicle-diagnostics-43390041712-1",
+      "size_in_bytes": 340645998,
+      "digest": "sha256:688c77fea0d8c3fca58db03b07937c789167cfed567c9044f7d7d5c9020193cd",
+      "expired": false,
+      "workflow_run": {
+        "id": 43390041712,
+        "repository_id": 1433402945,
+        "head_repository_id": 1433402945,
+        "head_branch": "main",
+        "head_sha": "a4b9404257efe395cf3cf865a806bff5daba6f4b"
+      }
+    }
+  ]
+}
