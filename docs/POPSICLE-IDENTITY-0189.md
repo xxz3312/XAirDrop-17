@@ -10,7 +10,7 @@ Before implementation, rechecked upstream main commits: OPAirDrop `28a3a1dbc9f51
 - `tools/kernel/stock_cnss_identity.py`: host parser/evaluator. Reject duplicate, unknown, missing and malformed fields; require exact captured stock file hashes/loaded notes/boot/kernel/firmware, stable before/after observations and absence of candidate/retained transaction state. If both vendor trees supply a module, both must match. A successful result is only `CAPTURED_STOCK_IDENTITY_MATCH_ONLY`, always with `load_authorized=false` and `runtime_certified=false`.
 - A separate Python/shell-only CI runs 43 device host tests and 110 kernel Python tests and publishes the collector with its digest. No native build trigger is changed.
 
-The host tests use temporary filesystem/command fixtures and regular files in place of block devices. They verify actual shell behavior with real fixture file hashing, no file changes, root/I/O failure, rejected action arguments, changed identities/boot observations, missing modules, conflicting file copies and malformed captures. These are not phone results. Independent CI is pending at initial submission.
+The host tests use temporary filesystem/command fixtures and regular files in place of block devices. They verify actual shell behavior with real fixture file hashing, no file changes, root/I/O failure, rejected action arguments, changed identities/boot observations, missing modules, conflicting file copies and malformed captures. These are not phone results. Independent [Actions 43423838657](https://github.com/xxz3312/XAirDrop-17/actions/runs/43423838657) passed at `b831718f5ae74753195f01a2e19b58d9fbe466e3`; it ran the shell/Python tests only and published the standalone collector with its digest.
 
 ## Phone collection (Termux)
 
