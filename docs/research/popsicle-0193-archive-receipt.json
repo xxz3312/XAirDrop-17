@@ -1,0 +1,12 @@
+{
+  "stage": "0193",
+  "status": "PHONE_REPORTED_ARCHIVE_SUCCESS",
+  "receipt_sha256": "823ba96ecfef655b76e2b222b5aab3b3f657f42c1b1b0776807c8e4ddb502475",
+  "archive_path": "/data/adb/xairdrop17-stockcnss-transaction.previous.0193.722369de-3820-40a5-9e3d-88f2432f1176",
+  "script_source_commit": "f83f7c4152158a7d5542c3c835c97cc139229245",
+  "script_sha256": "972ec86df065da75b5a106011a90d8ae80064efdcf449486863e27b39ef4c6f2",
+  "qualified_host_ci_run": 43450934023,
+  "load_authorized": false,
+  "runtime_certified": false,
+  "scope": "Uploaded tool receipt reports successful prior-boot directory rename after source-absence and destination-inode checks. Archive bytes were not independently downloaded; no driver/service/partition operation or new installation acceptance is claimed."
+}

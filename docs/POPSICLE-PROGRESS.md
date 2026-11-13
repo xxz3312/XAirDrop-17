@@ -1,6 +1,6 @@
 ## 当前证据与归档阶段 0193（实际kernel完全匹配，旧boot事务）
 
-实际上传boot与0190 SHA一致，42,170,880字节kernel载荷与旧审计SHA完全一致；0192确认标准父目录权限及旧boot active事务，manifest/备份匹配且无phase.new。固化4.0.6归档专用证据，不修改旧安装profile。新增严格身份重验、共享锁、完整保留改名与失败停止的独立归档工具，无驱动/服务操作；实机归档未执行。118项device本地79通过、39mksh跳过；110项kernel通过；CI 43450934023全部118项device与110项kernel通过，无跳过。新驱动安装executor与实机装载仍未验收。见 [0193](POPSICLE-PRIOR-BOOT-ARCHIVE-0193.md)。
+实际上传boot与0190 SHA一致，42,170,880字节kernel载荷与旧审计SHA完全一致；0192确认标准父目录权限及旧boot active事务，manifest/备份匹配且无phase.new。固化4.0.6归档专用证据，不修改旧安装profile。新增严格身份重验、共享锁、完整保留改名与失败停止的独立归档工具，无驱动/服务操作；手机回传0193成功归档标记及预期保留路径，旧事务记录已按脚本成功条件改名保存（日志回执，非逐文件回下载验收）。118项device本地79通过、39mksh跳过；110项kernel通过；CI 43450934023全部118项device与110项kernel通过，无跳过。新驱动安装executor与实机装载仍未验收。见 [0193](POPSICLE-PRIOR-BOOT-ARCHIVE-0193.md)。
 
 ## 当前核验阶段 0192（原厂组件匹配，boot变化与父目录规则修复）
 

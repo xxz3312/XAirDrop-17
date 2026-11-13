@@ -2,7 +2,7 @@
 
 - Actual boot export matches the phone capture; complete kernel payload matches the reviewed kernel SHA. Corrected transaction report confirms a prior-boot active record with matching manifest/backup and no unfinished journal.
 - Record a 4.0.6 archive-only evidence profile; keep old install/loader profiles pinned. Add standalone check/archive tool with exact identity/record gates, shared legacy lock, no-clobber whole-directory rename, inode verification and stop-on-uncertain failure. No driver/service or partition effects.
-- Local: 79 device tests pass, 39 mksh cases skipped; 110 kernel Python tests pass. Actions 43450934023 passed all 118 device host cases (39 mksh, no skips) and 110 kernel Python tests. Phone archive not yet executed; no installation/runtime/RF/Apple qualification.
+- Local: 79 device tests pass, 39 mksh cases skipped; 110 kernel Python tests pass. Actions 43450934023 passed all 118 device host cases (39 mksh, no skips) and 110 kernel Python tests. Uploaded phone receipt reports successful archive to the expected prior-boot path; no installation/runtime/RF/Apple qualification.
 
 ## 0192 — process real identities and repair Android parent admission
 
