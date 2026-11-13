@@ -2,7 +2,7 @@
 
 - Add standalone read-only transaction capture and strict host classification of boot association, exact old manifest/backup, private paths, journal state and observation changes. No classification grants archival/replay/loading authority.
 - Preserve all existing state, supported firmware and executors. No fresh 0190 identity or transaction capture received; firmware 4.0.6.0 remains unqualified.
-- Local 54 device tests pass, 18 mandatory-in-CI mksh cases skipped locally; 110 kernel Python tests pass. Shared shell/Python CI pending; no native rebuild or install package.
+- Local 54 device tests pass, 18 mandatory-in-CI mksh cases skipped locally; 110 kernel Python tests pass. Shared Actions 43441499389 passed all 72 device host and 110 kernel Python tests with no skips; no native rebuild or install package.
 
 ## 0190 — reject incomplete real capture and harden shell digest collection
 

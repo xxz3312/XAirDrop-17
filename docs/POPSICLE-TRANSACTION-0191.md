@@ -23,7 +23,7 @@ Every result keeps archive/replay/load/runtime authority false. Even a prior-boo
 
 ## Validation
 
-Local 72 device host test cases: 54 passed, 18 mksh cases skipped because the local shell is absent. All 110 kernel Python tests pass. New transaction cases exercise actual collector behavior on synthetic files, never a phone: same/prior/absent states without writes, symlink/directory/ownership rejection, FIFO/oversized/missing fields, boot/phase/inode/manifest/backup mutations, partial journal, empty HAL file, argument/root rejection, suppressed digest and malformed captures. The shared CI requires mksh and tests the full matrix; its result is pending at submission. No native rebuild is requested.
+Local 72 device host test cases: 54 passed, 18 mksh cases skipped because the local shell is absent. All 110 kernel Python tests pass. New transaction cases exercise actual collector behavior on synthetic files, never a phone: same/prior/absent states without writes, symlink/directory/ownership rejection, FIFO/oversized/missing fields, boot/phase/inode/manifest/backup mutations, partial journal, empty HAL file, argument/root rejection, suppressed digest and malformed captures. The shared CI requires mksh and tests the full matrix. [Actions 43441499389](https://github.com/xxz3312/XAirDrop-17/actions/runs/43441499389) passed at `fb24851cb8f915e2de7e2a310fb98298548d01e8`: all 72 device host cases (including the 18 mksh cases without skips) and 110 kernel Python tests passed. No native rebuild is requested.
 
 ## Phone use
 
