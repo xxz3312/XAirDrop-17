@@ -77,6 +77,12 @@ int mishare_radio_open(struct wlan_objmgr_vdev *vdev,
                        unsigned long session_cookie, u32 freq,
                        const struct mishare_ndi_start_summary *plan,
                        struct mishare_radio **radio);
+/* Authenticate opaque handles against the live registry before dereference.
+ * EINVAL for missing arguments, ENOENT for unknown/retired tokens; output is
+ * unchanged on every error. Runtime also rechecks its owner/component after
+ * an unlocked radio observation (EUCLEAN on component identity drift).
+ * Read-only: caller must retain/serialize parents; no reference, START/window
+ * authority, arbitrary concurrent teardown or allocator-address reuse proof. */
 int mishare_radio_snapshot(struct mishare_radio *radio,
                            struct mishare_radio_status *status);
 /* EINPROGRESS: poll, never sleep under RTNL/SM locks. EUCLEAN: keep every

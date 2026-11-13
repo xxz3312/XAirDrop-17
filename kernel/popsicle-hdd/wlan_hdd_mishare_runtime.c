@@ -1088,16 +1088,47 @@ void mishare_runtime_freed(struct wlan_objmgr_psoc *psoc, unsigned long owner_to
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status)
 {
+    struct mishare_runtime_owner *entry;
+    struct mishare_radio *radio;
+    struct mishare_radio_status observed = {0};
     unsigned long flags;
+    int ret;
 
     if (!owner || !status)
         return -EINVAL;
     spin_lock_irqsave(&mishare_runtime_lock, flags);
-    *status = owner->state;
+    for (entry = mishare_runtime_owners; entry && entry != owner; entry = entry->next)
+        ;
+    if (!entry) {
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return -ENOENT;
+    }
+    radio = entry->radio;
+    if (!radio) {
+        *status = entry->state;
+        spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+        return 0;
+    }
     spin_unlock_irqrestore(&mishare_runtime_lock, flags);
-    if (owner->radio)
-        return mishare_radio_snapshot(owner->radio, &status->radio);
-    return 0;
+    /* No registry locks nest. Caller still retains/serializes native parents;
+     * this observation acquires no lifetime reference or teardown authority. */
+    ret = mishare_radio_snapshot(radio, &observed);
+    if (ret)
+        return ret;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (entry = mishare_runtime_owners; entry && entry != owner; entry = entry->next)
+        ;
+    if (!entry)
+        ret = -ENOENT;
+    else if (entry->radio != radio)
+        ret = -EUCLEAN;
+    else {
+        *status = entry->state;
+        status->radio = observed;
+        ret = 0;
+    }
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
 }
 
 /* Registry lock held, scalar/handle presence only. No native dereference. */

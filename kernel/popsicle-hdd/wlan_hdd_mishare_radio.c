@@ -256,20 +256,28 @@ static void radio_put(struct mishare_radio *r)
 }
 int mishare_radio_snapshot(struct mishare_radio *r, struct mishare_radio_status *s)
 {
+    struct mishare_radio *entry;
     unsigned long flags;
+    int ret = -ENOENT;
+
     if (!r || !s)
         return -EINVAL;
     spin_lock_irqsave(&mishare_radio_lock, flags);
-    *s = r->state;
+    for (entry = mishare_radios; entry; entry = entry->next) {
+        if (entry != r)
+            continue;
+        *s = entry->state;
+        ret = 0;
+        break;
+    }
     spin_unlock_irqrestore(&mishare_radio_lock, flags);
-    return 0;
+    return ret;
 }
 
 static bool radio_phase(struct mishare_radio *r, enum mishare_radio_phase phase)
 {
     struct mishare_radio_status s;
-    mishare_radio_snapshot(r, &s);
-    return s.phase == phase;
+    return !mishare_radio_snapshot(r, &s) && s.phase == phase;
 }
 static bool radio_applying(struct mishare_radio *r, bool start)
 {
@@ -571,7 +579,9 @@ QDF_STATUS mishare_radio_down_send(struct vdev_mlme_obj *m, uint16_t len, void *
         return QDF_STATUS_E_NOSUPPORT;
     {
         struct mishare_radio_status s;
-        mishare_radio_snapshot(r, &s);
+        ret = mishare_radio_snapshot(r, &s);
+        if (ret)
+            return radio_result(r, ret);
         ret = s.down_attempted;
     }
     if (!radio_phase(r, MISHARE_RADIO_WAIT_STOP) || !radio_applying(r, false) || ret)
@@ -728,7 +738,9 @@ static int radio_execute(struct radio_request *req)
     if (!mishare_runtime_work_allowed(r->vdev, r->owner))
         return radio_abort_before_prepare(req);
     m = wlan_vdev_mlme_get_cmpt_obj(r->vdev);
-    mishare_radio_snapshot(r, &s);
+    ret = mishare_radio_snapshot(r, &s);
+    if (ret)
+        return ret;
     if (m && s.phase == MISHARE_RADIO_BLOCKED && req->work == RADIO_START)
         return radio_abort_before_prepare(req);
     if (!m || s.phase == MISHARE_RADIO_BLOCKED)

@@ -1,3 +1,9 @@
+## 0186 — authenticate runtime/radio snapshots before dereference
+
+- Confirmed all eight required 0185 jobs passed at 97715bc / Actions 43379073833.
+- Authenticate opaque runtime/radio handles under live registry locks. Read radio without nesting locks, then reauthenticate runtime/component before publishing; preserve output on every error. Internal radio phase/down/execute readers now check errors.
+- Add live/unknown/retired/failing-component and three synchronous retained-storage cut checks to actual factory/native/ordinary composition, with five behavior mutations. Parent lifetime/serialization remains mandatory; no concurrent-teardown/ABA, configured START or phone claim. Complete Actions pending at submission.
+
 ## 0185 — actual host factory/native constructor/ordinary exit composition
 
 - Confirmed all eight required 0184 jobs passed at 52f3199 / Actions 43374571813.

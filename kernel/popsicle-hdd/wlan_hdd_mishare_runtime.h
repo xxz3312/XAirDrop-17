@@ -276,6 +276,12 @@ int mishare_runtime_ndi_start(struct mishare_runtime_owner *owner);
  * verify readback; changed input is EBUSY. Caller owns native parent scope. */
 int mishare_runtime_bssid_bind(struct mishare_runtime_owner *owner, const u8 *bssid);
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner);
+/* Authenticate opaque handles against the live registry before dereference.
+ * EINVAL for missing arguments, ENOENT for unknown/retired tokens; output is
+ * unchanged on every error. Runtime also rechecks its owner/component after
+ * an unlocked radio observation (EUCLEAN on component identity drift).
+ * Read-only: caller must retain/serialize parents; no reference, START/window
+ * authority, arbitrary concurrent teardown or allocator-address reuse proof. */
 int mishare_runtime_snapshot(struct mishare_runtime_owner *owner,
                              struct mishare_runtime_status *status);
 /* Native object-manager origins; no pointer retention/ref acquisition here.
