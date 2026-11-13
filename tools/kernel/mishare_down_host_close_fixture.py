@@ -130,7 +130,7 @@ def fixture(root):
 #undef wlan_pdev_get_psoc
 '''
     free='\n#define kfree terminal_metadata_free\n'+function(host,'mishare_host_free_tracked')+'\n#undef kfree\n'
-    actual=PRIMITIVES+pins+free+function(host,'mishare_wonder_host_destroy_locked')
+    actual=PRIMITIVES+pins+free+'\nstatic int mishare_host_parent_identity(struct mishare_wonder_host *);\n'+function(host,'mishare_wonder_host_destroy_locked')
     once(modeled,actual)
     bind=function(source,'composite_bind')
     setup=''' assert(try_module_get(THIS_MODULE));
