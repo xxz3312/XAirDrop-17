@@ -23,3 +23,9 @@ caller-owned host、独立 runtime、typed managed 配置请求、UP/WAIT/失败
 - 两层分别验证：原生 CDS→runtime fixture 的 host registry 边界有显式模型；实际 host C fixture 的 runtime API 为显式模型。不能将两者合称完整原生 host+radio 一体实机证明。IRQ/固件/锁/引用/PM/DP 等物理原语仍有模型。
 
 本地 100 项 Python 回归、语法/原生源构造/patch 检查通过；C/sanitizer 和目标编译由统一 Actions 验证，提交时待观察。保留原厂 CNSS2，不触碰 init_boot，不部署手机。configured START、AWDL 发现/握手/双向文件传输仍未因此开放。
+
+## 完整 CI 修复记录
+
+`7c9963a` / Actions 43329355321 的自动 native DOWN/runtime、组件、active fence、计划测试通过，六项必需任务通过；stop-admission 在 host RTNL 负例的断言识别处失败，diagnostic 在历史 parent/CDS 源指纹审计处失败。并非整轮通过，也没有实机结论。
+
+本次修复只调整验证：为 RTNL ownership 模型断言增加明确标识，只有该变异匹配此标识，其他变异仍须匹配 DOWN host 合同断言；parent 审计只还原 exact 0180 declaration 与 candidate 前调用两处插入，保留原始 whole-file hash，不更新散列或扩大任意代码白名单。新增五项 Python 回归验证缺项、重复、参数/位置变化拒绝及无关变化仍进入原散列检查。随后重跑完整 Actions；结果待观察。

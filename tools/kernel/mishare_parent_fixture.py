@@ -107,9 +107,29 @@ int main(void) {
 '''
 
 
+def restore_down_observer(text):
+    """Restore only the exact 0180 declaration/candidate-prefix insertion.
+
+    The original whole-file digest below remains authoritative. This cannot
+    excuse another CDS body change, reordered observer, partial or duplicate
+    insertion, or an unknown declaration/call signature.
+    """
+    name='mishare_wonder_host_down_observe'
+    if name not in text:
+        return text
+    declaration='extern int '+name+'(struct wlan_objmgr_psoc *psoc);\n'
+    call='     '+name+'(wma->psoc) ||\n'
+    before='static void mishare_cds_recovery_window('
+    candidates='     !mishare_runtime_recovery_candidates(wma->psoc) ||'
+    if (text.count(name)!=2 or text.count(declaration+before)!=1 or
+            text.count(call+candidates)!=1):
+        raise ValueError('Unrecognized native DOWN observer insertion')
+    return text.replace(declaration+before,before,1).replace(call+candidates,candidates,1)
+
+
 def fixture(root):
     for path, expected in BASE.items():
-        if hashlib.sha256(remove_parent_additions((root/path).read_text()).encode()).hexdigest() != expected:
+        if hashlib.sha256(remove_parent_additions(restore_down_observer((root/path).read_text())).encode()).hexdigest() != expected:
             raise ValueError('Unbounded parent teardown delta: '+path)
     cds=(root/CDS).read_text();main=(root/MAIN).read_text();dispatcher=(root/DISPATCHER).read_text()
     functions = {

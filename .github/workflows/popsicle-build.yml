@@ -38,6 +38,7 @@ on:
       - tools/kernel/mishare_reset_context_origins.py
       - tools/kernel/mishare_recovery_origins.py
       - tools/kernel/mishare_parent_fixture.py
+      - tools/kernel/test_down_observer_origins.py
       - tools/kernel/mishare_parent_origins.py
       - tools/kernel/mishare_idle_origins.py
       - tools/kernel/mishare_batch_fixture.py

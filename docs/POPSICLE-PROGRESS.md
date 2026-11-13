@@ -1,3 +1,7 @@
+## 0180 完整 CI 修复中
+
+`7c9963a` 的自动 native DOWN 等新增链路通过，但完整 CI 有两项失败：host RTNL 负例标识不匹配；历史 parent/CDS hash 审计未还原 exact 0180 插入。本次仅修验证并保留原散列/生产门禁，新增五项还原边界回归，集中重验；不能将 0180 记为全部通过。
+
 ## 当前代码阶段 0180（handed-off raw DOWN 自动原生观察）
 
 0179 八项必需 CI 全部通过。0180 在原生 CDS 停止后、候选窗口检查前自动观察 exact-PSOC handed-off raw DOWN host；保留唯一 runtime 槽，RTNL trylock，错误阻止窗口，原有 post-disable retire 继续完成回收。新增 64 组原生自动组合、两类观察拒绝/两项原生变异，实际 host 边界和五项变异单独验证。完整 CI 待观察；typed managed 配置、caller-owned/独立 runtime、UP/WAIT/失败来源不被此入口接管，无手机/RF/Apple 验收。见 [0180](POPSICLE-DOWN-AUTO-0180.md)。
