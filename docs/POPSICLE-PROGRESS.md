@@ -1,3 +1,7 @@
+## 当前验证阶段 0182（真实 host 终端关闭与完整 native 退役组合）
+
+0181 的八项必需 CI 全部通过。0182 用真实 host destroy/pin/unpin/tracked free 替换上一批的终端结果模型；adapter/netdev/link/sync/metadata 真正堆释放，核对 runtime 先退役、注销/排空/关闭/put/free/module put 顺序。保留 64 组合、16 类失败与 foreign 并发，新增两类 sync registry 边界及六项变异。本地 105 项 Python与源检查通过，完整 Actions 待观察。底层物理原语/factory 仍有模型，本批不改生产门禁、无手机结论。见 [0182](POPSICLE-DOWN-HOST-CLOSE-0182.md)。
+
 ## 当前验证阶段 0181（实际 host/runtime/native DOWN 组合）
 
 0180 最终 `685c780` 的八项必需 CI 全部通过。0181 关闭先前 host/runtime 分开测试的结果模型边界：生产六个 host 函数与实际 runtime/batch/native CDS/SM 同进程运行，覆盖 64 组合、16 类保留/失败、三项变异及 foreign-PSOC 注册表并发。Host factory/终端 adapter/sync 物理原语仍明确模拟；本批不修改生产门禁，无实机结论。完整 Actions 待观察。见 [0181](POPSICLE-DOWN-HOST-COMPOSITE-0181.md)。

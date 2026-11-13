@@ -1,3 +1,9 @@
+## 0182 — actual terminal host close after native DOWN retirement
+
+- Confirmed all eight required 0181 jobs passed at ee0efb1 / Actions 43354582023.
+- Compose actual production host destroy, parent pin/unpin and tracked metadata retirement with the existing actual host/runtime/native chain. Heap adapter/netdev/link/sync/metadata are physically freed by explicit primitive models, preserving runtime-first and unregister/drain/close/put/free/module ordering.
+- Retain 64 combinations and 16 failure cases; add two sync-registry refusal cases and six terminal ownership/order mutations. Local Python/source checks passed; native/sanitizer and full target Actions pending. No production behavior or phone activation changes.
+
 ## 0181 — actual host/runtime/native DOWN ownership composition
 
 - Confirmed all eight required 0180 jobs passed at 685c780 / Actions 43347366011.
