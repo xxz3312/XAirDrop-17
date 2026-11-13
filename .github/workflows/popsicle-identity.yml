@@ -1,0 +1,38 @@
+name: Popsicle read-only identity checks
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-identity.yml'
+      - 'tools/device/popsicle-identity-0189.sh'
+      - 'tools/device/tests/test_identity_0189.py'
+      - 'tools/kernel/stock_cnss_identity.py'
+      - 'kernel/abi/popsicle-pair-deployment.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Syntax and host rejection tests (no native compilation)
+        run: |
+          sh -n tools/device/popsicle-identity-0189.sh
+          python3 -m py_compile tools/kernel/stock_cnss_identity.py
+          python3 -m unittest discover -s tools/device/tests -p 'test_*.py'
+          python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+      - name: Digest standalone read-only collector
+        run: |
+          cd tools/device
+          sha256sum popsicle-identity-0189.sh > identity-SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-identity-0189-read-only-no-driver
+          path: |
+            tools/device/popsicle-identity-0189.sh
+            tools/device/identity-SHA256SUMS
+          if-no-files-found: error

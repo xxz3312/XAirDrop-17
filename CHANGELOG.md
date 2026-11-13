@@ -1,3 +1,9 @@
+## 0189 — collect fresh stock identity without lifecycle effects
+
+- Confirmed independent 0188 audit and separately triggered full build both passed.
+- Add a standalone root/Termux read-only TSV collector and strict host evaluator; require exact stock/kernel/boot/firmware identity, consistent before/after observations and no candidate/transaction state. Results never authorize loading.
+- 43 device host tests and 110 kernel Python tests pass locally; new shell/Python-only CI pending. Old deployment profiles/executors remain unchanged; no phone evidence or new install package yet.
+
 ## 0188 — independently audit existing candidate artifact records
 
 - Confirmed all eight required 0187 jobs passed at a4b9404 / Actions 43390041712.
