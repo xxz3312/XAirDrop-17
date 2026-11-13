@@ -2,7 +2,7 @@
 
 - Reject the uploaded 0189 capture missing seven hashes; record observed firmware drift to 4.0.6.0 and retained transaction without changing supported stock identities.
 - Add the standalone xi_digest collector and independent expected/successful digest counts; return structured CLI rejection reports. Add mandatory mksh coverage and historical shell-collision reproduction.
-- Local checks: 46 host tests passed, 10 mksh cases skipped locally; 110 kernel Python tests passed. Mandatory shell CI pending. No module loading, package/executor retarget or transaction cleanup.
+- Local checks: 46 host tests passed, 10 mksh cases skipped locally; 110 kernel Python tests passed. Actions 43438909642 passed all 56 host tests (ten mksh cases, no skips) and 110 kernel Python tests; historical omission reproduced and private helper verified. No module loading, package/executor retarget or transaction cleanup.
 
 ## 0189 — collect fresh stock identity without lifecycle effects
 
