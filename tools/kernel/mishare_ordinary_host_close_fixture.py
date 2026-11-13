@@ -85,7 +85,7 @@ def fixture(root):
     pos=source.index('static struct mishare_runtime_owner *down_runtime_ready(')
     source=source[:pos]+selected+'\n'+CALLER+component+'\n'+blocked+'\n'+end+'\n'+ordinary+source[pos:]
     main=function(source,'main')
-    once(main,CASES+'\nint main(void) {ordinary_cases();engine_contract();puts("MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY");return 0;}\n')
+    once(main,CASES+'\nint main(void) {\n ordinary_cases();engine_contract();puts("MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY");return 0;\n}\n')
     return source,exits,stubbed
 
 def negative_controls(directory,c_file,command,env,source,root):
