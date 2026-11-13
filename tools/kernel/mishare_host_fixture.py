@@ -1991,6 +1991,15 @@ def extract(text, pattern):
     return match[0]
 
 
+def creation_admission_code(code):
+    main=extract(code,r'^int main\(void\)\s*\{.*?^\}')
+    lines=main.splitlines()
+    assert lines[1]=='{' and 'struct device dev=' in lines[2]
+    assert '.parent_dev=&dev' in lines[2] and 'expected_psoc=&psoc' in lines[2]
+    focused='int main(void)\n{\n'+lines[2]+'\n creation_admission_cases(&h,&wdev);return 0;\n}\n'
+    return code.replace(main,focused,1)
+
+
 def creation_admission_mutations(host_source):
     controls=[]
     for name,old,new,marker in [
@@ -2105,6 +2114,7 @@ def run(wlan, output, creation_only=False):
         # Mutation controls must reach behavior assertions, not fail compilation.
         host_source=(production/'wlan_hdd_mishare_host.c').read_text()
         if creation_only:
+            source.write_text(creation_admission_code(code))
             controls=creation_admission_mutations(host_source)
             for changed,marker in controls:
                 (d/'wlan_hdd_mishare_host.c').write_text(changed)
@@ -2663,6 +2673,7 @@ def run(wlan, output, creation_only=False):
             assert bad.returncode==-6 and marker in bad.stderr,(down_index,bad.returncode,bad.stderr[-1600:])
         (d/'wlan_hdd_mishare_host.c').unlink(missing_ok=True)
         source.write_text(code)
+        source.write_text(creation_admission_code(code))
         create_admission_controls=creation_admission_mutations(host_source)
         for changed,marker in create_admission_controls:
             (d/'wlan_hdd_mishare_host.c').write_text(changed)
