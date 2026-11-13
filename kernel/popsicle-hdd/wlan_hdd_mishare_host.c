@@ -801,6 +801,10 @@ int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
         return -EBUSY;
     ASSERT_RTNL();
     osif_psoc_sync_assert_trans_protected(hdd->parent_dev);
+    /* Native recovery owns this transition too; retaining its parents does
+     * not grant authority to allocate a fresh host/adapter during teardown. */
+    if (cds_is_driver_recovering())
+        return -ESHUTDOWN;
     ret = wlan_hdd_validate_context(hdd);
     if (ret)
         return ret;
@@ -863,11 +867,11 @@ int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host)
     ret = mishare_host_parent_identity(host);
     if (ret)
         return ret;
+    if (host->session.closing || cds_is_driver_recovering())
+        return -ESHUTDOWN;
     ret = wlan_hdd_validate_context(host->hdd);
     if (ret)
         return ret;
-    if (host->session.closing)
-        return -ESHUTDOWN;
     adapter = host->adapter;
     if (netif_running(adapter->dev) ||
         test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||

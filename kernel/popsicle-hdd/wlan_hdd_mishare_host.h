@@ -235,6 +235,9 @@ int mishare_ssr_stop_unload_ready_locked(struct mishare_ssr_stop_checkpoint *c,
  * must prevent native parent teardown, including between asynchronous polls.
  * Success means a DOWN host adapter only, never Wonder/radio initialization.
  */
+/* Fresh native host/VDEV creation refuses recovery under the retained PSOC
+ * transition, before context lookups, allocation or new module/parent pins.
+ * Destroy/reclaim remains available through its existing qualified routes. */
 int mishare_wonder_host_create_locked(struct hdd_context *hdd, const u8 *mac,
                                     struct mishare_wonder_host **owner);
 int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner);

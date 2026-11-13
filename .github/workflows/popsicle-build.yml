@@ -215,6 +215,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Host recovery creation admission and factory rollback
+        run: python3 tools/kernel/mishare_host_fixture.py --creation-only --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host-creation.json
       - name: Ordinary radio through actual host idle close
         run: python3 tools/kernel/mishare_ordinary_host_close_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-ordinary-host-close.json
       - name: Actual terminal host close and native DOWN retirement
@@ -292,6 +294,7 @@ jobs:
             stop-down-host-composite.json
             stop-down-host-close.json
             stop-ordinary-host-close.json
+            stop-host-creation.json
             stop-active-fence.json
             stop-plan-commit.json
             stop-plan-preview.json

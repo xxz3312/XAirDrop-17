@@ -1,3 +1,7 @@
+## 当前代码阶段 0184（创建入口 recovery/closing 门禁）
+
+0183 八项必需 CI 全部通过。0184 给实际 host factory 加 recovery 早拒绝，给 VDEV factory 加 recovery/closing 的 lookup 前拒绝，避免 teardown transition 被误用为创建授权。新增零副作用检查、九类 factory 回滚/新对象健康重建、三项行为变异；完整 host baseline 和原回归保持。本地 105 项 Python通过，完整 Actions待观察，无手机/RF/Apple结论，configured START/public init未开放。见 [0184](POPSICLE-CREATION-ADMISSION-0184.md)。
+
 ## 当前验证阶段 0183（普通 radio 全退出与真实 host idle close）
 
 0182 八项必需 CI 全部通过。0183 将普通 raw START/UP/STOP/DOWN、实际 PE/peer/DELETE/DP 普通回执与实际 host idle/destroy/pins/free 同进程组合，要求无 SSR/window。新增 256 组合、六类保留故障及两项 ACK 门禁变异；底层物理原语与 peer object-manager 仍有明确模型。生产门禁不变，无手机/RF/Apple 结论；完整 Actions 待观察。见 [0183](POPSICLE-ORDINARY-HOST-CLOSE-0183.md)。

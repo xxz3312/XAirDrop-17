@@ -1,3 +1,9 @@
+## 0184 — reject fresh host/VDEV creation during recovery
+
+- Confirmed all eight required 0183 jobs passed at 66068d2 / Actions 43364591966.
+- Refuse host creation during recovery before native context lookup, allocations and new refs. Refuse VDEV creation for closing/recovering hosts before context lookup; retain exact parent identity and existing destruction/reclaim paths.
+- Add zero-side-effect entry checks, nine factory rollback/fresh healthy construction cases and three behavior mutations. Focused CI runs the complete host baseline plus these controls before existing full lifecycle regression; native/sanitizer/target results pending at submission. Stock CNSS2/init_boot and activation policy unchanged.
+
 ## 0183 — ordinary radio retirement through actual host idle close
 
 - Confirmed all eight required 0182 jobs passed at a743605 / Actions 43359590092.
