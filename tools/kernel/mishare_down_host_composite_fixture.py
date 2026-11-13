@@ -166,8 +166,12 @@ static void composite_faults(void) {
 '''
 def fixture(root):
     source,exits,stubbed=previous.fixture(root)
-    stub=function(source,'mishare_wonder_host_down_observe')
+    stub='int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *p) {return down_host_observer?down_host_observer(p):0;}'
+    assert source.count(stub)==1
     source=source.replace(stub,'int mishare_wonder_host_down_observe(struct wlan_objmgr_psoc *);',1)
+    needle='static int (*down_host_observer)(struct wlan_objmgr_psoc *);'
+    assert source.count(needle)==1
+    source=source.replace(needle,'',1)
     old='struct hdd_context {struct wlan_objmgr_psoc *psoc;int driver_status;};'
     assert source.count(old)==1
     source=source.replace(old,old.replace('int driver_status;','int driver_status;struct device *parent_dev;struct wlan_objmgr_pdev *pdev;'),1)
