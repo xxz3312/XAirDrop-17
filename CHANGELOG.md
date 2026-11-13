@@ -1,3 +1,9 @@
+## 0187 — reject mixed history and lost resources in configuration observation
+
+- Confirmed all eight required 0186 jobs passed at 4a269a1 / Actions 43383874228.
+- Require pristine named radio/fence/retirement and runtime recovery provenance; completed configuration must retain its DP cookie and stats ownership. Preserve native beacon/DTIM values and existing exact plan comparison.
+- Add 141 three-phase provenance/resource boundaries, four native zero-timing compatibility cases and three mutations; existing bridge/host/native regressions remain. Local checks passed, complete Actions pending. Read-only observation still grants no configured START/public init or phone authority.
+
 ## 0186 — authenticate runtime/radio snapshots before dereference
 
 - Confirmed all eight required 0185 jobs passed at 97715bc / Actions 43379073833.

@@ -172,10 +172,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Coherent configuration ownership and native plan provenance
+        run: python3 tools/kernel/mishare_start_ready_fixture.py
       - name: Bridge and session ownership regression checks
         run: |
           python3 tools/kernel/mishare_request_bridge_fixture.py
-          python3 tools/kernel/mishare_start_ready_fixture.py
           python3 tools/kernel/mishare_prestart_fixture.py
           python3 tools/kernel/mishare_session_driver_fixture.py
           python3 tools/kernel/mishare_bridge_fixture.py

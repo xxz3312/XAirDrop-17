@@ -1,3 +1,7 @@
+## 当前代码阶段 0187（配置准入的资源与历史来源）
+
+0186八项必需CI全部通过。0187 补齐 pure配置观察的 pristine radio/fence/retirement 与 runtime recovery 历史检查，完整配置必须仍拥有 DP cookie/stats；不对原生 beacon/DTIM 增加未验证限制。新增141边界、四项零timing兼容正例和三项行为变异，仍只读、不提交START。105项Python通过，完整Actions待观察；configured START/public init未开放，无手机结论。见 [0187](POPSICLE-READINESS-PROVENANCE-0187.md)。
+
 ## 当前代码阶段 0186（snapshot live registry 与失败输出）
 
 0185 八项必需 CI 全部通过。0186 修复 runtime/radio snapshot 对 opaque token 的直接解引用：先 registry 认证，runtime 解锁读组件后再次核对 owner 与关联，错误输出保持不变；三个内部 radio 调用检查错误。新增完整创建/普通退出组合中的 live/unknown/retired/组件故障和三类同步读取切点及五项变异。仍要求调用方保留/串行父级，无任意并发 teardown/ABA 保证。完整 Actions待观察，未开放 configured START/public init，无手机结论。见 [0186](POPSICLE-SNAPSHOT-OWNERSHIP-0186.md)。

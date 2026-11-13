@@ -21,6 +21,7 @@ static void ready_values(struct mishare_runtime_status *s,struct mishare_prestar
  s->allocated=true;s->bssid.requested=s->bssid.applied=true;memcpy(s->bssid.value,p->bssid,6);
  s->ndi.active=s->ndi.create.wire_accepted=s->ndi.create.dp_attached=s->ndi.create.timer_ready=true;
  s->ndi.create.wire_attempted=s->ndi.create.dp_attempted=true;
+ s->ndi.create.dp_cookie=1;s->ndi.create.stats_owned=true;
  s->ndi.legacy_ready=s->ndi.wma_bound=s->ndi.peer_created=true;
  s->ndi.pe_requested=s->ndi.pe_submitted=s->ndi.pe_completed=s->ndi.pe_ready=true;
  s->ndi.channel_requested=s->ndi.channel_submitted=s->ndi.channel_completed=s->ndi.channel_prepared=true;
@@ -196,7 +197,80 @@ static void plan_commit_observation_cases(void)
  assert(mishare_start_plan_commit_check(&s,&c,&session,&q,1,2)==-ECANCELED && "EXPECTED_PLAN_CALLER_ERROR");
  assert(mishare_start_plan_commit_check(NULL,&c,&session,&q,1,2)==-EINVAL);
 }
-int main(void) {readiness_cases();plan_commit_observation_cases();assert(!previous_prestart_main());puts("MISHARE_START_READY_FIXTURE_PASS_ONLY");return 0;}
+
+static void configuration_ownership_cases(void) {
+ struct mishare_runtime_status s,copy;struct mishare_prestart c;struct mishare_session session;
+ struct mishare_init_request q;struct wondertap_init_params p={0};
+ p.channel.freq=5240;p.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HT;p.tx_rate.nss=1;p.tx_rate.mcs=7;
+ p.mac_addr[0]=2;p.mac_addr[5]=1;p.bssid[5]=8;memcpy(p.country_code,"CN",3);
+ assert(!mishare_init_parse(&p,&q));
+ for(unsigned phase=0;phase<3;phase++)for(unsigned fault=0;fault<45+2;fault++) {
+  ready_values(&s,&c,&session,&q);if(phase)plan_values(&s,phase==2);
+  int expected=-EBUSY;
+  switch(fault) {
+  case 0:s.radio.start_attempted=1;break;
+  case 1:s.radio.stop_attempted=1;break;
+  case 2:s.radio.down_attempted=1;break;
+  case 3:s.radio.down_accepted=1;break;
+  case 4:s.radio.pending=1;break;
+  case 5:s.radio.users=1;break;
+  case 6:s.radio.ssr_cancelled_before_start=1;break;
+  case 7:s.radio.ssr_start_submit_error=1;break;
+  case 8:s.radio.ssr_start_callback_refused=1;break;
+  case 9:s.radio.ssr_start_body_aborted=1;break;
+  case 10:s.radio.ssr_start_prepared_aborted=1;break;
+  case 11:s.radio.ssr_start_sm_entry_aborted=1;break;
+  case 12:s.radio.ssr_start_init_rejected=1;break;
+  case 13:s.radio.down_fence_callback_seen=1;break;
+  case 14:s.radio.down_retire_timer_attempted=1;break;
+  case 15:s.radio.down_retire_timer_released=1;break;
+  case 16:s.radio.down_retired=1;break;
+  case 17:s.radio.down_retire_error=1;break;
+  case 18:s.radio.fence.recorded=1;break;
+  case 19:s.radio.fence.error=1;break;
+  case 20:s.radio.fence.closing=1;break;
+  case 21:s.radio.fence.start_attempted=1;break;
+  case 22:s.radio.fence.stop_attempted=1;break;
+  case 23:s.radio.fence.host_up=1;break;
+  case 24:s.radio.fence.down_attempted=1;break;
+  case 25:s.radio.fence.down_accepted=1;break;
+  case 26:s.radio.fence.pending=1;break;
+  case 27:s.radio.fence.users=1;break;
+  case 28:s.radio.fence.start_sm_entered=1;break;
+  case 29:s.radio.fence.start_sm_call_active=1;break;
+  case 30:s.radio.fence.start_reply_queued=1;break;
+  case 31:s.radio.fence.stop_reply_queued=1;break;
+  case 32:s.radio.fence.applying_start_reply=1;break;
+  case 33:s.radio.fence.applying_stop_reply=1;break;
+  case 34:s.radio.fence.phase=MISHARE_RADIO_UP;break;
+  case 35:s.recovery_down_observed=true;break;
+  case 36:s.recovery_down_released=true;break;
+  case 37:s.recovery_timer_attempted=true;break;
+  case 38:s.recovery_timer_released=true;break;
+  case 39:s.recovery_pe_attempted=true;break;
+  case 40:s.recovery_pe_released=true;break;
+  case 41:s.recovery_context_attempted=true;break;
+  case 42:s.recovery_context_released=true;break;
+  case 43:s.recovery_dp_attempted=true;break;
+  case 44:s.recovery_dp_freed=true;break;
+  case 45:s.ndi.create.dp_cookie=0;expected=-EUCLEAN;break;
+  case 45+1:s.ndi.create.stats_owned=false;expected=-EUCLEAN;break;
+  }
+  copy=s;
+  int ret=phase?mishare_start_plan_commit_check(&s,&c,&session,&q,1,2):
+                 mishare_start_ready_check(&s,&c,&session,&q,1,2);
+  assert(ret==expected && !memcmp(&s,&copy,sizeof(s)) && "EXPECTED_START_READY_OWNERSHIP");
+ }
+ for(unsigned committed=0;committed<2;committed++)for(unsigned field=0;field<2;field++) {
+  ready_values(&s,&c,&session,&q);plan_values(&s,!!committed);
+  if(field)s.start_preview.summary.dtim_period=0;else s.start_preview.summary.beacon_interval=0;
+  if(committed)s.ndi.start_plan=s.start_preview.summary;
+  copy=s;assert(!mishare_start_plan_commit_check(&s,&c,&session,&q,1,2) &&
+   !memcmp(&s,&copy,sizeof(s)) && "EXPECTED_PLAN_CALLER_NATIVE_ZERO_TIMING");
+ }
+}
+
+int main(void) {readiness_cases();plan_commit_observation_cases();configuration_ownership_cases();assert(!previous_prestart_main());puts("MISHARE_START_READY_FIXTURE_PASS_ONLY");return 0;}
 '''
 
 def main():
@@ -211,7 +285,10 @@ def main():
               ('memcmp(s->bssid.value, p->bssid, ETH_ALEN)','(false && memcmp(s->bssid.value, p->bssid, ETH_ALEN))'),
               ('session->stage > MISHARE_SESSION_PLAN','false'),
               ('session->freq != p->channel.freq','false'),
-              ('n->channel_freq != p->channel.freq','false')]
+              ('n->channel_freq != p->channel.freq','false'),
+              ('!mishare_start_radio_pristine(&s->radio)','false'),
+              ('!n->create.dp_cookie ||','false ||'),
+              ('!n->create.stats_owned','false')]
     plan_controls=[('preview->integrity_error ||','false ||'),
                    ('preview->vdev_id != s->retry.vdev_id','false'),
                    ('preview->freq != request->params.channel.freq','false'),
@@ -238,7 +315,7 @@ def main():
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
             assert bad.returncode==-6 and 'EXPECTED_PLAN_CALLER_' in bad.stderr,(old,bad.returncode,bad.stderr[-1800:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-start-ready-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text(json.dumps({'status':'MISHARE_START_READY_FIXTURE_PASS_ONLY','success_modes':16,'boundary_cases':56,'mutations':len(controls),'plan_success_modes':32,'plan_boundaries':35,'plan_mutations':len(plan_controls),'limitations':'Production pure snapshot predicate with modeled rate/retry/BSSID/native state, plus preceding production prestart/session fixture regressions. No START admission, active-radio teardown, firmware ACK, public init or phone proof.'},indent=2)+'\n')
+    out.write_text(json.dumps({'status':'MISHARE_START_READY_FIXTURE_PASS_ONLY','success_modes':16,'boundary_cases':56,'ownership_boundaries':141,'native_zero_timing_cases':4,'new_ownership_mutations':3,'mutations':len(controls),'plan_success_modes':32,'plan_boundaries':35,'plan_mutations':len(plan_controls),'limitations':'Production pure snapshot predicate with modeled rate/retry/BSSID/native state, plus preceding production prestart/session fixture regressions. No START admission, active-radio teardown, firmware ACK, public init or phone proof.'},indent=2)+'\n')
     print('MISHARE_START_READY_FIXTURE_PASS_ONLY')
 
 if __name__=='__main__':main()

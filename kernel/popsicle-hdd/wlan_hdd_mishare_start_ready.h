@@ -4,6 +4,29 @@
 #include "wlan_hdd_mishare_prestart.h"
 #include "wlan_hdd_mishare_init.h"
 
+/* A NEW phase alone cannot erase earlier command/fence/retirement facts. */
+static inline bool
+mishare_start_radio_pristine(const struct mishare_radio_status *r)
+{
+    const struct mishare_radio_fence_status *f = &r->fence;
+
+    return r->phase == MISHARE_RADIO_NEW && !r->error && !r->closing &&
+           !r->start_attempted && !r->stop_attempted && !r->host_up &&
+           !r->down_attempted && !r->down_accepted && !r->pending && !r->users &&
+           !r->ssr_cancelled_before_start && !r->ssr_start_submit_error &&
+           !r->ssr_start_callback_refused && !r->ssr_start_body_aborted &&
+           !r->ssr_start_prepared_aborted && !r->ssr_start_sm_entry_aborted &&
+           !r->ssr_start_init_rejected && !r->down_fence_callback_seen &&
+           !r->down_retire_timer_attempted && !r->down_retire_timer_released &&
+           !r->down_retired && !r->down_retire_error &&
+           !f->recorded && f->phase == MISHARE_RADIO_NEW && !f->error && !f->closing &&
+           !f->start_attempted && !f->stop_attempted && !f->host_up &&
+           !f->down_attempted && !f->down_accepted && !f->pending && !f->users &&
+           !f->start_sm_entered && !f->start_sm_call_active &&
+           !f->start_reply_queued && !f->stop_reply_queued &&
+           !f->applying_start_reply && !f->applying_stop_reply;
+}
+
 /* One coherent runtime snapshot, no mutation or native submission. Zero is a
  * current pre-START configuration observation, NOT permission to remove the
  * runtime START guards, a reusable lease, firmware ACK or public init success.
@@ -64,6 +87,13 @@ mishare_start_configuration_check(const struct mishare_runtime_status *s,
         rate->peer_reset_admitted || rate->peer_reset_completed || rate->tail_dp_attempted ||
         rate->tail_attempted || rate->tail_completed || rate->reset_admitted || rate->reset_completed)
         return -EBUSY;
+    if (!mishare_start_radio_pristine(&s->radio) ||
+        s->recovery_down_observed || s->recovery_down_released ||
+        s->recovery_timer_attempted || s->recovery_timer_released ||
+        s->recovery_pe_attempted || s->recovery_pe_released ||
+        s->recovery_context_attempted || s->recovery_context_released ||
+        s->recovery_dp_attempted || s->recovery_dp_freed)
+        return -EBUSY;
     expected.preamble = p->tx_rate.preamble;
     expected.bw = p->tx_rate.bw;
     expected.gi = p->tx_rate.gi;
@@ -99,6 +129,8 @@ mishare_start_configuration_check(const struct mishare_runtime_status *s,
         !rate->requested || !rate->posted || !rate->completed ||
         !retry->requested || !retry->posted || !retry->completed)
         return -EINPROGRESS;
+    if (!n->create.dp_cookie || !n->create.stats_owned)
+        return -EUCLEAN;
     if (n->channel_freq != p->channel.freq || !rate->accepted ||
         !rate->receipt.attempted || !rate->receipt.complete || rate->receipt.busy ||
         rate->receipt.first_error || rate->receipt.attempted_mask != 7 ||
