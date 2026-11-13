@@ -1,0 +1,6 @@
+id=xairdrop17_stage0194
+name=XAirDrop-17 0194 Candidate Check and Backup
+version=0.0.194-preflight
+versionCode=194
+author=xxz3312
+description=4.0.6.0 candidate integrity and stock-backup qualification. Action checks only. No driver loading or boot actions.

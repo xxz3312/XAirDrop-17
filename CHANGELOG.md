@@ -1,3 +1,9 @@
+## 0194 — independently stage current candidate and verify stock backup
+
+- Create a separate exact-4.0.6.0 KSU check/backup package from independently reaudited immutable 0187 raw WLAN/provider. Preserve old packages/profiles and archived evidence; no ELF rewriting or native rebuild.
+- Reject apply/restore/archive, Action checks only, boot no-op. Verify integrity before sourcing; require all present stock copies, live notes and prior archive. Add atomic stock backup with actual baseline observation, failure retention and no-clobber publication. No driver/service effects.
+- Local 91 device host tests pass, 49 mksh cases skipped; 110 kernel Python tests pass. Complete shell/real-ELF packaging CI pending. Phone installation/backup not yet accepted; driver loading remains absent.
+
 ## 0193 — verify actual identical kernel payload and preserve prior-boot state
 
 - Actual boot export matches the phone capture; complete kernel payload matches the reviewed kernel SHA. Corrected transaction report confirms a prior-boot active record with matching manifest/backup and no unfinished journal.

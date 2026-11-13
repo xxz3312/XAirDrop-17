@@ -1,0 +1,59 @@
+name: Popsicle 0194 candidate staging package
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-stage0194.yml'
+      - 'tools/kernel/stock_cnss_stage0194.py'
+      - 'tools/kernel/stock_cnss_candidate_audit.py'
+      - 'tools/kernel/stock_cnss_bundle.py'
+      - 'tools/device/stage-0194/**'
+      - 'tools/device/tests/**'
+      - 'tools/kernel/test_*.py'
+      - 'docs/research/popsicle-candidate-0188-ci.json'
+      - 'docs/research/popsicle-candidate-0188-validation.json'
+      - 'kernel/abi/popsicle-pair-deployment.json'
+      - 'docs/research/popsicle-stock-4.0.6-0193.json'
+      - 'docs/research/popsicle-0193-archive-receipt.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  stage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install shell test dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Qualify staging and recovery boundaries without compiling drivers
+        env:
+          XAIRDROP_REQUIRE_MKSH: "1"
+        run: |
+          for script in tools/device/stage-0194/*.sh; do sh -n "$script"; mksh -n "$script"; done
+          python3 -m unittest discover -s tools/device/tests -p 'test_*.py'
+          python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+      - name: Download previously built immutable candidates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14021858523/zip > "$RUNNER_TEMP/diagnostics.zip"
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14022515459/zip > "$RUNNER_TEMP/validation.zip"
+      - name: Reaudit actual ELF and create check-backup-only package
+        run: |
+          python3 tools/kernel/stock_cnss_stage0194.py \
+            --full "$RUNNER_TEMP/diagnostics.zip" --compact "$RUNNER_TEMP/validation.zip" \
+            --output "$RUNNER_TEMP/XAirDrop-17-stage-0194.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xairdrop-stage0194-check-backup-${{ github.run_id }}
+          compression-level: 0
+          path: |
+            ${{ runner.temp }}/XAirDrop-17-stage-0194.zip
+            ${{ runner.temp }}/XAirDrop-17-stage-0194.json
+          if-no-files-found: error
