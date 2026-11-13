@@ -1,3 +1,7 @@
+## 当前验证阶段 0181（实际 host/runtime/native DOWN 组合）
+
+0180 最终 `685c780` 的八项必需 CI 全部通过。0181 关闭先前 host/runtime 分开测试的结果模型边界：生产六个 host 函数与实际 runtime/batch/native CDS/SM 同进程运行，覆盖 64 组合、16 类保留/失败、三项变异及 foreign-PSOC 注册表并发。Host factory/终端 adapter/sync 物理原语仍明确模拟；本批不修改生产门禁，无实机结论。完整 Actions 待观察。见 [0181](POPSICLE-DOWN-HOST-COMPOSITE-0181.md)。
+
 ## 0180 完整 CI 修复中
 
 `7c9963a` 的自动 native DOWN 等新增链路通过，但完整 CI 有两项失败：host RTNL 负例标识不匹配；历史 parent/CDS hash 审计未还原 exact 0180 插入。本次仅修验证并保留原散列/生产门禁，新增五项还原边界回归，集中重验；不能将 0180 记为全部通过。

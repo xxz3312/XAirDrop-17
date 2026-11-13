@@ -1,3 +1,9 @@
+## 0181 — actual host/runtime/native DOWN ownership composition
+
+- Confirmed all eight required 0180 jobs passed at 685c780 / Actions 43347366011.
+- Added one-process composition of six actual production host functions with actual runtime preparation/batch/retirement and pinned native CDS/SM/WMA lifecycle. Factory, physical synchronization and terminal HDD adapter/sync destruction stay explicit models.
+- Cover 64 combinations, 16 refusal/partial/terminal-close cases, three authority mutations, and 2000 foreign registry publications against 200 observations. Native/sanitizer and target CI pending; production behavior, configured START/public init and phone deployment unchanged.
+
 ## 0180 — native CDS observation of handed-off raw DOWN hosts
 
 - Confirmed all eight required 0179 CI jobs, including target diagnostic compilation, passed at 4341e7c / Actions 43291591879.

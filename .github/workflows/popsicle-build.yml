@@ -59,6 +59,7 @@ on:
       - tools/kernel/mishare_down_retire_fixture.py
       - tools/kernel/mishare_down_runtime_fixture.py
       - tools/kernel/mishare_down_auto_fixture.py
+      - tools/kernel/mishare_down_host_composite_fixture.py
       - tools/kernel/mishare_native_cleanup_fixture.py
       - tools/kernel/mishare_native_objmgr_fixture.py
       - tools/kernel/mishare_native_refs_fixture.py
@@ -212,6 +213,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Actual host ownership and native DOWN recovery composition
+        run: python3 tools/kernel/mishare_down_host_composite_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-host-composite.json
       - name: Native CDS automatic handed-off DOWN observation
         run: python3 tools/kernel/mishare_down_auto_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-auto.json
       - name: Completed DOWN native-window runtime retirement
@@ -280,6 +283,7 @@ jobs:
             stop-down-retire.json
             stop-down-runtime.json
             stop-down-auto.json
+            stop-down-host-composite.json
             stop-active-fence.json
             stop-plan-commit.json
             stop-plan-preview.json
