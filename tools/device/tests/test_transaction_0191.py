@@ -18,6 +18,7 @@ if os.environ.get('XAIRDROP_REQUIRE_MKSH')=='1' and not shutil.which('mksh'):
 
 class TransactionTests(unittest.TestCase):
     SHELL='sh'
+    PROBE='popsicle-transaction-0191.sh'
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name);self.bin=self.root/'bin';self.bin.mkdir()
@@ -37,9 +38,9 @@ class TransactionTests(unittest.TestCase):
         self.command('stat','if [ "$2" = %u ];then echo "${FIXTURE_OWNER:-0}";else exec /usr/bin/stat "$@";fi')
         for name in ['rm','mv','cp','rmmod','insmod','reboot','svc','cmd','start','stop','sync']:
             self.command(name,'echo FORBIDDEN >&2;exit 99')
-        source=(ROOT/'tools/device/popsicle-transaction-0191.sh').read_text()
+        source=(ROOT/'tools/device'/self.PROBE).read_text()
         source=source.replace('PATH=/system/bin:/system/xbin',f'PATH={self.bin}:/usr/bin:/bin')
-        source=re.sub(r'/data(?=[ /\n])|/data/adb|/proc/sys/',lambda m:str(self.root)+m.group(),source)
+        source=re.sub(r'/data(?=[ /\n)])|/data/adb|/proc/sys/',lambda m:str(self.root)+m.group(),source)
         self.script=self.root/'probe.sh';self.script.write_text(source)
     def put(self,name,value):
         p=self.root/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(value)
@@ -73,7 +74,7 @@ class TransactionTests(unittest.TestCase):
         c=self.run_probe();self.assertNotEqual(c.returncode,0);self.assertIn(b'transaction.access\tREJECTED',c.stdout)
         self.state.chmod(0o755)
         c=self.run_probe(FIXTURE_OWNER='1000');self.assertNotEqual(c.returncode,0)
-        with self.assertRaises(ValueError):self.classify(c.stdout)
+        self.assertEqual(self.classify(c.stdout)['status'],'TRANSACTION_RECORD_BLOCKED')
         self.state.rename(self.root/'retained-outside')
         self.state.symlink_to(self.root/'retained-outside',target_is_directory=True)
         c=self.run_probe();self.assertNotEqual(c.returncode,0)

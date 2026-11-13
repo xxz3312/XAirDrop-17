@@ -11,6 +11,12 @@ SMALL=('boot-id','phase','manifest.sha256','wifi.before','phase.new','phase.afte
 OPS=r'(wifi-off|hals-stop|remove-wlan|insert-provider|insert-wlan|hals-start|wifi-restore)'
 PHASE=r'(backup-only|prepared|active|intent:'+OPS+r'|done:'+OPS+r'|returned:'+OPS+r':[0-9]+)'
 
+
+def parent_signature_allowed(value,android_data=False):
+    if android_data and value in ('1000:1000:771','1000:1000:0771'):return True
+    match=re.fullmatch(r'0:[0-9]+:([0-7]{3,4})',value)
+    return bool(match and not (int(match[1],8)&0o022))
+
 def classify(raw):
     if len(raw)>16384:raise ValueError('Oversized capture')
     f={}
@@ -20,7 +26,8 @@ def classify(raw):
             raise ValueError('Malformed/ambiguous fields')
         f[p[0]]=p[1]
     base={'schema','stage','uid','boot_id','boot_id.after','transaction.present','capture_status'}
-    if f.get('transaction.present') not in ('0','1'):raise ValueError('Invalid transaction presence')
+    if f.get('stage')=='0192':base.update(('parent.data.meta','parent.adb.meta'))
+    if f.get('transaction.present') not in ('0','1','UNKNOWN'):raise ValueError('Invalid transaction presence')
     if f['transaction.present']=='1':
         if 'transaction.access' in f:base.add('transaction.access')
         else:
@@ -29,11 +36,16 @@ def classify(raw):
             base.update(k+'.'+s for k in ('backup','hals') for s in ('status','sha256'))
     if set(f)!=base:raise ValueError('Missing/unexpected fields')
     reasons=[]
-    for k,v in {'schema':'1','stage':'0191','uid':'0','capture_status':'CAPTURE_COMPLETE_RECORD_ONLY'}.items():
+    for k,v in {'schema':'1','uid':'0','capture_status':'CAPTURE_COMPLETE_RECORD_ONLY'}.items():
         if f[k]!=v:reasons.append(k)
+    if f['stage'] not in ('0191','0192'):reasons.append('stage')
+    if f['stage']=='0192':
+        for key,android_data in [('parent.data.meta',True),('parent.adb.meta',False)]:
+            if not parent_signature_allowed(f[key],android_data):reasons.append(key)
     if not re.fullmatch(UUID,f['boot_id']) or f['boot_id.after']!=f['boot_id']:reasons.append('boot_changed_or_invalid')
     status='TRANSACTION_RECORD_BLOCKED'
-    if f['transaction.present']=='0':
+    if f['transaction.present']=='UNKNOWN':reasons.append('transaction_presence_unverified')
+    elif f['transaction.present']=='0':
         if not reasons:status='NO_TRANSACTION_RECORDED'
     elif 'transaction.access' in f:reasons.append('transaction_access_rejected')
     else:
@@ -55,7 +67,7 @@ def classify(raw):
         if f['hals.status']!='OK' or not re.fullmatch(r'[0-9a-f]{64}',f['hals.sha256']):reasons.append('hals_record_unreadable')
         if not reasons:
             status='SAME_BOOT_TRANSACTION_PRESERVED' if f['boot-id.value']==f['boot_id'] else 'PRIOR_BOOT_RECORD_ONLY'
-    return {'stage':'0191','status':status,'reasons':reasons,'capture_sha256':hashlib.sha256(raw).hexdigest(),
+    return {'stage':f['stage'],'status':status,'reasons':reasons,'capture_sha256':hashlib.sha256(raw).hexdigest(),
             'archive_authorized':False,'replay_authorized':False,'load_authorized':False,'runtime_certified':False,
             'limitations':'User-supplied observations are not device attestation or serialization. '
                 'Even prior-boot matching records require fresh qualified stock identity and an independently '

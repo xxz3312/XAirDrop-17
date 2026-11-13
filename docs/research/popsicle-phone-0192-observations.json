@@ -1,0 +1,49 @@
+{
+  "stage": "0192",
+  "status": "PARTIAL_STOCK_MATCH_DEPLOYMENT_BLOCKED",
+  "identity_capture_sha256": "80df4e2b49e76c7b89ea345f5211aa0abe7169679ecf3a82151d98d8d47c30a3",
+  "transaction_capture_sha256": "85be06f1fb3dedd489102cc3d6d2f766c677de8fd170ea6613ffc3fd371679cf",
+  "observed_firmware": "OS4.0.6.0.XPBCNXM",
+  "captured_target_firmware": "OS4.0.5.0.XPBCNXM",
+  "observed_kernel_release": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+  "kernel_release_matches": true,
+  "observed_boot_sha256": "84e5aded3a181265b4a53132d3e4aafa29a8946112b166b8bc78f0724da390e8",
+  "captured_boot_sha256": "a0ca3dd5c43f48e5ee7eb6eb602cc8fa4e9c2967c9eb5312530c3d50838d4a93",
+  "stock_module_observations": {
+    "cnss2": {
+      "vendor_sha256": "6e0494f4535ee6e7923493abe75db2e50e3216cf204334639a52d84e23c51a37",
+      "vendor_dlkm_sha256": "6e0494f4535ee6e7923493abe75db2e50e3216cf204334639a52d84e23c51a37",
+      "loaded_note_sha256": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3",
+      "all_match_captured_stock": true
+    },
+    "qca_cld3_peach_v2": {
+      "vendor_sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+      "vendor_dlkm_sha256": "202977cadf13b330a21838f3dd222cb0886eb0649d705937a778d7da69085f75",
+      "loaded_note_sha256": "e2db5a4c55b3664d2aa3d5ce4dc24af67df31f58d88f4e65121fd5aa0b050ecd",
+      "all_match_captured_stock": true
+    }
+  },
+  "blocked_identity_fields": [
+    "firmware",
+    "boot_sha256",
+    "xairdrop17-stockcnss-transaction.present"
+  ],
+  "transaction_result": {
+    "stage": "0191",
+    "status": "TRANSACTION_RECORD_BLOCKED",
+    "reasons": [
+      "capture_status",
+      "transaction_presence_unverified"
+    ],
+    "capture_sha256": "85be06f1fb3dedd489102cc3d6d2f766c677de8fd170ea6613ffc3fd371679cf",
+    "archive_authorized": false,
+    "replay_authorized": false,
+    "load_authorized": false,
+    "runtime_certified": false,
+    "limitations": "User-supplied observations are not device attestation or serialization. Even prior-boot matching records require fresh qualified stock identity and an independently qualified executor before any archival operation. Firmware 4.0.6.0 is not qualified by this record."
+  },
+  "kernel_payload_compared": false,
+  "accepted_profile_updated": false,
+  "load_authorized": false,
+  "runtime_certified": false
+}
