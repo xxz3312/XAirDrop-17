@@ -35,7 +35,9 @@ def parse(raw):
             if fields[key]=='1':required.add(f'{m}.{area}.sha256')
     required.update(m+'.loaded' for m in FOREIGN)
     required.update(t+'.present' for t in TRANSACTIONS)
-    if set(fields)!=required:raise ValueError('Missing or unexpected evidence fields')
+    if set(fields)!=required:
+        raise ValueError('Missing fields: '+','.join(sorted(required-fields.keys()))+
+                         '; unexpected fields: '+','.join(sorted(fields.keys()-required)))
     return fields
 
 def evaluate(raw):
@@ -45,10 +47,11 @@ def evaluate(raw):
     failures=[]
     def expect(key,value):
         if f[key]!=value:failures.append(key)
-    for key,value in {'schema':'1','stage':'0189','uid':'0','capture_status':'CAPTURE_COMPLETE_NOT_FOR_INSTALL',
+    for key,value in {'schema':'1','uid':'0','capture_status':'CAPTURE_COMPLETE_NOT_FOR_INSTALL',
                       'device':profile['device'],'firmware':profile['firmware'],'kernel':profile['kernel_release'],
                       'machine':'aarch64','boot_completed':'1','boot_sha256':profile['boot_sha256']}.items():
         expect(key,value)
+    if f['stage'] not in ('0189','0190'):failures.append('stage')
     if f['slot'] not in ('_a','_b'):failures.append('slot')
     if not re.fullmatch(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',f['boot_id']):failures.append('boot_id')
     for key in PROPS:expect(key+'.after',f[key])
@@ -63,7 +66,7 @@ def evaluate(raw):
             expect(m+'.initstate','live');expect(m+'.note_sha256',profile['stock'][m]['note_sha256'])
     for m in FOREIGN:expect(m+'.loaded','0')
     for t in TRANSACTIONS:expect(t+'.present','0')
-    return {'stage':'0189','status':'IDENTITY_MISMATCH_BLOCKED' if failures else 'CAPTURED_STOCK_IDENTITY_MATCH_ONLY',
+    return {'stage':f['stage'],'status':'IDENTITY_MISMATCH_BLOCKED' if failures else 'CAPTURED_STOCK_IDENTITY_MATCH_ONLY',
             'capture_sha256':hashlib.sha256(raw).hexdigest(),
             'stock_profile_sha256':hashlib.sha256(profile_path.read_bytes()).hexdigest(),
             'mismatched_fields':failures,'observed_firmware':f['firmware'],'observed_kernel':f['kernel'],
@@ -76,5 +79,11 @@ def evaluate(raw):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--capture',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);a=p.parse_args()
-    result=evaluate(a.capture.read_bytes());a.output.write_text(json.dumps(result,indent=2)+'\n')
-    print(result['status']);raise SystemExit(bool(result['mismatched_fields']))
+    raw=a.capture.read_bytes()
+    try:result=evaluate(raw)
+    except (ValueError,UnicodeError) as error:
+        result={'stage':'0190','status':'CAPTURE_INVALID_BLOCKED',
+                'capture_sha256':hashlib.sha256(raw).hexdigest(),'error':str(error),
+                'load_authorized':False,'runtime_certified':False,'deployment_bundle_created':False}
+    a.output.write_text(json.dumps(result,indent=2)+'\n')
+    print(result['status']);raise SystemExit(result['status']!='CAPTURED_STOCK_IDENTITY_MATCH_ONLY')

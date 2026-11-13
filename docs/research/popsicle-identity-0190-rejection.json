@@ -1,0 +1,16 @@
+{
+  "stage": "0190",
+  "status": "CAPTURE_INVALID_BLOCKED",
+  "capture_sha256": "67439775541ff98b48b42c294e931db7a048d7327ca6fc325ca713ff3f4a8670",
+  "error": "Missing fields: boot_sha256,cnss2.note_sha256,cnss2.vendor.sha256,cnss2.vendor_dlkm.sha256,qca_cld3_peach_v2.note_sha256,qca_cld3_peach_v2.vendor.sha256,qca_cld3_peach_v2.vendor_dlkm.sha256; unexpected fields: ",
+  "load_authorized": false,
+  "runtime_certified": false,
+  "deployment_bundle_created": false,
+  "observed_unverified_fields": {
+    "firmware": "OS4.0.6.0.XPBCNXM",
+    "kernel": "6.12.69-android16-6-g43b5ab7e247d-abogki558343811-4k",
+    "slot": "_a",
+    "stock_cnss_transaction_present": true
+  },
+  "scope": "Rejected user-uploaded 0189 capture. Observed fields do not establish complete device identity; no expected stock hash or supported firmware was changed."
+}

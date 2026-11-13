@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/popsicle-identity.yml'
       - 'tools/device/popsicle-identity-0189.sh'
+      - 'tools/device/popsicle-identity-0190.sh'
       - 'tools/device/tests/test_identity_0189.py'
       - 'tools/kernel/stock_cnss_identity.py'
       - 'kernel/abi/popsicle-pair-deployment.json'
@@ -19,20 +20,27 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Syntax and host rejection tests (no native compilation)
+      - name: Install mksh shell regression dependency
         run: |
-          sh -n tools/device/popsicle-identity-0189.sh
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Syntax and host rejection tests (no native compilation)
+        env:
+          XAIRDROP_REQUIRE_MKSH: "1"
+        run: |
+          sh -n tools/device/popsicle-identity-0190.sh
+          mksh -n tools/device/popsicle-identity-0190.sh
           python3 -m py_compile tools/kernel/stock_cnss_identity.py
           python3 -m unittest discover -s tools/device/tests -p 'test_*.py'
           python3 -m unittest discover -s tools/kernel -p 'test_*.py'
       - name: Digest standalone read-only collector
         run: |
           cd tools/device
-          sha256sum popsicle-identity-0189.sh > identity-SHA256SUMS
+          sha256sum popsicle-identity-0190.sh > identity-SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: popsicle-identity-0189-read-only-no-driver
+          name: popsicle-identity-0190-read-only-no-driver
           path: |
-            tools/device/popsicle-identity-0189.sh
+            tools/device/popsicle-identity-0190.sh
             tools/device/identity-SHA256SUMS
           if-no-files-found: error

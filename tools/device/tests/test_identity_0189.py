@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -14,7 +15,11 @@ ROOT=Path(__file__).resolve().parents[3]
 sys.path.insert(0,str(ROOT/'tools/kernel'))
 import stock_cnss_identity as identity
 
+if os.environ.get("XAIRDROP_REQUIRE_MKSH")=="1" and not shutil.which("mksh"):
+    raise RuntimeError("mksh is required for this CI shell regression")
+
 class IdentityTests(unittest.TestCase):
+    SHELL="sh"
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
         self.root=Path(self.tmp.name);self.bin=self.root/'bin';self.bin.mkdir()
@@ -39,13 +44,17 @@ sys.boot_completed) echo 1;;
 *) exit 1;; esac''')
         for name in ['insmod','rmmod','reboot','svc','cmd','start','stop','setprop','mount','rm','mv','cp','sync']:
             self.command(name,'echo FORBIDDEN >&2; exit 99')
-        source=(ROOT/'tools/device/popsicle-identity-0189.sh').read_text()
+        source=(ROOT/'tools/device/popsicle-identity-0190.sh').read_text()
+        source=self.map_source(source)
+        self.script=self.root/'probe.sh';self.script.write_text(source)
+
+    def map_source(self,source):
         source=source.replace('PATH=/system/bin:/system/xbin',f'PATH={self.bin}:/usr/bin:/bin')
         source=re.sub(r'/proc/sys/|/dev/block/|/sys/module/|/data/adb/|/\$area/lib/',
                       lambda m:str(self.root)+m.group(),source)
         # A host regular-file fixture stands in for an Android boot block device.
         source=source.replace('[ -b "$boot" ]','[ -f "$boot" ]')
-        self.script=self.root/'probe.sh';self.script.write_text(source)
+        return source
 
     def put(self,path,content):
         p=self.root/path;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content)
@@ -53,7 +62,7 @@ sys.boot_completed) echo 1;;
     def command(self,name,body):
         p=self.bin/name;p.write_text('#!/bin/sh\n'+body+'\n');p.chmod(0o755)
     def run_probe(self,*args,**env):
-        return subprocess.run(['sh',str(self.script),*args],capture_output=True,env=dict(os.environ,**env))
+        return subprocess.run([self.SHELL,str(self.script),*args],capture_output=True,env=dict(os.environ,**env))
     def evaluate(self,raw):
         with patch.object(identity,'ROOT',self.root):return identity.evaluate(raw)
     def capture(self):
@@ -109,5 +118,45 @@ sys.boot_completed) echo 1;;
                     raw+b'bad\tx\textra\n',raw+b'bad\t\n',b'\xff',b'x'*32769,
                     self.edit(raw,'cnss2.vendor.present','2')]:
             with self.subTest(raw=bad[:30]),self.assertRaises((ValueError,UnicodeError)):self.evaluate(bad)
+
+
+    def test_silently_skipped_digest_cannot_claim_complete(self):
+        source=self.script.read_text()
+        start=source.index('xi_digest() {');end=source.index('\nproperties() {',start)
+        self.script.write_text(source[:start]+'xi_digest() { :; }\n'+source[end:])
+        r=self.run_probe();self.assertNotEqual(r.returncode,0)
+        self.assertIn(b'capture_status\tCAPTURE_INCOMPLETE',r.stdout)
+        with self.assertRaises(ValueError):self.evaluate(r.stdout)
+
+    def test_cli_invalid_capture_writes_blocked_result(self):
+        capture=self.root/'incomplete.tsv';capture.write_bytes(b'schema\t1\n')
+        output=self.root/'blocked.json'
+        r=subprocess.run([sys.executable,str(ROOT/'tools/kernel/stock_cnss_identity.py'),
+                          '--capture',str(capture),'--output',str(output)],capture_output=True)
+        self.assertNotEqual(r.returncode,0)
+        result=json.loads(output.read_text());self.assertEqual(result['status'],'CAPTURE_INVALID_BLOCKED')
+        self.assertIs(result['load_authorized'],False);self.assertNotIn(b'Traceback',r.stderr)
+
+    def test_old_capture_missing_seven_hashes_is_rejected_despite_complete_status(self):
+        raw=self.capture()
+        self.put('vendor_dlkm/lib/modules/cnss2.ko','cnss2 fixture file')
+        self.put('vendor_dlkm/lib/modules/qca_cld3_peach_v2.ko','qca_cld3_peach_v2 fixture file')
+        raw=self.capture()
+        raw=b'\n'.join(line for line in raw.splitlines() if b'sha256\t' not in line)+b'\n'
+        with self.assertRaisesRegex(ValueError,'boot_sha256'):self.evaluate(raw)
+
+@unittest.skipUnless(shutil.which('mksh'),'mksh unavailable locally; mandatory in CI')
+class IdentityMkshTests(IdentityTests):
+    SHELL='mksh'
+
+    def test_legacy_hash_helper_reproduces_missing_fields(self):
+        old=(ROOT/'tools/device/popsicle-identity-0189.sh').read_text()
+        self.script.write_text(self.map_source(old))
+        r=self.run_probe()
+        # A historical reproduction, never a successful identity assessment.
+        self.assertEqual(r.returncode,0,r.stderr)
+        self.assertIn(b'capture_status\tCAPTURE_COMPLETE_NOT_FOR_INSTALL',r.stdout)
+        self.assertNotIn(b'boot_sha256\t',r.stdout)
+        with self.assertRaises(ValueError):self.evaluate(r.stdout)
 
 if __name__=='__main__':unittest.main()
