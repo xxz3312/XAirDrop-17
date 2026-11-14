@@ -1,6 +1,6 @@
 {
   "stage": "0205",
-  "status": "CYCLE_LOG_PASS_INDEPENDENT_EVIDENCE_PENDING",
+  "status": "CYCLE_AND_INDEPENDENT_EVIDENCE_PASS_SINGLE_TRIAL",
   "upload_sha256": "5f644f6ea3504484efcab1c3fcb184b138b5b5219260c142dbc93ec171d710a0",
   "upload_bytes": 68861,
   "result": 0,
@@ -20,8 +20,9 @@
   "provider_removed_rc": 0,
   "stock_hal_running": true,
   "final_wifi_enabled": true,
-  "final_stock_connection": "not yet connected at log end",
-  "independent_retained_snapshots_verified": false,
-  "kernel_logs_reviewed": false,
-  "apple_readiness_certified": false
+  "final_stock_connection": "subsequent framework logs and current status confirm connected/IP/VALIDATED",
+  "independent_retained_snapshots_verified": true,
+  "kernel_logs_reviewed": true,
+  "apple_readiness_certified": false,
+  "evidence_receipt": "popsicle-evidence0206-phone-receipt.json"
 }
