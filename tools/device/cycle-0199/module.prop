@@ -1,0 +1,6 @@
+id=xairdrop17_cycle0195
+name=XAirDrop-17
+version=0.0.199-preserved-retrial
+versionCode=199
+author=xxz3312
+description=Manual scan-aware WLAN/provider diagnostic cycle with original CNSS2 retained. Action checks only; no boot loading or Apple service.

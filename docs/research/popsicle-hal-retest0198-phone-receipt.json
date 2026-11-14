@@ -58,5 +58,19 @@
   "upstream_heads": {
     "Leekin2/XAirDrop": "585e850e3e026bf9eae90f654dafd01746bc5ec9",
     "Weverses/OPAirDrop": "28a3a1dbc9f515fa5705417a3973616e5ae6180d"
+  },
+  "aborted197_contract": {
+    "phase.sha256": "fc1795bae4fda18489c0f8603441c3355063a5d08021d2cc8bfd15236cce596f",
+    "boot-id.sha256": "e1c90261886dc2af7ef582939ba35a0cb6ebb685b03643306c58b2a6cb7a9e90",
+    "manifest.sha256.sha256": "cd2be97c190dbf74429f1c35c41b7445a38c883bd729352a53bb12f27c644410",
+    "wifi.before.sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "scan.before.sha256": "e056a35db086947e2f5969d747f0a7517bff00c7ffff1f9e7b47b72bfac9d948",
+    "hals.sha256": "dd68eff1a98e1f749b70c35576cc235dd56e6943d93466c5389c5eb7f64a3619",
+    "interface.before.sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "commands.log.sha256": "4072a2665a34e5660ffce4a8ff073fb1789f8792d38f1d0b8c4893796f886fa7",
+    "kernel.before.log.sha256": "73d3ffefcc6b064be48b44a8d8ed9a8917dee0e3f469a2872303a6fe20d41a44",
+    "kernel.after.log.sha256": "c01877f82bed4ba4b66b0f38d3325c82c4d2696d4813392e2b92a2d17c185ca6",
+    "boot_id": "7773c0b0-e133-47e4-b507-46a8bcd18751",
+    "manifest_sha256": "5cc340eedd0b5072eb4991983685b35cbf8654d008bbb748d1b61877a1464043"
   }
 }

@@ -1,0 +1,68 @@
+name: Popsicle 0199 preserved pre-unload retrial
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-cycle0199.yml'
+      - 'tools/device/cycle-0199/**'
+      - 'tools/device/cycle-0195/**'
+      - 'tools/device/stage-0194/**'
+      - 'tools/retrial0199/**'
+      - 'tools/kernel/stock_cnss_cycle0199.py'
+      - 'tools/kernel/stock_cnss_cycle0197.py'
+      - 'docs/research/popsicle-hal-retest0198-phone-receipt.json'
+      - 'tools/kernel/stock_cnss_cycle0195.py'
+      - 'tools/kernel/stock_cnss_stage0194.py'
+      - 'tools/kernel/stock_cnss_candidate_audit.py'
+      - 'tools/kernel/stock_cnss_bundle.py'
+      - 'docs/research/popsicle-hal-probe0196-phone-receipt.json'
+      - 'docs/research/popsicle-hal-restart-0196.json'
+      - 'docs/research/popsicle-stage0194-phone-receipt.json'
+      - 'docs/research/popsicle-0193-archive-receipt.json'
+      - 'docs/research/popsicle-stock-4.0.6-0193.json'
+      - 'docs/research/popsicle-candidate-0188-*.json'
+      - 'kernel/abi/popsicle-pair-deployment.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install mksh
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Qualify upgrade archive framework recovery and native effect boundaries
+        env:
+          XAIRDROP_REQUIRE_MKSH: '1'
+        run: |
+          for script in tools/device/cycle-0199/*.sh; do sh -n "$script"; mksh -n "$script"; done
+          python3 -m unittest discover -s tools/diagnostics -p 'test_*.py'
+          python3 -m unittest discover -s tools/retrial0199 -p 'test_*.py'
+          python3 -m unittest discover -s tools/observations -p 'test_*.py'
+          python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+      - name: Download immutable candidates without native rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14021858523/zip > "$RUNNER_TEMP/diagnostics.zip"
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14022515459/zip > "$RUNNER_TEMP/validation.zip"
+      - name: Independently audit raw ELF and create same-ID upgrade
+        run: |
+          python3 tools/kernel/stock_cnss_cycle0199.py \
+            --full "$RUNNER_TEMP/diagnostics.zip" --compact "$RUNNER_TEMP/validation.zip" \
+            --output "$RUNNER_TEMP/XAirDrop-17-0199.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xairdrop0199-scan-guard-upgrade-${{ github.run_id }}
+          compression-level: 0
+          path: |
+            ${{ runner.temp }}/XAirDrop-17-0199.zip
+            ${{ runner.temp }}/XAirDrop-17-0199.json
+          if-no-files-found: error

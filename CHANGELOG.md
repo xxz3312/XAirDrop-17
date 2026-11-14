@@ -1,3 +1,9 @@
+## 0199 — exact pre-unload record preservation and controlled fresh diagnostic
+
+- Keep the module ID and original CNSS2 architecture; require byte-pinned 0197 evidence and a complete no-clobber preserved archive before one new transaction. Do not permit generic failed-state reset or future replay.
+- Keep all scan/HAL/native gates; distinguish framework-restored failure from reboot-needed failure and add explicit test start/end markers. No native rebuild or automatic boot trial.
+- Qualify archive refusal, complete diagnostic sequence, all effect failure boundaries and post-reboot framework-only recovery; actual candidate loading remains phone-pending.
+
 ## 0198 — observe pre-unload HAL restart despite scan-off
 
 - Phone 0197 preserved the old failure and blocked at sample 7 before any driver command, while Wi-Fi/scan remained disabled. Cleanup commands and final connected state are logged. The user subsequently reported manually enabling/scanning/connecting Wi-Fi at an unresolved time; spontaneous restart, scan-guard failure and script-only connection restoration are not established by this run.
