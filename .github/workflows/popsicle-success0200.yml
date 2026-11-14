@@ -1,0 +1,30 @@
+name: Popsicle 0200 completed transaction evidence
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-success0200.yml'
+      - 'tools/device/popsicle-success-evidence-0200.sh'
+      - 'tools/success0200/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install mksh
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Verify completed transaction collector without native effects
+        env:
+          XAIRDROP_REQUIRE_MKSH: '1'
+        run: |
+          sh -n tools/device/popsicle-success-evidence-0200.sh
+          mksh -n tools/device/popsicle-success-evidence-0200.sh
+          python3 -m unittest discover -s tools/success0200 -p 'test_*.py'

@@ -1,0 +1,11 @@
+# 0200 — inspect the completed 0199 transaction before candidate HAL activation
+
+The user confirmed that Wi-Fi automatically reconnected after the immediate 0199 status showed no association. Record this as operator-reported later automatic reconnection; do not rewrite the immediate log or claim independently measured latency/Internet validation.
+
+0199 established a phone-reported diagnostic round trip with no HAL/native start while the candidate was installed. Before the next native/HAL trial, inspect retained kernel.before/kernel.after, boot/manifest/journal identity, current stock module notes and current associated state. Current text receipt lacks the kernel diagnostics and boot ID needed to pin a new preservation contract. Do not discard or replay the completed 0199 record.
+
+Rechecked XAirDrop `585e850e3e026bf9eae90f654dafd01746bc5ec9` (`module/action.sh`) and OPAirDrop `28a3a1dbc9f515fa5705417a3973616e5ae6180d` (`module/bin/control.sh`). Their retained-CNSS2 stack lifecycle remains the reference. XAirDrop starts HAL after candidate loading, whereas 0199 deliberately did not; the next trial must validate that boundary explicitly. No native or module upgrade is needed for the evidence export.
+
+`popsicle-success-evidence-0200.sh` reuses the qualified 0198 read-only capture: private copied metadata, source hashes before/after, no driver binary export, timed pipe-bound framework queries and original files untouched. Require completed phase `restored` and installed versionCode199. Add current Wi-Fi status through a pipe; preserve its actual query return code. Publish exclusively to `/sdcard/Download/xairdrop-0200-evidence.tar.gz`, refusing existing files/symlinks, and recheck the trial lock before publication. Temporary archive and private staging directory are cleaned. There is no call to the controller, driver loader, Wi-Fi setter, HAL control or reboot.
+
+Local six tests pass; six mksh cases await CI. Cases cover source preservation, missing/symlink/lock rejection, query failures retained as evidence, completed-version gates, output collision/symlink refusal, pipe-bound current status and late lock publication refusal. Only collector tests/syntax run in this batch; no native rebuild or install package. Keep Wi-Fi normally connected for this capture; it is not the next driver experiment.

@@ -1,6 +1,6 @@
 {
   "stage": "0199",
-  "status": "PHONE_REPORTED_DIAGNOSTIC_LOAD_UNLOAD_STOCK_RESTORE_PASS_ASSOCIATION_PENDING",
+  "status": "PHONE_REPORTED_DIAGNOSTIC_ROUNDTRIP_PASS_AND_LATER_AUTORECONNECT_CONFIRMED",
   "source_commit": "53713576d8553d9c5aa42ae0fcdd7c9270f6d397",
   "receipt_file": "xairdrop-0199-cycle.txt",
   "receipt_sha256": "f5699abfecc31a5efff3ffe3e64b36b4d1b57426990c351a846f2b431d51d04d",
@@ -50,5 +50,7 @@
   "automatic_wifi_reconnection_certified": false,
   "apple_discovery_or_transfer_tested": false,
   "native_replay_allowed": false,
-  "raw_kernel_logs_independently_reviewed": false
+  "raw_kernel_logs_independently_reviewed": false,
+  "user_report_later_automatic_reconnection": true,
+  "automatic_reconnection_evidence": "user report after command completion; immediate log remained unassociated"
 }
