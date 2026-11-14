@@ -1,0 +1,34 @@
+{
+  "stage": "0195",
+  "status": "DIAGNOSTIC_CYCLE_CI_PASS_PHONE_PENDING",
+  "source_commit": "09b8f04c55cea7eb5d4f2e703466feb9fb6c9122",
+  "workflow_run_id": 43540619346,
+  "job_id": 132280066035,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/43540619346",
+  "device_tests": {
+    "passed": 166,
+    "skipped": 0,
+    "mksh_included": true
+  },
+  "kernel_tests": {
+    "passed": 110,
+    "skipped": 0
+  },
+  "artifact_id": 14092485211,
+  "package": {
+    "name": "XAirDrop-17-cycle-0195.zip",
+    "bytes": 168801167,
+    "sha256": "133f64faee055422082222646d192a4886afe24689dcea5002e27fecbe405b5f",
+    "matches_local_production": true,
+    "stage0194_backup_manifest_sha256": "58ccfda3c4bbe20bd150c81fc80ec4915e4bd4fa194134156698373c9ce14df7"
+  },
+  "cycle_enabled": true,
+  "apply_enabled": false,
+  "autostart": false,
+  "driver_rebuilt": false,
+  "driver_bytes_rewritten": false,
+  "partial_failure_live_recovery": false,
+  "phone_executed": false,
+  "runtime_certified": false,
+  "apple_transfer_certified": false
+}
