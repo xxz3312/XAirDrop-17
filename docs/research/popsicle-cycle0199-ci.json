@@ -1,0 +1,32 @@
+{
+  "stage": "0199",
+  "source_commit": "53713576d8553d9c5aa42ae0fcdd7c9270f6d397",
+  "status": "CI_PASSED_PHONE_PENDING",
+  "workflow_run": 43555492783,
+  "job_id": 132327299524,
+  "local_new_controller_tests": {
+    "passed": 10,
+    "skipped_mksh": 9
+  },
+  "local_kernel_tool_tests": 110,
+  "native_rebuild": false,
+  "native_sequence_unchanged_from_0197": true,
+  "stable_module_id": "xairdrop17_cycle0195",
+  "version_code": 199,
+  "local_package_sha256": "dc2dd8197827c5f2e3403e6f456bf4a3957af7e003225c67bfd0aaa93944ffe3",
+  "package_bytes": 168804779,
+  "candidate_elf_bytes_unchanged": true,
+  "phone_load_restore_certified": false,
+  "ci_test_counts": {
+    "historical_diagnostics": 43,
+    "preserved_retrial": 19,
+    "observations": 8,
+    "kernel_tools": 110,
+    "total": 180,
+    "skipped": 0
+  },
+  "ci_artifact_id": 14098776696,
+  "ci_package_sha256": "dc2dd8197827c5f2e3403e6f456bf4a3957af7e003225c67bfd0aaa93944ffe3",
+  "ci_package_matches_local": true,
+  "ci_job_conclusion": "success"
+}
