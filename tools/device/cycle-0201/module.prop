@@ -1,0 +1,6 @@
+id=xairdrop17_cycle0195
+name=XAirDrop-17
+version=0.0.201-candidate-hal
+versionCode=201
+author=xxz3312
+description=Manual candidate HAL and Wi-Fi lifecycle trial with original CNSS2 retained. Action checks only; no boot loading or Apple service.

@@ -1,3 +1,9 @@
+## 0201 — candidate HAL and ordinary Wi-Fi lifecycle
+
+- Preserve only the exact reviewed completed0199 transaction; keep the stable module ID and all earlier archives/backups. Candidate ELF bytes and original CNSS2 remain unchanged.
+- Add candidate HAL start, Wi-Fi enable, one scan request and bounded association/IP observation, then explicit Wi-Fi/HAL shutdown with ten stopped samples before normal candidate removal and original restoration. Scan command/cache success is not scan completion proof.
+- Ordinary observation gaps return code3 after confirmed original restoration; identity, HAL, signal, effect or journal faults stop subsequent loaders. Post-reboot recovery includes the observation phase and never replays drivers.
+
 ## 0199 — exact pre-unload record preservation and controlled fresh diagnostic
 
 - Keep the module ID and original CNSS2 architecture; require byte-pinned 0197 evidence and a complete no-clobber preserved archive before one new transaction. Do not permit generic failed-state reset or future replay.
