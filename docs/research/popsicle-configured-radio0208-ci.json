@@ -1,6 +1,6 @@
 {
   "stage": "0208",
-  "status": "FOCUSED_STOP_PASSED_FULL_TARGET_LINKING_PENDING_USER_WILL_RESUME",
+  "status": "PRODUCTION_BUILD_AND_FOCUSED_STOP_REQUALIFICATION_PASSED",
   "production_commit": "a05958f4c1a2c1c9ef1206b9a415d449a5e4886e",
   "production_run": 43604892297,
   "local_python_tests": 110,
@@ -36,6 +36,11 @@
   "production_job": 132477308922,
   "full_compile": "success",
   "cnss_provider_interfaces": "success",
-  "full_target_linking": "in_progress",
-  "do_not_wait_for_ci": true
+  "full_target_linking": "success",
+  "do_not_wait_for_ci": true,
+  "selected_layout_checks": "success",
+  "recorded_offline_module_checks": "success_not_phone_certification",
+  "required_job_classes_passed": 8,
+  "original_overall_run": "failure_due_to_obsolete_fixture_expectation",
+  "acceptance_scope": "Seven original job successes plus successful focused stop requalification; identical production source hashes. No independent installation ELF audit or phone activation."
 }
