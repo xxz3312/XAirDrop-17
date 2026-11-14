@@ -1,6 +1,6 @@
 {
   "stage": "0197",
-  "status": "PHONE_REPORTED_PRE_UNLOAD_HAL_RESTART_BLOCKED_FRAMEWORK_RESTORED",
+  "status": "PHONE_REPORTED_PRE_UNLOAD_GUARD_ABORT_WITH_MANUAL_WIFI_ACTION_TIMING_UNKNOWN",
   "receipt_file": "xairdrop-0197-cycle.txt",
   "receipt_sha256": "6fb395c9ef545815b1e609e20651b99928c5b3460032acbee2ff579e83ee5406",
   "receipt_bytes": 9854,
@@ -30,6 +30,11 @@
   "internet_validation_not_established": true,
   "native_load_restore_certified": false,
   "restart_requester_in_this_log": "not captured",
-  "scan_always_disabled_is_sufficient_hal_quiescence_control": false,
-  "retry_cycle_authorized": false
+  "retry_cycle_authorized": false,
+  "user_report_manual_wifi_enable_scan_and_connection": true,
+  "manual_action_timing_relative_to_guard_and_command_completion": "unknown; clarification required",
+  "spontaneous_hal_restart_established_by_this_run": false,
+  "restoration_attributable_to_script_alone_established": false,
+  "framework_cleanup_commands_and_marker_observed": true,
+  "scan_guard_sufficiency_determined_by_this_run": false
 }

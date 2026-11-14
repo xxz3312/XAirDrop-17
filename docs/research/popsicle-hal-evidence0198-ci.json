@@ -1,0 +1,19 @@
+{
+  "stage": "0198",
+  "status": "OBSERVATION_TOOLS_CI_PASS_OPERATOR_TIMING_PENDING",
+  "source_commit": "67f73e95bf298d49be854bad7f92184f5f28092b",
+  "workflow_run_id": 43552353408,
+  "job_id": 132317434584,
+  "tests_passed": 8,
+  "tests_skipped": 0,
+  "sh_and_mksh": true,
+  "collector_sha256": "4464c63e2f32c9ae64eafea05afafa7431271437574f706ab7962556a95ec4d1",
+  "operator_manual_wifi_action_reported": true,
+  "operator_action_timing_established": false,
+  "spontaneous_restart_established": false,
+  "scan_guard_sufficiency_established_by_phone_run": false,
+  "regression_scope": "safe guard abort and framework restoration under an external HAL-running state, not causal attribution",
+  "phone_evidence_export_observed": false,
+  "native_retry_authorized": false,
+  "native_build_or_new_module_package": false
+}
