@@ -1,0 +1,41 @@
+{
+  "stage": "0208",
+  "status": "FOCUSED_STOP_PASSED_FULL_TARGET_LINKING_PENDING_USER_WILL_RESUME",
+  "production_commit": "a05958f4c1a2c1c9ef1206b9a415d449a5e4886e",
+  "production_run": 43604892297,
+  "local_python_tests": 110,
+  "initial_fixture_failure": "Expected EOPNOTSUPP during an owned START/STOP MC reservation; actual generic pending-work guard returns EINPROGRESS without releasing resources. Fixture corrected and explicit UP/empty-work refusal added.",
+  "production_sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.c": "1843b497003dbe277c0ce2a5595cdc5f2f39795022987ee11d732dc29f73d0a5",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_runtime.h": "e049461552db1f60a1e43772b28301c6ecd470a4926e7e87cc96d6f4309e5107"
+  },
+  "phone_actions": false,
+  "public_init_opened": false,
+  "active_configured_ssr_opened": false,
+  "installed_version": 205,
+  "focused_source_commit": "cfefff822ef8c42cf290d9c1dd595b16fd11ae02",
+  "focused_run": 43605506637,
+  "focused_job": 132479161536,
+  "configured_composite": "success",
+  "configured_cycles": 512,
+  "admission_faults": 16,
+  "radio_faults": 7,
+  "cleanup_faults": 6,
+  "configured_mutations": 6,
+  "focused_changes": [
+    ".github/workflows/popsicle-configured208.yml",
+    "tools/kernel/mishare_configured_radio_fixture.py"
+  ],
+  "production_unchanged_in_focused_branch": true,
+  "fixture_repair_runs": [
+    43604892297,
+    43605193307,
+    43605355702
+  ],
+  "focused_stop_conclusion": "success",
+  "production_job": 132477308922,
+  "full_compile": "success",
+  "cnss_provider_interfaces": "success",
+  "full_target_linking": "in_progress",
+  "do_not_wait_for_ci": true
+}
