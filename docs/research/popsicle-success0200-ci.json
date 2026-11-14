@@ -1,0 +1,15 @@
+{
+  "stage": "0200",
+  "status": "CI_PASSED_PHONE_EVIDENCE_PENDING",
+  "source_commit": "fd47dae4eed48ba35b87d5ffd2393bad3fd30197",
+  "workflow_run": 43565640735,
+  "job_id": 132358768840,
+  "tests_passed": 12,
+  "tests_skipped": 0,
+  "script_sha256": "04fc315cb5b84b4309d4d1e49683746dcf5f5b87c656a8ecc592d56579f6b696",
+  "native_rebuild": false,
+  "new_install_package": false,
+  "driver_operations": false,
+  "wifi_hal_control": false,
+  "existing_transaction_unchanged": true
+}
