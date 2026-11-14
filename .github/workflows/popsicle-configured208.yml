@@ -1,0 +1,145 @@
+name: Popsicle 0208 configured radio stop qualification
+on:
+  push:
+    branches: [codex/configured208-check-a05958f]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stop-admission:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Fetch pinned WLAN and apply existing patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/stop-admission-wlan"
+          git -C "$RUNNER_TEMP/stop-admission-wlan" remote add origin https://github.com/MiCode/vendor_qcom_opensource_wlan.git
+          git -C "$RUNNER_TEMP/stop-admission-wlan" fetch --depth=1 origin 36df473046706a5259942e1bf7222108dbbb860f
+          git -C "$RUNNER_TEMP/stop-admission-wlan" checkout --detach FETCH_HEAD
+          for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
+            git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
+          done
+      - name: Configured native START UP STOP DOWN and ordinary cleanup
+        run: python3 tools/kernel/mishare_configured_radio_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-configured-radio.json
+      - name: Opaque runtime and radio snapshot ownership
+        run: python3 tools/kernel/mishare_snapshot_owner_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-snapshot-owner.json
+      - name: Actual host factory through native ordinary retirement
+        run: python3 tools/kernel/mishare_factory_native_lifecycle_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-factory-native.json
+      - name: Host recovery creation admission and factory rollback
+        run: python3 tools/kernel/mishare_host_fixture.py --creation-only --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host-creation.json
+      - name: Ordinary radio through actual host idle close
+        run: python3 tools/kernel/mishare_ordinary_host_close_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-ordinary-host-close.json
+      - name: Actual terminal host close and native DOWN retirement
+        run: python3 tools/kernel/mishare_down_host_close_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-host-close.json
+      - name: Actual host ownership and native DOWN recovery composition
+        run: python3 tools/kernel/mishare_down_host_composite_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-host-composite.json
+      - name: Native CDS automatic handed-off DOWN observation
+        run: python3 tools/kernel/mishare_down_auto_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-auto.json
+      - name: Completed DOWN native-window runtime retirement
+        run: python3 tools/kernel/mishare_down_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-runtime.json
+      - name: Completed DOWN controller and native response-timer retirement
+        run: python3 tools/kernel/mishare_down_retire_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-down-retire.json
+      - name: Native active radio fence origins and retention
+        run: python3 tools/kernel/mishare_active_fence_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-active-fence.json
+      - name: Configured START-plan adoption and native retirement
+        run: python3 tools/kernel/mishare_plan_commit_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-plan-commit.json
+      - name: Configured native START encoder preview and retirement
+        run: python3 tools/kernel/mishare_plan_preview_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-plan-preview.json
+      - name: Production host stop admission with sanitizers
+        run: python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-host.json
+      - name: External live-unload and native lifecycle with sanitizers
+        run: python3 tools/kernel/mishare_live_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-live.json
+      - name: Complete HDD unload result with sanitizers
+        run: python3 tools/kernel/mishare_unload_result_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-unload-result.json
+      - name: Native registration rollback and HDD load retention
+        run: python3 tools/kernel/mishare_registration_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-registration.json
+      - name: Native PCIe and CNSS2 checked lifecycle with sanitizers
+        run: python3 tools/kernel/mishare_cnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss.json
+      - name: Restored native CNSS2 interfaces with sanitizers
+        run: python3 tools/kernel/mishare_cnss_interfaces_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-cnss-interfaces.json
+      - name: Owned retry queue and completion ownership with sanitizers
+        run: python3 tools/kernel/mishare_retry_work_fixture.py
+      - name: Submitted retry native prepared SSR with sanitizers
+        run: python3 tools/kernel/mishare_retry_prepared_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry-prepared-reset.json
+      - name: Zero-attempt retry native prepared SSR with sanitizers
+        run: python3 tools/kernel/mishare_retry_zero_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry-zero-reset.json
+      - name: Retry prestart and native retirement composite with sanitizers
+        run: python3 tools/kernel/mishare_retry_native_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry-native.json
+      - name: Native retry group submission with sanitizers
+        run: python3 tools/kernel/mishare_retry_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-retry.json
+      - name: Native owned BSSID binding and prestart retirement with sanitizers
+        run: python3 tools/kernel/mishare_bssid_native_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-bssid-native.json
+      - name: Native radio cancel before work-drain ordering with sanitizers
+        run: python3 tools/kernel/mishare_radio_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-radio-cancel-order.json
+      - name: Native prestart configuration and ordinary retirement with sanitizers
+        run: python3 tools/kernel/mishare_prestart_native_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-prestart-native.json
+      - name: Native peer-completed SSR retirement with sanitizers
+        run: python3 tools/kernel/mishare_rate_peer_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-peer-reset.json
+      - name: Native peer-completed VDEV timer contract with sanitizers
+        run: python3 tools/kernel/mishare_rate_peer_timer_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-peer-timer.json
+      - name: Native late peer reply observation across SSR with sanitizers
+        run: python3 tools/kernel/mishare_rate_late_peer_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-late-peer.json
+      - name: Native late DELETE reply across SSR with sanitizers
+        run: python3 tools/kernel/mishare_rate_late_delete_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-late-delete.json
+      - name: Native first DP SSR continuation with sanitizers
+        run: python3 tools/kernel/mishare_rate_first_dp_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-first-dp.json
+      - name: Production host and runtime stop admission with sanitizers
+        run: |
+          python3 tools/kernel/mishare_rate_tail_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-tail.json
+          python3 tools/kernel/mishare_runtime_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-runtime.json
+          python3 tools/kernel/mishare_rate_final_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-final.json
+          python3 tools/kernel/mishare_rate_ordinary_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-ordinary.json
+          python3 tools/kernel/mishare_rate_reset_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-rate-reset.json
+          python3 tools/kernel/mishare_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-execution.json
+          python3 tools/kernel/mishare_pcie_execution_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-pcie-execution.json
+          python3 tools/kernel/mishare_icnss_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-icnss.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-stop-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            stop-host.json
+            stop-configured-radio.json
+            stop-down-retire.json
+            stop-down-runtime.json
+            stop-down-auto.json
+            stop-down-host-composite.json
+            stop-down-host-close.json
+            stop-ordinary-host-close.json
+            stop-host-creation.json
+            stop-factory-native.json
+            stop-snapshot-owner.json
+            stop-active-fence.json
+            stop-plan-commit.json
+            stop-plan-preview.json
+            stop-runtime.json
+            stop-retry-prepared-reset.json
+            stop-retry-zero-reset.json
+            stop-retry-native.json
+            stop-retry.json
+            stop-bssid-native.json
+            stop-radio-cancel-order.json
+            stop-prestart-native.json
+            stop-rate-peer-reset.json
+            stop-rate-peer-timer.json
+            stop-rate-late-peer.json
+            stop-rate-late-delete.json
+            stop-rate-first-dp.json
+            stop-rate-tail.json
+            stop-rate-final.json
+            stop-rate-ordinary.json
+            stop-rate-reset.json
+            stop-execution.json
+            stop-pcie-execution.json
+            stop-live.json
+            stop-unload-result.json
+            stop-registration.json
+            stop-cnss.json
+            stop-cnss-interfaces.json
+            stop-icnss.json
+          if-no-files-found: error
+          retention-days: 7
+

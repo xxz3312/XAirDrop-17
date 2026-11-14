@@ -53,7 +53,7 @@ TAIL=r'''
   state(o).configured_radio.returned && !state(o).configured_radio.stopped &&
   mishare_runtime_configured_start(o,freq)==-EALREADY && "EXPECTED_CONFIG208_START_ONCE");
  struct mishare_runtime_owner *held=o;
- assert(mishare_runtime_destroy(&held)==-EOPNOTSUPP && held==o && !pe_pending.bodyptr &&
+ assert(mishare_runtime_destroy(&held)==-EINPROGRESS && held==o && !pe_pending.bodyptr &&
   !pe_deletes && !dp_detaches && "EXPECTED_CONFIG208_NO_PREMATURE_PE");
  assert(mishare_runtime_configured_stop(o)==-EINPROGRESS && !state(o).radio.closing &&
   !state(o).configured_radio.stop_requested && !radio_stops && "EXPECTED_CONFIG208_PENDING_START_HELD");
@@ -69,6 +69,8 @@ TAIL=r'''
  radio_run(false);
  assert(state(o).radio.phase==MISHARE_RADIO_UP && state(o).radio.host_up &&
   radio_starts==1 && !radio_stops && !radio_downs && "EXPECTED_CONFIG208_NATIVE_UP");
+ assert(mishare_runtime_destroy(&held)==-EOPNOTSUPP && held==o && !pe_pending.bodyptr &&
+  !pe_deletes && !dp_detaches && "EXPECTED_CONFIG208_UP_REQUIRES_EXPLICIT_STOP");
  if(radio_fault==6) {
   mishare_runtime_quiesce_psoc(&psoc,MISHARE_QUIESCE_SSR);
   assert(mishare_runtime_configured_stop(o)==-ESHUTDOWN && o->radio &&
@@ -88,7 +90,7 @@ TAIL=r'''
    "EXPECTED_CONFIG208_STOP_POST_HELD");return;
  }
  assert(ret==-EINPROGRESS && state(o).configured_radio.stop_requested && o->radio &&
-  mishare_runtime_destroy(&held)==-EOPNOTSUPP && !pe_pending.bodyptr &&
+  mishare_runtime_destroy(&held)==-EINPROGRESS && !pe_pending.bodyptr &&
   "EXPECTED_CONFIG208_STOP_BEFORE_PE");
  if(radio_fault==4)radio_stop_fail=true;
  radio_run(false);
