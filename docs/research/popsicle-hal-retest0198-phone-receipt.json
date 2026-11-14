@@ -1,0 +1,62 @@
+{
+  "stage": "0198",
+  "status": "STOCK_ONLY_HAL_RETEST_PASSED_WITH_RETAINED_SYSTEMUI_ENABLE_EVENT",
+  "uploads": {
+    "xairdrop-0198-export.txt": "b8f3fe449b5dd2d66cb8a16eaf382176a7db5c86f97143ec65ff691ddc895402",
+    "xairdrop-0196-hal-retest.txt": "d64fd9be35e8bd04765d021c289ede2573a00d40829ecea1d0110ffbb69ce6ab",
+    "xairdrop-0198-evidence.tar.gz": "c53110a0924972767791fd51ce663b7d67249d2bce0c24dfdb5394689030dd8e"
+  },
+  "hal_stopped_sample_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "original_source_hashes_verified": 10,
+  "framework_dump_return_codes": {
+    "wifi": 0,
+    "wifiscanner": 0,
+    "wifip2p": 0,
+    "logcat": 0
+  },
+  "current_stock_cnss2_and_wlan_notes_match": true,
+  "current_provider_absent": true,
+  "retained_0197_phase": "done:hals-stop",
+  "retained_0197_commands_sha256": "4072a2665a34e5660ffce4a8ff073fb1789f8792d38f1d0b8c4893796f886fa7",
+  "retained_framework_events": [
+    {
+      "local_time": "11:17:24.162",
+      "event": "CMD_WIFI_TOGGLED",
+      "source": "com.android.shell",
+      "transition": "disable"
+    },
+    {
+      "local_time": "11:17:33.074",
+      "event": "CMD_WIFI_TOGGLED",
+      "source": "com.android.systemui",
+      "transition": "DisabledState -> EnabledState"
+    },
+    {
+      "local_time": "11:17:34.563",
+      "event": "CMD_WIFI_TOGGLED",
+      "source": "com.android.shell",
+      "transition": "cleanup baseline restoration"
+    }
+  ],
+  "interpretation": "SystemUI enable precedes shell cleanup, supporting reported manual action during the observation window. Does not prove all HAL restarts are operator-caused or guarantee post-unload stability.",
+  "retest_immediate_status_ip_null": true,
+  "subsequent_framework_ip_configuration_success_local_time": "11:50:26.698",
+  "internet_validation_certified": false,
+  "native_roundtrip_certified": false,
+  "native_replay_permitted": false,
+  "upstream_heads": {
+    "Leekin2/XAirDrop": "585e850e3e026bf9eae90f654dafd01746bc5ec9",
+    "Weverses/OPAirDrop": "28a3a1dbc9f515fa5705417a3973616e5ae6180d"
+  }
+}
