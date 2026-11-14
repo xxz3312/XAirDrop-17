@@ -1,0 +1,32 @@
+name: Popsicle 0196 stock HAL stability probe
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-hal-probe0196.yml'
+      - 'tools/device/popsicle-hal-probe-0196.sh'
+      - 'tools/diagnostics/test_hal_probe0196.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install mksh
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Test actual framework-only script and restoration paths
+        env:
+          XAIRDROP_REQUIRE_MKSH: '1'
+        run: |
+          sh -n tools/device/popsicle-hal-probe-0196.sh
+          mksh -n tools/device/popsicle-hal-probe-0196.sh
+          python3 -m unittest discover -s tools/diagnostics -p 'test_*.py'
+      - name: Record script digest
+        run: sha256sum tools/device/popsicle-hal-probe-0196.sh

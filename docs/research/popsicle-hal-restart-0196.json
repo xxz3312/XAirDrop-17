@@ -1,0 +1,33 @@
+{
+  "stage": "0196",
+  "status": "HAL_LAZY_RESTART_OBSERVED_STOCK_PROBE_PHONE_PENDING",
+  "source_0195_commit": "09b8f04c55cea7eb5d4f2e703466feb9fb6c9122",
+  "evidence_archive": "xairdrop-0195-failure-evidence.tar.gz",
+  "evidence_sha256": "c634f1e87047e9720800af0eda00f19db7fe345979c52de2040de1e43c4d4f82",
+  "evidence_bytes": 173792,
+  "kernel_before_sha256": "50b878dbca8468e48d6cea22d01ea63c563837a162da1cd0f984120d9eacaa75",
+  "kernel_after_sha256": "88f2136296db5cf230a80cad61e7da502e461eadbffba7b1d8cd94779fa12801",
+  "commands_log_sha256": "f05c474a242f4baa56e93f87e6a4240ef81c4d14dcfc1d5a017ce36324bf14cc",
+  "transaction_manifest_sha256": "46a964d7a416c8b56034bfe0df37ec641ff090710cc2623da4272ca69e751853",
+  "last_phase": "returned:insert-provider:1",
+  "timeline_uptime_seconds": {
+    "hal_stop_ctl_processed": 258.117437,
+    "original_wlan_hard_unload": 259.289062,
+    "original_wlan_deinitialized": 259.394797,
+    "framework_lazy_lookup": 260.237141,
+    "hal_start": 260.237611,
+    "hal_started_running": 260.240443
+  },
+  "lazy_start_requester": "system_server via servicemanager ctl.interface_start",
+  "hal_restart_observed": true,
+  "scan_always_available_observed": true,
+  "scan_setting_as_unique_restart_cause_confirmed": false,
+  "exact_blocking_gate_logged": false,
+  "likely_blocking_gate_inference": "cy_hals_stopped in insert-provider common preconditions",
+  "provider_insmod_observed": false,
+  "native_load_restore_certified": false,
+  "cycle_retry_authorized": false,
+  "stock_hal_probe_phone_executed": false,
+  "probe_driver_loading_operations": false,
+  "probe_updates_module_or_init_boot": false
+}

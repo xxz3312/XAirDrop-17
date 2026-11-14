@@ -1,3 +1,9 @@
+## 0196 — observe framework lazy HAL restart and qualify stock-only probe
+
+- Retained logs show system_server requested lazy AIDL HAL startup after original WLAN removal. This fits the unlabelled HAL-stop gate failure before provider insertion; the scan-always flag was enabled, but its causal role remains unproven.
+- Add a standalone framework-only probe: snapshot and temporarily disable scan-always/Wi-Fi, stop HAL, observe ten stopped samples with unchanged stock notes, then restore both original toggles and HAL, including partial-command failures and signals. No module loader, trial replay, new module ID or native rebuild.
+- Keep raw private kernel logs out of the repository. Persist hashes and the narrowly relevant event timeline. Stock probe device acceptance remains pending.
+
 ## 0195 phone incident — diagnostic round trip failed
 
 - Phone log records original WLAN removal followed by a pre-provider-command failure; no provider/candidate WLAN insmod or successful restoration was observed. The user reported Wi-Fi unavailable and subsequently restored after recovery guidance.
