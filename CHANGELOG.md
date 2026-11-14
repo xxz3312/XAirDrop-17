@@ -1,3 +1,8 @@
+## 0195 phone incident — diagnostic round trip failed
+
+- Phone log records original WLAN removal followed by a pre-provider-command failure; no provider/candidate WLAN insmod or successful restoration was observed. The user reported Wi-Fi unavailable and subsequently restored after recovery guidance.
+- Retain failed transaction and original backup. No cycle retry or new driver trial pending retained kernel-log analysis and explicit gate diagnostics. Host/CI success is not phone load/restoration acceptance.
+
 ## 0195 — explicit diagnostic candidate load and stock restore
 
 - Add an independent manual-only cycle package retaining stock CNSS2 and exact raw 0187 WLAN/provider bytes. Keep 0194 backup and 0193 archive immutable; capture fresh current-boot baseline separately.

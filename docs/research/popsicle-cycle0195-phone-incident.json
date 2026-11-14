@@ -1,0 +1,31 @@
+{
+  "stage": "0195",
+  "status": "PHONE_REPORTED_DIAGNOSTIC_CYCLE_FAILED",
+  "receipt_file": "xairdrop-0195-cycle.txt",
+  "receipt_sha256": "6e46b095beb54adaf05157f5eb509e1f9487440f1d257d2c858faea2316255fb",
+  "source_commit": "09b8f04c55cea7eb5d4f2e703466feb9fb6c9122",
+  "phone_report_date": "2026-11-14",
+  "last_phase": "returned:insert-provider:1",
+  "observed_command_returns": {
+    "wifi_disable": 0,
+    "stop_vendor.wifi_hal_legacy": 0,
+    "rmmod_qca_cld3_peach_v2": 0
+  },
+  "provider_insmod_command_observed": false,
+  "candidate_wlan_insmod_observed": false,
+  "stock_reinsert_observed": false,
+  "wifi_restoration_in_cycle_observed": false,
+  "user_report_wifi_unavailable_after_cycle": true,
+  "user_subsequently_reported_wifi_restored": true,
+  "recovery_steps_independently_observed": false,
+  "root_cause": "UNKNOWN_PRE_PROVIDER_COMMAND_GATE_FAILURE",
+  "missing_evidence": [
+    "kernel.before.log",
+    "kernel.after.log",
+    "saved transaction baseline and journal"
+  ],
+  "cycle_retry_authorized": false,
+  "native_load_restore_certified": false,
+  "runtime_certified": false,
+  "apple_transfer_certified": false
+}

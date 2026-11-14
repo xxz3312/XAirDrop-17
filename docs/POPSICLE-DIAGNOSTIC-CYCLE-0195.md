@@ -1,5 +1,11 @@
 # 0195 — explicit diagnostic WLAN/provider load and stock restore
 
+## Current phone result — failed, preserve state and do not retry
+
+The uploaded 2026-11-14 phone log reports Wi-Fi disable, HAL stop and original WLAN removal returning zero. It then records `returned:insert-provider:1`, without a logged provider `insmod` command. The cycle did not restore WLAN/HAL/Wi-Fi and the user reported Wi-Fi could not be enabled. After recovery instructions, the user reported Wi-Fi restored; the actual recovery steps and current loaded identities were not independently captured.
+
+This is a failed phone diagnostic round trip, despite the earlier passing host/CI tests. Do not repeat cycle, clear the retained transaction, or infer provider/candidate WLAN load from the phase name. Root cause remains unknown: the pre-provider path contains multiple short-circuit observations without individual failure labels. Retained kernel-before/kernel-after logs and transaction baselines are required before a new trial. Collect them read-only, keep the trial disabled, and retain 0194 backup/0193 archive. Evidence: `research/popsicle-cycle0195-phone-incident.json`.
+
 ## Evidence and upstream
 
 0194's exact uploaded log reports installed check and independent stock backup success on OS4.0.6.0.XPBCNXM. It does not certify a driver load. The new package is an explicit experimental diagnostic cycle using independently reaudited raw 0187 candidates, stock CNSS2 retained. It leaves the installed 0194 package, its backup and the prior-boot 0193 archive unchanged.
@@ -18,17 +24,17 @@ Before implementation, XAirDrop main was `585e850e3e026bf9eae90f654dafd01746bc5e
 
 The candidate HAL never starts. No Wonder, mac80211 swap, firmware overlay, public backend initialization, configured START, native Apple service, RF control, live-unload sysfs request, forced unload or init_boot operation is included. Kernel module initialization itself is a real experimental native operation; this design cannot guarantee absence of panic, firmware failure or reboot.
 
-Every fixed effect has persisted intent/actual returned status/done markers and original CNSS2/transaction ownership checks around it. A nonzero command can have changed state; it stops the sequence without attempting further module operations or claiming recovery. A positive refcount or unexpected holder blocks deletion. Incomplete/complete transactions and preparing residue block replay. A failed or interrupted cycle requires preserved logs and a stock-driver reboot; this package has no partial live recovery or retry command. Only the complete observed round trip can qualify load/restoration for these bytes.
+Every fixed effect has persisted intent/actual returned status/done markers and original CNSS2/transaction ownership checks around it. A nonzero command can have changed state; it stops the sequence without attempting further module operations or claiming recovery. A positive refcount or unexpected holder blocks deletion. Incomplete/complete transactions and preparing residue block replay. A failed or interrupted cycle requires preserved logs and a stock-driver reboot; this package has no partial live recovery or retry command. Only a future complete observed round trip can qualify load/restoration for these bytes; the returned 0195 attempt did not complete.
 
 0194 backup bytes can survive an intervening install reboot: their original manifest and stock content are checked, but their boot/Wi-Fi/HAL values are never used as current baseline. 0195 captures current baseline independently. No old record is overwritten, deleted or automatically archived.
 
-## Validation and phone handoff
+## Validation and historical phone handoff (do not repeat)
 
 Host fixtures execute the actual controller/adapter on private synthetic files, with both Wi-Fi baselines and before/after-effect failures at all ten command boundaries. They verify journal failures, original CNSS identity drift, busy candidate refusal, wrong stock reinsert, transport/copy/log failures, foreign locks/state, prior-boot backup use, no replay and integrity-before-source. Synthetic module/command behavior does not certify kernel ABI or native restoration. Actual ELF audit/package production is a separate CI step, with no native rebuild or byte rewriting.
 
-Local validation: 166 device-host tests ran, 105 passed and 61 mksh cases skipped locally; 110 kernel-tool tests passed. Real-ELF reinspection, current-script comparison and ZIP CRC passed. Local ZIP SHA256 is `133f64faee055422082222646d192a4886afe24689dcea5002e27fecbe405b5f` (168,801,167 bytes). CI [43540619346](https://github.com/xxz3312/XAirDrop-17/actions/runs/43540619346) at `09b8f04c55cea7eb5d4f2e703466feb9fb6c9122` passed all 166 device tests including mksh and all 110 kernel-tool tests with no skips. Real-ELF audit and packaging passed; CI and local package SHA256/size are identical. Artifact 14092485211 contains the ZIP and build receipt. See `docs/research/popsicle-cycle0195-ci.json`. Phone cycle acceptance remains pending.
+Local validation: 166 device-host tests ran, 105 passed and 61 mksh cases skipped locally; 110 kernel-tool tests passed. Real-ELF reinspection, current-script comparison and ZIP CRC passed. Local ZIP SHA256 is `133f64faee055422082222646d192a4886afe24689dcea5002e27fecbe405b5f` (168,801,167 bytes). CI [43540619346](https://github.com/xxz3312/XAirDrop-17/actions/runs/43540619346) at `09b8f04c55cea7eb5d4f2e703466feb9fb6c9122` passed all 166 device tests including mksh and all 110 kernel-tool tests with no skips. Real-ELF audit and packaging passed; CI and local package SHA256/size are identical. Artifact 14092485211 contains the ZIP and build receipt. See `docs/research/popsicle-cycle0195-ci.json`. Phone cycle acceptance failed as recorded above.
 
-Install the new ZIP through KernelSU and reboot normally. Keep the 0194 module and its backup. After boot, one explicit Termux command runs check then the diagnostic round trip:
+Install the new ZIP through KernelSU and reboot normally. Keep the 0194 module and its backup. The original handoff was the following command; it is retained for provenance only and must not be repeated after the incident:
 
 ```sh
 su -c '/system/bin/sh /data/adb/modules/xairdrop17_cycle0195/cyclectl.sh check && /system/bin/sh /data/adb/modules/xairdrop17_cycle0195/cyclectl.sh cycle' > /sdcard/Download/xairdrop-0195-cycle.txt 2>&1
