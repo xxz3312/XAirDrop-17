@@ -19,10 +19,11 @@ struct mishare_ndi_status {
  bool channel_submitted,channel_completed,channel_prepared,start_plan_requested,radio_requested;
  bool pe_delete_requested,pe_delete_submitted,pe_delete_completed,peer_delete_pending,peer_delete_submitted,peer_delete_replied,delete_pending,delete_submitted,delete_replied,dp_detaching,dp_detach_submitted,dp_freed;
  bool start_plan_submitted,start_plan_completed,start_plan_ready;
- int start_plan_error;struct mishare_ndi_start_summary start_plan;
+ int start_plan_error,radio_submit_error;u32 channel_freq;struct mishare_ndi_start_summary start_plan;
  int completion_error;
 };
 struct runtime_model_state {
+ struct {bool requested,applied;int error;} bssid;
  bool blocked,draining,allocated,freed,host_reclaim,host_delete_accepted;int quiesced;
  bool mc_drained,recovery_window,recovery_window_closed,ndi_reclaim_started,ndi_reclaim_ready;
  bool recovery_timer_attempted,recovery_timer_released,recovery_pe_attempted,recovery_pe_released;
@@ -34,6 +35,7 @@ struct runtime_model_state {
  struct mishare_runtime_rate_status rate;
  struct mishare_runtime_retry_status retry;
  struct mishare_start_preview_status start_preview;
+ struct mishare_configured_radio_status configured_radio;struct mishare_radio_status radio;
 };
 struct mishare_runtime_owner {
  struct mishare_runtime_owner *next;struct wlan_objmgr_vdev *vdev;
@@ -329,7 +331,10 @@ def main():
     code=WORK_HARNESS[:WORK_HARNESS.index('int main(void){')]
     summary=re.search(r'^struct mishare_ndi_start_summary \{.*?^\};',(production/'wlan_hdd_mishare_ndi.h').read_text(),re.S|re.M)[0]
     preview=re.search(r'^struct mishare_start_preview_status \{.*?^\};',(production/'wlan_hdd_mishare_runtime.h').read_text(),re.S|re.M)[0]
-    model=MODEL.replace('PREVIEW_TYPES',summary+'\n'+preview,1).replace('RUNTIME_BLOCK',block)
+    radio=(production/'wlan_hdd_mishare_radio.h').read_text()
+    radio_types='\n'.join(re.search(pattern,radio,re.S|re.M)[0] for pattern in [r'enum mishare_radio_phase \{.*?^\};',r'struct mishare_radio_fence_status \{.*?^\};',r'struct mishare_radio_status \{.*?^\};'])
+    configured=re.search(r'^struct mishare_configured_radio_status \{.*?^\};',(production/'wlan_hdd_mishare_runtime.h').read_text(),re.S|re.M)[0]
+    model=MODEL.replace('PREVIEW_TYPES',summary+'\n'+preview+'\n'+radio_types+'\n'+configured,1).replace('RUNTIME_BLOCK',block)
     code=code.replace('static struct scheduler_msg queued;',model+'\nstatic struct scheduler_msg queued;')
     code=code.replace('static int owner,allocs,','static int allocs,')
     code=code.replace('pending++;return 0;', 'pending++;owner.state.work_pending++;return 0;')

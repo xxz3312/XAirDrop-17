@@ -211,6 +211,57 @@ static bool mishare_runtime_rate_ordinary_terminal(struct mishare_runtime_owner 
             n->create.timer_ready || n->create.stats_owned || n->legacy_ready || n->wma_bound);
 }
 
+/* Scalar-only configuration history, including after native resources free.
+ * A success never replaces current parent/regulatory checks by the caller. */
+static int mishare_runtime_configured_history(struct mishare_runtime_owner *e)
+{
+    const struct mishare_start_preview_status *p = &e->state.start_preview;
+    const struct mishare_runtime_rate_status *r = &e->state.rate;
+    const struct mishare_runtime_retry_status *retry = &e->state.retry;
+    const struct mishare_ndi_status *n = &e->state.ndi;
+    int ret = mishare_runtime_preview_retire_check(e);
+
+    if (ret)
+        return ret;
+    if (!p->committed || !r->requested || !r->posted || !r->accepted || !r->completed ||
+        r->integrity_error || !r->receipt.attempted || !r->receipt.complete || r->receipt.busy ||
+        r->receipt.result || r->receipt.first_error || r->receipt.attempted_mask != 7 ||
+        r->receipt.submitted_mask != 7 || !retry->requested || !retry->posted || !retry->accepted ||
+        !retry->completed || retry->integrity_error || retry->result ||
+        !mishare_runtime_retry_receipt_valid(retry, &retry->receipt, 0, p->vdev_id) ||
+        !e->state.bssid.requested || !e->state.bssid.applied || e->state.bssid.error ||
+        n->channel_freq != p->freq || n->radio_submit_error)
+        return -EUCLEAN;
+    return 0;
+}
+
+/* Ordinary DOWN only; never project BLOCKED/SSR into terminal success. */
+static bool mishare_runtime_configured_down(struct mishare_runtime_owner *e)
+{
+    const struct mishare_configured_radio_status *c = &e->state.configured_radio;
+    const struct mishare_radio_status *r = &e->state.radio;
+
+    return c->requested && c->returned && c->start_result == -EINPROGRESS &&
+           c->stop_requested && c->stopped && !c->stop_error && !e->radio &&
+           e->state.ndi.radio_requested && !mishare_runtime_configured_history(e) &&
+           !e->state.quiesced && r->phase == MISHARE_RADIO_DOWN && r->closing &&
+           r->start_attempted && r->stop_attempted && r->host_up &&
+           r->down_attempted && r->down_accepted && !r->pending && !r->users && !r->error &&
+           !r->fence.recorded && r->fence.phase == MISHARE_RADIO_NEW &&
+           !r->fence.error && !r->fence.closing && !r->fence.start_attempted &&
+           !r->fence.stop_attempted && !r->fence.host_up && !r->fence.down_attempted &&
+           !r->fence.down_accepted && !r->fence.pending && !r->fence.users &&
+           !r->fence.start_sm_entered && !r->fence.start_sm_call_active &&
+           !r->fence.start_reply_queued && !r->fence.stop_reply_queued &&
+           !r->fence.applying_start_reply && !r->fence.applying_stop_reply &&
+           !r->ssr_cancelled_before_start && !r->ssr_start_submit_error &&
+           !r->ssr_start_callback_refused && !r->ssr_start_body_aborted &&
+           !r->ssr_start_prepared_aborted && !r->ssr_start_sm_entry_aborted &&
+           !r->ssr_start_init_rejected && !r->down_fence_callback_seen &&
+           !r->down_retire_timer_attempted && !r->down_retire_timer_released &&
+           !r->down_retired && !r->down_retire_error;
+}
+
 /* Registry lock held. Only normal pre-START DELETE may consume this policy.
  * Admission is not an ACK: existing PE/peer/VDEV/DP callbacks still gate every
  * step. Original configuration history is never rewritten during cleanup.
@@ -224,7 +275,9 @@ static int mishare_runtime_rate_ordinary_check(struct mishare_runtime_owner *ent
     if (ret != -EOPNOTSUPP)
         return ret;
     if (entry->state.quiesced || r->reset_admitted || r->reset_completed ||
-        entry->radio || n->radio_requested || (n->start_plan_requested && !entry->state.start_preview.committed) ||
+        entry->radio || (n->radio_requested && !mishare_runtime_configured_down(entry)) ||
+        (entry->state.configured_radio.requested && !mishare_runtime_configured_down(entry)) ||
+        (n->start_plan_requested && !entry->state.start_preview.committed) ||
         entry->state.ndi_reclaim_started || entry->state.host_reclaim ||
         entry->state.recovery_window || entry->state.recovery_window_closed)
         return -EOPNOTSUPP;
@@ -3279,6 +3332,193 @@ int mishare_runtime_ndi_start(struct mishare_runtime_owner *entry)
         entry->state.radio.error = ret;
         spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     }
+    return ret;
+}
+
+static bool
+mishare_configured_radio_pristine(const struct mishare_radio_status *r)
+{
+    const struct mishare_radio_fence_status *f = &r->fence;
+
+    return r->phase == MISHARE_RADIO_NEW && !r->error && !r->closing &&
+           !r->start_attempted && !r->stop_attempted && !r->host_up &&
+           !r->down_attempted && !r->down_accepted && !r->pending && !r->users &&
+           !r->ssr_cancelled_before_start && !r->ssr_start_submit_error &&
+           !r->ssr_start_callback_refused && !r->ssr_start_body_aborted &&
+           !r->ssr_start_prepared_aborted && !r->ssr_start_sm_entry_aborted &&
+           !r->ssr_start_init_rejected && !r->down_fence_callback_seen &&
+           !r->down_retire_timer_attempted && !r->down_retire_timer_released &&
+           !r->down_retired && !r->down_retire_error &&
+           !f->recorded && f->phase == MISHARE_RADIO_NEW && !f->error && !f->closing &&
+           !f->start_attempted && !f->stop_attempted && !f->host_up &&
+           !f->down_attempted && !f->down_accepted && !f->pending && !f->users &&
+           !f->start_sm_entered && !f->start_sm_call_active &&
+           !f->start_reply_queued && !f->stop_reply_queued &&
+           !f->applying_start_reply && !f->applying_stop_reply;
+}
+
+/* Internal configured path. Native scope/canonical policy is the caller's
+ * obligation; no public entry, parameter or automatic worker calls this API. */
+int mishare_runtime_configured_start(struct mishare_runtime_owner *owner, u32 freq)
+{
+    struct mishare_runtime_owner *e;
+    struct mishare_configured_radio_status *c;
+    struct mishare_ndi_status *n;
+    unsigned long flags;
+    int ret = -ENOENT;
+
+    if (!owner || !freq)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (e = mishare_runtime_owners; e && e != owner; e = e->next)
+        ;
+    if (!e)
+        goto unlock;
+    c = &e->state.configured_radio;
+    n = &e->state.ndi;
+    if (e->state.quiesced || e->state.draining || e->state.freed) {
+        ret = -ESHUTDOWN;
+        goto unlock;
+    }
+    if (c->requested) {
+        ret = -EALREADY;
+        goto unlock;
+    }
+    if (c->returned || c->stop_requested || c->stopped || c->start_result || c->stop_error ||
+        e->state.blocked || n->blocked || e->state.work_error || e->state.recovery_error ||
+        e->state.create_error || e->state.reclaim_error || n->completion_error) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    if (!e->state.start_preview.committed) {
+        ret = -EINPROGRESS;
+        goto unlock;
+    }
+    ret = mishare_runtime_configured_history(e);
+    if (ret)
+        goto unlock;
+    if (freq != e->state.start_preview.freq || !e->vdev || !e->referenced || !e->events ||
+        e->cookie != (unsigned long)e->vdev || !e->pe_cookie || !e->state.allocated ||
+        e->state.start_preview.vdev_id != wlan_vdev_get_id(e->vdev) ||
+        !n->active || !n->legacy_ready || !n->wma_bound || !n->peer_created || !n->pe_ready ||
+        !n->pe_submitted || !n->pe_completed || !n->channel_submitted || !n->channel_completed ||
+        !n->channel_prepared || !n->create.wire_accepted || !n->create.dp_attached ||
+        !n->create.dp_cookie || !n->create.stats_owned || !n->create.timer_ready ||
+        n->pe_delete_requested || n->peer_delete_pending || n->delete_pending || n->dp_detaching ||
+        e->state.rate.ordinary_admitted || e->state.rate.reset_admitted ||
+        n->radio_requested || e->radio || !mishare_configured_radio_pristine(&e->state.radio)) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    c->requested = true; /* Before submission: no retry, even on partial failure. */
+    n->radio_requested = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_radio_open(e->vdev, e->events, e, e->pe_cookie,
+                            freq, &n->start_plan, &e->radio);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    c->returned = true;
+    c->start_result = ret;
+    if (ret != -EINPROGRESS)
+        n->radio_submit_error = ret ? ret : -EUCLEAN;
+    if (!ret)
+        ret = -EUCLEAN; /* An unexpected zero from open is not radio readiness. */
+unlock:
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    return ret;
+}
+
+/* Component STOP only; resource cleanup stays behind a terminal DOWN receipt.
+ * Caller retains every parent and serializes this owner across unlocked calls. */
+int mishare_runtime_configured_stop(struct mishare_runtime_owner *owner)
+{
+    struct mishare_runtime_owner *e;
+    struct mishare_configured_radio_status *c;
+    struct mishare_radio *radio;
+    struct mishare_radio_status observed = {0}, last = {0};
+    unsigned long flags;
+    int ret = -ENOENT;
+
+    if (!owner)
+        return -EINVAL;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (e = mishare_runtime_owners; e && e != owner; e = e->next)
+        ;
+    if (!e)
+        goto unlock;
+    c = &e->state.configured_radio;
+    if (e->state.quiesced || e->state.draining || e->state.freed) {
+        ret = -ESHUTDOWN;
+        goto unlock;
+    }
+    if (!c->requested) {
+        ret = -EINVAL;
+        goto unlock;
+    }
+    if (!c->returned) {
+        ret = -EINPROGRESS;
+        goto unlock;
+    }
+    if (c->stop_error || c->start_result != -EINPROGRESS || e->state.blocked ||
+        e->state.ndi.blocked || e->state.work_error || e->state.recovery_error ||
+        e->state.reclaim_error || e->state.ndi.completion_error) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    ret = mishare_runtime_configured_history(e);
+    if (ret)
+        goto unlock;
+    if (c->stopped) {
+        ret = mishare_runtime_configured_down(e) ? 0 : -EUCLEAN;
+        goto unlock;
+    }
+    if (!e->radio || !e->vdev || !e->referenced || !e->events || !e->pe_cookie ||
+        e->cookie != (unsigned long)e->vdev || !e->state.ndi.radio_requested ||
+        e->state.rate.ordinary_admitted || e->state.rate.reset_admitted ||
+        e->state.ndi.pe_delete_requested || e->state.ndi.peer_delete_pending ||
+        e->state.ndi.delete_pending || e->state.ndi.dp_detaching) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    radio = e->radio;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_radio_snapshot(radio, &observed);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    if (ret || e->radio != radio) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    if (e->state.quiesced || observed.fence.recorded || observed.error ||
+        observed.phase == MISHARE_RADIO_BLOCKED) {
+        ret = -ESHUTDOWN;
+        goto unlock;
+    }
+    if (observed.phase == MISHARE_RADIO_NEW || observed.phase == MISHARE_RADIO_STARTING ||
+        observed.phase == MISHARE_RADIO_WAIT_START || observed.pending || observed.users) {
+        ret = -EINPROGRESS; /* Do not manufacture pre-UP cancellation support. */
+        goto unlock;
+    }
+    if ((observed.phase != MISHARE_RADIO_UP && observed.phase != MISHARE_RADIO_STOPPING &&
+         observed.phase != MISHARE_RADIO_WAIT_STOP && observed.phase != MISHARE_RADIO_DOWN) ||
+        !observed.start_attempted || !observed.host_up) {
+        ret = -EUCLEAN;
+        goto unlock;
+    }
+    c->stop_requested = true;
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    ret = mishare_radio_drain(&e->radio, &last);
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    e->state.radio = last; /* Native history is retained, never projected/reset. */
+    if (!ret) {
+        c->stopped = true;
+        if (!mishare_runtime_configured_down(e)) {
+            c->stopped = false;
+            c->stop_error = -EUCLEAN;
+            ret = -EUCLEAN;
+        }
+    } else if (ret != -EINPROGRESS)
+        c->stop_error = ret;
+unlock:
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
     return ret;
 }
 

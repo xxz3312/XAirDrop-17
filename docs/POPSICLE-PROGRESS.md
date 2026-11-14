@@ -1,3 +1,7 @@
+## 当前实现 0208：内部配置射频的 START/STOP/DOWN 与普通资源回收（CI待验）
+
+0207八项必需CI已通过。本批新增显式内部runtime配置启动/停止接口：完整已提交配置与真实资源/身份通过后只提交一次START；未完成START不假造取消；UP后沿现有原生STOP/DOWN，获得完整退出历史且控制器已释放后才允许PE/peer/DELETE/DP继续回收。失败、SSR、配置损坏或缺失DOWN证明保留资源，旧raw START与公开Wonder初始化仍保持关闭。配置后活动态SSR/remove恢复、完整父级生命周期与公开host调用尚待后续接入；手机保持205，无需命令或安装。见 [0208](POPSICLE-CONFIGURED-RADIO-0208.md)。
+
 ## 0207 CI 验收完成：八项必需检查全部通过
 
 0207 源码 dce381b877ddac740d892a2dfbeb3b9ae5830dfe / Actions43599564193 八项必需CI全部成功，包含新配置提交后检查、managed/host准入与释放、普通/SSR回归、完整目标编译、严格模块链接、CNSS接口与选定布局比较。Optional ICNSS跳过且不计入必需项。新ELF尚未独立重审为安装产物；手机保持已验收205，不开放Wonder init/射频START，不重跑cycle。下一阶段需补配置后运行态的停止/恢复与父级生命周期，再连接真实射频启动和收包。见 [0207](POPSICLE-LAUNCH-CHECK-0207.md)。

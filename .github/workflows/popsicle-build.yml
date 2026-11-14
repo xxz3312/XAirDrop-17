@@ -110,6 +110,7 @@ on:
       - tools/kernel/mishare_request_bridge_fixture.py
       - tools/kernel/mishare_prestart_native_fixture.py
       - tools/kernel/mishare_plan_commit_fixture.py
+      - tools/kernel/mishare_configured_radio_fixture.py
       - tools/kernel/mishare_plan_preview_fixture.py
       - tools/kernel/mishare_start_ready_fixture.py
       - tools/kernel/mishare_prestart_fixture.py
@@ -218,6 +219,8 @@ jobs:
           for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
             git -C "$RUNNER_TEMP/stop-admission-wlan" apply "$patch"
           done
+      - name: Configured native START UP STOP DOWN and ordinary cleanup
+        run: python3 tools/kernel/mishare_configured_radio_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-configured-radio.json
       - name: Opaque runtime and radio snapshot ownership
         run: python3 tools/kernel/mishare_snapshot_owner_fixture.py --wlan "$RUNNER_TEMP/stop-admission-wlan" --output stop-snapshot-owner.json
       - name: Actual host factory through native ordinary retirement
@@ -295,6 +298,7 @@ jobs:
           name: popsicle-stop-admission-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             stop-host.json
+            stop-configured-radio.json
             stop-down-retire.json
             stop-down-runtime.json
             stop-down-auto.json

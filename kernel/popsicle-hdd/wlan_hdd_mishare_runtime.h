@@ -39,7 +39,24 @@ int mishare_runtime_start_preview(struct mishare_runtime_owner *owner, u32 freq)
  * same parent lifetime as preview. Rechecks receipt and owner history before
  * publishing the already-owned plan; never submits WMI or radio START. */
 int mishare_runtime_start_plan_commit(struct mishare_runtime_owner *owner, u32 freq);
+/* Internal configured START/ordinary STOP provenance; never a firmware lease. */
+struct mishare_configured_radio_status {
+    bool requested, returned, stop_requested, stopped;
+    int start_result, stop_error;
+};
+/* Caller owns one exclusive native parent lifetime/serialization across every
+ * poll, and checks the full canonical request plus CURRENT regulatory policy
+ * before this internal first START. No public Wonder callback invokes it.
+ * Raw START continues refusing configured sessions. No replay after an attempt.
+ */
+int mishare_runtime_configured_start(struct mishare_runtime_owner *owner, u32 freq);
+/* Ordinary fully-UP STOP/DOWN only. Pending START stays pending without any
+ * close/STOP effect; SSR/fault/partial START remains retained. Radio is drained
+ * before ordinary PE/peer/DELETE/DP cleanup may proceed through destroy.
+ */
+int mishare_runtime_configured_stop(struct mishare_runtime_owner *owner);
 struct mishare_runtime_status {
+    struct mishare_configured_radio_status configured_radio;
     struct mishare_runtime_bssid_status bssid;
     struct mishare_runtime_rate_status rate;
     struct mishare_runtime_retry_status retry;
