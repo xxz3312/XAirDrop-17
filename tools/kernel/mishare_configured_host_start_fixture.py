@@ -10,6 +10,8 @@ from mishare_recovery_fixture import function
 ROOT=prior.ROOT
 
 EXTRA=r'''
+#include "wlan_hdd_mishare_rate.h"
+#include "wlan_hdd_mishare_start_ready.h"
 static bool configured210_recovery;
 static int configured210_context_error;
 static bool configured210_recovering(void) {return configured210_recovery;}

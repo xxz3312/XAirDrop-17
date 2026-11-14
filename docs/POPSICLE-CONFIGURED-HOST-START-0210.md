@@ -21,3 +21,7 @@ Local110 Python checks, syntax and whitespace checks pass. New native composite 
 Host/RTNL/parent/HDD primitives and WMI/firmware delivery remain modeled. Full frozen request/current native policy and native firmware lifecycle are not one end-to-end factory/typed proof here. Complete parent/firmware lease coordination, managed launch, active configured recovery, real RF and Apple transfer remain unqualified. No installation artifact acceptance follows from this suite.
 
 Dedicated branch codex/host-configured210 runs native prequalification before one full target compilation/link/interface/layout/offline-record build. CI is pending until explicitly reviewed. Main stays at accepted0209. Return the run link immediately without waiting for completion.
+
+## Initial CI fixture compilation failure
+
+Source4d8e1c1a40c1218857e81865fd7b29fcd0a7b430 / Actions43619605055 passed110 Python tooling checks, but native job132522054622 failed compiling the newly extracted host launch/start functions. The composite had not included the production request definition and launch-check header, producing undefined request type and implicit helper declarations. Add the actual production rate/start-ready headers before those extracted functions; start-ready itself includes the canonical init/request header. No production function, type, gate or native START behavior changes. All native runtime/model and full target checks remain pending; the target job was skipped. Preserve this failed run and re-run the same dedicated workflow.
