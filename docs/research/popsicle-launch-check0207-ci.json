@@ -1,0 +1,136 @@
+{
+  "stage": "0207",
+  "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe",
+  "workflow_run": 43599564193,
+  "status": "ALL_EIGHT_REQUIRED_CI_PASSED_PHONE_UNCHANGED",
+  "local_python_tests_passed": 110,
+  "production_sha256": {
+    "kernel/popsicle-hdd/wlan_hdd_mishare_start_ready.h": "c67ca5a09edc8c1a2f4a84876db100c644d351685291ff99c647826fbdb80bd1",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.c": "5f59d8ec5123864eb178fa974a716e80a4f9fae926ce0431b5eff0def07504a6",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_host.h": "244fd7a8d90d4b1f8cee82cd39ca72f2ba96b7552cbc889322fcf021186c7233",
+    "kernel/popsicle-hdd/wlan_hdd_mishare_request_bridge.h": "0bc5a76dc264249fb03ba0d1d437b52b14918cf7fe0c598a37f6d8b884169660"
+  },
+  "pure_observation_modes": 16,
+  "pure_invalid_configuration_cases": 192,
+  "managed_failure_cases": 17,
+  "managed_mutations": 5,
+  "required_committed_receipt_mutations": 1,
+  "phone_commands": false,
+  "public_backend_init_opened": false,
+  "configured_runtime_start_opened": false,
+  "new_phone_installation_package": false,
+  "installed_module_id": "xairdrop17_cycle0195",
+  "installed_version_code": 205,
+  "upstream_refs": {
+    "XAirDrop": "585e850e3e026bf9eae90f654dafd01746bc5ec9",
+    "OPAirDrop": "28a3a1dbc9f515fa5705417a3973616e5ae6180d"
+  },
+  "jobs": {
+    "ce-stop": {
+      "id": 132461202332,
+      "conclusion": "success"
+    },
+    "htt-callbacks": {
+      "id": 132461202487,
+      "conclusion": "success"
+    },
+    "transport-stop": {
+      "id": 132461202521,
+      "conclusion": "success"
+    },
+    "parent-peer-composite": {
+      "id": 132461202529,
+      "conclusion": "success"
+    },
+    "stop-admission": {
+      "id": 132461202582,
+      "conclusion": "success"
+    },
+    "ce-buffers": {
+      "id": 132461202615,
+      "conclusion": "success"
+    },
+    "bridge-controller": {
+      "id": 132461202648,
+      "conclusion": "success"
+    },
+    "diagnostic": {
+      "id": 132461202700,
+      "conclusion": "success"
+    },
+    "Optional ICNSS reference (not target CNSS2)": {
+      "id": 132461203687,
+      "conclusion": "skipped"
+    }
+  },
+  "full_target_build": "success",
+  "module_linking": "success",
+  "selected_structure_layouts": "success",
+  "recorded_module_checks": "success_offline_only",
+  "independent_new_elf_reaudit": false,
+  "artifacts": [
+    {
+      "id": 14116908092,
+      "name": "popsicle-validation-43599564193-1",
+      "bytes": 124897,
+      "digest": "sha256:6352b235b1fa1dc4ff26f96391b0844c1d2c6704e2bd0f63aa2f1cd5b8a0b772",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116810243,
+      "name": "popsicle-parent-peer-43599564193-1",
+      "bytes": 27638,
+      "digest": "sha256:024a61d63e47d2d79a45765ef3bef85386ce871441bdba1456eee76779c3e881",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116723418,
+      "name": "popsicle-diagnostics-43599564193-1",
+      "bytes": 340597172,
+      "digest": "sha256:1788c28973b8dce23b752c0b240fbd79359d7b890446b839d53abf6bbb380847",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116656846,
+      "name": "popsicle-stop-admission-43599564193-1",
+      "bytes": 87861,
+      "digest": "sha256:d0dc6298a01eaddc2c70b7f11d71d5fbb4fb6e4adead05b5e905a180096215af",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116431692,
+      "name": "popsicle-transport-stop-43599564193-1",
+      "bytes": 3541,
+      "digest": "sha256:b52ae0c587f94b2621295408b5e505a2a65a256595e8b780403ff69f80c86754",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116277102,
+      "name": "popsicle-ce-buffers-43599564193-1",
+      "bytes": 2693,
+      "digest": "sha256:8a68e064ac41f5d8d9e71b35eb60e0a1fa83da2f7022d5a4be360f373e5026ca",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116246157,
+      "name": "popsicle-bridge-report-43599564193",
+      "bytes": 6585,
+      "digest": "sha256:8e11a0d873de7ada72173f468886e5e3aad3560d37098c5d73e6360e7898057b",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14116176545,
+      "name": "popsicle-ce-stop-43599564193-1",
+      "bytes": 3447,
+      "digest": "sha256:2c68078c898d55e21b1e04988245883d05bb78fff59894107de0d1f1c2d87bcb",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    },
+    {
+      "id": 14115947437,
+      "name": "popsicle-htt-callbacks-43599564193-1",
+      "bytes": 3729,
+      "digest": "sha256:91e2cbc90e17f8731cf1ba156ad5982f8020a2c81107e2542257426bd39cb389",
+      "source_commit": "dce381b877ddac740d892a2dfbeb3b9ae5830dfe"
+    }
+  ]
+}
