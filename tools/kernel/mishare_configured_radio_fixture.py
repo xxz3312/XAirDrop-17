@@ -182,7 +182,7 @@ def fixture(root):
     assert clean.count(needle)==1
     clean=clean.replace(needle,'state(*o).configured_radio.stopped && state(*o).ndi.radio_requested && ',1)
     main=function(source,'main')
-    source=source.replace(main,main.replace('int main(void)', 'int previous_configured208_main(void)',1)+'\n'+clean+'\n'+case+'\nint main(void) {\n configured208_cases();engine_contract();puts("MISHARE_CONFIGURED_RADIO_ORDINARY_FIXTURE_PASS_ONLY");return 0;\n}\n',1)
+    source=source.replace(main,main.replace('int main(void)', 'int previous_configured208_main(void)',1)+'\n'+clean+'\n'+case+'\nint main(void) {\n configured208_cases();engine_contract();puts("MISHARE_PINNED_NATIVE_SM_ENGINE_FIXTURE_PASS_ONLY");return 0;\n}\n',1)
     return source,exits,stubbed
 
 
