@@ -29,5 +29,15 @@
   "cycle_retry_authorized": false,
   "stock_hal_probe_phone_executed": false,
   "probe_driver_loading_operations": false,
-  "probe_updates_module_or_init_boot": false
+  "probe_updates_module_or_init_boot": false,
+  "probe_ci": {
+    "source_commit": "130b8f6cf88d135ec12d32a54df34e887be76e45",
+    "workflow_run_id": 43546465034,
+    "job_id": 132298846823,
+    "tests_passed": 16,
+    "tests_skipped": 0,
+    "sh_and_mksh": true,
+    "script_sha256": "ceaffb902eae598fdccf541f3fb46aecd7a27eadd259cce1bfca4c6f8bcd72f1",
+    "phone_executed": false
+  }
 }
