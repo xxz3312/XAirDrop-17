@@ -3522,6 +3522,41 @@ unlock:
     return ret;
 }
 
+/* Host closure may poll after the native VDEV has gone but its runtime owner
+ * still awaits final release. No native pointer is dereferenced on that path. */
+int mishare_runtime_configured_drain(struct mishare_runtime_owner *owner)
+{
+    struct mishare_runtime_owner *e;
+    const struct mishare_configured_radio_status *c;
+    unsigned long flags;
+    int ret = -ENOENT;
+    bool stop = false;
+
+    if (!owner)
+        return 0;
+    spin_lock_irqsave(&mishare_runtime_lock, flags);
+    for (e = mishare_runtime_owners; e && e != owner; e = e->next)
+        ;
+    if (!e)
+        goto unlock;
+    c = &e->state.configured_radio;
+    if (!c->requested) {
+        ret = c->returned || c->stop_requested || c->stopped || c->start_result ||
+              c->stop_error ? -EUCLEAN : 0;
+        goto unlock;
+    }
+    if (c->stopped) {
+        ret = mishare_runtime_configured_down(e) ? 0 : -EUCLEAN;
+        goto unlock;
+    }
+    stop = true;
+unlock:
+    spin_unlock_irqrestore(&mishare_runtime_lock, flags);
+    /* No registry lock nests the controller lock or native STOP submission.
+     * The caller retains/serializes this same owner through both calls. */
+    return stop ? mishare_runtime_configured_stop(owner) : ret;
+}
+
 static void mishare_runtime_ndi_dp_freed(void *context)
 {
     struct mishare_runtime_owner *entry;

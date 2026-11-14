@@ -1,3 +1,7 @@
+## 当前候选 0209：host 退出先排空配置射频，再回收 VDEV/adapter（分支CI待验）
+
+0208完整编译/链接/布局/离线模块检查及退出复验已通过。0209将两处host关闭入口接到配置STOP/DOWN前缀：等待或错误保留完整所有权，原有runtime_destroy继续负责PE/peer/DELETE/DP与最后引用。新增512组host→原生退出组合、边界/变异和旧factory回归。专用分支先过原生预验再启动一次完整构建；发起后直接提供CI链接，不等待。公开Wonder初始化、完整父级/固件生命周期与活动配置SSR/remove恢复仍未开放；手机继续205，无需操作。见 [0209](POPSICLE-CONFIGURED-HOST-CLOSE-0209.md)。
+
 ## 当前实现 0208：内部配置射频的 START/STOP/DOWN 与普通资源回收（CI待验）
 
 0207八项必需CI已通过。本批新增显式内部runtime配置启动/停止接口：完整已提交配置与真实资源/身份通过后只提交一次START；未完成START不假造取消；UP后沿现有原生STOP/DOWN，获得完整退出历史且控制器已释放后才允许PE/peer/DELETE/DP继续回收。失败、SSR、配置损坏或缺失DOWN证明保留资源，旧raw START与公开Wonder初始化仍保持关闭。配置后活动态SSR/remove恢复、完整父级生命周期与公开host调用尚待后续接入；手机保持205，无需命令或安装。见 [0208](POPSICLE-CONFIGURED-RADIO-0208.md)。

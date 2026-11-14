@@ -1,0 +1,142 @@
+name: Popsicle 0209 configured host close
+on:
+  push:
+    branches: [codex/host-configured209]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  configured-host-close:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Python tooling regressions
+        run: python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+      - name: Fetch pinned WLAN and apply existing patches
+        run: |
+          set -euo pipefail
+          git init -q "$RUNNER_TEMP/host209-wlan"
+          git -C "$RUNNER_TEMP/host209-wlan" remote add origin https://github.com/MiCode/vendor_qcom_opensource_wlan.git
+          git -C "$RUNNER_TEMP/host209-wlan" fetch --depth=1 origin 36df473046706a5259942e1bf7222108dbbb860f
+          git -C "$RUNNER_TEMP/host209-wlan" checkout --detach FETCH_HEAD
+          for patch in "$GITHUB_WORKSPACE"/kernel/patches/popsicle/*.patch; do
+            git -C "$RUNNER_TEMP/host209-wlan" apply "$patch"
+          done
+      - name: Configured host VDEV close through actual native STOP DOWN and cleanup
+        run: python3 tools/kernel/mishare_configured_host_close_fixture.py --wlan "$RUNNER_TEMP/host209-wlan" --output .host209-reports/configured-host.json
+      - name: Existing configured runtime regression
+        run: python3 tools/kernel/mishare_configured_radio_fixture.py --wlan "$RUNNER_TEMP/host209-wlan" --output .host209-reports/configured-runtime.json
+      - name: Complete host scope ownership and adapter-release model regression
+        run: python3 tools/kernel/mishare_host_fixture.py --wlan "$RUNNER_TEMP/host209-wlan" --output .host209-reports/host.json
+      - name: Existing raw factory and native ordinary close regression
+        run: python3 tools/kernel/mishare_factory_native_lifecycle_fixture.py --wlan "$RUNNER_TEMP/host209-wlan" --output .host209-reports/factory-native.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: popsicle-host209-${{ github.run_id }}
+          path: .host209-reports/*.json
+          if-no-files-found: warn
+  diagnostic:
+    needs: configured-host-close
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      WORK: ${{ github.workspace }}/.popsicle-ci
+      PHASE: ${{ inputs.phase || 'module-trial' }}
+      POPSICLE_BUILD_JOBS: '4'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Host regression checks
+        run: |
+          python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+          bash -n tools/kernel/popsicle_trial_build.sh
+          python3 tools/kernel/mishare_mgmt_rx_fixture.py
+          python3 tools/kernel/mishare_session_driver_fixture.py
+          python3 tools/kernel/wonder_managed_fixture.py
+          python3 tools/kernel/wonder_provider_fixture.py
+      - name: Install host build dependencies
+        run: |
+          # Only Ubuntu packages are needed. Unrelated runner repositories can
+          # fail independently (e.g. Microsoft 403) and block apt-get update.
+          apt_sources="$RUNNER_TEMP/popsicle-ubuntu-sources"
+          mkdir -p "$apt_sources"
+          cp /etc/apt/sources.list.d/ubuntu.sources "$apt_sources/ubuntu.sources"
+          apt_options=(-o Dir::Etc::sourcelist=/dev/null
+                       -o "Dir::Etc::sourceparts=$apt_sources"
+                       -o Acquire::Retries=3)
+          sudo apt-get "${apt_options[@]}" update
+          sudo apt-get "${apt_options[@]}" install -y --no-install-recommends \
+            build-essential flex bison m4 bc pahole libelf-dev libdw-dev \
+            libssl-dev pkg-config zlib1g-dev libzstd-dev curl git python3
+      - name: Restore pinned toolchains
+        id: toolchains
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/clang-r536225
+            .popsicle-ci/toolchains/rust-1.82.0.p2
+          key: popsicle-tools-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docs/popsicle-source-lock.json') }}
+      - name: Restore pinned bindgen
+        id: bindgen
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/host/usr/bin/bindgen
+            .popsicle-ci/toolchains/host/usr/bin/.popsicle-bindgen-source-url
+          key: popsicle-bindgen-v1-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('docs/popsicle-source-lock.json') }}
+      - name: Fetch locked sources and official toolchains
+        id: setup
+        run: python3 tools/kernel/popsicle_ci.py setup --work "$WORK"
+      - name: Save complete toolchains before compilation
+        if: steps.setup.outcome == 'success' && steps.toolchains.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/clang-r536225
+            .popsicle-ci/toolchains/rust-1.82.0.p2
+          key: ${{ steps.toolchains.outputs.cache-primary-key }}
+      - name: Save complete bindgen before compilation
+        if: steps.setup.outcome == 'success' && steps.bindgen.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .popsicle-ci/toolchains/host/usr/bin/bindgen
+            .popsicle-ci/toolchains/host/usr/bin/.popsicle-bindgen-source-url
+          key: ${{ steps.bindgen.outputs.cache-primary-key }}
+      - name: Compile diagnostic objects
+        run: python3 tools/kernel/popsicle_ci.py build --work "$WORK" --phase "$PHASE"
+      - name: Check CNSS provider interfaces
+        if: env.PHASE != 'prepare'
+        run: python3 tools/kernel/popsicle_ci.py audit --work "$WORK"
+      - name: Strict module linking and complete WLAN dependency gate
+        if: env.PHASE == 'module-trial'
+        run: python3 tools/kernel/popsicle_ci.py modules --link-only --work "$WORK"
+      - name: Compare selected WLAN structure layouts with stock BTF metadata
+        if: env.PHASE == 'module-trial'
+        run: python3 tools/kernel/popsicle_ci.py layouts --work "$WORK"
+      - name: Required recorded module checks (not runtime certification)
+        if: env.PHASE == 'module-trial'
+        run: python3 tools/kernel/popsicle_ci.py review --work "$WORK"
+      - name: Upload diagnostics even when interface audit fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .popsicle-ci/artifacts/
+          if-no-files-found: warn
+          retention-days: 7
+          compression-level: 0
+      - name: Upload compact validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: popsicle-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .popsicle-ci/artifacts/reports/
+          if-no-files-found: warn
+          retention-days: 7

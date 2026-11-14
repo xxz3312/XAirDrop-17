@@ -162,7 +162,8 @@ static struct osif_vdev_sync *registered;
 bool mishare_wonder_host_adapter_owned(struct hdd_adapter *adapter);
 static const u8 mac[6]={2,3,4,5,6,7};
 static void event(char c) { size_t n=strlen(trace);assert(n+1<sizeof(trace));trace[n]=c;trace[n+1]=0; }
-static void reset(int fail) { execution_close_result=execution_close_calls=0;fixture_lease_scope_reset();assert(!module_refs && "EXPECTED_MODULE_RELEASE");assert(!runtime_tokens);pins_empty();assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
+static int configured_drain_calls,configured_drain_result;
+static void reset(int fail) { configured_drain_calls=configured_drain_result=0; execution_close_result=execution_close_calls=0;fixture_lease_scope_reset();assert(!module_refs && "EXPECTED_MODULE_RELEASE");assert(!runtime_tokens);pins_empty();assert(!active && !registered);assert(!expected_psoc || !mishare_wonder_host_psoc_busy(expected_psoc));failure=fail;trace[0]=0; }
 static struct device *get_device(struct device *d) { assert(d);event('G');if(failure==6)return NULL;d->refs++;
  if(managed_instance_case && (managed_factory_io || !parent_owned))managed_device_refs++;else device_pins++;
  return d; }
@@ -215,6 +216,10 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,struct mishare_r
  return 0;
 }
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev,const u8 *address,void *osif,struct wireless_dev *wdev,struct mishare_runtime_owner **owner) { pins_live();assert(pdev && pdev->refs==1 && address && osif && wdev);if(*owner)return -EBUSY;*owner=calloc(1,sizeof(**owner));runtime_tokens++;return 0; }
+int mishare_runtime_configured_drain(struct mishare_runtime_owner *owner) {
+ idle_cleanup_boundary();pins_live();if(!owner)return 0;
+ configured_drain_calls++;return configured_drain_result;
+}
 int mishare_runtime_destroy(struct mishare_runtime_owner **owner) { idle_cleanup_boundary();pins_live();if(!*owner)return 0;if(runtime_ssr)return -EUCLEAN;if(runtime_error)return runtime_error;if(runtime_busy)return -EINPROGRESS;assert(runtime_tokens==1);runtime_tokens--;free(*owner);*owner=NULL;runtime_closed++;return 0; }
 int mishare_runtime_bssid_bind(struct mishare_runtime_owner *o,const u8 *b) {(void)o;(void)b;return -EOPNOTSUPP;}
 int mishare_runtime_retry_configure(struct mishare_runtime_owner *o,u8 d,u8 m) {(void)o;(void)d;(void)m;return -EOPNOTSUPP;}
@@ -1828,6 +1833,41 @@ static void managed_commit_cases(struct hdd_context *h,struct wireless_dev *wdev
  }
 }
 
+static void configured_host_close_cases(struct hdd_context *h,struct wireless_dev *wdev) {
+ for(unsigned entry=0;entry<2;entry++)for(unsigned failure_kind=0;failure_kind<3;failure_kind++) {
+  pid_t child=fork();assert(child>=0);if(!child) {
+   reset(0);parent_owned=rtnl_owned=true;runtime_ssr=false;runtime_busy=0;runtime_error=0;
+   struct mishare_wonder_host *owner=NULL;
+   assert(!mishare_wonder_host_create_locked(h,mac,&owner));active->dev->ieee80211_ptr=wdev;
+   assert(!mishare_wonder_host_vdev_create_locked(owner));
+   struct mishare_runtime_owner *held=owner->runtime;
+   int original_closed=closed,original_runtime_closed=runtime_closed;
+   configured_drain_result=failure_kind==0?-EINPROGRESS:failure_kind==1?-EUCLEAN:-ESHUTDOWN;
+   for(unsigned repeat=0;repeat<2;repeat++) {
+    int ret=entry?mishare_wonder_host_destroy_locked(&owner):mishare_wonder_host_vdev_destroy_locked(owner);
+    assert(ret==configured_drain_result && owner && owner->runtime==held && owner->session.closing &&
+     configured_drain_calls==(int)repeat+1 && runtime_tokens==1 && active && registered &&
+     closed==original_closed && runtime_closed==original_runtime_closed &&
+     "EXPECTED_HOST209_CONFIGURED_PREFIX_RETAIN");pins_live();
+   }
+   if(failure_kind)_Exit(0); /* Deliberately retained hard-error model. */
+   configured_drain_result=0;runtime_busy=1;
+   assert((entry?mishare_wonder_host_destroy_locked(&owner):mishare_wonder_host_vdev_destroy_locked(owner))==-EINPROGRESS &&
+    owner && owner->runtime==held && active && registered && closed==original_closed &&
+    "EXPECTED_HOST209_RUNTIME_ACK_REQUIRED");
+   runtime_busy=0;
+   assert(!(entry?mishare_wonder_host_destroy_locked(&owner):mishare_wonder_host_vdev_destroy_locked(owner)) &&
+    configured_drain_calls==4 && "EXPECTED_HOST209_PREFIX_THEN_DESTROY");
+   if(!entry)assert(owner && !owner->runtime && !mishare_wonder_host_destroy_locked(&owner));
+   assert(!owner && !runtime_tokens && !module_refs && !active && !registered &&
+    closed==original_closed+1 && runtime_closed==original_runtime_closed+1 &&
+    "EXPECTED_HOST209_FINAL_RELEASE");pins_empty();_Exit(0);
+  }
+  int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status) &&
+   "EXPECTED_HOST209_CHILD");
+ }
+}
+
 int main(void)
 {
  struct device dev={0};struct wlan_objmgr_psoc psoc={0},other_psoc={0};struct wlan_objmgr_pdev pdev={.psoc=&psoc};struct wireless_dev wdev={0};struct hdd_context h={.parent_dev=&dev,.psoc=&psoc,.pdev=&pdev};struct mishare_wonder_host *owner=NULL;expected_psoc=&psoc;
@@ -2017,6 +2057,7 @@ int main(void)
  managed_cases(&h,&wdev);
  managed_auto_ssr_cases(&h,&wdev);
  managed_readiness_cases(&h,&wdev);managed_commit_cases(&h,&wdev);
+ configured_host_close_cases(&h,&wdev);
  /* The ordinary production wrapper must reject PASSTHRU, factory-only override. */
  struct hdd_adapter_create_param params={.num_sessions=1};
  assert(hdd_open_adapter(&h,17,"misharewt%d",(u8*)mac,0,true,&params)==NULL && !active);
@@ -2284,6 +2325,16 @@ def run(wlan, output, creation_only=False):
             (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             assert bad.returncode==-6 and 'EXPECTED_MANAGED_LAUNCH_' in bad.stderr,(label,bad.returncode,bad.stderr[-2000:])
+        host209_controls=[]
+        for name in ['mishare_wonder_host_vdev_destroy_locked','mishare_wonder_host_destroy_locked']:
+            body=extract(host_source,r'^int '+name+r'\([^;{]+?\)\s*\{.*?^\}')
+            needle='ret = mishare_runtime_configured_drain(host->runtime);'
+            assert body.count(needle)==1,name
+            host209_controls.append(host_source.replace(body,body.replace(needle,'ret = 0;',1),1))
+        for changed in host209_controls:
+            (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode==-6 and 'EXPECTED_HOST209_' in bad.stderr,(bad.returncode,bad.stderr[-2000:])
         regulatory_controls = [
             ('ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);',
              'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),

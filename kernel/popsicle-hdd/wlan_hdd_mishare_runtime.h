@@ -55,6 +55,13 @@ int mishare_runtime_configured_start(struct mishare_runtime_owner *owner, u32 fr
  * before ordinary PE/peer/DELETE/DP cleanup may proceed through destroy.
  */
 int mishare_runtime_configured_stop(struct mishare_runtime_owner *owner);
+/* Ordinary host-close prefix. NULL/no configured attempt adds no radio action.
+ * Authenticate non-NULL owners and refuse malformed cold/failed records.
+ * Zero only means the prefix needs no further STOP work; the caller MUST still
+ * use runtime_destroy for PE/peer/DELETE/DP/refs and final owner release.
+ * Parent serialization/retention is the same as configured_stop, not acquired.
+ */
+int mishare_runtime_configured_drain(struct mishare_runtime_owner *owner);
 struct mishare_runtime_status {
     struct mishare_configured_radio_status configured_radio;
     struct mishare_runtime_bssid_status bssid;

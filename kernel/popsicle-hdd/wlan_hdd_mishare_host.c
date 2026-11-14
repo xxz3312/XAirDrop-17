@@ -897,6 +897,9 @@ int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host)
         test_bit(SME_SESSION_OPENED, host->adapter->deflink->link_flags))
         return -EBUSY;
     host->session.closing = true;
+    ret = mishare_runtime_configured_drain(host->runtime);
+    if (ret)
+        return ret;
     return mishare_runtime_destroy(&host->runtime);
 }
 
@@ -1186,6 +1189,9 @@ int mishare_wonder_host_destroy_locked(struct mishare_wonder_host **owner)
         test_bit(SME_SESSION_OPENED, adapter->deflink->link_flags))
         return -EBUSY;
     host->session.closing = true;
+    ret = mishare_runtime_configured_drain(host->runtime);
+    if (ret)
+        return ret;
     ret = mishare_runtime_destroy(&host->runtime);
     if (ret)
         return ret;
