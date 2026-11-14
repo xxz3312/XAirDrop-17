@@ -1,3 +1,9 @@
+## 0203 — help255 semantics and visible pre-effect aborts
+
+- Correct the help capability check: accept status0/255 only with the expected Wi-Fi help header and exact required command lines; reject exceptions, unknown/denied output and every other status. Independent list-results queries still require zero.
+- Expose pre-journal gates and baseline observations in redirected stderr. Track whether an effect was requested so snapshot/preflight failures preserve state without mutating framework settings or emitting a blanket reboot instruction.
+- Keep the fixed module ID, exact completed199 archive eligibility, candidate HAL lifecycle and all native safety boundaries. No new driver build or byte rewrite. The phone diagnosis confirms no active/preparing residue; never clear records to retry.
+
 ## 0201 — candidate HAL and ordinary Wi-Fi lifecycle
 
 - Preserve only the exact reviewed completed0199 transaction; keep the stable module ID and all earlier archives/backups. Candidate ELF bytes and original CNSS2 remain unchanged.

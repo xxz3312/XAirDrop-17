@@ -1,0 +1,23 @@
+{
+  "stage": "0202",
+  "status": "HELP255_WITH_VALID_HELP_TEXT_IS_THE_ONLY_OBSERVED_BLOCKER",
+  "receipt_sha256": "e32db54b794399d5592ff76eabb89ce1aab9b1ab1fe31889a6a48f2c20ac86a9",
+  "receipt_bytes": 38024,
+  "boot_id": "b5319b29-0eb4-4932-aa72-7dbda5c4688f",
+  "all_stock_history_baseline_predicates_pass": true,
+  "active_transaction_absent": true,
+  "preparing_paths_absent": true,
+  "timeout_present": true,
+  "bounded_status_rc": 0,
+  "direct_status_rc": 0,
+  "primary_wifi_connected_ip": true,
+  "android_network_validated": true,
+  "help_rc": 255,
+  "help_text_sha256": "c1fee37722530ea24bd34f56978b48ee5cb03edf455caca1c212bd6483f82269",
+  "help_has_expected_header": true,
+  "help_has_exact_start_scan_command_line": true,
+  "help_has_exact_list_scan_results_command_line": true,
+  "list_scan_query_executed_by_0202": false,
+  "candidate_hal_runtime_certified": false,
+  "new_native_commands_authorized_by_receipt_alone": false
+}
