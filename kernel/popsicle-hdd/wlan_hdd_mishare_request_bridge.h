@@ -4,7 +4,7 @@
 #include "wlan_hdd_mishare_bridge.h"
 #include "wlan_hdd_mishare_init.h"
 
-/* Internal pre-START subset only. Bind the full canonical request once, but
+/* Internal typed preparation and explicit configured-START subset. Bind the full canonical request once, but
  * bind host-MLME BSSID and prepare MAC/frequency/NSS/fixed-rate/retry limits.
  * Aggregation enable is rejected; zero flags do not prove firmware disable.
  * Zero is NOT full Wonder initialization or firmware/radio/RX/TX readiness.
@@ -194,4 +194,21 @@ mishare_request_bridge_launch_check_locked(const struct mishare_request_bridge *
         return ret;
     return mishare_wonder_host_launch_check_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
 }
+/* Explicit internal launch, under caller-retained native parents/firmware.
+ * Validate full frozen request and CURRENT policy on every attempt, then use
+ * the host's fresh committed-state check and runtime one-shot admission.
+ * No automatic managed/public caller, cached readiness ticket or UP result. */
+static inline int
+mishare_request_bridge_configured_start_locked(const struct mishare_request_bridge *c,
+                                                struct hdd_context *hdd,
+                                                const struct mishare_init_request *request,
+                                                u8 nss_2g, u8 nss_5g)
+{
+    int ret = mishare_request_bridge_validate_locked(c, hdd, request, nss_2g, nss_5g);
+
+    if (ret)
+        return ret;
+    return mishare_wonder_host_configured_start_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
+}
+
 #endif

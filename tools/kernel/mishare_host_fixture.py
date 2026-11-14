@@ -216,6 +216,11 @@ int mishare_runtime_reclaim_batch(struct wlan_objmgr_psoc *psoc,struct mishare_r
  return 0;
 }
 int mishare_runtime_create(struct wlan_objmgr_pdev *pdev,const u8 *address,void *osif,struct wireless_dev *wdev,struct mishare_runtime_owner **owner) { pins_live();assert(pdev && pdev->refs==1 && address && osif && wdev);if(*owner)return -EBUSY;*owner=calloc(1,sizeof(**owner));runtime_tokens++;return 0; }
+static unsigned configured_start_model_calls;
+int mishare_runtime_configured_start(struct mishare_runtime_owner *owner,u32 freq) {
+ assert(owner && freq==5240 && parent_owned && rtnl_owned && "EXPECTED_HOST210_START_SCOPE");
+ configured_start_model_calls++;return -EINPROGRESS;
+}
 int mishare_runtime_configured_drain(struct mishare_runtime_owner *owner) {
  idle_cleanup_boundary();pins_live();if(!owner)return 0;
  configured_drain_calls++;return configured_drain_result;
@@ -1773,6 +1778,20 @@ static void managed_commit_cases(struct hdd_context *h,struct wireless_dev *wdev
     !ready_snapshot.ndi.radio_requested && !instance->busy && !parent_owned && !rtnl_owned &&
     runtime_tokens==1 && instance->request_bridge.bridge.host==host && "EXPECTED_MANAGED_LAUNCH_READ_ONLY");
   }
+  parent_owned=rtnl_owned=true;
+  unsigned start_calls=configured_start_model_calls;
+  assert(mishare_request_bridge_configured_start_locked(&instance->request_bridge,h,&instance->request,1,2)==-EINPROGRESS &&
+   configured_start_model_calls==start_calls+1 && "EXPECTED_HOST210_TYPED_START");
+  for(unsigned field=0;field<4;field++) {
+   struct mishare_init_request altered=instance->request;
+   if(field==0)altered.params.country_code[0]='U';
+   if(field==1)altered.params.mac_addr[5]^=1;
+   if(field==2)altered.params.bssid[5]^=1;
+   if(field==3)altered.params.mgmt_retry_limit++;
+   assert(mishare_request_bridge_configured_start_locked(&instance->request_bridge,h,&altered,1,2)==-EBUSY &&
+    configured_start_model_calls==start_calls+1 && "EXPECTED_HOST210_FROZEN_REQUEST");
+  }
+  parent_owned=rtnl_owned=false;
   if(!mode)for(unsigned fault=0;fault<17;fault++) {
    pid_t child=fork();assert(child>=0);if(!child) {
     int expected=-EUCLEAN;unsigned old_commits=commit_model_calls;

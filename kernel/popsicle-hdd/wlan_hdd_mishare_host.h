@@ -74,6 +74,16 @@ int mishare_wonder_managed_launch_check(void *handle);
 int mishare_wonder_host_launch_check_locked(struct mishare_wonder_host *host,
                                             const struct mishare_init_request *request,
                                             u8 nss_2g, u8 nss_5g);
+/* Explicit one-shot internal submission after a fresh launch check. Requires
+ * RTNL/exclusive transition and the caller's retained native parents/firmware
+ * across all asynchronous work and ordinary destroy polls. Typed users enter
+ * via request_bridge_configured_start_locked for full frozen-request/current
+ * policy validation. EINPROGRESS means submission/pending, never radio UP.
+ * Repeated calls recheck current state and refuse; no replay or new preparation.
+ * No managed/public caller or active configured SSR/remove support is added. */
+int mishare_wonder_host_configured_start_locked(struct mishare_wonder_host *host,
+                                                const struct mishare_init_request *request,
+                                                u8 nss_2g, u8 nss_5g);
 /* Internal owned-MC native START encoder preview, zero means a summary only.
  * Public initialization, actual NDI START-plan and radio START remain closed. */
 int mishare_wonder_managed_plan_step(void *handle);
@@ -283,7 +293,8 @@ int mishare_wonder_host_reclaim_ssr_locked(struct mishare_wonder_host **owner);
 int mishare_wonder_host_reclaim_handoff_ssr_locked(struct hdd_context *hdd);
 /* Optional host vdev attachment. Retain host/adapter on EINPROGRESS/EUCLEAN;
  * destroy_locked also drains this attachment before freeing the netdev.
- * No SME session, firmware CREATE/DELETE, START/STOP or radio operation.
+ * Create only attaches an owner. Destroy first drains a configured STOP/DOWN
+ * if present, then ordinary firmware/PE/DP teardown; pending/errors retain host.
  */
 int mishare_wonder_host_vdev_create_locked(struct mishare_wonder_host *host);
 int mishare_wonder_host_vdev_destroy_locked(struct mishare_wonder_host *host);

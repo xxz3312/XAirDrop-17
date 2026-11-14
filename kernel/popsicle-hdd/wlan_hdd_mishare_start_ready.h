@@ -218,8 +218,9 @@ mishare_start_plan_commit_check(const struct mishare_runtime_status *s,
 /* Strict post-commit / before-first-START observation. Unlike plan adoption,
  * an otherwise valid but uncommitted encoder receipt is still pending here.
  * No state projection, cached ticket, radio command or teardown authority.
- * Public init and configured runtime START stay closed until their native
- * parent lifetime and active configured retirement are qualified together.
+ * This observer never submits. An explicit internal caller-retained host
+ * entry may use its result immediately; managed/public initialization still
+ * requires complete native parent/firmware and active retirement qualification.
  */
 static inline int
 mishare_start_launch_check(const struct mishare_runtime_status *s,

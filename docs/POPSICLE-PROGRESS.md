@@ -1,3 +1,7 @@
+## 0210 候选：显式 typed bridge → host → runtime 配置 START（CI待验）
+
+0209已验收。本批添加调用方保留完整父级/固件生命周期条件下的内部启动入口：先校验完整冻结请求与当前策略，再校验host已提交配置，最后由runtime独立核验并一次性提交。新原生组合覆盖host START到0209 STOP/DOWN与普通退出，typed请求一致性单独模型回归。未接入managed/公开初始化；完整父级生命周期协调与活动配置SSR/remove恢复仍待完成。手机保持0205，无需操作。见 [0210](POPSICLE-CONFIGURED-HOST-START-0210.md)。
+
 ## 0209 CI 已验收：host STOP/DOWN 后再回收资源
 
 源码1e32b7143f6247f710dd7af23dba932fda75fc0f / Actions43616123462 两项作业全部通过：512组原生host退出组合及变异、旧配置runtime/host/factory回归，完整目标编译、CNSS接口、严格链接、选定布局与离线模块检查。首轮测试脚手架位图类型错误已独立修正，驱动源码未变；首轮失败记录保留。仅为软件验收，尚非安装包或实机射频/Apple验收，手机保持0205。见 [0209](POPSICLE-CONFIGURED-HOST-CLOSE-0209.md)。

@@ -1073,6 +1073,21 @@ int mishare_wonder_host_launch_check_locked(struct mishare_wonder_host *host,
                                       request, nss_2g, nss_5g);
 }
 
+/* Explicit internal one-shot submission. Caller retains the complete native
+ * parent/firmware lifetime and serializes this host across callbacks/polls.
+ * Typed callers must enter through request_bridge_configured_start_locked.
+ * No managed/public caller, state projection or implicit preparation here. */
+int mishare_wonder_host_configured_start_locked(struct mishare_wonder_host *host,
+                                                const struct mishare_init_request *request,
+                                                u8 nss_2g, u8 nss_5g)
+{
+    int ret = mishare_wonder_host_launch_check_locked(host, request, nss_2g, nss_5g);
+
+    if (ret)
+        return ret;
+    return mishare_runtime_configured_start(host->runtime, request->params.channel.freq);
+}
+
 /* Native parameter preview only, never the NDI radio START-plan path. */
 int mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *host,
                                             const struct mishare_init_request *request,
