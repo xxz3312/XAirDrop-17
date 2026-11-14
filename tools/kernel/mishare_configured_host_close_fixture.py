@@ -10,7 +10,7 @@ from mishare_recovery_fixture import function
 ROOT=prior.ROOT
 MODEL=r'''
 struct configured209_dev {bool running;};
-struct configured209_link {unsigned long link_flags;};
+struct configured209_link {unsigned long link_flags[1];};
 struct configured209_adapter {
  struct configured209_dev *dev;struct configured209_link *deflink;unsigned long event_flags;
 };
@@ -84,7 +84,7 @@ TAIL=r'''
   if(guard==1)configured209_parent_error=-EUCLEAN;
   if(guard==2)netdev.running=true;
   if(guard==3)adapter.event_flags=1UL<<1;
-  if(guard==4)link.link_flags=1UL<<2;
+  if(guard==4)link.link_flags[0]=1UL<<2;
   if(guard==5)o->state.configured_radio.returned=true;
   if(guard==6) {
    assert(mishare_runtime_configured_start(o,freq)==-EINPROGRESS);

@@ -21,3 +21,7 @@ Local110 Python tooling regressions, Python syntax and diff checks pass. New com
 Host object, RTNL/parent primitives and adapter flags remain explicit models in the new native composite; full adapter/sync/parent release has separate existing/model coverage, not one configured end-to-end native factory proof. Firmware delivery/WMI execution, primitive references/locks/unmap and physical timing remain unqualified. No AWDL receive/send or Apple claim follows.
 
 The dedicated branch workflow first runs these native checks and host regressions; only success starts one complete target build. This avoids building a full driver for a failed test harness. Per user preference return the CI link immediately, leave CI running and inspect it only when asked to continue. Main stays at accepted208 until209 validation is reviewed.
+
+## Initial CI failure and fixture-only correction
+
+Source cc5d6f8ecd8a32042397c359f704f4894591b6f5 / Actions43612381222 passed110 Python regressions but failed compiling the new native composite: its model declared link_flags as a scalar although the extracted production host body passes it as a bitmap pointer to test_bit. Correct the model to a one-element unsigned-long array and set its first word for the session-open guard. No production source or guard is changed. The native matrix and downstream regressions have not passed yet; the complete target job was skipped. Re-run the dedicated branch workflow with unchanged production bytes, and keep all native/target checks pending until the next review.
