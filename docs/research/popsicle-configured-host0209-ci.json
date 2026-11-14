@@ -1,0 +1,17 @@
+{
+  "status": "NATIVE_HOST_CLOSE_AND_TARGET_BUILD_PASSED",
+  "source_commit": "1e32b7143f6247f710dd7af23dba932fda75fc0f",
+  "run_id": 43616123462,
+  "run_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/43616123462",
+  "jobs": {
+    "configured-host-close": 132511445617,
+    "diagnostic": 132513156304
+  },
+  "production_sha256": {
+    "wlan_hdd_mishare_runtime.c": "4b90e6685dd640e3c3c93cab7bd4e47591598f3c8938ad8c4fbdb6d5e85f1159",
+    "wlan_hdd_mishare_runtime.h": "98441e51489966878ca822cf76ee4483c83a95ef1a030924fc3f82785387f8ab",
+    "wlan_hdd_mishare_host.c": "c53414f981a022e4a380f07f0d99d3e027926e9f84e33559fd52bb8435bf079b",
+    "wlan_hdd_mishare_host.h": "244fd7a8d90d4b1f8cee82cd39ca72f2ba96b7552cbc889322fcf021186c7233"
+  },
+  "limitations": "Software and modeled native lifecycle qualification only. No independent install-ELF audit, phone/RF or Apple qualification; installed phone remains0205. Complete caller-native parent/firmware lifetime and active configured SSR/remove remain unqualified. Original failed run43612381222 retained."
+}

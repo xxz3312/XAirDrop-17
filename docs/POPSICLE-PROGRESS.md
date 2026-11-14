@@ -1,3 +1,7 @@
+## 0209 CI 已验收：host STOP/DOWN 后再回收资源
+
+源码1e32b7143f6247f710dd7af23dba932fda75fc0f / Actions43616123462 两项作业全部通过：512组原生host退出组合及变异、旧配置runtime/host/factory回归，完整目标编译、CNSS接口、严格链接、选定布局与离线模块检查。首轮测试脚手架位图类型错误已独立修正，驱动源码未变；首轮失败记录保留。仅为软件验收，尚非安装包或实机射频/Apple验收，手机保持0205。见 [0209](POPSICLE-CONFIGURED-HOST-CLOSE-0209.md)。
+
 ## 当前候选 0209：host 退出先排空配置射频，再回收 VDEV/adapter（分支CI待验）
 
 0208完整编译/链接/布局/离线模块检查及退出复验已通过。0209将两处host关闭入口接到配置STOP/DOWN前缀：等待或错误保留完整所有权，原有runtime_destroy继续负责PE/peer/DELETE/DP与最后引用。新增512组host→原生退出组合、边界/变异和旧factory回归。专用分支先过原生预验再启动一次完整构建；发起后直接提供CI链接，不等待。公开Wonder初始化、完整父级/固件生命周期与活动配置SSR/remove恢复仍未开放；手机继续205，无需操作。见 [0209](POPSICLE-CONFIGURED-HOST-CLOSE-0209.md)。

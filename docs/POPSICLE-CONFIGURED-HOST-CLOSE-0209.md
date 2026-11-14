@@ -25,3 +25,7 @@ The dedicated branch workflow first runs these native checks and host regression
 ## Initial CI failure and fixture-only correction
 
 Source cc5d6f8ecd8a32042397c359f704f4894591b6f5 / Actions43612381222 passed110 Python regressions but failed compiling the new native composite: its model declared link_flags as a scalar although the extracted production host body passes it as a bitmap pointer to test_bit. Correct the model to a one-element unsigned-long array and set its first word for the session-open guard. No production source or guard is changed. The native matrix and downstream regressions have not passed yet; the complete target job was skipped. Re-run the dedicated branch workflow with unchanged production bytes, and keep all native/target checks pending until the next review.
+
+## Completed CI acceptance
+
+Source1e32b7143f6247f710dd7af23dba932fda75fc0f / Actions43616123462 passed both jobs. Job132511445617 passed110 Python checks, the512-case exact-host-close/native-runtime composite and its controls, existing configured-runtime regressions, complete host ownership/adapter-release model, and raw factory/native lifecycle. Job132513156304 passed full target compilation, CNSS interfaces, strict module linking/dependencies, selected stock-BTF layouts and offline module records. Original failed run remains historical. This accepts0209 software; no new phone install or RF/Apple qualification. See research/popsicle-configured-host0209-ci.json for immutable provenance and production hashes.
