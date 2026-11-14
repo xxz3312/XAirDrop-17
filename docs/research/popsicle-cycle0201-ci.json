@@ -1,0 +1,32 @@
+{
+  "stage": "0201",
+  "status": "CI_PASSED_CANDIDATE_HAL_PHONE_PENDING",
+  "source_commit": "6b6136b10c5657c182a46df8f18be70b36277f17",
+  "workflow_run": 43573319942,
+  "local_distinct_sh_policy_cases_exercised": 11,
+  "local_kernel_tool_tests_passed": 110,
+  "native_rebuild": false,
+  "candidate_elf_bytes_unchanged": true,
+  "stable_module_id": "xairdrop17_cycle0195",
+  "version_code": 201,
+  "local_package_sha256": "5dcf7e946020fad7b5aedfc0213055afe8a20c9700bbb297ca11d5e95f939ade",
+  "package_bytes": 168806707,
+  "candidate_hal_phone_certified": false,
+  "scan_completion_certified": false,
+  "apple_services_started": false,
+  "ci_test_counts": {
+    "sh_controller_and_policy": 11,
+    "mksh_controller": 10,
+    "kernel_tools": 110,
+    "total": 131,
+    "skipped": 0
+  },
+  "ci_jobs": {
+    "sh": 132382136260,
+    "mksh": 132382136163,
+    "package": 132383149870
+  },
+  "ci_artifact_id": 14105296996,
+  "ci_package_sha256": "5dcf7e946020fad7b5aedfc0213055afe8a20c9700bbb297ca11d5e95f939ade",
+  "ci_package_matches_local": true
+}
