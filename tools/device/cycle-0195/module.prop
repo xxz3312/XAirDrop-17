@@ -1,0 +1,6 @@
+id=xairdrop17_cycle0195
+name=XAirDrop-17 0195 Diagnostic Load and Restore
+version=0.0.195-diagnostic
+versionCode=195
+author=xxz3312
+description=Manual WLAN/provider diagnostic round trip with stock CNSS2 retained. Action checks only. No Apple service or boot loading.

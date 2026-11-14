@@ -1,3 +1,9 @@
+## 0195 — explicit diagnostic candidate load and stock restore
+
+- Add an independent manual-only cycle package retaining stock CNSS2 and exact raw 0187 WLAN/provider bytes. Keep 0194 backup and 0193 archive immutable; capture fresh current-boot baseline separately.
+- Stop Wi-Fi/HAL before swapping, validate candidate identities, remove the pair while still quiescent, restore exact original WLAN/HAL/Wi-Fi. Check ownership, boot and CNSS2 around every journaled effect. Failure/busy/uncertainty stops without forced unload, automatic partial recovery or replay.
+- No candidate HAL/native START, Apple service, firmware overlay, RF enablement or init_boot write. Local 105 device tests pass (61 mksh cases skipped), 110 kernel tests pass; actual ELF packaging and ZIP CRC pass. Full shell CI and phone load/restore acceptance pending.
+
 ## 0194 — independently stage current candidate and verify stock backup
 
 - Create a separate exact-4.0.6.0 KSU check/backup package from independently reaudited immutable 0187 raw WLAN/provider. Preserve old packages/profiles and archived evidence; no ELF rewriting or native rebuild.
