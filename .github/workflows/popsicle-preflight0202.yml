@@ -1,0 +1,30 @@
+name: Popsicle 0202 read-only preflight diagnostics
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-preflight0202.yml'
+      - 'tools/device/popsicle-preflight-0202.sh'
+      - 'tools/preflight0202/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnostics:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install mksh
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Verify exact-index diagnostic isolation and visible predicates
+        env:
+          XAIRDROP_REQUIRE_MKSH: '1'
+        run: |
+          sh -n tools/device/popsicle-preflight-0202.sh
+          mksh -n tools/device/popsicle-preflight-0202.sh
+          python3 -m unittest discover -s tools/preflight0202 -p 'test_*.py'

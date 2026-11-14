@@ -1,0 +1,18 @@
+{
+  "stage": "0201",
+  "status": "CHECK_AND_EXISTING_0199_ARCHIVE_PASS_CYCLE_ABORT_WITHOUT_VISIBLE_JOURNAL",
+  "receipt_sha256": "8c50c8ab41579992073e76a98f07a7e4d6ba6d1eaa48ba7c6c4b09000335513a",
+  "receipt_bytes": 1144,
+  "check_success_marker": true,
+  "existing_completed0199_archive_verified_marker": true,
+  "new_archive_rename_in_this_invocation_reported": false,
+  "cycle_start_marker": true,
+  "visible_journal": false,
+  "visible_native_commands": false,
+  "exact_blocking_predicate_known": false,
+  "preflight_or_snapshot_exit_suspected": true,
+  "all_possible_native_effects_excluded_from_outer_log_alone": false,
+  "generic_reboot_message_does_not_establish_reboot_needed": true,
+  "current_wifi_state_known": false,
+  "replay_allowed": false
+}
