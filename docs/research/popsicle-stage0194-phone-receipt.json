@@ -1,0 +1,23 @@
+{
+  "stage": "0194",
+  "status": "PHONE_REPORTED_CHECK_BACKUP_SUCCESS",
+  "receipt_date": "2026-11-14",
+  "receipt_file": "xairdrop-0194-stage.txt",
+  "receipt_sha256": "04b2d29ae96c59dd8ad2db0be631d668b50a3b8bd47f277fc0a666974787f077",
+  "receipt_bytes": 1206,
+  "firmware": "OS4.0.6.0.XPBCNXM",
+  "source_commit": "d91e33ed207a6c3b90927242eb7d6ad15fd61c12",
+  "markers": [
+    "STAGE0194_CHECK_PASS_ONLY",
+    "STAGE0194_BACKUP_VERIFIED_ONLY_NO_DRIVER_EFFECTS"
+  ],
+  "checksum_ok_lines": 52,
+  "backup_path": "/data/adb/xairdrop17-stage0194-backup",
+  "evidence_scope": "Phone-returned controller log, not independent backup byte download or native runtime acceptance",
+  "apply_enabled": false,
+  "driver_loading_observed": false,
+  "driver_recovery_qualified": false,
+  "rf_certified": false,
+  "apple_transfer_certified": false,
+  "next_gate": "Independently qualify current-candidate load/recovery executor before controlled phone driver trial"
+}

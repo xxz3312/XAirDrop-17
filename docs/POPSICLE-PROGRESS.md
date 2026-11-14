@@ -1,6 +1,6 @@
 ## 当前部署阶段 0194（独立候选检查与备份包）
 
-新增4.0.6专用、独立module ID的检查/备份安装包；重新审计0187实际产物并保留WLAN/provider原字节，不重定向旧包。安装/Action只检查，boot空操作，无apply入口；先校验后source，两个vendor副本一致，旧归档不变，新备份原子发布并保留失败状态。CI 43465342560完整140项device（含mksh）及110项kernel全部通过、无跳过；真实ELF重审打包成功，ZIP与本地产物SHA256一致。尚无手机安装/备份结果，装载/恢复执行器与RF/Apple未验收。见 [0194](POPSICLE-STAGE-PACKAGE-0194.md)。
+新增4.0.6专用、独立module ID的检查/备份安装包；重新审计0187实际产物并保留WLAN/provider原字节，不重定向旧包。安装/Action只检查，boot空操作，无apply入口；先校验后source，两个vendor副本一致，旧归档不变，新备份原子发布并保留失败状态。CI 43465342560完整140项device（含mksh）及110项kernel全部通过、无跳过；真实ELF重审打包成功，ZIP与本地产物SHA256一致。2026-11-14手机回传0194检查与备份成功标记，52条文件校验OK；已记录日志SHA256与实机回执，属于脚本回报而非独立回下载备份验收。装载/恢复执行器与RF/Apple仍未验收。见 [0194](POPSICLE-STAGE-PACKAGE-0194.md)。
 
 ## 当前证据与归档阶段 0193（实际kernel完全匹配，旧boot事务）
 
