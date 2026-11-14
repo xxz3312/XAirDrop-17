@@ -1,0 +1,9 @@
+# 0204 — retain successful candidate HAL evidence and resolve scan completion
+
+203 text receipt establishes HAL start/association/IP, controlled shutdown and original WLAN/HAL/settings restoration, with RESULT0 and scan review pending. Its twelve post-request cache rows have ages1.081–1.243s, exceeding the entire0.34s explicit request observation interval, so no claim that the requested scan completed. Immediate candidate Internet validation and final original association are also unconfirmed by that text capture.
+
+Rechecked unchanged upstream XAirDrop585e850e3e026bf9eae90f654dafd01746bc5ec9 (`module/action.sh`) and OPAirDrop28a3a1dbc9f515fa5705417a3973616e5ae6180d (`module/bin/control.sh`). Keep original CNSS2, explicit lifecycle ownership and exact preserved transactions. Do not replay203 or start Wonder/Apple based solely on ordinary candidate Wi-Fi association.
+
+Reuse the qualified200 read-only exporter, changing only the output/temp prefix to0204 and the completed phase/module version gate to203. Collect retained journal/kernel logs, exact boot/manifest identity, current module notes and Wi-Fi status, timed Wi-Fi/scanner/P2P dumps and filtered framework logs. Verify all ten original file hashes, exclude driver binaries, refuse active locks/occupied output and recheck the lock before exclusive publication. No Wi-Fi/HAL control, driver operation, archive mutation, trial replay or install package. Current status can show subsequent restored connection; it does not alone prove operator causality.
+
+Output `/sdcard/Download/xairdrop-0204-evidence.tar.gz` with a separate export stdout receipt. Keep ordinary Wi-Fi connected and historical state unchanged. Review kernel/scanner request/completion events and preserve exact203 success before implementing a fresh scan-completion-aware test and eventual Wonder/AWDL interface activation. Raw network identifiers stay private; source control receives only redacted facts and hashes.

@@ -1,0 +1,58 @@
+{
+  "stage": "0203",
+  "status": "PHONE_REPORTED_CANDIDATE_HAL_ASSOCIATION_IP_AND_STOCK_ROUNDTRIP_PASS_SCAN_REQUEST_COMPLETION_PENDING",
+  "source_commit": "fb01a8a07a1259ef06f6ca2208235311cff9ccf4",
+  "receipt_file": "xairdrop-0203-cycle.txt",
+  "receipt_sha256": "b3c43499c4c660d7c6305621f90dab18394b74cee3cc4091c6434a81cd400205",
+  "receipt_bytes": 65576,
+  "help_rc255_semantically_validated": true,
+  "stock_stopped_samples": 10,
+  "candidate_stopped_samples": 10,
+  "command_count": 19,
+  "all_command_return_codes_zero": true,
+  "native_command_count": 6,
+  "candidate_hal_start_and_stop_pass": true,
+  "candidate_hal_pid": 27137,
+  "candidate_association_supplicant_completed": true,
+  "candidate_ip_assigned": true,
+  "candidate_frequency_mhz": 5240,
+  "candidate_negotiated_tx_rx_mbps": [
+    2401,
+    2401
+  ],
+  "candidate_traffic_counters_observed": {
+    "tx_success_packets": 14,
+    "rx_success_packets": 9
+  },
+  "candidate_android_validated_observed": false,
+  "candidate_throughput_tested": false,
+  "observation_uptime_s": [
+    136.14,
+    136.48
+  ],
+  "post_request_list": {
+    "rows": 12,
+    "frequencies_mhz": [
+      5220,
+      5240,
+      5785,
+      5805
+    ],
+    "age_min_s": 1.081,
+    "age_max_s": 1.243,
+    "all_ages_exceed_request_observation_window": true
+  },
+  "explicit_scan_request_completion_certified": false,
+  "scan_interpretation": "Recent results are present, but all predate the explicit request window; compatible with automatic connection scanning. Request rc0 and cache list are not request-completion proof.",
+  "final_original_stock_identity_checks_reported_pass": true,
+  "final_hal_running": true,
+  "final_wifi_enabled": true,
+  "final_scan_always_enabled": true,
+  "final_wifi_associated_at_immediate_capture": false,
+  "later_original_reconnection_user_confirmed": false,
+  "final_phase": "restored",
+  "result": 0,
+  "raw_kernel_logs_for_0203_independently_reviewed": false,
+  "apple_service_or_transfer_tested": false,
+  "replay_allowed": false
+}
