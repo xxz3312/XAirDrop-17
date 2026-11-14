@@ -1,3 +1,7 @@
+## 0200 成功事务与内核证据核对通过
+
+原始10文件哈希全部匹配；安装部署表与已发0199包一致。内核确认候选provider创建、候选WLAN加载并收到FW ready，随后正常卸载、原厂WLAN加载并重新连接。当前同boot，原厂CNSS2/WLAN身份匹配、provider不存在，Wi-Fi已连接、有IP且系统VALIDATED，补齐0199即时日志尚未关联后的恢复证据。初始化日志仍有报错，部分原厂重载同样出现；候选HAL/扫描/连接未测。下一批保留精确成功事务后实现候选HAL生命周期阶段，不直接重放旧cycle。见 [0200](POPSICLE-SUCCESS-EVIDENCE-0200.md)。
+
 ## 0199 实机诊断往返通过（热点重连尚未验收）
 
 手机日志回报10次HAL停止采样全通过，原厂WLAN卸载、provider与候选WLAN装载、候选WLAN与provider卸载、原厂WLAN重新装载这6条命令均返回0；最终phase restored / RESULT 0，原厂CNSS2门禁持续通过。结束HAL running、Wi-Fi及后台扫描enabled，但明确尚未连接热点，不能算自动重连或互联网恢复通过。候选驱动期间未启动HAL，候选HAL/扫描/连接和Apple互传仍待验证；保留事务与备份，不直接重跑cycle。详见 [0199](POPSICLE-PRESERVED-RETRIAL-0199.md) 和脱敏实机回执。

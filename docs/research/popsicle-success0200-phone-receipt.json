@@ -1,0 +1,63 @@
+{
+  "stage": "0200",
+  "status": "COMPLETED_0199_KERNEL_EVIDENCE_AND_RESTORED_VALIDATED_WIFI_VERIFIED",
+  "uploads": {
+    "xairdrop-0200-export.txt": "e1214e13bcaf5d42f6b7ddb4a355e9578ac41b7e45ccaa41c0ac6dff9edf6068",
+    "xairdrop-0200-evidence.tar.gz": "81decaddfa23391037af04cfa2ae9ef2c1619aa51ab78fbfce1bf63fc3ba66a7"
+  },
+  "original_source_hashes_verified": 10,
+  "deployment_and_module_prop_match_delivered_0199_zip": true,
+  "retained_commands_match_uploaded_cycle_receipt": true,
+  "same_boot_at_trial_and_capture": true,
+  "completed199_contract": {
+    "phase.sha256": "09204dbfbdb8fc121fb2a47988fe1a42a1981ac4e16ea4afc915e2d87b40d324",
+    "boot-id.sha256": "fc8cc9bbdf00f4a428d654056ec6df0b4916d28f248a9251463769efbe36cf94",
+    "manifest.sha256.sha256": "27ea2bef26eb5d6228e654f30b963e993627ede5b40a97a0bd5d39a08ac556a6",
+    "wifi.before.sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "scan.before.sha256": "e056a35db086947e2f5969d747f0a7517bff00c7ffff1f9e7b47b72bfac9d948",
+    "hals.sha256": "dd68eff1a98e1f749b70c35576cc235dd56e6943d93466c5389c5eb7f64a3619",
+    "interface.before.sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "commands.log.sha256": "b43528ad1f87bbc4e4be4174d30298b029c3482faa605f0f0a63258f3166ebd7",
+    "kernel.before.log.sha256": "54c9776444a9612383727866f9d6df983d23ec3dd9942b46ce33d4bfa425e71d",
+    "kernel.after.log.sha256": "f7712b9d6e16d74a921153b11fe9f9df748c1813ad91b5d046a8c97da7a87842",
+    "boot_id": "d9921526-9c71-430d-9a03-b81d54fdf223",
+    "manifest_sha256": "f802766c9d7120b438f8c03a315fb49549782aee955f4fdb22b27acc0168b551"
+  },
+  "current_stock_note_hashes": {
+    "cnss2": "fd452273270f45ac4dd89fb08b4e7c281c99f46bdbd23d1289be52c9ec5c99c3",
+    "qca_cld3_peach_v2": "e2db5a4c55b3664d2aa3d5ce4dc24af67df31f58d88f4e65121fd5aa0b050ecd"
+  },
+  "current_provider_absent": true,
+  "current_hal_running": true,
+  "current_wifi_connected": true,
+  "current_ip_assigned": true,
+  "android_network_validated": true,
+  "independent_network_throughput_test": false,
+  "framework_query_return_codes": {
+    "wifi-status": 0,
+    "wifi": 0,
+    "wifiscanner": 0,
+    "wifip2p": 0,
+    "logcat": 0
+  },
+  "kernel_events_uptime_s": {
+    "stock_unload": 2024.011353,
+    "provider_created": 2025.345595,
+    "candidate_load": 2026.985517,
+    "candidate_fw_ready": 2028.038099,
+    "candidate_unload": 2029.254777,
+    "stock_load": 2031.953293,
+    "stock_fw_ready": 2033.075528,
+    "restored_stock_connection_success": 2036.803369
+  },
+  "kernel_diagnostics": {
+    "new_unknown_symbol_crc_vermagic_oops_panic_warning_signatures_in_trial_interval": false,
+    "preexisting_gpu_drm_warning_uptime": 1992.034306,
+    "cooling_node_missing_observed_with_both_drivers": true,
+    "firmware_lookup_and_initialization_diagnostics_require_candidate_runtime_validation": true
+  },
+  "candidate_hal_started_in_0199": false,
+  "candidate_scan_connection_certified": false,
+  "apple_runtime_tested": false,
+  "native_replay_allowed": false
+}
