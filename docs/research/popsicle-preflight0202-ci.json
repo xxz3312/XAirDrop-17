@@ -1,0 +1,13 @@
+{
+  "stage": "0202",
+  "status": "CI_PASSED_PHONE_PREDICATE_EVIDENCE_PENDING",
+  "source_commit": "0ef404c80afb282f98c4017476a2b000397287e2",
+  "workflow_run": 43579861721,
+  "job_id": 132402072996,
+  "tests_passed": 8,
+  "tests_skipped": 0,
+  "script_sha256": "e9105e62b4d887ff72bcff4465391110329e0e652824b7aad11ae4281b714044",
+  "new_module_package": false,
+  "native_control": false,
+  "phone_mutation_allowed": false
+}
