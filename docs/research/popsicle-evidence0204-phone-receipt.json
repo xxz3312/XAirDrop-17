@@ -1,0 +1,93 @@
+{
+  "stage": "0204",
+  "status": "CANDIDATE_HAL_NETWORK_VALIDATION_AND_STOCK_RECOVERY_CORROBORATED_EXPLICIT_SCAN_FAILED_AT_TEARDOWN",
+  "uploads": {
+    "xairdrop-0204-export.txt": "fbc943c75c5cae543291c16ca1e7c91ce899ee28088c4fa299a213f92adf877b",
+    "xairdrop-0204-evidence.tar.gz": "ff793f479466f4e9ce9c9da04adaad335e939a97d9f9bb74de907897dfd73276"
+  },
+  "original_file_hashes_verified": 10,
+  "installed_metadata_exactly_matches_delivered203_zip": true,
+  "retained_journal_matches_uploaded203_log": true,
+  "same_boot_at_trial_and_capture": true,
+  "completed203_contract": {
+    "phase.sha256": "09204dbfbdb8fc121fb2a47988fe1a42a1981ac4e16ea4afc915e2d87b40d324",
+    "boot-id.sha256": "f006e18323b679751b3ffe28ef1dc3bc6e9b63b7b35859f16690476a979bb775",
+    "manifest.sha256.sha256": "b1356b37d5052e94aab84a4aa2cc1a60e76cb67b6d260ee816919c465cc3f1d6",
+    "wifi.before.sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "scan.before.sha256": "e056a35db086947e2f5969d747f0a7517bff00c7ffff1f9e7b47b72bfac9d948",
+    "hals.sha256": "dd68eff1a98e1f749b70c35576cc235dd56e6943d93466c5389c5eb7f64a3619",
+    "interface.before.sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+    "commands.log.sha256": "2fef593d3ce31ced188b03aeb556ef6f82a435881aba5d0e6134552d0bd1a87f",
+    "kernel.before.log.sha256": "e797bdc04115a86a996b77dfb4ee1880f8f0581cf10fb30c096029fc4e2b5987",
+    "kernel.after.log.sha256": "2cd0d405d41be72f020cb3c87fa6913cef0fb596e725d696568e7479c152d093",
+    "boot_id": "ba958c25-e11d-4b7d-bb00-0ad0a5935908",
+    "manifest_sha256": "dac59a7c2ec97c849cf3094e4aee4c7482b4832b2412818ca309ecf95a8caa7e"
+  },
+  "current_stock_cnss2_wlan_notes_match": true,
+  "current_provider_absent": true,
+  "current_hal_running": true,
+  "current_wifi_connected_ip": true,
+  "current_android_validated": true,
+  "query_return_codes": {
+    "wifi-status": 0,
+    "wifi": 0,
+    "wifiscanner": 0,
+    "wifip2p": 0,
+    "logcat": 0
+  },
+  "candidate_network_events_local": {
+    "ip_configuration_success": "17:59:00.085",
+    "network_agent_valid_network": "17:59:01.141"
+  },
+  "stock_network_events_local": {
+    "ip_configuration_success": "17:59:25.343",
+    "network_agent_valid_network": "17:59:26.108"
+  },
+  "candidate_connection_scan": {
+    "listener_id": "4d63d55",
+    "request_local": "17:58:59.467664",
+    "result_local": "17:58:59.664920",
+    "results": 12,
+    "channels_mhz": [
+      5220,
+      5240,
+      5785,
+      5805
+    ]
+  },
+  "candidate_other_auto_scan": {
+    "listener_id": "df514b1",
+    "failed_local": "17:58:59.793921",
+    "reason": -7,
+    "text": "Scan aborted"
+  },
+  "explicit_shell_scan": {
+    "listener_id": "9f0b06f",
+    "request_local": "17:59:00.422743",
+    "worksource": "0 com.android.shell",
+    "requested_bands": "24Ghz & 5Ghz (DFS incl) & 6Ghz & 60Ghz",
+    "wifi_toggle_off_source": "0 com.android.shell",
+    "wifi_toggle_off_local": "17:59:01.995",
+    "scanner_disable_local": "17:59:02.216083",
+    "failed_local": "17:59:02.216501",
+    "failure_reason": -1,
+    "failure_text": "Scan failed - unspecified reason",
+    "successful_result_for_this_request_observed": false
+  },
+  "interpretation": "Explicit shell scan failed at scanner disable during scripted Wi-Fi teardown. The controller did not await completion; full-band driver scan support remains undetermined. Do not treat directed auto-scan results or request rc0 as this request success.",
+  "kernel_events_uptime_s": {
+    "stock_unload": 127.297476,
+    "provider_create": 128.485465,
+    "candidate_load": 129.885317,
+    "candidate_first_fw_ready": 130.941758,
+    "candidate_hal_fw_ready": 134.896137,
+    "candidate_unload": 154.303243,
+    "stock_reload": 156.522026,
+    "stock_hal_fw_ready": 160.175577
+  },
+  "new_oops_panic_abi_or_recovery_signatures_in_inspected_trial_interval": false,
+  "throughput_or_long_term_stability_certified": false,
+  "explicit_scan_success_certified": false,
+  "apple_service_started": false,
+  "native_replay_allowed": false
+}
