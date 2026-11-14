@@ -1,3 +1,9 @@
+## 当前实现 0207：补齐配置提交后的启动前检查（尚未提交射频 START）
+
+0206 已独立验收0205：本次显式扫描2.246654秒返回10条；候选及原厂恢复后均获得IP/VALIDATED；13份保留文件哈希、同boot、已发包元数据和原厂身份均匹配。普通Wi-Fi基础往返完成，Wonder/AWDL/Apple仍未通过。
+
+本批新增managed→fresh scope→canonical request/current native policy→host snapshot→post-commit检查，明确区分“可提交配置”和“已经提交配置”。完整配置、资源所有权和零射频历史均须一致，不缓存许可或自动启动。公开Wonder init和configured START继续拒绝，后续仍需将启动与配置后运行态停止/恢复、父级生命周期一起验证。无需手机操作，不重跑cycle。见 [0207](POPSICLE-LAUNCH-CHECK-0207.md) / [0206](POPSICLE-SCAN-EVIDENCE-0206.md)。
+
 ## 当前实现 0205（等待本次扫描结果后再收尾，实机待验）
 
 固定ID/versionCode205；完整保留精确203 HAL往返事务，继续要求199及更早归档/原厂备份。候选关联后先拍取扫描历史、只请求一次扫描，再匹配唯一新root-shell监听器的成功/失败事件；旧缓存、无关/被动回调、旧标识复用、含糊或冲突记录不算完成。查询与轮询有界，明确结果或超时后正常停止候选HAL、卸载并恢复原厂；危险身份/HAL/信号/装卸故障仍阻断后续装卸。无原生驱动重编译、参数修改或Apple/Wonder启动。见 [0205](POPSICLE-SCAN-COMPLETION-0205.md)。

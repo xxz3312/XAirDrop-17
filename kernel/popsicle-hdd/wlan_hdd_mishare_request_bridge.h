@@ -180,4 +180,18 @@ mishare_request_bridge_plan_commit_step_locked(const struct mishare_request_brid
         return ret;
     return mishare_wonder_host_plan_commit_step_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
 }
+/* Full canonical request and CURRENT native policy are rechecked even after
+ * plan adoption. The resulting zero is not a retained START authorization. */
+static inline int
+mishare_request_bridge_launch_check_locked(const struct mishare_request_bridge *c,
+                                            struct hdd_context *hdd,
+                                            const struct mishare_init_request *request,
+                                            u8 nss_2g, u8 nss_5g)
+{
+    int ret = mishare_request_bridge_validate_locked(c, hdd, request, nss_2g, nss_5g);
+
+    if (ret)
+        return ret;
+    return mishare_wonder_host_launch_check_locked(c->bridge.host, &c->request, nss_2g, nss_5g);
+}
 #endif

@@ -215,4 +215,23 @@ mishare_start_plan_commit_check(const struct mishare_runtime_status *s,
         return -EUCLEAN;
     return 0;
 }
+/* Strict post-commit / before-first-START observation. Unlike plan adoption,
+ * an otherwise valid but uncommitted encoder receipt is still pending here.
+ * No state projection, cached ticket, radio command or teardown authority.
+ * Public init and configured runtime START stay closed until their native
+ * parent lifetime and active configured retirement are qualified together.
+ */
+static inline int
+mishare_start_launch_check(const struct mishare_runtime_status *s,
+                            const struct mishare_prestart *c,
+                            const struct mishare_session *session,
+                            const struct mishare_init_request *request,
+                            u8 nss_2g, u8 nss_5g)
+{
+    int ret = mishare_start_plan_commit_check(s, c, session, request, nss_2g, nss_5g);
+
+    if (ret)
+        return ret;
+    return s->start_preview.committed ? 0 : -EINPROGRESS;
+}
 #endif

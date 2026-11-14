@@ -15,6 +15,8 @@ static unsigned retry_steps;
 static struct mishare_request_bridge *request_control;
 static unsigned ready_reads;static int ready_result;
 static unsigned commit_reads;static int commit_result;
+static unsigned launch_reads;static int launch_result;
+int mishare_wonder_host_launch_check_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) {assert(parent_lease && o==&host && q==&request_control->request && a==1 && b==2);launch_reads++;return launch_result;}
 int mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) {assert(o==&host && q && a==1 && b==2);return -EOPNOTSUPP;}
 int mishare_wonder_host_plan_commit_step_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) {assert(parent_lease && o==&host && q==&request_control->request && a==1 && b==2 && "EXPECTED_REQUEST_COMMIT_SOURCE");commit_reads++;return commit_result;}
 int mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *o,const struct mishare_init_request *q,u8 a,u8 b) { assert(parent_lease && o==&host && q==&request_control->request && a==1 && b==2);ready_reads++;return ready_result;}
@@ -37,7 +39,7 @@ int mishare_wonder_host_prestart_step_locked(struct mishare_wonder_host *o,u32 f
 static struct mishare_init_request input;
 static void request_reset(struct mishare_request_bridge *c) {
  memset(c,0,sizeof(*c));reset(&c->bridge);request_control=c;
- ready_reads=commit_reads=0;ready_result=commit_result=-EINPROGRESS;
+ ready_reads=commit_reads=launch_reads=0;ready_result=commit_result=launch_result=-EINPROGRESS;
  preflights=prepared_steps=retry_steps=0;policy_error=bssid_result=retry_result=0;prepared_result=-EINPROGRESS;
  struct wondertap_init_params p={.channel={.freq=5240},.tx_rate={.preamble=WONDERTAP_RATE_PREAMBLE_HT,.nss=1,.mcs=7},
   .mgmt_retry_limit=3,.data_retry_limit=5};
@@ -152,7 +154,21 @@ static void request_ready_cases(void) {
    commit_reads==result+1 && ready_reads==previews && prepared_steps==posts && preflights==policies+1 &&
    "EXPECTED_REQUEST_COMMIT_FRESH");
  }
+ for(unsigned result=0;result<3;result++) {
+  launch_result=result==0?-EINPROGRESS:result==1?0:-EUCLEAN;
+  unsigned before=preflights,commits=commit_reads,prepares=prepared_steps;
+  struct mishare_request_bridge copy=observation;
+  assert(mishare_request_bridge_launch_check_locked(&observation,&parent,&input,1,2)==launch_result &&
+   launch_reads==result+1 && commit_reads==commits && prepared_steps==prepares && preflights==before+1 &&
+   !memcmp(&copy,&observation,sizeof(copy)) && "EXPECTED_REQUEST_LAUNCH_FRESH");
+ }
  struct mishare_init_request drift=input;drift.params.bssid[5]++;
+ unsigned launches=launch_reads;
+ assert(mishare_request_bridge_launch_check_locked(&observation,&parent,&drift,1,2)==-EBUSY &&
+  launch_reads==launches && "EXPECTED_REQUEST_LAUNCH_IDENTITY");
+ policy_error=-EOPNOTSUPP;
+ assert(mishare_request_bridge_launch_check_locked(&observation,&parent,&input,1,2)==-EOPNOTSUPP &&
+  launch_reads==launches && "EXPECTED_REQUEST_LAUNCH_POLICY");policy_error=0;
  unsigned commits=commit_reads;
  assert(mishare_request_bridge_plan_commit_step_locked(&observation,&parent,&drift,1,2)==-EBUSY &&
   commit_reads==commits && "EXPECTED_REQUEST_COMMIT_IDENTITY");
@@ -162,6 +178,8 @@ static void request_ready_cases(void) {
  assert(!retire(&observation.bridge));
  assert(mishare_request_bridge_plan_commit_step_locked(&observation,&parent,&input,1,2)==-ESHUTDOWN &&
   commit_reads==commits && "EXPECTED_REQUEST_COMMIT_CLOSE");
+ assert(mishare_request_bridge_launch_check_locked(&observation,&parent,&input,1,2)==-ESHUTDOWN &&
+  launch_reads==launches && "EXPECTED_REQUEST_LAUNCH_CLOSE");
 
 }
 
@@ -320,6 +338,7 @@ def main():
     decl+='\nint mishare_wonder_host_plan_step_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     decl+='\nint mishare_wonder_host_plan_commit_step_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     decl+='\nint mishare_wonder_host_start_ready_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
+    decl+='\nint mishare_wonder_host_launch_check_locked(struct mishare_wonder_host *,const struct mishare_init_request *,u8,u8);\n'
     code=legacy.HARNESS.replace('#include "wlan_hdd_mishare_bridge.h"','#include "wlan_hdd_mishare_request_bridge.h"').replace('int main(void)','static int legacy_bridge_main(void)',1)+'\n'+MODEL
     host=(prod/'wlan_hdd_mishare_host.c').read_text();reg=function(host,'mishare_init_regulatory_check');pre=function(host,'mishare_wonder_request_preflight_locked')
     managed_function=function(host,'mishare_wonder_managed_prestart_step')
@@ -339,11 +358,13 @@ def main():
     ]
     validate=function(bound,'mishare_request_bridge_validate_locked')
     commit=function(bound,'mishare_request_bridge_plan_commit_step_locked')
+    launch=function(bound,'mishare_request_bridge_launch_check_locked')
     commit_controls=[]
     for body,old,new in [
         (validate,'!mishare_init_equal(&c->request, &canonical)','false'),
         (validate,'if (ret)\n        return ret;\n    if (!b->host','if (false && ret)\n        return ret;\n    if (!b->host'),
         (commit,'if (ret)\n        return ret;','if (false && ret)\n        return ret;'),
+        (launch,'if (ret)\n        return ret;','if (false && ret)\n        return ret;'),
     ]:
         assert body.count(old)==1,old
         commit_controls.append(bound.replace(body,body.replace(old,new,1),1))
@@ -378,7 +399,7 @@ def main():
         for changed in commit_controls:
             (d/'wlan_hdd_mishare_request_bridge.h').write_text(changed);f.write_text(code);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
-            assert bad.returncode==-6 and ('EXPECTED_REQUEST_COMMIT_' in bad.stderr or 'EXPECTED_REQUEST_READY_' in bad.stderr),(bad.returncode,bad.stderr[-2000:])
+            assert bad.returncode==-6 and ('EXPECTED_REQUEST_COMMIT_' in bad.stderr or 'EXPECTED_REQUEST_READY_' in bad.stderr or 'EXPECTED_REQUEST_LAUNCH_' in bad.stderr),(bad.returncode,bad.stderr[-2000:])
         (d/'wlan_hdd_mishare_request_bridge.h').write_text(bound)
         run(policy)
         for text in policies:

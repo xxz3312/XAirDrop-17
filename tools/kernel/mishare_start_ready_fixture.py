@@ -198,6 +198,47 @@ static void plan_commit_observation_cases(void)
  assert(mishare_start_plan_commit_check(NULL,&c,&session,&q,1,2)==-EINVAL);
 }
 
+static void launch_observation_cases(void) {
+ struct mishare_runtime_status s,copy;struct mishare_prestart c,old_c;struct mishare_session session,old_session;
+ struct mishare_init_request q,old_q;struct wondertap_init_params p={0};
+ p.channel.freq=5240;p.tx_rate.preamble=WONDERTAP_RATE_PREAMBLE_HT;p.tx_rate.nss=1;p.tx_rate.mcs=7;
+ p.mac_addr[0]=2;p.mac_addr[5]=1;p.bssid[5]=8;memcpy(p.country_code,"CN",3);
+ for(unsigned band=0;band<2;band++)for(unsigned pair=0;pair<4;pair++)for(unsigned rate=0;rate<2;rate++) {
+  p.channel.freq=band?5240:2437;p.data_retry_limit=pair&1?5:0;p.mgmt_retry_limit=pair&2?3:0;
+  p.tx_rate.preamble=rate?WONDERTAP_RATE_PREAMBLE_HE:WONDERTAP_RATE_PREAMBLE_HT;
+  assert(!mishare_init_parse(&p,&q));ready_values(&s,&c,&session,&q);
+  assert(mishare_start_launch_check(&s,&c,&session,&q,1,2)==-EINPROGRESS && "EXPECTED_LAUNCH_NO_PREVIEW");
+  plan_values(&s,false);copy=s;
+  assert(mishare_start_launch_check(&s,&c,&session,&q,1,2)==-EINPROGRESS && !memcmp(&s,&copy,sizeof(s)) &&
+   "EXPECTED_LAUNCH_REQUIRE_COMMITTED");
+  plan_values(&s,true);copy=s;old_c=c;old_session=session;old_q=q;
+  for(unsigned repeat=0;repeat<3;repeat++)assert(!mishare_start_launch_check(&s,&c,&session,&q,1,2) &&
+   !memcmp(&s,&copy,sizeof(s)) && !memcmp(&c,&old_c,sizeof(c)) && !memcmp(&session,&old_session,sizeof(session)) &&
+   !memcmp(&q,&old_q,sizeof(q)) && !s.ndi.radio_requested && "EXPECTED_LAUNCH_READ_ONLY");
+  for(unsigned fault=0;fault<12;fault++) {
+   s=copy;int expected=-EUCLEAN;
+   switch(fault) {
+   case 0:s.quiesced=MISHARE_QUIESCE_SSR;expected=-ESHUTDOWN;break;
+   case 1:s.work_users=1;expected=-EINPROGRESS;break;
+   case 2:s.start_preview.integrity_error=true;break;
+   case 3:s.start_preview.vdev_id++;break;
+   case 4:s.ndi.start_plan.dtim_period++;break;
+   case 5:s.rate.request.mcs++;break;
+   case 6:s.retry.receipt.vdev_id++;break;
+   case 7:s.ndi.radio_requested=true;expected=-EBUSY;break;
+   case 8:s.radio.start_attempted=true;expected=-EBUSY;break;
+   case 9:s.recovery_timer_released=true;expected=-EBUSY;break;
+   case 10:s.ndi.create.dp_cookie=0;break;
+   case 11:s.ndi.create.stats_owned=false;break;
+   }
+   struct mishare_runtime_status changed=s;
+   assert(mishare_start_launch_check(&s,&c,&session,&q,1,2)==expected && !memcmp(&s,&changed,sizeof(s)) &&
+    "EXPECTED_LAUNCH_INVALID_CONFIG");
+  }
+ }
+ assert(mishare_start_launch_check(NULL,&c,&session,&q,1,2)==-EINVAL);
+}
+
 static void configuration_ownership_cases(void) {
  struct mishare_runtime_status s,copy;struct mishare_prestart c;struct mishare_session session;
  struct mishare_init_request q;struct wondertap_init_params p={0};
@@ -270,7 +311,7 @@ static void configuration_ownership_cases(void) {
  }
 }
 
-int main(void) {readiness_cases();plan_commit_observation_cases();configuration_ownership_cases();assert(!previous_prestart_main());puts("MISHARE_START_READY_FIXTURE_PASS_ONLY");return 0;}
+int main(void) {readiness_cases();plan_commit_observation_cases();configuration_ownership_cases();launch_observation_cases();assert(!previous_prestart_main());puts("MISHARE_START_READY_FIXTURE_PASS_ONLY");return 0;}
 '''
 
 def main():
@@ -289,6 +330,7 @@ def main():
               ('!mishare_start_radio_pristine(&s->radio)','false'),
               ('!n->create.dp_cookie ||','false ||'),
               ('!n->create.stats_owned','false')]
+    launch_controls=[('return s->start_preview.committed ? 0 : -EINPROGRESS;', 'return 0;')]
     plan_controls=[('preview->integrity_error ||','false ||'),
                    ('preview->vdev_id != s->retry.vdev_id','false'),
                    ('preview->freq != request->params.channel.freq','false'),
@@ -314,8 +356,13 @@ def main():
             (d/'wlan_hdd_mishare_start_ready.h').write_text(header.replace(old,new,1));subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
             assert bad.returncode==-6 and 'EXPECTED_PLAN_CALLER_' in bad.stderr,(old,bad.returncode,bad.stderr[-1800:])
+        for old,new in launch_controls:
+            assert header.count(old)==1,old
+            (d/'wlan_hdd_mishare_start_ready.h').write_text(header.replace(old,new,1));subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=15)
+            assert bad.returncode==-6 and 'EXPECTED_LAUNCH_' in bad.stderr,(old,bad.returncode,bad.stderr[-1800:])
     out=ROOT/'.popsicle-ci/artifacts/reports/mishare-start-ready-fixture.json';out.parent.mkdir(parents=True,exist_ok=True)
-    out.write_text(json.dumps({'status':'MISHARE_START_READY_FIXTURE_PASS_ONLY','success_modes':16,'boundary_cases':56,'ownership_boundaries':141,'native_zero_timing_cases':4,'new_ownership_mutations':3,'mutations':len(controls),'plan_success_modes':32,'plan_boundaries':35,'plan_mutations':len(plan_controls),'limitations':'Production pure snapshot predicate with modeled rate/retry/BSSID/native state, plus preceding production prestart/session fixture regressions. No START admission, active-radio teardown, firmware ACK, public init or phone proof.'},indent=2)+'\n')
+    out.write_text(json.dumps({'status':'MISHARE_START_READY_FIXTURE_PASS_ONLY','launch_success_modes':16,'launch_invalid_config_cases':192,'launch_mutations':len(launch_controls),'success_modes':16,'boundary_cases':56,'ownership_boundaries':141,'native_zero_timing_cases':4,'new_ownership_mutations':3,'mutations':len(controls),'plan_success_modes':32,'plan_boundaries':35,'plan_mutations':len(plan_controls),'limitations':'Production pure snapshot predicate with modeled rate/retry/BSSID/native state, plus preceding production prestart/session fixture regressions. No START admission, active-radio teardown, firmware ACK, public init or phone proof.'},indent=2)+'\n')
     print('MISHARE_START_READY_FIXTURE_PASS_ONLY')
 
 if __name__=='__main__':main()

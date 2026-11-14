@@ -1754,6 +1754,52 @@ static void managed_commit_cases(struct hdd_context *h,struct wireless_dev *wdev
     instance->request_bridge.bridge.host==host && runtime_tokens==1 && preview_model_calls==previews &&
     host->session.stage==MISHARE_SESSION_PLAN && "EXPECTED_MANAGED_COMMIT_POLL");
   }
+  /* Real managed->scope->request->host->snapshot launch observation. */
+  struct mishare_runtime_status launch_copy=ready_snapshot;
+  struct mishare_prestart launch_prestart=host->prestart;
+  struct mishare_session launch_session=host->session;
+  for(unsigned repeat=0;repeat<3;repeat++) {
+   unsigned old_reads=ready_snapshot_reads,old_commits=commit_model_calls;
+   managed_context();assert(!mishare_wonder_managed_launch_check(handle) &&
+    ready_snapshot_reads==old_reads+1 && commit_model_calls==old_commits && preview_model_calls==previews &&
+    !memcmp(&ready_snapshot,&launch_copy,sizeof(launch_copy)) &&
+    !memcmp(&host->prestart,&launch_prestart,sizeof(launch_prestart)) &&
+    !memcmp(&host->session,&launch_session,sizeof(launch_session)) &&
+    !ready_snapshot.ndi.radio_requested && !instance->busy && !parent_owned && !rtnl_owned &&
+    runtime_tokens==1 && instance->request_bridge.bridge.host==host && "EXPECTED_MANAGED_LAUNCH_READ_ONLY");
+  }
+  if(!mode)for(unsigned fault=0;fault<17;fault++) {
+   pid_t child=fork();assert(child>=0);if(!child) {
+    int expected=-EUCLEAN;unsigned old_commits=commit_model_calls;
+    struct wlan_objmgr_pdev replacement={0};
+    if(fault==0){ready_values(&ready_snapshot,&host->prestart,&host->session,&instance->request);plan_values(&ready_snapshot,false);expected=-EINPROGRESS;}
+    if(fault==1){ready_values(&ready_snapshot,&host->prestart,&host->session,&instance->request);expected=-EINPROGRESS;}
+    if(fault==2){ready_snapshot.work_users=1;expected=-EINPROGRESS;}
+    if(fault==3)ready_snapshot.start_preview.vdev_id++;
+    if(fault==4){instance->request.params.data_retry_limit++;expected=-EBUSY;}
+    if(fault==5){reg_state=0;expected=-EOPNOTSUPP;}
+    if(fault==6){runtime_ssr=true;expected=-ESHUTDOWN;}
+    if(fault==7){instance->busy=true;expected=-EINPROGRESS;}
+    if(fault==8){rtnl_contended=true;expected=-EAGAIN;}
+    if(fault==9)h->pdev=&replacement;
+    if(fault==10){host->session.closing=true;expected=-ESHUTDOWN;}
+    if(fault==11){ready_snapshot.ndi.radio_requested=true;expected=-EBUSY;}
+    if(fault==12)ready_snapshot.ndi.start_plan.dtim_period++;
+    if(fault==13)ready_snapshot.rate.request.mcs++;
+    if(fault==14){instance->request_prepared=false;expected=-EINVAL;}
+    if(fault==15){instance->request_bridge.bridge.closing=true;expected=-ESHUTDOWN;}
+    if(fault==16)instance->parent_pdev=&replacement;
+    struct mishare_runtime_status before=ready_snapshot;managed_context();
+    assert(mishare_wonder_managed_launch_check(handle)==expected &&
+     !memcmp(&before,&ready_snapshot,sizeof(before)) && commit_model_calls==old_commits &&
+     preview_model_calls==previews && runtime_tokens==1 && instance->request_bridge.bridge.host==host &&
+     "EXPECTED_MANAGED_LAUNCH_REFUSAL");
+    assert(instance->busy==(fault==7) && !parent_owned && !rtnl_owned && "EXPECTED_MANAGED_LAUNCH_RELEASE");
+    _Exit(0);
+   }
+   int status;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status) &&
+    "EXPECTED_MANAGED_LAUNCH_BOUNDARY_CHILD");
+  }
   unsigned commits=commit_model_calls,reads=ready_snapshot_reads;
   reg_state=0;managed_context();
   assert(mishare_wonder_managed_plan_commit_step(handle)==-EOPNOTSUPP && ready_snapshot_reads==reads &&
@@ -2222,6 +2268,22 @@ def run(wlan, output, creation_only=False):
             (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
             bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
             assert bad.returncode==-6 and 'EXPECTED_MANAGED_COMMIT_' in bad.stderr,(label,bad.returncode,bad.stderr[-2000:])
+        launch_managed=extract(host_source,r'^int mishare_wonder_managed_launch_check\([^;{]+?\)\s*\{.*?^\}')
+        launch_host=extract(host_source,r'^int mishare_wonder_host_launch_check_locked\([^;{]+?\)\s*\{.*?^\}')
+        launch_controls=[]
+        for body,needle,replacement in [
+            (launch_managed,'if (!instance->request_prepared)','if (false && !instance->request_prepared)'),
+            (launch_managed,'    mishare_bridge_scope_end(&scope);','    if (false) mishare_bridge_scope_end(&scope);'),
+            (launch_managed,'    mishare_instance_release(instance);','    if (false) mishare_instance_release(instance);'),
+            (launch_managed,'ret = mishare_instance_parent_check(instance, scope.hdd);','ret = 0 * mishare_instance_parent_check(instance, scope.hdd);'),
+            (launch_host,'return mishare_start_launch_check(', 'return 0 * mishare_start_launch_check('),
+        ]:
+            assert body.count(needle)==1,needle
+            launch_controls.append((needle,host_source.replace(body,body.replace(needle,replacement,1),1)))
+        for label,changed in launch_controls:
+            (d/'wlan_hdd_mishare_host.c').write_text(changed);subprocess.run(command,check=True)
+            bad=subprocess.run([exe],capture_output=True,text=True,env=env,timeout=10)
+            assert bad.returncode==-6 and 'EXPECTED_MANAGED_LAUNCH_' in bad.stderr,(label,bad.returncode,bad.stderr[-2000:])
         regulatory_controls = [
             ('ret = mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);',
              'ret = 0 * mishare_init_regulatory_check(scope.hdd, &request, nss_2g, nss_5g);'),
