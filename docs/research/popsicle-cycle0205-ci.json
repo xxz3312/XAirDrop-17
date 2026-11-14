@@ -1,0 +1,26 @@
+{
+  "stage": "0205",
+  "status": "CI_PASSED_PHONE_PENDING",
+  "source_commit": "a0e0b0e06b9a5800f37a9d1cd864f6d7dbe4cb28",
+  "workflow_run": 43589004061,
+  "local_focused_cases_passed": 9,
+  "local_kernel_tests_passed": 110,
+  "module_id": "xairdrop17_cycle0195",
+  "version_code": 205,
+  "native_rebuild": false,
+  "native_bytes_unchanged": true,
+  "local_package_sha256": "30c0cd87898dfe334e24ce014bebf5e77aca44414330643ddd1351669896a1ce",
+  "package_bytes": 168809725,
+  "phone_scan_completion_certified": false,
+  "apple_services_started": false,
+  "workflow_jobs": {
+    "sh": 132429526090,
+    "mksh": 132429526318,
+    "package": 132431042577
+  },
+  "ci_tests_passed": 131,
+  "ci_tests_skipped": 0,
+  "ci_package_matches_local": true,
+  "artifact_id": 14111758130,
+  "library_file_id": "libfile_d88ed15e4aac8191a47351b0061c74a2"
+}
