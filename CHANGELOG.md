@@ -2,7 +2,7 @@
 
 - Upgrade the existing module ID with versionCode197 and stable display name. Preserve the exact reviewed prior-boot 0195 failed record by explicit verified directory rename before a fresh transaction; keep original backups and old source/artifact evidence.
 - Save/disable scan-always, verify a stopped-HAL interval and log each readiness predicate before fixed diagnostic module operations. Restore original scan/Wi-Fi baseline on success. Framework-only failure cleanup is limited to confirmed stock hardware; post-reboot settings recovery never replays native operations or rewrites failed phase.
-- Local 23 diagnostic tests and 110 kernel-tool tests pass (20 mksh cases skipped locally); actual immutable-ELF audit/package and ZIP CRC pass. Complete shell CI is pending. No new native build, rewritten CRC/vermagic, boot loading, firmware overlay, Apple service or init_boot write. Phone acceptance pending.
+- Local 23 diagnostic tests and 110 kernel-tool tests pass (20 mksh cases skipped locally); actual immutable-ELF audit/package and ZIP CRC pass. CI 43549094684 passed all 43 diagnostic tests including mksh and 110 kernel-tool tests with no skips; actual ELF packaging reproduced the local ZIP hash. No new native build, rewritten CRC/vermagic, boot loading, firmware overlay, Apple service or init_boot write. Phone acceptance pending.
 
 ## 0196 — observe framework lazy HAL restart and qualify stock-only probe
 

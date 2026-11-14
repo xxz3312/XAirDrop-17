@@ -1,6 +1,6 @@
 ## 当前部署阶段 0197（同ID升级、扫描基线与明确门禁）
 
-新增同ID升级版：固定xairdrop17_cycle0195，显示名XAirDrop-17，versionCode197。只显式归档哈希/boot/phase/备份匹配的旧0195失败记录，整体改名保留，不重放；新事务保存扫描开关，先关闭后台扫描并验证10个HAL静止采样，再执行诊断WLAN/provider往返，最后恢复扫描/Wi-Fi原设置。每项门禁输出名称和返回值；原厂驱动仍在时只恢复框架设置，状态不明时停止并重启，另有重启后的recover-settings，不改失败phase或重放驱动操作。保留0194备份/0193归档，安装和Action只检查、boot不运行。本地43项诊断测试23通过、20项mksh跳过，110项kernel通过；真实ELF重审打包/ZIP完整性通过，集中CI及实机197尚未验收。见 [0197](POPSICLE-SCAN-GUARD-UPGRADE-0197.md)。
+新增同ID升级版：固定xairdrop17_cycle0195，显示名XAirDrop-17，versionCode197。只显式归档哈希/boot/phase/备份匹配的旧0195失败记录，整体改名保留，不重放；新事务保存扫描开关，先关闭后台扫描并验证10个HAL静止采样，再执行诊断WLAN/provider往返，最后恢复扫描/Wi-Fi原设置。每项门禁输出名称和返回值；原厂驱动仍在时只恢复框架设置，状态不明时停止并重启，另有重启后的recover-settings，不改失败phase或重放驱动操作。保留0194备份/0193归档，安装和Action只检查、boot不运行。CI 43549094684全部43项诊断（含mksh）与110项kernel测试通过、无跳过；真实ELF重审打包通过，CI与本地ZIP哈希一致。0197同ID升级包已生成，实机归档/往返/恢复仍未验收。见 [0197](POPSICLE-SCAN-GUARD-UPGRADE-0197.md)。
 
 ## 当前故障分析 0196（原厂侧HAL静止窗口与设置恢复通过）
 

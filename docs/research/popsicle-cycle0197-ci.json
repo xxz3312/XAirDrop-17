@@ -1,0 +1,37 @@
+{
+  "stage": "0197",
+  "status": "SCAN_GUARDED_SAME_ID_UPGRADE_CI_PASS_PHONE_PENDING",
+  "source_commit": "7227ef2790ff343a9396e8c77c0252faa33298bb",
+  "workflow_run_id": 43549094684,
+  "job_id": 132307157420,
+  "workflow_url": "https://github.com/xxz3312/XAirDrop-17/actions/runs/43549094684",
+  "diagnostic_tests": {
+    "passed": 43,
+    "skipped": 0,
+    "sh_and_mksh": true
+  },
+  "kernel_tool_tests": {
+    "passed": 110,
+    "skipped": 0
+  },
+  "artifact_id": 14095513303,
+  "package": {
+    "name": "XAirDrop-17-0197.zip",
+    "bytes": 168803736,
+    "sha256": "6c63f8381aca2fbe35ef8738b8080a79c44a2033ce05d7d10922342c612a25cc",
+    "matches_local_production": true,
+    "module_id": "xairdrop17_cycle0195",
+    "version_code": 197
+  },
+  "candidate_source_commit": "a4b9404257efe395cf3cf865a806bff5daba6f4b",
+  "raw_driver_rebuilt": false,
+  "raw_driver_bytes_rewritten": false,
+  "boot_loading": false,
+  "init_boot_written": false,
+  "native_failure_auto_rollback": false,
+  "phone_archive_observed": false,
+  "phone_cycle_observed": false,
+  "phone_settings_recovery_observed": false,
+  "runtime_certified": false,
+  "apple_transfer_certified": false
+}
