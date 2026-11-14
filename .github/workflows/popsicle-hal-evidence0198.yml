@@ -1,0 +1,32 @@
+name: Popsicle 0198 pre-unload HAL observation and evidence
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-hal-evidence0198.yml'
+      - 'tools/device/popsicle-hal-evidence-0198.sh'
+      - 'tools/observations/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install mksh
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Verify collector isolation and phone-observed sample-7 abort
+        env:
+          XAIRDROP_REQUIRE_MKSH: '1'
+        run: |
+          sh -n tools/device/popsicle-hal-evidence-0198.sh
+          mksh -n tools/device/popsicle-hal-evidence-0198.sh
+          python3 -m unittest discover -s tools/observations -p 'test_*.py'
+      - name: Record standalone collector digest
+        run: sha256sum tools/device/popsicle-hal-evidence-0198.sh

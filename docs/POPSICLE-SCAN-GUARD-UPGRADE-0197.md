@@ -1,5 +1,11 @@
 # 0197 — same-ID scan-aware diagnostic upgrade
 
+## Current phone result — blocked before any driver command
+
+The uploaded 0197 log reports successful preservation of the reviewed 0195 failure. Wi-Fi and scan-always were disabled and HAL initially stopped. Samples 0–6 passed; at sample 7 the framework quiet gate still passed but HAL was running, and the explicitly labelled HAL guard blocked before original WLAN removal. There is no insmod/rmmod command and no remove-stock intent. Framework-only cleanup restored both original enabled toggles and running HAL; the status reports association to the original network again. The final generic reboot/recover hint does not require reboot or settings recovery when this cleanup succeeded and Wi-Fi is healthy. Do not rerun cycle or clear the retained transaction.
+
+This establishes the earlier scan-only mitigation is insufficient across observed runs; it does not identify the requester for this particular HAL restart. The 0196 pass remains a bounded prior observation, not a universal guarantee. Archive preservation and pre-native failure cleanup have phone-returned positive evidence; native candidate load/restoration remains untested. See `research/popsicle-cycle0197-phone-receipt.json` and [0198 read-only evidence](POPSICLE-PREUNLOAD-HAL-0198.md).
+
 ## Scope and evidence
 
 0195 stopped after original WLAN removal, before a logged provider insertion. Kernel logs show a system_server lazy AIDL request restarting the stopped HAL. 0196 then reported ten stopped-HAL samples with Wi-Fi and scan-always disabled while original WLAN remained loaded, followed by restoration of both original enabled toggles. These facts justify a bounded scan-aware deployment test, not a claim that the specific old gate or every lazy restart source is proved.
@@ -30,13 +36,13 @@ The cooperative lock and ownership checks cannot exclude arbitrary other root so
 
 Host tests execute the actual new controller/adapter with synthetic files and controlled framework/native command models. They cover same-ID replacement, read-only install check, explicit inode-preserving archive, corrupt/current-boot/conflicting old state, both enabled/disabled toggle baselines, all before/after-effect failures, no native replay, lazy HAL restart after removal, busy candidate, pre-native framework cleanup, journal failures, signal cleanup, post-reboot settings recovery without changing phase and integrity before source. The 0196 probe regression matrix and kernel audit tool tests run in the same CI. Actual unchanged raw ELF audit and package production are separate steps, with no driver recompilation or byte rewriting.
 
-Local 43 diagnostic tests ran: 23 passed and 20 mksh cases skipped locally; all 110 kernel-tool tests passed. Real immutable-ELF reinspection and ZIP CRC passed. The 168,803,736-byte local ZIP SHA256 is `6c63f8381aca2fbe35ef8738b8080a79c44a2033ce05d7d10922342c612a25cc`; its shell files match current source. CI [43549094684](https://github.com/xxz3312/XAirDrop-17/actions/runs/43549094684) at `7227ef2790ff343a9396e8c77c0252faa33298bb` passed all 43 diagnostic tests including mksh and all 110 kernel-tool tests, with no skips. Real immutable-ELF reinspection and packaging passed and reproduced the exact local ZIP SHA256/size. Artifact 14095513303 contains the ZIP and build receipt. Machine evidence: `research/popsicle-cycle0197-ci.json`. Phone 0197 archive/cycle/recovery acceptance remains pending.
+Local 43 diagnostic tests ran: 23 passed and 20 mksh cases skipped locally; all 110 kernel-tool tests passed. Real immutable-ELF reinspection and ZIP CRC passed. The 168,803,736-byte local ZIP SHA256 is `6c63f8381aca2fbe35ef8738b8080a79c44a2033ce05d7d10922342c612a25cc`; its shell files match current source. CI [43549094684](https://github.com/xxz3312/XAirDrop-17/actions/runs/43549094684) at `7227ef2790ff343a9396e8c77c0252faa33298bb` passed all 43 diagnostic tests including mksh and all 110 kernel-tool tests, with no skips. Real immutable-ELF reinspection and packaging passed and reproduced the exact local ZIP SHA256/size. Artifact 14095513303 contains the ZIP and build receipt. Machine evidence: `research/popsicle-cycle0197-ci.json`. Phone-returned evidence now supports old-record preservation and framework-only failure cleanup. Cycle was blocked before driver removal; native load/restore and explicit post-reboot settings recovery remain unqualified.
 
-## Phone handoff after final CI
+## Historical phone handoff (do not repeat after the blocked attempt)
 
 Install the ZIP over the existing 0195 module and reboot normally. Keep original backups/history. This does not add another module ID and does not run a cycle at boot. The existing 0194 entry is historical and is not automatically deleted.
 
-One Termux command checks, explicitly preserves the reviewed old failure, and then starts the fresh scan-aware diagnostic trial:
+The original handoff is retained below only for provenance. The returned attempt has already created a preserved transaction; do not repeat it:
 
 ```sh
 su -c '/system/bin/sh /data/adb/modules/xairdrop17_cycle0195/cyclectl.sh check && /system/bin/sh /data/adb/modules/xairdrop17_cycle0195/cyclectl.sh archive-0195 && /system/bin/sh /data/adb/modules/xairdrop17_cycle0195/cyclectl.sh cycle' > /sdcard/Download/xairdrop-0197-cycle.txt 2>&1

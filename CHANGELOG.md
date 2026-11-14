@@ -1,3 +1,9 @@
+## 0198 — observe pre-unload HAL restart despite scan-off
+
+- Phone 0197 preserved the old failure and blocked at sample 7 before any driver command, while Wi-Fi/scan remained disabled. Framework-only cleanup restored toggles, HAL and Wi-Fi association. Scan-off alone is not a sufficient quiescence guarantee; this restart's requester is not yet captured.
+- Preserve installed module and transaction. Add a read-only collector for retained kernel/journal evidence, current Wi-Fi/scanner/P2P dumps and Wi-Fi-related framework logs; no module/settings/service control and no new install package. Capture query statuses and verify source files unchanged.
+- Add a regression executing the actual 0197 controller against the exact sample-7 scenario. Do not shorten the guard window, repeatedly stop HAL, clear failed state or retry native cycle pending service-attribution evidence.
+
 ## 0197 — same-ID scan guard and preserved failure migration
 
 - Upgrade the existing module ID with versionCode197 and stable display name. Preserve the exact reviewed prior-boot 0195 failed record by explicit verified directory rename before a fresh transaction; keep original backups and old source/artifact evidence.
