@@ -1,3 +1,9 @@
+## 0205 — await one correlated scan result before normal teardown
+
+- Preserve only the exact203 HAL roundtrip record and retain all earlier archives/backups under the fixed module ID. No native ELF rebuild or byte rewrite.
+- Wait for ordinary association, snapshot scanner history, issue one scan, and require one new root-shell listener with a matching successful nonempty result before normal Wi-Fi/HAL shutdown. Old cache, passive/unrelated callbacks, reused history IDs, ambiguous or conflicting events never qualify.
+- Bound the wait by deadline and poll/query limits; retain scanner snapshots and request/callback evidence. Ordinary failed/empty/unavailable/timeout observations restore stock with result3. Unsafe ownership/HAL/signal/native failures retain the existing stop/reboot boundary.
+
 ## 0203 — help255 semantics and visible pre-effect aborts
 
 - Correct the help capability check: accept status0/255 only with the expected Wi-Fi help header and exact required command lines; reject exceptions, unknown/denied output and every other status. Independent list-results queries still require zero.

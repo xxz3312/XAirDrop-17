@@ -1,0 +1,69 @@
+name: Popsicle 0205 request-correlated scan completion
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/popsicle-cycle0205.yml'
+      - 'tools/device/cycle-0205/**'
+      - 'tools/scan0205/**'
+      - 'tools/kernel/stock_cnss_cycle0205.py'
+      - 'docs/research/popsicle-evidence0204-phone-receipt.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [sh, mksh]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install mksh
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mksh
+      - name: Qualify candidate lifecycle ownership preservation and failures
+        env:
+          XAIRDROP_REQUIRE_MKSH: '1'
+          PYTHONPATH: tools/scan0205
+        run: |
+          for script in tools/device/cycle-0205/*.sh; do ${{ matrix.shell }} -n "$script"; done
+          if [ '${{ matrix.shell }}' = sh ]; then
+            python3 -m unittest test_scan0205.ScanTests test_scan0205.ParserTests test_scan0205.PolicyTests
+            python3 -m unittest discover -s tools/kernel -p 'test_*.py'
+          else
+            python3 -m unittest test_scan0205.MkshScanTests test_scan0205.MkshParserTests
+          fi
+  package:
+    needs: qualify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retrieve immutable native candidates without rebuilding
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14021858523/zip > "$RUNNER_TEMP/diagnostics.zip"
+          gh api repos/xxz3312/XAirDrop-17/actions/artifacts/14022515459/zip > "$RUNNER_TEMP/validation.zip"
+      - name: Audit actual ELF and reproduce same-ID candidate HAL package
+        run: |
+          python3 tools/kernel/stock_cnss_cycle0205.py \
+            --full "$RUNNER_TEMP/diagnostics.zip" --compact "$RUNNER_TEMP/validation.zip" \
+            --output "$RUNNER_TEMP/XAirDrop-17-0205.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xairdrop0205-candidate-hal-${{ github.run_id }}
+          compression-level: 0
+          path: |
+            ${{ runner.temp }}/XAirDrop-17-0205.zip
+            ${{ runner.temp }}/XAirDrop-17-0205.json
+          if-no-files-found: error
