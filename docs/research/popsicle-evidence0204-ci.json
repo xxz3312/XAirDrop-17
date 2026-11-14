@@ -1,0 +1,14 @@
+{
+  "stage": "0204",
+  "status": "CI_PASSED_PHONE_KERNEL_SCANNER_EVIDENCE_PENDING",
+  "source_commit": "3f9ee806a737f7b427915e830efbca351998b23c",
+  "workflow_run": 43583565992,
+  "job_id": 132413216935,
+  "tests_passed": 10,
+  "tests_skipped": 0,
+  "script_sha256": "6a02a736fe7282117f76dd8850c7b429dd77010612699c68eaa257c38ac36b39",
+  "new_install_package": false,
+  "native_control": false,
+  "wifi_hal_control": false,
+  "original_records_unchanged": true
+}
