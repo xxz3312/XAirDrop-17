@@ -1,0 +1,32 @@
+{
+  "stage": "0203",
+  "status": "CI_PASSED_CANDIDATE_HAL_PHONE_PENDING",
+  "source_commit": "fb01a8a07a1259ef06f6ca2208235311cff9ccf4",
+  "workflow_run": 43581297930,
+  "local_targeted_controller_cases_passed": 5,
+  "local_kernel_tool_tests_passed": 110,
+  "module_id": "xairdrop17_cycle0195",
+  "version_code": 203,
+  "native_rebuild": false,
+  "native_elf_bytes_unchanged": true,
+  "local_package_sha256": "50dcc801f111482003e1f3f52d3dae22d6477167b711ab2f134e7a2d8d86d982",
+  "package_bytes": 168807334,
+  "help255_exception_scope": "semantic help only; independent list query and all setters/loaders still require zero",
+  "candidate_hal_phone_certified": false,
+  "scan_completion_certified": false,
+  "ci_test_counts": {
+    "sh_controller_and_policy": 15,
+    "mksh_controller": 14,
+    "kernel_tools": 110,
+    "total": 139,
+    "skipped": 0
+  },
+  "ci_jobs": {
+    "sh": 132406385654,
+    "mksh": 132406385429,
+    "package": 132407925952
+  },
+  "ci_artifact_id": 14109070349,
+  "ci_package_sha256": "50dcc801f111482003e1f3f52d3dae22d6477167b711ab2f134e7a2d8d86d982",
+  "ci_package_matches_local": true
+}
